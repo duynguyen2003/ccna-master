@@ -2,35 +2,64 @@ const bcrypt = require('bcrypt');
 const { getPrisma } = require('../config/database');
 const prisma = getPrisma();
 
-// Helper to get ISO week number for labeling charts
+// ── Constants ────────────────────────────────────────────────────────────────
+const ROLES = { ADMIN: 'ADMIN', STUDENT: 'STUDENT' };
+const STATUS = { ACTIVE: 'active', INACTIVE: 'inactive' };
+const DAY_LABELS = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+const MAX_NOTE_LENGTH = 10000;
+const TOTAL_LABS = 50;
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+/**
+ * Get ISO week label from a date
+ * @param {Date|string} date
+ * @returns {string} e.g. "Tuần 12"
+ */
 function getISOWeekLabel(date) {
-  const d = new Date(date);
-  const startOfYear = new Date(d.getFullYear(), 0, 1);
-  const week = Math.ceil(((d - startOfYear) / 86400000 + startOfYear.getDay() + 1) / 7);
-  return `Tuần ${week}`;
+  try {
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return null;
+    const startOfYear = new Date(d.getFullYear(), 0, 1);
+    const week = Math.ceil(
+      ((d - startOfYear) / 86400000 + startOfYear.getDay() + 1) / 7
+    );
+    return `Tuần ${week}`;
+  } catch {
+    return null;
+  }
 }
+
+/**
+ * Clamp a number between min and max
+ */
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, Number(value) || 0));
+}
+
+// ── Controllers ──────────────────────────────────────────────────────────────
 
 module.exports.getAll = async (req, res, next) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const search = req.query.search || '';
-    const role = req.query.role;
-    const status = req.query.status;
+    const { role, status } = req.query;
     const skip = (page - 1) * limit;
 
-    const roleFilter = ['ADMIN', 'STUDENT'].includes(role) ? role : undefined;
+    const roleFilter = Object.values(ROLES).includes(role) ? role : undefined;
     const statusFilter =
-      status === 'active' ? true : status === 'inactive' ? false : undefined;
+      status === STATUS.ACTIVE ? true :
+        status === STATUS.INACTIVE ? false : undefined;
 
     const whereParams = {
       deletedAt: null,
-      ...(roleFilter ? { role: roleFilter } : {}),
-      ...(typeof statusFilter === 'boolean' ? { isActive: statusFilter } : {}),
+      ...(roleFilter !== undefined ? { role: roleFilter } : {}),
+      ...(statusFilter !== undefined ? { isActive: statusFilter } : {}),
       ...(search ? {
         OR: [
           { fullName: { contains: search, mode: 'insensitive' } },
-          { email: { contains: search, mode: 'insensitive' } }
+          { email: { contains: search, mode: 'insensitive' } },
         ]
       } : {})
     };
@@ -42,8 +71,8 @@ module.exports.getAll = async (req, res, next) => {
         take: limit,
         orderBy: { createdAt: 'desc' },
         select: {
-          id: true, fullName: true, email: true, role: true, 
-          isActive: true, createdAt: true, lastLogin: true
+          id: true, fullName: true, email: true, role: true,
+          isActive: true, createdAt: true, lastLogin: true,
         }
       }),
       prisma.user.count({ where: whereParams })
@@ -55,7 +84,7 @@ module.exports.getAll = async (req, res, next) => {
         total,
         page,
         limit,
-        totalPages: Math.ceil(total / limit)
+        totalPages: Math.ceil(total / limit),
       }
     });
   } catch (error) {
@@ -63,141 +92,172 @@ module.exports.getAll = async (req, res, next) => {
   }
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+
 module.exports.getById = async (req, res, next) => {
   try {
     const { id } = req.params;
+
     const user = await prisma.user.findUnique({
       where: { id: parseInt(id) },
       select: {
-        id: true, fullName: true, email: true, role: true, 
+        id: true, fullName: true, email: true, role: true,
         isActive: true, createdAt: true, lastLogin: true,
         level: true, streak: true, totalStudyTime: true,
         progress: {
           select: {
             id: true,
             progressPercent: true,
-            course: {
-              select: { id: true, title: true, level: true }
-            }
+            course: { select: { id: true, title: true, level: true } }
           }
         },
-        examResults: true
+        examResults: true,
       }
     });
-    if (!user || user.deletedAt) return res.status(404).json({ message: 'User not found' });
+
+    if (!user || user.deletedAt) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
     res.json(user);
   } catch (error) {
     next(error);
   }
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+
 module.exports.getProfileMe = async (req, res, next) => {
   try {
     const userId = req.user.id;
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true, fullName: true, email: true, role: true,
-        isActive: true, avatarUrl: true, createdAt: true,
-        level: true, streak: true, totalStudyTime: true,
-        // Tiến độ từng khóa học
-        progress: {
-          select: {
-            progressPercent: true,
-            courseId: true,
-            course: { select: { id: true, title: true } }
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+    // ── Chạy song song để tối ưu hiệu năng ───────────────────────────────
+    const [user, completedLabs] = await Promise.all([
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true, fullName: true, email: true, role: true,
+          isActive: true, avatarUrl: true, createdAt: true,
+          level: true, streak: true, totalStudyTime: true,
+
+          // Tiến độ cấp độ khóa học
+          progress: {
+            where: { moduleId: null, lessonId: null, labId: null },
+            select: {
+              progressPercent: true,
+              courseId: true,
+              course: { select: { id: true, title: true } }
+            }
           },
-          where: { moduleId: null, lessonId: null, labId: null } // Chỉ lấy progress cấp độ khóa học
-        },
-        // Hoạt động gần đây (10 hoạt động mới nhất)
-        activities: {
-          orderBy: { createdAt: 'desc' },
-          take: 10,
-          select: { id: true, title: true, type: true, createdAt: true, referenceId: true }
-        },
-        // Thành tích / Huy hiệu
-        badges: {
-          orderBy: { earnedAt: 'desc' },
-          select: { id: true, badgeName: true, badgeIcon: true, earnedAt: true }
-        },
-        // Kết quả thi để tính điểm trung bình
-        examResults: {
-          select: { percentage: true, isPassed: true }
+
+          // Hoạt động trong 7 ngày gần nhất — filter trực tiếp trong DB
+          activities: {
+            where: { createdAt: { gte: sevenDaysAgo } },
+            orderBy: { createdAt: 'desc' },
+            select: {
+              id: true, title: true, type: true,
+              createdAt: true, referenceId: true,
+            }
+          },
+
+          // Thành tích / Huy hiệu
+          badges: {
+            orderBy: { earnedAt: 'desc' },
+            select: {
+              id: true, badgeName: true, badgeIcon: true, earnedAt: true,
+            }
+          },
+
+          // Kết quả thi — bao gồm date để tính weeklyScores
+          examResults: {
+            select: {
+              percentage: true, isPassed: true,
+              takenAt: true, createdAt: true,
+            }
+          }
         }
-      }
-    });
+      }),
 
-    if (!user) return res.status(404).json({ message: 'User not found' });
+      // Lab đã hoàn thành
+      prisma.userProgress.count({
+        where: { userId, labId: { not: null }, status: 'COMPLETED' }
+      })
+    ]);
 
-    // --- 1. weeklyScores: last 7 weeks from ExamResults ---
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // ── weeklyScores: nhóm điểm thi theo tuần, lấy 7 tuần gần nhất ───────
     const weeklyMap = {};
     user.examResults.forEach(r => {
-      const week = getISOWeekLabel(r.takenAt || r.createdAt || new Date()); 
+      const dateRef = r.takenAt || r.createdAt;
+      if (!dateRef) return;
+
+      const week = getISOWeekLabel(dateRef);
+      if (!week) return;
+
       if (!weeklyMap[week]) weeklyMap[week] = [];
       weeklyMap[week].push(Number(r.percentage));
     });
-    const weeklyScores = Object.entries(weeklyMap).map(([week, scores]) => ({
-      week,
-      score: Math.round(scores.reduce((a, b) => a + b, 0) / scores.length),
-    })).slice(-7);
 
-    // --- 2. dailyStudyTime: last 7 days from UserActivity ---
-    // Since we don't have a 'watchedTime' per event, we estimate study time 
-    // based on activity count (e.g., 15 minutes per lesson/lab activity)
-    const DAY_LABELS = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
-    const dailyMap = { CN: 0, T2: 0, T3: 0, T4: 0, T5: 0, T6: 0, T7: 0 };
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const weeklyScores = Object.entries(weeklyMap)
+      .map(([week, scores]) => ({
+        week,
+        score: Math.round(scores.reduce((a, b) => a + b, 0) / scores.length),
+      }))
+      .slice(-7);
 
+    // ── dailyStudyTime: ước tính thời gian học theo ngày trong tuần ───────
+    const dailyMap = Object.fromEntries(DAY_LABELS.map(d => [d, 0]));
     user.activities.forEach(act => {
-      if (new Date(act.createdAt) >= sevenDaysAgo) {
-        const label = DAY_LABELS[new Date(act.createdAt).getDay()];
-        // Estimate: 15 mins for lesson/lab, 5 mins for others
-        const estimatedMins = act.type.includes('COMPLETED') ? 20 : 5;
-        dailyMap[label] += estimatedMins;
-      }
+      const label = DAY_LABELS[new Date(act.createdAt).getDay()];
+      // Ước tính: 20 phút cho lesson/lab hoàn thành, 5 phút cho hành động khác
+      dailyMap[label] += act.type.includes('COMPLETED') ? 20 : 5;
     });
-    const dailyStudyTime = DAY_LABELS.map(day => ({ day, minutes: dailyMap[day] }));
+    const dailyStudyTime = DAY_LABELS.map(day => ({
+      day,
+      minutes: dailyMap[day],
+    }));
 
-    // --- 3. Summary metrics ---
+    // ── Summary metrics ───────────────────────────────────────────────────
     const courseProgress = user.progress.map(p => ({
       courseId: p.courseId,
-      courseName: p.course?.title || p.courseId,
-      progressPercent: p.progressPercent
+      courseName: p.course?.title || String(p.courseId),
+      progressPercent: p.progressPercent,
     }));
 
     const totalProgress = courseProgress.length > 0
-      ? Math.round(courseProgress.reduce((sum, p) => sum + p.progressPercent, 0) / courseProgress.length)
+      ? Math.round(
+        courseProgress.reduce((s, p) => s + p.progressPercent, 0) / courseProgress.length
+      )
       : 0;
-
-    const completedLabs = await prisma.userProgress.count({
-      where: { userId, labId: { not: null }, status: 'COMPLETED' }
-    });
 
     const averageScore = user.examResults.length > 0
-      ? Math.round(user.examResults.reduce((sum, r) => sum + Number(r.percentage), 0) / user.examResults.length)
+      ? Math.round(
+        user.examResults.reduce((s, r) => s + Number(r.percentage), 0) / user.examResults.length
+      )
       : 0;
 
-    const examCount = user.examResults.length;
-
+    // ── Loại bỏ các field đã xử lý trước khi spread ──────────────────────
     const { examResults, progress, activities, ...baseUser } = user;
 
-    res.json({
+    return res.json({
       data: {
         ...baseUser,
         progress: courseProgress,
         totalProgress,
-        completedLabs,
-        totalLabs: 50,
-        averageScore,
-        examCount,
         weeklyScores,
         dailyStudyTime,
+        recentActivities: user.activities,
+        badges: user.badges,
         stats: {
-          totalStudyTime: user.totalStudyTime * 60, // Phút -> Giây để thống nhất với plan (h:m format)
+          totalStudyTime: user.totalStudyTime, // unit: minutes
           avgScore: averageScore,
-          examCount: examCount,
-          labsDone: completedLabs
+          examCount: user.examResults.length,
+          labsDone: completedLabs,
+          totalLabs: TOTAL_LABS,
         }
       }
     });
@@ -206,12 +266,13 @@ module.exports.getProfileMe = async (req, res, next) => {
   }
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
 
 module.exports.getUserProgress = async (req, res, next) => {
   try {
     const userId = req.user.id;
     const progressList = await prisma.userProgress.findMany({
-      where: { userId: userId },
+      where: { userId }
     });
     res.json({ data: progressList });
   } catch (error) {
@@ -219,16 +280,23 @@ module.exports.getUserProgress = async (req, res, next) => {
   }
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+
 module.exports.updateProgress = async (req, res, next) => {
   try {
     const userId = req.user.id;
-    const { courseId, moduleId, lessonId, labId, progressPercent, status } = req.body;
+    const { courseId, moduleId, lessonId, labId, status } = req.body;
 
+    // ── Validate ──────────────────────────────────────────────────────────
     if (!courseId) {
       return res.status(400).json({ message: 'courseId là bắt buộc' });
     }
 
-    // Tìm xem đã có bản ghi tiến độ này chưa
+    // Clamp progressPercent về khoảng [0, 100]
+    const progressPercent = clamp(req.body.progressPercent, 0, 100);
+    const isCompleted = status === 'COMPLETED' || progressPercent >= 95;
+
+    // ── Upsert tiến độ ────────────────────────────────────────────────────
     const existing = await prisma.userProgress.findFirst({
       where: {
         userId,
@@ -240,15 +308,15 @@ module.exports.updateProgress = async (req, res, next) => {
     });
 
     let result;
-    const isCompleted = status === 'COMPLETED' || progressPercent >= 95;
 
     if (existing) {
       result = await prisma.userProgress.update({
         where: { id: existing.id },
         data: {
-          progressPercent: Math.max(existing.progressPercent, progressPercent || 0),
+          // Không cho phép giảm tiến độ (tua lại video không reset %)
+          progressPercent: Math.max(existing.progressPercent, progressPercent),
           status: isCompleted ? 'COMPLETED' : (status || existing.status),
-          completedAt: isCompleted && !existing.completedAt ? new Date() : existing.completedAt
+          completedAt: isCompleted && !existing.completedAt ? new Date() : existing.completedAt,
         }
       });
     } else {
@@ -259,21 +327,26 @@ module.exports.updateProgress = async (req, res, next) => {
           moduleId: moduleId || null,
           lessonId: lessonId || null,
           labId: labId || null,
-          progressPercent: progressPercent || 0,
+          progressPercent,
           status: isCompleted ? 'COMPLETED' : (status || 'ACTIVE'),
-          completedAt: isCompleted ? new Date() : null
+          completedAt: isCompleted ? new Date() : null,
         }
       });
     }
 
-    // Nếu bài học hoàn thành, ghi lại hoạt động
-    if (isCompleted && (!existing || existing.status !== 'COMPLETED')) {
+    // ── Ghi activity nếu vừa hoàn thành lần đầu ──────────────────────────
+    const isFirstCompletion = isCompleted && (!existing || existing.status !== 'COMPLETED');
+    if (isFirstCompletion) {
+      const activityType =
+        lessonId ? 'LESSON_COMPLETED' :
+          labId ? 'LAB_COMPLETED' : 'COURSE_COMPLETED';
+
       await prisma.userActivity.create({
         data: {
           userId,
-          title: `Đã hoàn thành bài học: ${lessonId || labId || courseId}`,
-          type: lessonId ? 'LESSON_COMPLETED' : (labId ? 'LAB_COMPLETED' : 'COURSE_COMPLETED'),
-          referenceId: lessonId || labId || null
+          title: `Đã hoàn thành: ${lessonId || labId || courseId}`,
+          type: activityType,
+          referenceId: lessonId || labId || null,
         }
       });
     }
@@ -284,45 +357,39 @@ module.exports.updateProgress = async (req, res, next) => {
   }
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+
 module.exports.createUser = async (req, res, next) => {
   try {
     const { fullName, email, password, role } = req.body;
-    
+
     if (!email || !password) {
       return res.status(400).json({ message: 'Vui lòng cung cấp email và mật khẩu' });
     }
 
+    const assignedRole = Object.values(ROLES).includes(role) ? role : ROLES.STUDENT;
+
     const existingUser = await prisma.user.findUnique({ where: { email } });
-    if (existingUser && !existingUser.deletedAt) {
-      return res.status(409).json({ message: 'Email này đã được sử dụng' });
-    }
 
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
 
-    if (existingUser && existingUser.deletedAt) {
-      // Restore user if soft deleted
+    // Nếu email đã tồn tại nhưng đã bị soft-delete → khôi phục
+    if (existingUser?.deletedAt) {
       const restoredUser = await prisma.user.update({
         where: { email },
-        data: {
-          fullName,
-          passwordHash,
-          role: role || 'STUDENT',
-          deletedAt: null,
-          isActive: true
-        },
+        data: { fullName, passwordHash, role: assignedRole, deletedAt: null, isActive: true },
         select: { id: true, fullName: true, email: true, role: true, isActive: true }
       });
       return res.status(201).json({ message: 'Tạo tài khoản thành công', user: restoredUser });
     }
 
+    if (existingUser) {
+      return res.status(409).json({ message: 'Email này đã được sử dụng' });
+    }
+
     const newUser = await prisma.user.create({
-      data: {
-        fullName,
-        email,
-        passwordHash,
-        role: role || 'STUDENT'
-      },
+      data: { fullName, email, passwordHash, role: assignedRole },
       select: { id: true, fullName: true, email: true, role: true, isActive: true }
     });
 
@@ -332,27 +399,35 @@ module.exports.createUser = async (req, res, next) => {
   }
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+
 module.exports.updateRole = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { role } = req.body;
-    if (!['STUDENT', 'ADMIN'].includes(role)) {
+
+    if (!Object.values(ROLES).includes(role)) {
       return res.status(400).json({ message: 'Role không hợp lệ' });
     }
+
     const updatedUser = await prisma.user.update({
       where: { id: parseInt(id) },
       data: { role },
       select: { id: true, fullName: true, email: true, role: true }
     });
+
     res.json({ message: 'Cập nhật quyền thành công', user: updatedUser });
   } catch (error) {
     next(error);
   }
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+
 module.exports.toggleActive = async (req, res, next) => {
   try {
     const { id } = req.params;
+
     const user = await prisma.user.findUnique({ where: { id: parseInt(id) } });
     if (!user) return res.status(404).json({ message: 'User not found' });
 
@@ -361,43 +436,46 @@ module.exports.toggleActive = async (req, res, next) => {
       data: { isActive: !user.isActive },
       select: { id: true, fullName: true, email: true, isActive: true }
     });
-    res.json({ message: `Đã ${updatedUser.isActive ? 'kích hoạt' : 'vô hiệu hóa'} tài khoản`, user: updatedUser });
+
+    res.json({
+      message: `Đã ${updatedUser.isActive ? 'kích hoạt' : 'vô hiệu hóa'} tài khoản`,
+      user: updatedUser,
+    });
   } catch (error) {
     next(error);
   }
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+
 module.exports.deleteUser = async (req, res, next) => {
   try {
     const { id } = req.params;
+
     await prisma.user.update({
       where: { id: parseInt(id) },
       data: { deletedAt: new Date(), isActive: false }
     });
+
     res.json({ message: 'Xóa tài khoản thành công' });
   } catch (error) {
     next(error);
   }
 };
 
-const MAX_NOTE_LENGTH = 10000;
+// ─────────────────────────────────────────────────────────────────────────────
 
 module.exports.getUserNote = async (req, res, next) => {
   try {
-    const { lessonId } = req.params;
     const userId = req.user.id;
+    const lessonId = parseInt(req.params.lessonId);
 
-    if (!lessonId || isNaN(parseInt(lessonId))) {
+    if (!lessonId || isNaN(lessonId)) {
       return res.status(400).json({ message: 'lessonId không hợp lệ.' });
     }
 
     const note = await prisma.userNote.findUnique({
-      where: {
-        userId_lessonId: {
-          userId: parseInt(userId),
-          lessonId: parseInt(lessonId)
-        }
-      }
+      where: { userId_lessonId: { userId, lessonId } }
     });
 
     res.json({ content: note?.content ?? '' });
@@ -406,12 +484,15 @@ module.exports.getUserNote = async (req, res, next) => {
   }
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+
 module.exports.upsertUserNote = async (req, res, next) => {
   try {
-    const { lessonId, content } = req.body;
     const userId = req.user.id;
+    const { lessonId, content } = req.body;
 
-    if (!lessonId || isNaN(parseInt(lessonId))) {
+    const parsedLessonId = parseInt(lessonId);
+    if (!parsedLessonId || isNaN(parsedLessonId)) {
       return res.status(400).json({ message: 'lessonId không hợp lệ.' });
     }
     if (typeof content !== 'string') {
@@ -424,21 +505,9 @@ module.exports.upsertUserNote = async (req, res, next) => {
     }
 
     await prisma.userNote.upsert({
-      where: {
-        userId_lessonId: {
-          userId: parseInt(userId),
-          lessonId: parseInt(lessonId)
-        }
-      },
-      update: {
-        content,
-        updatedAt: new Date()
-      },
-      create: {
-        userId: parseInt(userId),
-        lessonId: parseInt(lessonId),
-        content
-      }
+      where: { userId_lessonId: { userId, lessonId: parsedLessonId } },
+      update: { content, updatedAt: new Date() },
+      create: { userId, lessonId: parsedLessonId, content }
     });
 
     res.json({ success: true });
