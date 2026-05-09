@@ -54,11 +54,9 @@ export default function Profile() {
 
   if (!profile) return null;
 
-  // Giả lập hoặc tính toán các thông số chưa có trực tiếp từ profile API nếu cần
   const recentActivities = profile.activities || [];
   const badges = profile.badges || [];
   const courseProgress = profile.progress || [];
-
   const { stats, weeklyScores, dailyStudyTime } = profile;
 
   const formatTime = (seconds) => {
@@ -70,14 +68,12 @@ export default function Profile() {
   return (
     <div className="app">
       <div className="container">
-        {/* Header Card */}
-        <div className="header-card">
-          <div className="bg-circle blue"></div>
-          <div className="bg-circle purple"></div>
-
-          <div className="header-content">
-            <div className="user-info">
-              <div className="profile-avatar">
+        <div className="profile-grid">
+          
+          {/* Row 0: Header Card */}
+          <div className="profile-header">
+            <div className="user-profile-info">
+              <div className="user-avatar-circle">
                 {profile.avatarUrl ? (
                   <img 
                     src={profile.avatarUrl.startsWith('http') 
@@ -94,179 +90,175 @@ export default function Profile() {
                   profile.fullName?.charAt(0).toUpperCase() || "U"
                 )}
               </div>
-              <div>
-                <h1>
-                  Xin chào, {profile.fullName} <span>👋</span>
-                </h1>
-                <p className="subtitle">Học viên CCNA • Level {profile.level || 1}</p>
-                <div className="streak">
-                  <Flame size={16} />
+              <div className="user-details">
+                <h1>Xin chào, {profile.fullName} 👋</h1>
+                <p>Học viên CCNA • Level {profile.level || 1}</p>
+                <div className="user-streak">
+                  <Flame size={14} />
                   {profile.streak || 0} ngày streak
                 </div>
               </div>
             </div>
 
-            <div className="progress-box">
-              <div className="progress-top">
-                <div>
-                  <p>Tiến độ tổng thể</p>
-                  <div className="percent">{profile.totalProgress || 0}%</div>
-                </div>
-                <button className="primary-btn">
-                  Tiếp tục học <ChevronRight size={18} />
-                </button>
-              </div>
-              <div className="progress-bar">
-                <div className="progress-fill" style={{ width: `${profile.totalProgress || 0}%` }}></div>
+            <div className="header-progress">
+              <p className="header-progress-label">Tiến độ tổng thể</p>
+              <div className="header-progress-value">{profile.totalProgress || 0}%</div>
+              <div className="header-progress-bar">
+                <div className="header-progress-fill" style={{ width: `${profile.totalProgress || 0}%` }}></div>
               </div>
             </div>
           </div>
-        </div>
 
-        <div className="main-grid">
-          <div className="left-column">
-            {/* Progress by Course */}
-            <div className="card">
-              <div className="card-header">
-                <BookOpen size={22} />
-                <h2>Tiến độ theo khóa học</h2>
-              </div>
+          {/* Row 1: 4 Metric Cards */}
+          <div className="metric-card">
+            <span className="metric-label">Thời gian học</span>
+            <div className="metric-value">{formatTime(stats?.totalStudyTime || 0)}</div>
+          </div>
+          
+          <div className="metric-card">
+            <span className="metric-label">Điểm TB</span>
+            <div className="metric-value">
+              {stats?.avgScore || 0} <small>/ 100</small>
+            </div>
+          </div>
 
+          <div className="metric-card">
+            <span className="metric-label">Bài kiểm tra</span>
+            <div className="metric-value">
+              {stats?.examCount || 0} <small>bài</small>
+            </div>
+          </div>
+
+          <div className="metric-card">
+            <span className="metric-label">Lab hoàn thành</span>
+            <div className="metric-value">
+              {stats?.labsDone || 0} <small>/ 50</small>
+            </div>
+          </div>
+
+          {/* Row 2: Middle Cards (2 per row) */}
+          <div className="section-card span-2">
+            <div className="card-title">
+              <BookOpen size={20} />
+              <h2>Tiến độ theo khóa học</h2>
+            </div>
+            <div className="course-list">
               {courseProgress.length > 0 ? courseProgress.map((cp, idx) => (
-                <div className="course" key={idx}>
-                  <div className="course-row">
+                <div className="course-item" key={idx}>
+                  <div className="course-info">
                     <span>{cp.courseName || cp.courseId}</span>
-                    <span className="blue">{cp.progressPercent}%</span>
+                    <span style={{ color: '#3b82f6' }}>{cp.progressPercent}%</span>
                   </div>
-                  <div className="bar">
-                    <div className="fill blue-bg" style={{ width: `${cp.progressPercent}%` }}></div>
+                  <div className="course-bar">
+                    <div className="course-fill" style={{ width: `${cp.progressPercent}%` }}></div>
                   </div>
                 </div>
               )) : (
-                <p style={{ color: '#64748b', fontSize: '0.9rem' }}>Chưa có tiến độ khóa học nào.</p>
-              )}
-            </div>
-
-            {/* Recent Activity */}
-            <div className="card">
-              <div className="card-header">
-                <Activity size={22} />
-                <h2>Hoạt động gần đây</h2>
-              </div>
-
-              {recentActivities.length > 0 ? recentActivities.map((act) => (
-                <div className="activity" key={act.id}>
-                  {act.type === 'Lesson' ? <MonitorPlay size={24} /> : <FileText size={24} />}
-                  <div>
-                    <h3>{act.title}</h3>
-                    <p>{new Date(act.createdAt).toLocaleDateString()}</p>
-                  </div>
-                  <button>Xem lại</button>
-                </div>
-              )) : (
-                <p style={{ color: '#64748b', fontSize: '0.9rem' }}>Chưa có hoạt động gần đây.</p>
+                <p className="empty-text">Chưa có tiến độ khóa học nào.</p>
               )}
             </div>
           </div>
 
-          <div className="right-column">
-            {/* Achievements */}
-            <div className="card">
-              <div className="card-header">
-                <Trophy size={22} />
-                <h2>Thành tích</h2>
-              </div>
-
-              <div className="achievement-grid">
-                {badges.length > 0 ? badges.map((badge, idx) => (
-                  <div className="achievement" key={idx}>
-                    <Zap size={20} />
-                    <span>{badge.badgeName}</span>
-                  </div>
-                )) : (
-                  <p style={{ color: '#64748b', fontSize: '0.9rem', gridColumn: 'span 3' }}>Chưa có thành tích.</p>
-                )}
-              </div>
+          <div className="section-card span-2">
+            <div className="card-title">
+              <Trophy size={20} />
+              <h2>Thành tích</h2>
             </div>
-
-            {/* Statistics */}
-            <div className="card stats-detail-card">
-              <div className="card-header">
-                <BarChart2 size={22} />
-                <h2>Thống kê chi tiết</h2>
-              </div>
-
-              {/* Metric Grid */}
-              <div className="stats-metrics-grid">
-                <div className="stat-metric-card">
-                  <span className="stat-metric-label">Tổng thời gian học</span>
-                  <span className="stat-metric-value">{formatTime(stats?.totalStudyTime || 0)}</span>
+            <div className="achievements-list">
+              {badges.length > 0 ? badges.map((badge, idx) => (
+                <div className="badge-item" key={idx}>
+                  <div className="badge-icon"><Zap size={16} /></div>
+                  <span className="badge-name">{badge.badgeName}</span>
                 </div>
-                <div className="stat-metric-card">
-                  <span className="stat-metric-label">Điểm trung bình</span>
-                  <span className="stat-metric-value">{stats?.avgScore || 0} <small>/ 100</small></span>
-                </div>
-                <div className="stat-metric-card">
-                  <span className="stat-metric-label">Bài kiểm tra đã làm</span>
-                  <span className="stat-metric-value">{stats?.examCount || 0} <small>bài</small></span>
-                </div>
-                <div className="stat-metric-card">
-                  <span className="stat-metric-label">Lab hoàn thành</span>
-                  <span className="stat-metric-value">{stats?.labsDone || 0} <small>/ 50</small></span>
-                </div>
-              </div>
+              )) : (
+                <p className="empty-text" style={{ gridColumn: 'span 2' }}>Chưa có thành tích.</p>
+              )}
+            </div>
+          </div>
 
-              {/* Weekly Scores Chart */}
-              <div className="chart-wrapper">
-                <h3 className="chart-section-title">Điểm kiểm tra theo tuần</h3>
-                {weeklyScores && weeklyScores.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={180}>
-                    <LineChart data={weeklyScores}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" vertical={false} />
-                      <XAxis dataKey="week" tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-                      <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-                      <Tooltip
-                        contentStyle={{ background: '#1e293b', border: 'none', borderRadius: 8, fontSize: '12px' }}
-                        labelStyle={{ color: '#fff', marginBottom: '4px' }}
-                        cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1 }}
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="score"
-                        stroke="#2563eb"
-                        strokeWidth={3}
-                        dot={{ r: 4, fill: '#2563eb', strokeWidth: 2, stroke: '#fff' }}
-                        activeDot={{ r: 6, strokeWidth: 0 }}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="chart-empty-state">
-                    <span>📊</span>
-                    <p>Chưa có dữ liệu kiểm tra</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Daily Study Time Chart */}
-              <div className="chart-wrapper">
-                <h3 className="chart-section-title">Thời gian học theo ngày (phút)</h3>
-                <ResponsiveContainer width="100%" height={160}>
-                  <BarChart data={dailyStudyTime || []}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" vertical={false} />
-                    <XAxis dataKey="day" tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+          {/* Row 3: Charts (2 per row) */}
+          <div className="section-card span-2">
+            <div className="card-title">
+              <Activity size={20} />
+              <h2>Điểm kiểm tra theo tuần</h2>
+            </div>
+            <div className="chart-container">
+              {weeklyScores && weeklyScores.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={weeklyScores}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                    <XAxis dataKey="week" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
+                    <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
                     <Tooltip
-                      contentStyle={{ background: '#1e293b', border: 'none', borderRadius: 8, fontSize: '12px' }}
-                      labelStyle={{ color: '#fff', marginBottom: '4px' }}
-                      cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                      contentStyle={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                      labelStyle={{ fontWeight: 600, marginBottom: '4px' }}
                     />
-                    <Bar dataKey="minutes" fill="#0ea5e9" radius={[4, 4, 0, 0]} barSize={24} />
+                    <Line
+                      type="monotone"
+                      dataKey="score"
+                      stroke="#3b82f6"
+                      strokeWidth={3}
+                      dot={{ r: 4, fill: '#3b82f6', strokeWidth: 2, stroke: '#fff' }}
+                      activeDot={{ r: 6, strokeWidth: 0 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              ) : (
+                <p className="empty-text">Chưa có dữ liệu kiểm tra.</p>
+              )}
+            </div>
+          </div>
+
+          <div className="section-card span-2">
+            <div className="card-title">
+              <BarChart2 size={20} />
+              <h2>Thời gian học theo ngày</h2>
+            </div>
+            <div className="chart-container">
+              {dailyStudyTime && dailyStudyTime.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={dailyStudyTime}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                    <XAxis dataKey="day" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
+                    <Tooltip
+                      contentStyle={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                    />
+                    <Bar dataKey="minutes" fill="#0ea5e9" radius={[4, 4, 0, 0]} barSize={20} />
                   </BarChart>
                 </ResponsiveContainer>
-              </div>
+              ) : (
+                <p className="empty-text">Chưa có dữ liệu học tập.</p>
+              )}
             </div>
           </div>
+
+          {/* Row 4: Recent Activity (Full width) */}
+          <div className="section-card span-4">
+            <div className="card-title">
+              <Activity size={20} />
+              <h2>Hoạt động gần đây</h2>
+            </div>
+            <div className="activity-list">
+              {recentActivities.length > 0 ? recentActivities.map((act) => (
+                <div className="activity-item" key={act.id}>
+                  <div className="activity-left">
+                    <div className="activity-icon">
+                      {act.type === 'Lesson' ? <MonitorPlay size={20} /> : <FileText size={20} />}
+                    </div>
+                    <div className="activity-text">
+                      <h3>{act.title}</h3>
+                      <p>{new Date(act.createdAt).toLocaleDateString()}</p>
+                    </div>
+                  </div>
+                  <button className="btn-secondary">Xem lại</button>
+                </div>
+              )) : (
+                <p className="empty-text">Chưa có hoạt động gần đây.</p>
+              )}
+            </div>
+          </div>
+
         </div>
       </div>
     </div>
