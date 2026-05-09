@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import '../../css/Profile.css';
+
 import {
   Zap,
   Trophy,
@@ -27,7 +29,9 @@ import { useAuth } from "../../context/AuthContext";
 
 export default function Profile() {
   const { token } = useAuth();
+  const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
+
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -154,9 +158,16 @@ export default function Profile() {
                   </div>
                 </div>
               )) : (
-                <p className="empty-text">Chưa có tiến độ khóa học nào.</p>
+                <div className="empty-state">
+                  <div className="empty-icon">📚</div>
+                  <p>Chưa có tiến độ khóa học nào.</p>
+                  <button className="btn-action" onClick={() => navigate('/roadmap')}>
+                    Bắt đầu học ngay <ChevronRight size={14} />
+                  </button>
+                </div>
               )}
             </div>
+
           </div>
 
           <div className="section-card span-2">
@@ -171,9 +182,16 @@ export default function Profile() {
                   <span className="badge-name">{badge.badgeName}</span>
                 </div>
               )) : (
-                <p className="empty-text" style={{ gridColumn: 'span 2' }}>Chưa có thành tích.</p>
+                <div className="empty-state compact">
+                  <div className="empty-icon">🏆</div>
+                  <p>Chưa có thành tích.</p>
+                  <button className="btn-text" onClick={() => navigate('/exam')}>
+                    Khám phá thử thách →
+                  </button>
+                </div>
               )}
             </div>
+
           </div>
 
           {/* Row 3: Charts (2 per row) */}
@@ -201,6 +219,8 @@ export default function Profile() {
                       dot={{ r: 4, fill: '#3b82f6', strokeWidth: 2, stroke: '#fff' }}
                       activeDot={{ r: 6, strokeWidth: 0 }}
                     />
+
+
                   </LineChart>
                 </ResponsiveContainer>
               ) : (
@@ -223,8 +243,11 @@ export default function Profile() {
                     <YAxis tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
                     <Tooltip
                       contentStyle={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                      formatter={(value) => [`${value} phút`, 'Thời gian']}
                     />
                     <Bar dataKey="minutes" fill="#0ea5e9" radius={[4, 4, 0, 0]} barSize={20} />
+
+
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
@@ -254,9 +277,18 @@ export default function Profile() {
                   <button className="btn-secondary">Xem lại</button>
                 </div>
               )) : (
-                <p className="empty-text">Chưa có hoạt động gần đây.</p>
+                <div className="empty-state wide">
+                  <div className="empty-icon">🕒</div>
+                  <div>
+                    <p>Chưa có hoạt động gần đây.</p>
+                    <button className="btn-action" onClick={() => navigate('/roadmap')}>
+                      Xem bài học mới <ChevronRight size={14} />
+                    </button>
+                  </div>
+                </div>
               )}
             </div>
+
           </div>
 
         </div>
