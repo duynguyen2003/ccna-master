@@ -11,7 +11,12 @@ router.get('/profile/me', verifyToken, userController.getProfileMe);
 router.get('/progress', verifyToken, userController.getUserProgress);
 router.post('/progress', verifyToken, userController.updateProgress);
 
+// Tiến độ Video (Accurate tracking)
+router.get('/progress/video/:lessonId', verifyToken, userController.getVideoProgress);
+router.post('/progress/video', verifyToken, userController.updateVideoProgress);
+
 // Học viên lưu ghi chú cá nhân
+
 router.get('/notes/:lessonId', verifyToken, userController.getUserNote);
 router.post('/notes', verifyToken, userController.upsertUserNote);
 

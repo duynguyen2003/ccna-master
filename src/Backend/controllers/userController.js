@@ -12,9 +12,7 @@ const TOTAL_LABS = 50;
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 /**
- * Get ISO week label from a date
- * @param {Date|string} date
- * @returns {string} e.g. "Tuần 12"
+ * Get ISO week label from a date → "Tuần 12"
  */
 function getISOWeekLabel(date) {
   try {
@@ -35,6 +33,15 @@ function getISOWeekLabel(date) {
  */
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, Number(value) || 0));
+}
+
+/**
+ * Normalize a date to midnight (YYYY-MM-DD 00:00:00)
+ */
+function toMidnight(date = new Date()) {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  return d;
 }
 
 // ── Controllers ──────────────────────────────────────────────────────────────
@@ -80,12 +87,7 @@ module.exports.getAll = async (req, res, next) => {
 
     res.json({
       data: users,
-      pagination: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-      }
+      pagination: { total, page, limit, totalPages: Math.ceil(total / limit) }
     });
   } catch (error) {
     next(error);
@@ -132,7 +134,6 @@ module.exports.getProfileMe = async (req, res, next) => {
     const userId = req.user.id;
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
-    // ── Chạy song song để tối ưu hiệu năng ───────────────────────────────
     const [user, completedLabs] = await Promise.all([
       prisma.user.findUnique({
         where: { id: userId },
@@ -143,7 +144,7 @@ module.exports.getProfileMe = async (req, res, next) => {
 
           // Tiến độ cấp độ khóa học
           progress: {
-            where: { moduleId: null, lessonId: null, labId: null },
+            where: { moduleId: null, lessonId: null, labId: null, progressPercent: { gt: 0 } },
             select: {
               progressPercent: true,
               courseId: true,
@@ -151,7 +152,7 @@ module.exports.getProfileMe = async (req, res, next) => {
             }
           },
 
-          // Hoạt động trong 7 ngày gần nhất — filter trực tiếp trong DB
+          // Hoạt động trong 7 ngày gần nhất
           activities: {
             where: { createdAt: { gte: sevenDaysAgo } },
             orderBy: { createdAt: 'desc' },
@@ -161,25 +162,27 @@ module.exports.getProfileMe = async (req, res, next) => {
             }
           },
 
-          // Thành tích / Huy hiệu
+          // Thành tích
           badges: {
             orderBy: { earnedAt: 'desc' },
-            select: {
-              id: true, badgeName: true, badgeIcon: true, earnedAt: true,
-            }
+            select: { id: true, badgeName: true, badgeIcon: true, earnedAt: true }
           },
 
-          // Kết quả thi — bao gồm date để tính weeklyScores
+          // Kết quả thi
           examResults: {
-            select: {
-              percentage: true, isPassed: true,
-              takenAt: true, createdAt: true,
-            }
+            select: { percentage: true, isPassed: true, takenAt: true }
+          },
+
+          // [FIX] StudyLog: lấy trong 7 ngày gần nhất
+          studyLogs: {
+            where: { date: { gte: sevenDaysAgo } },
+            orderBy: { date: 'asc' },
+            // [FIX] select rõ ràng thay vì lấy toàn bộ
+            select: { date: true, duration: true }
           }
         }
       }),
 
-      // Lab đã hoàn thành
       prisma.userProgress.count({
         where: { userId, labId: { not: null }, status: 'COMPLETED' }
       })
@@ -189,15 +192,12 @@ module.exports.getProfileMe = async (req, res, next) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // ── weeklyScores: nhóm điểm thi theo tuần, lấy 7 tuần gần nhất ───────
+    // ── weeklyScores ──────────────────────────────────────────────────────
     const weeklyMap = {};
     user.examResults.forEach(r => {
-      const dateRef = r.takenAt || r.createdAt;
-      if (!dateRef) return;
-
-      const week = getISOWeekLabel(dateRef);
+      if (!r.takenAt) return;
+      const week = getISOWeekLabel(r.takenAt);
       if (!week) return;
-
       if (!weeklyMap[week]) weeklyMap[week] = [];
       weeklyMap[week].push(Number(r.percentage));
     });
@@ -209,13 +209,14 @@ module.exports.getProfileMe = async (req, res, next) => {
       }))
       .slice(-7);
 
-    // ── dailyStudyTime: ước tính thời gian học theo ngày trong tuần ───────
+    // ── dailyStudyTime từ StudyLog (chính xác 100%) ───────────────────────
+    // [FIX] Dùng reduce để cộng dồn nếu có nhiều log cùng ngày
     const dailyMap = Object.fromEntries(DAY_LABELS.map(d => [d, 0]));
-    user.activities.forEach(act => {
-      const label = DAY_LABELS[new Date(act.createdAt).getDay()];
-      // Ước tính: 20 phút cho lesson/lab hoàn thành, 5 phút cho hành động khác
-      dailyMap[label] += act.type.includes('COMPLETED') ? 20 : 5;
+    user.studyLogs.forEach(log => {
+      const label = DAY_LABELS[new Date(log.date).getDay()];
+      dailyMap[label] += Math.round((log.duration || 0) / 60); // giây → phút
     });
+
     const dailyStudyTime = DAY_LABELS.map(day => ({
       day,
       minutes: dailyMap[day],
@@ -240,8 +241,8 @@ module.exports.getProfileMe = async (req, res, next) => {
       )
       : 0;
 
-    // ── Loại bỏ các field đã xử lý trước khi spread ──────────────────────
-    const { examResults, progress, activities, ...baseUser } = user;
+    // [FIX] Destructure studyLogs ra khỏi baseUser để không bị lộ raw data
+    const { examResults, progress, activities, studyLogs, ...baseUser } = user;
 
     return res.json({
       data: {
@@ -250,12 +251,12 @@ module.exports.getProfileMe = async (req, res, next) => {
         totalProgress,
         weeklyScores,
         dailyStudyTime,
-        recentActivities: user.activities,
+        recentActivities: activities,
         badges: user.badges,
         stats: {
           totalStudyTime: user.totalStudyTime, // unit: minutes
           avgScore: averageScore,
-          examCount: user.examResults.length,
+          examCount: examResults.length,
           labsDone: completedLabs,
           totalLabs: TOTAL_LABS,
         }
@@ -271,9 +272,7 @@ module.exports.getProfileMe = async (req, res, next) => {
 module.exports.getUserProgress = async (req, res, next) => {
   try {
     const userId = req.user.id;
-    const progressList = await prisma.userProgress.findMany({
-      where: { userId }
-    });
+    const progressList = await prisma.userProgress.findMany({ where: { userId } });
     res.json({ data: progressList });
   } catch (error) {
     next(error);
@@ -287,16 +286,13 @@ module.exports.updateProgress = async (req, res, next) => {
     const userId = req.user.id;
     const { courseId, moduleId, lessonId, labId, status } = req.body;
 
-    // ── Validate ──────────────────────────────────────────────────────────
     if (!courseId) {
       return res.status(400).json({ message: 'courseId là bắt buộc' });
     }
 
-    // Clamp progressPercent về khoảng [0, 100]
     const progressPercent = clamp(req.body.progressPercent, 0, 100);
     const isCompleted = status === 'COMPLETED' || progressPercent >= 95;
 
-    // ── Upsert tiến độ ────────────────────────────────────────────────────
     const existing = await prisma.userProgress.findFirst({
       where: {
         userId,
@@ -313,7 +309,6 @@ module.exports.updateProgress = async (req, res, next) => {
       result = await prisma.userProgress.update({
         where: { id: existing.id },
         data: {
-          // Không cho phép giảm tiến độ (tua lại video không reset %)
           progressPercent: Math.max(existing.progressPercent, progressPercent),
           status: isCompleted ? 'COMPLETED' : (status || existing.status),
           completedAt: isCompleted && !existing.completedAt ? new Date() : existing.completedAt,
@@ -334,7 +329,7 @@ module.exports.updateProgress = async (req, res, next) => {
       });
     }
 
-    // ── Ghi activity nếu vừa hoàn thành lần đầu ──────────────────────────
+    // Ghi activity khi hoàn thành lần đầu
     const isFirstCompletion = isCompleted && (!existing || existing.status !== 'COMPLETED');
     if (isFirstCompletion) {
       const activityType =
@@ -351,7 +346,48 @@ module.exports.updateProgress = async (req, res, next) => {
       });
     }
 
-    res.json({ data: result });
+    // Cập nhật tiến độ tổng quát của khóa học
+    const [totalLessons, totalLabs, completedLessons, completedLabsInCourse] = await Promise.all([
+      prisma.lesson.count({ where: { module: { courseId } } }),
+      prisma.lab.count({ where: { courseId } }),
+      prisma.userProgress.count({
+        where: { userId, courseId, lessonId: { not: null }, status: 'COMPLETED' }
+      }),
+      prisma.userProgress.count({
+        where: { userId, courseId, labId: { not: null }, status: 'COMPLETED' }
+      })
+    ]);
+
+    const totalItems = totalLessons + totalLabs;
+    const completedItems = completedLessons + completedLabsInCourse;
+    const overallPercent = totalItems > 0
+      ? Math.round((completedItems / totalItems) * 100)
+      : 0;
+
+    const summaryRecord = await prisma.userProgress.findFirst({
+      where: { userId, courseId, moduleId: null, lessonId: null, labId: null }
+    });
+
+    if (summaryRecord) {
+      await prisma.userProgress.update({
+        where: { id: summaryRecord.id },
+        data: {
+          progressPercent: overallPercent,
+          status: overallPercent >= 100 ? 'COMPLETED' : 'ACTIVE'
+        }
+      });
+    } else {
+      await prisma.userProgress.create({
+        data: {
+          userId, courseId,
+          moduleId: null, lessonId: null, labId: null,
+          progressPercent: overallPercent,
+          status: 'ACTIVE'
+        }
+      });
+    }
+
+    res.json({ data: result, overallPercent });
   } catch (error) {
     next(error);
   }
@@ -368,13 +404,10 @@ module.exports.createUser = async (req, res, next) => {
     }
 
     const assignedRole = Object.values(ROLES).includes(role) ? role : ROLES.STUDENT;
-
     const existingUser = await prisma.user.findUnique({ where: { email } });
-
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
 
-    // Nếu email đã tồn tại nhưng đã bị soft-delete → khôi phục
     if (existingUser?.deletedAt) {
       const restoredUser = await prisma.user.update({
         where: { email },
@@ -427,7 +460,6 @@ module.exports.updateRole = async (req, res, next) => {
 module.exports.toggleActive = async (req, res, next) => {
   try {
     const { id } = req.params;
-
     const user = await prisma.user.findUnique({ where: { id: parseInt(id) } });
     if (!user) return res.status(404).json({ message: 'User not found' });
 
@@ -451,12 +483,10 @@ module.exports.toggleActive = async (req, res, next) => {
 module.exports.deleteUser = async (req, res, next) => {
   try {
     const { id } = req.params;
-
     await prisma.user.update({
       where: { id: parseInt(id) },
       data: { deletedAt: new Date(), isActive: false }
     });
-
     res.json({ message: 'Xóa tài khoản thành công' });
   } catch (error) {
     next(error);
@@ -490,8 +520,8 @@ module.exports.upsertUserNote = async (req, res, next) => {
   try {
     const userId = req.user.id;
     const { lessonId, content } = req.body;
-
     const parsedLessonId = parseInt(lessonId);
+
     if (!parsedLessonId || isNaN(parsedLessonId)) {
       return res.status(400).json({ message: 'lessonId không hợp lệ.' });
     }
@@ -508,6 +538,95 @@ module.exports.upsertUserNote = async (req, res, next) => {
       where: { userId_lessonId: { userId, lessonId: parsedLessonId } },
       update: { content, updatedAt: new Date() },
       create: { userId, lessonId: parsedLessonId, content }
+    });
+
+    res.json({ success: true });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ── Video Progress ────────────────────────────────────────────────────────────
+
+module.exports.getVideoProgress = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const lessonId = parseInt(req.params.lessonId);
+
+    // [FIX] Validate lessonId trước khi query
+    if (!lessonId || isNaN(lessonId)) {
+      return res.status(400).json({ message: 'lessonId không hợp lệ.' });
+    }
+
+    const progress = await prisma.videoProgress.findUnique({
+      where: { userId_lessonId: { userId, lessonId } }
+    });
+
+    res.json({ data: progress || { lastPosition: 0, watchedSeconds: 0 } });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+module.exports.updateVideoProgress = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+
+    // [FIX] Validate đầu vào trước khi làm bất cứ điều gì
+    const lessonId = parseInt(req.body.lessonId);
+    if (!req.body.lessonId || isNaN(lessonId)) {
+      return res.status(400).json({
+        message: 'lessonId không hợp lệ hoặc bị thiếu.',
+        received: req.body.lessonId
+      });
+    }
+
+    // [FIX] Clamp và validate watchedSeconds, lastPosition
+    const watchedSeconds = clamp(req.body.watchedSeconds, 0, 86400); // max 24h
+    const lastPosition = clamp(req.body.lastPosition, 0, 86400);
+
+    const today = toMidnight(); // [FIX] Dùng helper thay vì inline
+
+    // ── Chạy song song: VideoProgress + StudyLog ──────────────────────────
+    await Promise.all([
+      // 1. Upsert VideoProgress — lưu vị trí xem + tổng giây xem theo lesson
+      prisma.videoProgress.upsert({
+        where: { userId_lessonId: { userId, lessonId } },
+        update: {
+          // [FIX] Chỉ tăng watchedSeconds, không giảm nếu tua lùi
+          watchedSeconds: { increment: watchedSeconds },
+          lastPosition,
+        },
+        create: {
+          userId,
+          lessonId,
+          watchedSeconds,
+          lastPosition,
+        }
+      }),
+
+      // 2. Upsert StudyLog — cộng dồn giây học theo ngày
+      prisma.studyLog.upsert({
+        where: { userId_date: { userId, date: today } },
+        update: { duration: { increment: watchedSeconds } },
+        create: { userId, date: today, duration: watchedSeconds }
+      })
+    ]);
+
+    // 3. Cập nhật totalStudyTime trên User (đơn vị: phút)
+    // [FIX] Tính lại từ StudyLog để đảm bảo chính xác, không bị lệch khi increment nhiều lần
+    const totalSeconds = await prisma.studyLog.aggregate({
+      where: { userId },
+      _sum: { duration: true }
+    });
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        totalStudyTime: Math.floor((totalSeconds._sum.duration || 0) / 60)
+      }
     });
 
     res.json({ success: true });

@@ -284,6 +284,17 @@ export const api = {
       body: JSON.stringify(noteData),
     }),
 
+  // ── Video Tracking ────────────────────────────────────────────────────────
+
+  getVideoProgress: (token, lessonId) =>
+    apiFetch(`/users/progress/video/${lessonId}`, token),
+
+  updateVideoProgress: (token, videoData) =>
+    apiFetch("/users/progress/video", token, {
+      method: "POST",
+      body: JSON.stringify(videoData),
+    }),
+
   // ── Exams ─────────────────────────────────────────────────────────────────
 
   getExams: async (token) => {

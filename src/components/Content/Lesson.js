@@ -8,6 +8,7 @@ import { useAuth } from '../../context/AuthContext';
 import api from '../../services/Api';
 import MarkdownRenderer from '../Common/MarkdownRenderer';
 import errorIllustration from '../../image/fix1.png';
+import YouTube from 'react-youtube';
 
 const MOBILE_BREAKPOINT = 1024;
 const RESOURCE_BREAKPOINT = 1280;
@@ -16,8 +17,6 @@ const getViewportWidth = () => (
    typeof window === 'undefined' ? RESOURCE_BREAKPOINT : window.innerWidth
 );
 
-
-/** Trích xuất YouTube video ID từ mọi dạng URL */
 const getYoutubeVideoId = (url) => {
    if (!url) return null;
    const patterns = [
@@ -29,7 +28,6 @@ const getYoutubeVideoId = (url) => {
       const match = url.match(pattern);
       if (match) return match[1];
    }
-   // Thử parse bằng URL API
    try {
       const u = new URL(url.trim());
       if (u.hostname === 'youtu.be') return u.pathname.slice(1).split('?')[0];
@@ -38,211 +36,123 @@ const getYoutubeVideoId = (url) => {
    return null;
 };
 
-/** Component video: dùng YouTube IFrame API cho YouTube, <video> cho file */
 const VideoPlayer = ({ url, lessonId, courseId, moduleId, token, onProgressChange }) => {
-   const playerRef = useRef(null);  // YouTube Player instance
-   const intervalRef = useRef(null);  // setInterval reference
-   const lastSavedRef = useRef(0);     // Thời điểm save cuối (tránh trùng)
-   const maxWatchedRef = useRef(0);     // Thời điểm xem xa nhất
-   const containerRef = useRef(null);  // div chứa player
-   const videoRef = useRef(null);  // video element cho file .mp4
-
-   const [localProgress, setLocalProgress] = useState({ percentage: 0, watchedTime: 0, status: 'Chưa học' });
+   const playerRef = useRef(null);
+   const intervalRef = useRef(null);
+   const lastReportedTimeRef = useRef(0);
    const youtubeId = getYoutubeVideoId(url);
+   const [videoData, setVideoData] = useState({ lastPosition: 0, watchedSeconds: 0 });
 
-   // ── Khởi tạo YouTube Player ───────────────────────────────────────────────
+   // 1. Lấy tiến độ cũ để Resume
    useEffect(() => {
-      if (!youtubeId || !containerRef.current) return;
-
-      // Tạo div target mới mỗi lần (để tránh xung đột ID)
-      const divId = `yt-player-${lessonId || 'main'}`;
-      let targetDiv = document.getElementById(divId);
-      if (!targetDiv) {
-         targetDiv = document.createElement('div');
-         targetDiv.id = divId;
-         containerRef.current.appendChild(targetDiv);
+      if (lessonId && token) {
+         api.getVideoProgress(token, lessonId)
+            .then(res => {
+               if (res.data) setVideoData(res.data);
+            })
+            .catch(err => console.error("Error fetching video progress:", err));
       }
+   }, [lessonId, token]);
 
-      const initPlayer = () => {
-         if (playerRef.current) {
-            try { playerRef.current.destroy(); } catch (e) { /* ignore */ }
-         }
-         playerRef.current = new window.YT.Player(divId, {
-            videoId: youtubeId,
-            width: '100%',
-            height: '100%',
-            playerVars: { rel: 0, modestbranding: 1 },
-            events: {
-               onReady: (event) => {
-                  // Seek về vị trí đã xem trước
-                  if (maxWatchedRef.current > 0) {
-                     event.target.seekTo(maxWatchedRef.current, true);
-                  }
-               },
-               onStateChange: (event) => {
-                  if (event.data === window.YT.PlayerState.PLAYING) {
-                     startTracking();
-                  } else if (
-                     event.data === window.YT.PlayerState.PAUSED ||
-                     event.data === window.YT.PlayerState.ENDED
-                  ) {
-                     stopTracking();
-                     saveProgress();
-                  }
-               },
-            },
-         });
-      };
+   const startTracking = (player) => {
+      stopTracking();
+      lastReportedTimeRef.current = Math.floor(player.getCurrentTime());
 
-      if (window.YT && window.YT.Player) {
-         initPlayer();
-      } else {
-         const prevCallback = window.onYouTubeIframeAPIReady;
-         window.onYouTubeIframeAPIReady = () => {
-            if (prevCallback) prevCallback();
-            initPlayer();
-         };
-      }
-
-      return () => {
-         stopTracking();
-         saveProgress();
-         if (playerRef.current) {
-            try { playerRef.current.destroy(); } catch (e) { /* ignore */ }
-            playerRef.current = null;
-         }
-      };
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-   }, [youtubeId, lessonId]);
-
-   // ── Tracking mỗi 1 giây ──────────────────────────────────────────────────
-   const startTracking = () => {
-      clearInterval(intervalRef.current);
       intervalRef.current = setInterval(() => {
-         if (!playerRef.current || typeof playerRef.current.getCurrentTime !== 'function') return;
+         const currentTime = Math.floor(player.getCurrentTime());
+         const duration = player.getDuration();
+         const delta = currentTime - lastReportedTimeRef.current;
 
-         const currentTime = playerRef.current.getCurrentTime() || 0;
-         const duration = playerRef.current.getDuration() || 1;
-         const percent = Math.min((currentTime / duration) * 100, 100);
-
-         if (currentTime > maxWatchedRef.current) {
-            maxWatchedRef.current = currentTime;
+         // Nếu user xem được ít nhất 5s thực tế (không phải nhảy cóc)
+         if (delta >= 5 && delta < 15) { 
+            api.updateVideoProgress(token, {
+               lessonId,
+               watchedSeconds: delta,
+               lastPosition: currentTime
+            }).catch(e => console.error("Failed to sync video time:", e));
+            
+            lastReportedTimeRef.current = currentTime;
+         } else if (delta < 0 || delta >= 15) {
+            // User vừa nhảy video (seek), cập nhật lại mốc để tính delta tiếp theo
+            lastReportedTimeRef.current = currentTime;
          }
 
-         const status = percent >= 90 ? 'Hoàn thành' : percent > 0 ? 'Đang học' : 'Chưa học';
-         const newProgress = { percentage: Math.round(percent), watchedTime: Math.floor(currentTime), status };
+         // Cập nhật UI Progress bar
+         if (duration > 0) {
+            const percent = (currentTime / duration) * 100;
+            onProgressChange && onProgressChange({
+               played: percent / 100,
+               playedSeconds: currentTime,
+               loaded: 1,
+               loadedSeconds: duration,
+            });
 
-         setLocalProgress(newProgress);
-         // Thông báo lên component cha để cập nhật UI nút "Tiếp theo"
-         onProgressChange && onProgressChange({
-            played: percent / 100,
-            playedSeconds: currentTime,
-            loaded: 1,
-            loadedSeconds: duration,
-         });
-
-         // Lưu DB mỗi 10 giây
-         const floorTime = Math.floor(currentTime);
-         if (floorTime % 10 === 0 && floorTime !== lastSavedRef.current && floorTime > 0) {
-            lastSavedRef.current = floorTime;
-            saveProgressToServer(currentTime, percent, status);
+            // Nếu đạt >90% thì mark hoàn thành bài học
+            if (percent >= 90) {
+               api.updateUserProgress(token, {
+                  courseId, moduleId, lessonId,
+                  progressPercent: Math.round(percent),
+                  status: 'COMPLETED'
+               });
+            }
          }
       }, 1000);
    };
 
    const stopTracking = () => {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-   };
-
-   const saveProgress = () => {
-      if (maxWatchedRef.current > 0 && localProgress.percentage > 0) {
-         saveProgressToServer(maxWatchedRef.current, localProgress.percentage, localProgress.status);
+      if (intervalRef.current) {
+         clearInterval(intervalRef.current);
+         intervalRef.current = null;
       }
    };
 
-   const saveProgressToServer = (watchedTime, percentage, status) => {
-      if (!lessonId || !token) return;
-      const progressStatus = status === 'Hoàn thành' ? 'COMPLETED' : 'ACTIVE';
-      api.updateUserProgress(token, {
-         courseId: courseId,
-         moduleId: moduleId,
-         lessonId,
-         progressPercent: Math.round(percentage),
-         status: progressStatus,
-      }).catch(err => console.error('[VideoPlayer] Lỗi lưu tiến độ:', err));
+   const onReady = (event) => {
+      playerRef.current = event.target;
+      // Seek tới vị trí cũ nếu có
+      if (videoData.lastPosition > 0) {
+         event.target.seekTo(videoData.lastPosition);
+      }
    };
 
-   // Lưu khi rời trang (F5, Đóng tab, hoặc chuyển trang bằng Menu)
+   const onStateChange = (event) => {
+      // 1: PLAYING, 2: PAUSED, 0: ENDED
+      if (event.data === 1) {
+         startTracking(event.target);
+      } else {
+         stopTracking();
+      }
+   };
+
    useEffect(() => {
-      const forceSave = () => {
-         if (playerRef.current && playerRef.current.getCurrentTime && playerRef.current.getDuration) {
-            const currentTime = playerRef.current.getCurrentTime();
-            const duration = playerRef.current.getDuration();
-            if (duration > 0) {
-               const percent = (currentTime / duration) * 100;
-               const status = percent >= 90 ? 'Hoàn thành' : percent > 0 ? 'Đang học' : 'Chưa học';
-               saveProgressToServer(currentTime, percent, status);
-            }
-         }
-      };
+      return () => stopTracking();
+   }, []);
 
-      window.addEventListener('beforeunload', forceSave);
-      return () => {
-         window.removeEventListener('beforeunload', forceSave);
-         forceSave(); // Kích hoạt lưu ngay khi component bị hủy (người dùng chuyển trang)
-      };
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-   }, [lessonId, courseId, moduleId, token]);
-
-   // ── Tracking cho video file .mp4 ─────────────────────────────────────────
-   const handleVideoTimeUpdate = () => {
-      const video = videoRef.current;
-      if (!video || video.duration <= 0) return;
-      const played = video.currentTime / video.duration;
-      const percent = Math.round(played * 100);
-      const status = percent >= 90 ? 'Hoàn thành' : percent > 0 ? 'Đang học' : 'Chưa học';
-      setLocalProgress({ percentage: percent, watchedTime: Math.floor(video.currentTime), status });
-      onProgressChange && onProgressChange({
-         played,
-         playedSeconds: video.currentTime,
-         loaded: video.buffered.length > 0 ? video.buffered.end(0) / video.duration : 0,
-         loadedSeconds: video.buffered.length > 0 ? video.buffered.end(0) : 0,
-      });
-   };
-
-   // ── Render ────────────────────────────────────────────────────────────────
    if (youtubeId) {
       return (
-         <div ref={containerRef}
+         <YouTube
+            videoId={youtubeId}
+            opts={{
+               width: '100%',
+               height: '100%',
+               playerVars: {
+                  rel: 0,
+                  modestbranding: 1,
+               },
+            }}
+            onReady={onReady}
+            onStateChange={onStateChange}
+            containerClassName="video-player-container"
             style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
          />
       );
    }
 
-   if (!url) {
-      return (
-         <div style={{
-            position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b'
-         }}>
-            Chưa có video cho bài học này
-         </div>
-      );
-   }
-
    return (
-      <video
-         ref={videoRef}
-         src={url}
-         controls
-         style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
-         onTimeUpdate={handleVideoTimeUpdate}
-      />
+      <div className="video-error">
+         {url ? <video src={url} controls style={{ width: '100%', height: '100%' }} /> : "Chưa có video"}
+      </div>
    );
 };
-
-
 
 const Lesson = () => {
    const navigate = useNavigate();

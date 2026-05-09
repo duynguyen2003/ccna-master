@@ -59,6 +59,9 @@ model User {
   activities     UserActivity[]
   badges         UserBadge[]
   adminLogs      AdminLog[]     
+  videoProgress  VideoProgress[]
+  studyLogs      StudyLog[]
+
 
   @@map("users")
 }
@@ -161,6 +164,8 @@ model Lesson {
   module        Module    @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   progress      UserProgress[]
   notes         UserNote[]
+  videoProgress VideoProgress[]
+
 
   @@map("lessons")
 }
@@ -379,3 +384,30 @@ model QuestionBank {
   @@map("question_bank")
 }
 
+
+model VideoProgress {
+  id              Int      @id @default(autoincrement())
+  userId          Int      @map("user_id")
+  lessonId        Int      @map("lesson_id")
+  watchedSeconds  Int      @default(0) @map("watched_seconds")
+  lastPosition    Int      @default(0) @map("last_position")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson          Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, lessonId])
+  @@map("video_progress")
+}
+
+model StudyLog {
+  id       Int      @id @default(autoincrement())
+  userId   Int      @map("user_id")
+  date     DateTime @default(now()) @db.Date
+  duration Int      @default(0) // Giây
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@map("study_logs")
+}
