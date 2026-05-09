@@ -1,0 +1,226 @@
+/* src/css/Admin/AdminCommon.css */
+
+/* ========== SEARCH INPUT ========== */
+.admin-search-input {
+  background-color: #f8fafc;
+  border: 1px solid var(--admin-border-color);
+  color: var(--admin-text-primary);
+  padding: 9px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: 'Inter', sans-serif;
+  outline: none;
+  transition: var(--admin-transition);
+}
+
+.admin-search-input:focus {
+  border-color: var(--admin-primary);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+  background-color: #ffffff;
+}
+
+.admin-search-input::placeholder {
+  color: var(--admin-text-muted);
+}
+
+/* ========== PRIMARY BUTTON ========== */
+.admin-btn-primary {
+  background-color: var(--admin-primary);
+  color: #fff;
+  border: none;
+  padding: 9px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 14px;
+  transition: var(--admin-transition);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Inter', sans-serif;
+}
+
+.admin-btn-primary:hover {
+  background-color: var(--admin-primary-hover);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+}
+
+/* ========== BADGES ========== */
+.admin-badge {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.admin-badge.admin {
+  background-color: #fef2f2;
+  color: #dc2626;
+}
+
+.admin-badge.student {
+  background-color: #f0fdf4;
+  color: #16a34a;
+}
+
+.admin-badge.active {
+  background-color: #f0fdf4;
+  color: #16a34a;
+}
+
+.admin-badge.inactive {
+  background-color: #f1f5f9;
+  color: #64748b;
+}
+
+/* ========== ACTION BUTTONS ========== */
+.admin-action-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--admin-text-muted);
+  padding: 6px;
+  border-radius: 6px;
+  transition: var(--admin-transition);
+  display: inline-flex;
+}
+
+.admin-action-btn:hover {
+  background-color: #f1f5f9;
+  color: var(--admin-text-primary);
+}
+
+.admin-action-btn.delete:hover {
+  background-color: #fef2f2;
+  color: var(--admin-danger);
+}
+
+/* ========== EMPTY STATE ========== */
+.admin-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: var(--admin-text-muted);
+}
+
+.admin-empty-state svg {
+  opacity: 0.3;
+  margin-bottom: 12px;
+}
+
+/* ========== MODAL SYSTEM ========== */
+.admin-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.admin-modal-container {
+  background-color: #ffffff;
+  padding: 0;
+  border-radius: 16px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  animation: adminModalFadeIn 0.2s ease-out;
+  display: flex;
+  flex-direction: column;
+}
+
+@keyframes adminModalFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.admin-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.admin-modal-header-info {
+  min-width: 0;
+}
+
+.admin-modal-header-info h3 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.admin-modal-header-info p {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.45;
+}
+
+.admin-modal-close {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  display: flex;
+  transition: 0.15s;
+}
+
+.admin-modal-close:hover {
+  background-color: #f1f5f9;
+  color: #64748b;
+}
+
+.admin-modal-body {
+  padding: 24px;
+  overflow-y: auto;
+}
+
+.admin-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 24px;
+  border-top: 1px solid #e2e8f0;
+  background-color: #f8fafc;
+  border-radius: 0 0 16px 16px;
+}
+
+.admin-modal-btn-secondary {
+  padding: 9px 20px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #374151;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: 'Inter', sans-serif;
+  transition: 0.15s;
+}
+
+.admin-modal-btn-secondary:hover {
+  background-color: #f8fafc;
+  border-color: #d1d5db;
+}

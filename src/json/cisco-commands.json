@@ -1,0 +1,272 @@
+[
+    {
+        "id": 1,
+        "command": "enable",
+        "mode": "User EXEC",
+        "prompt": "Router>",
+        "category": "Cơ bản",
+        "description": "Chuyển từ chế độ người dùng (User EXEC) sang chế độ đặc quyền (Privileged EXEC).",
+        "example": "Router> enable\nRouter#"
+    },
+    {
+        "id": 2,
+        "command": "configure terminal",
+        "mode": "Privileged EXEC",
+        "prompt": "Router#",
+        "category": "Cơ bản",
+        "description": "Vào chế độ cấu hình toàn cục (Global Configuration Mode) để thay đổi cài đặt thiết bị.",
+        "example": "Router# configure terminal\nRouter(config)#"
+    },
+    {
+        "id": 3,
+        "command": "hostname [name]",
+        "mode": "Global Config",
+        "prompt": "Router(config)#",
+        "category": "Cơ bản",
+        "description": "Đổi tên thiết bị (Router hoặc Switch).",
+        "example": "Router(config)# hostname R1\nR1(config)#"
+    },
+    {
+        "id": 4,
+        "command": "ping [ip]",
+        "mode": "Privileged EXEC",
+        "prompt": "Router#",
+        "category": "Kiểm tra & Xử lý sự cố",
+        "description": "Kiểm tra kết nối mạng đến một địa chỉ IP cụ thể (sử dụng gói tin ICMP).",
+        "example": "Router# ping 192.168.1.1"
+    },
+    {
+        "id": 5,
+        "command": "traceroute [ip]",
+        "mode": "Privileged EXEC",
+        "prompt": "Router#",
+        "category": "Kiểm tra & Xử lý sự cố",
+        "description": "Theo dõi đường đi của gói tin từ nguồn đến đích qua các Router.",
+        "example": "Router# traceroute 8.8.8.8"
+    },
+    {
+        "id": 6,
+        "command": "copy running-config startup-config",
+        "mode": "Privileged EXEC",
+        "prompt": "Router#",
+        "category": "Lưu trữ",
+        "description": "Lưu cấu hình đang chạy (trên RAM) vào bộ nhớ (NVRAM) để không bị mất khi khởi động lại.",
+        "example": "Router# copy running-config startup-config"
+    },
+    {
+        "id": 7,
+        "command": "interface [type] [number]",
+        "mode": "Global Config",
+        "prompt": "Router(config)#",
+        "category": "Cổng giao tiếp",
+        "description": "Truy cập vào chế độ cấu hình của một cổng mạng cụ thể (ví dụ: GigabitEthernet 0/0).",
+        "example": "Router(config)# interface g0/0\nRouter(config-if)#"
+    },
+    {
+        "id": 8,
+        "command": "ip address [ip] [mask]",
+        "mode": "Interface Config",
+        "prompt": "Router(config-if)#",
+        "category": "Cổng giao tiếp",
+        "description": "Gán địa chỉ IP và Subnet Mask cho cổng mạng.",
+        "example": "Router(config-if)# ip address 192.168.1.1 255.255.255.0"
+    },
+    {
+        "id": 9,
+        "command": "no shutdown",
+        "mode": "Interface Config",
+        "prompt": "Router(config-if)#",
+        "category": "Cổng giao tiếp",
+        "description": "Bật (kích hoạt) cổng mạng. Mặc định cổng Router luôn bị tắt.",
+        "example": "Router(config-if)# no shutdown"
+    },
+    {
+        "id": 10,
+        "command": "show ip interface brief",
+        "mode": "Privileged EXEC",
+        "prompt": "Router#",
+        "category": "Giám sát",
+        "description": "Hiển thị bảng tóm tắt trạng thái tất cả các cổng (IP, trạng thái Up/Down).",
+        "example": "Router# show ip interface brief"
+    },
+    {
+        "id": 11,
+        "command": "show running-config",
+        "mode": "Privileged EXEC",
+        "prompt": "Router#",
+        "category": "Giám sát",
+        "description": "Xem toàn bộ cấu hình đang chạy trên thiết bị.",
+        "example": "Router# show running-config"
+    },
+    {
+        "id": 12,
+        "command": "vlan [id]",
+        "mode": "Global Config",
+        "prompt": "Switch(config)#",
+        "category": "VLAN & Trunking",
+        "description": "Tạo một VLAN mới hoặc truy cập vào cấu hình VLAN đã có.",
+        "example": "Switch(config)# vlan 10\nSwitch(config-vlan)#"
+    },
+    {
+        "id": 13,
+        "command": "name [vlan-name]",
+        "mode": "VLAN Config",
+        "prompt": "Switch(config-vlan)#",
+        "category": "VLAN & Trunking",
+        "description": "Đặt tên cho VLAN để dễ quản lý.",
+        "example": "Switch(config-vlan)# name KETOAN"
+    },
+    {
+        "id": 14,
+        "command": "switchport mode access",
+        "mode": "Interface Config",
+        "prompt": "Switch(config-if)#",
+        "category": "VLAN & Trunking",
+        "description": "Cấu hình cổng hoạt động ở chế độ Access (kết nối với thiết bị đầu cuối như PC).",
+        "example": "Switch(config-if)# switchport mode access"
+    },
+    {
+        "id": 15,
+        "command": "switchport access vlan [id]",
+        "mode": "Interface Config",
+        "prompt": "Switch(config-if)#",
+        "category": "VLAN & Trunking",
+        "description": "Gán cổng vào một VLAN cụ thể.",
+        "example": "Switch(config-if)# switchport access vlan 10"
+    },
+    {
+        "id": 16,
+        "command": "switchport mode trunk",
+        "mode": "Interface Config",
+        "prompt": "Switch(config-if)#",
+        "category": "VLAN & Trunking",
+        "description": "Cấu hình cổng hoạt động ở chế độ Trunk (truyền tải dữ liệu của nhiều VLAN giữa các Switch).",
+        "example": "Switch(config-if)# switchport mode trunk"
+    },
+    {
+        "id": 17,
+        "command": "show vlan brief",
+        "mode": "Privileged EXEC",
+        "prompt": "Switch#",
+        "category": "Giám sát",
+        "description": "Hiển thị danh sách các VLAN và các cổng đang thuộc về VLAN đó.",
+        "example": "Switch# show vlan brief"
+    },
+    {
+        "id": 18,
+        "command": "show mac address-table",
+        "mode": "Privileged EXEC",
+        "prompt": "Switch#",
+        "category": "Giám sát",
+        "description": "Hiển thị bảng địa chỉ MAC mà Switch đã học được.",
+        "example": "Switch# show mac address-table"
+    },
+    {
+        "id": 19,
+        "command": "ip route [network] [mask] [next-hop]",
+        "mode": "Global Config",
+        "prompt": "Router(config)#",
+        "category": "Định tuyến tĩnh",
+        "description": "Cấu hình định tuyến tĩnh đến một mạng đích.",
+        "example": "Router(config)# ip route 192.168.2.0 255.255.255.0 10.0.0.2"
+    },
+    {
+        "id": 20,
+        "command": "ip route 0.0.0.0 0.0.0.0 [next-hop]",
+        "mode": "Global Config",
+        "prompt": "Router(config)#",
+        "category": "Định tuyến tĩnh",
+        "description": "Cấu hình Default Route (định tuyến mặc định đẩy gói tin ra Internet).",
+        "example": "Router(config)# ip route 0.0.0.0 0.0.0.0 10.0.0.1"
+    },
+    {
+        "id": 21,
+        "command": "show ip route",
+        "mode": "Privileged EXEC",
+        "prompt": "Router#",
+        "category": "Giám sát",
+        "description": "Hiển thị bảng định tuyến của Router.",
+        "example": "Router# show ip route"
+    },
+    {
+        "id": 22,
+        "command": "router ospf [process-id]",
+        "mode": "Global Config",
+        "prompt": "Router(config)#",
+        "category": "OSPF",
+        "description": "Kích hoạt giao thức định tuyến OSPF với một Process ID.",
+        "example": "Router(config)# router ospf 1\nRouter(config-router)#"
+    },
+    {
+        "id": 23,
+        "command": "network [network] [wildcard] area [area-id]",
+        "mode": "Router Config",
+        "prompt": "Router(config-router)#",
+        "category": "OSPF",
+        "description": "Khai báo mạng tham gia OSPF kèm theo Wildcard Mask và Area.",
+        "example": "Router(config-router)# network 192.168.1.0 0.0.0.255 area 0"
+    },
+    {
+        "id": 24,
+        "command": "show ip ospf neighbor",
+        "mode": "Privileged EXEC",
+        "prompt": "Router#",
+        "category": "Giám sát",
+        "description": "Kiểm tra danh sách các Router láng giềng đã thiết lập OSPF.",
+        "example": "Router# show ip ospf neighbor"
+    },
+    {
+        "id": 25,
+        "command": "access-list [id] permit [ip] [wildcard]",
+        "mode": "Global Config",
+        "prompt": "Router(config)#",
+        "category": "ACL & Bảo mật",
+        "description": "Tạo luật Standard ACL cho phép một IP hoặc dải IP đi qua.",
+        "example": "Router(config)# access-list 10 permit 192.168.1.0 0.0.0.255"
+    },
+    {
+        "id": 26,
+        "command": "access-list [id] deny [ip] [wildcard]",
+        "mode": "Global Config",
+        "prompt": "Router(config)#",
+        "category": "ACL & Bảo mật",
+        "description": "Tạo luật Standard ACL chặn một IP hoặc dải IP.",
+        "example": "Router(config)# access-list 10 deny host 192.168.1.50"
+    },
+    {
+        "id": 27,
+        "command": "ip access-group [id] [in/out]",
+        "mode": "Interface Config",
+        "prompt": "Router(config-if)#",
+        "category": "ACL & Bảo mật",
+        "description": "Áp dụng danh sách ACL vào một cổng mạng theo chiều In hoặc Out.",
+        "example": "Router(config-if)# ip access-group 10 in"
+    },
+    {
+        "id": 28,
+        "command": "ip nat inside source static [local-ip] [global-ip]",
+        "mode": "Global Config",
+        "prompt": "Router(config)#",
+        "category": "NAT",
+        "description": "Cấu hình NAT tĩnh, ánh xạ 1 IP nội bộ ra 1 IP Public.",
+        "example": "Router(config)# ip nat inside source static 192.168.1.100 203.0.113.5"
+    },
+    {
+        "id": 29,
+        "command": "ip nat inside",
+        "mode": "Interface Config",
+        "prompt": "Router(config-if)#",
+        "category": "NAT",
+        "description": "Chỉ định cổng kết nối với mạng nội bộ (Inside Network).",
+        "example": "Router(config-if)# ip nat inside"
+    },
+    {
+        "id": 30,
+        "command": "ip nat outside",
+        "mode": "Interface Config",
+        "prompt": "Router(config-if)#",
+        "category": "NAT",
+        "description": "Chỉ định cổng kết nối ra ngoài Internet (Outside Network).",
+        "example": "Router(config-if)# ip nat outside"
+    }
+]

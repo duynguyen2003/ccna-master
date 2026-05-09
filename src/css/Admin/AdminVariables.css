@@ -1,0 +1,42 @@
+/* css/Admin/AdminVariables.css — NetMastery Clean Corporate Theme */
+
+:root {
+  /* Sidebar: Dark navy blue */
+  --admin-sidebar-bg: #1e2a3a;
+  --admin-sidebar-hover: rgba(255, 255, 255, 0.06);
+  --admin-sidebar-active: #ffffff;
+  --admin-sidebar-active-bg: #3b82f6;
+  --admin-sidebar-text: #94a3b8;
+  
+  /* Main area: Light gray */
+  --admin-bg: #f0f2f5;
+  --admin-topbar-bg: #ffffff;
+  --admin-card-bg: #ffffff;
+  
+  /* Text */
+  --admin-text-primary: #1e293b;
+  --admin-text-secondary: #64748b;
+  --admin-text-muted: #94a3b8;
+  --admin-text-heading: #0f172a;
+
+  /* Borders */
+  --admin-border-color: #e2e8f0;
+  
+  /* Primary Actions */
+  --admin-primary: #3b82f6;
+  --admin-primary-hover: #2563eb;
+  --admin-danger: #ef4444;
+  --admin-success: #22c55e;
+  --admin-warning: #f59e0b;
+  --admin-info: #06b6d4;
+
+  /* Sizing */
+  --admin-sidebar-width: 250px;
+  --admin-topbar-height: 64px;
+  
+  /* Others */
+  --admin-border-radius: 12px;
+  --admin-transition: 0.2s ease-in-out;
+  --admin-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --admin-shadow-md: 0 4px 6px rgba(0,0,0,0.06), 0 2px 4px rgba(0,0,0,0.04);
+}

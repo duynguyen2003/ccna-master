@@ -1,0 +1,207 @@
+/* ============================================================
+   Footer.css — NetMastery Footer Component
+   ============================================================ */
+
+/* ── CSS Variables ─────────────────────────────────────────── */
+:root {
+  --footer-bg: #181821;
+  --footer-border: #2a2a38;
+  --footer-text-primary: #ffffff;
+  --footer-text-muted: #a9b3bb;
+  --footer-text-subtle: #5a6370;
+  --footer-link-hover: #1d9bf0;
+  /* Cisco Blue */
+  --footer-logo-bg: #2563eb;
+  --footer-divider: #2a2a38;
+}
+
+/* ── Base ──────────────────────────────────────────────────── */
+.footer {
+  background-color: var(--footer-bg);
+  color: var(--footer-text-muted);
+  border-top: 1px solid var(--footer-border);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* ── Inner wrapper ─────────────────────────────────────────── */
+.footer__inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 56px 24px 0;
+}
+
+/* ── 4-Column Grid ─────────────────────────────────────────── */
+.footer__grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 40px;
+  padding-bottom: 48px;
+}
+
+/* ── Column base ───────────────────────────────────────────── */
+.footer__col {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Column 1: Brand ───────────────────────────────────────── */
+.footer__brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  text-decoration: none;
+}
+
+.footer__brand-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background-color: var(--footer-logo-bg);
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.footer__brand-icon .material-icons-round {
+  font-size: 20px !important;
+  color: #ffffff;
+}
+
+.footer__brand-name {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--footer-text-primary);
+  letter-spacing: -0.3px;
+}
+
+.footer__brand-slogan {
+  color: var(--footer-text-muted);
+  font-size: 13.5px;
+  line-height: 1.65;
+  margin-bottom: 20px;
+}
+
+.footer__contact-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.footer__contact-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--footer-text-muted);
+  font-size: 13px;
+}
+
+.footer__contact-item .material-icons-round {
+  font-size: 16px !important;
+  color: var(--footer-link-hover);
+  flex-shrink: 0;
+}
+
+/* ── Column Heading ────────────────────────────────────────── */
+.footer__col-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--footer-text-primary);
+  margin-bottom: 18px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--footer-border);
+}
+
+/* ── Nav Links ─────────────────────────────────────────────── */
+.footer__nav {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.footer__nav-link {
+  color: var(--footer-text-muted);
+  text-decoration: none;
+  font-size: 13.5px;
+  transition: color 0.22s ease;
+  display: inline-block;
+}
+
+.footer__nav-link:hover {
+  color: var(--footer-link-hover);
+}
+
+/* ── Divider ───────────────────────────────────────────────── */
+.footer__divider {
+  border: none;
+  border-top: 1px solid var(--footer-divider);
+  margin: 0;
+}
+
+/* ── Copyright Bar ─────────────────────────────────────────── */
+.footer__bottom {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.footer__copyright {
+  font-size: 12.5px;
+  color: var(--footer-text-subtle);
+}
+
+.footer__copyright strong {
+  color: var(--footer-text-muted);
+  font-weight: 600;
+}
+
+.footer__made-with {
+  font-size: 12px;
+  color: var(--footer-text-subtle);
+}
+
+.footer__made-with span {
+  color: #ef4444;
+}
+
+/* ── Responsive: Tablet (2 cột) ────────────────────────────── */
+@media (max-width: 900px) {
+  .footer__grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 32px;
+  }
+}
+
+/* ── Responsive: Mobile (1 cột xếp chồng) ─────────────────── */
+@media (max-width: 600px) {
+  .footer__inner {
+    padding: 40px 16px 0;
+  }
+
+  .footer__grid {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+
+  .footer__bottom {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 16px;
+  }
+}

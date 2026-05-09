@@ -1,0 +1,346 @@
+.cli-lookup-wrapper {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+  font-family: 'Inter', sans-serif;
+  color: #1a202c;
+}
+
+/* Header & Breadcrumb */
+.cli-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #64748b;
+  margin-bottom: 24px;
+}
+
+.cli-breadcrumb-link {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #64748b;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.cli-breadcrumb-link:hover {
+  color: #0284c7;
+}
+
+.cli-breadcrumb-sep {
+  font-size: 16px;
+  color: #cbd5e1;
+}
+
+.cli-breadcrumb-current {
+  color: #0f172a;
+}
+
+.cli-header {
+  margin-bottom: 32px;
+  text-align: center;
+}
+
+.cli-header-icon {
+  width: 64px;
+  height: 64px;
+  background-color: var(--navy-50);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px auto;
+}
+
+.cli-header-icon .material-icons-round {
+  font-size: 32px;
+}
+
+.cli-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: #111827;
+  letter-spacing: -0.5px;
+  margin: 0 0 8px 0;
+}
+
+.cli-desc {
+  font-size: 15px;
+  color: #4b5563;
+  margin: 0;
+}
+
+/* Category Pills & Search Bar */
+.cli-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.cli-categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.cli-category-pill {
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cli-category-pill:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.cli-category-pill.active {
+  background: #111827;
+  border-color: #111827;
+  color: #fff;
+}
+
+.cli-search-box {
+  position: relative;
+  width: 100%;
+}
+
+.cli-search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+  font-size: 20px;
+}
+
+.cli-search-input {
+  width: 100%;
+  padding: 14px 44px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  font-size: 15px;
+  color: #1f2937;
+  outline: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s;
+}
+
+.cli-search-input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.cli-search-clear {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 50%;
+  transition: background 0.2s, color 0.2s;
+}
+
+.cli-search-clear:hover {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.cli-search-clear .material-icons-round {
+  font-size: 18px;
+}
+
+/* Command Card */
+.cli-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.cli-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.cli-card:hover {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.04);
+}
+
+.cli-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.cli-command-title {
+  font-family: 'Fira Code', 'Courier New', monospace;
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.cli-card-badge {
+  background: #e0e7ff;
+  color: #4f46e5;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.cli-command-desc {
+  font-size: 14px;
+  color: #4b5563;
+  margin: 0 0 16px 0;
+  line-height: 1.5;
+}
+
+/* Terminal Box */
+.cli-terminal {
+  position: relative;
+  background: #1e1e1e;
+  border-radius: 8px;
+  padding: 16px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.cli-terminal pre {
+  margin: 0;
+  color: #a3b8cc;
+  font-family: 'Fira Code', 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* Copy Button Overlay in Terminal */
+.cli-copy-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cli-copy-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+.cli-copy-btn.copied {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: #10b981;
+  color: #34d399;
+}
+
+/* Related Commands */
+.cli-related {
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+.cli-related-link {
+  color: #3b82f6;
+  text-decoration: underline;
+  cursor: pointer;
+  margin-left: 4px;
+  transition: color 0.2s;
+  font-family: 'Fira Code', 'Courier New', monospace;
+  font-weight: 500;
+}
+
+.cli-related-link:hover {
+  color: #2563eb;
+}
+
+/* Load More */
+.cli-load-more {
+  text-align: center;
+  margin-top: 32px;
+}
+
+.btn-load-more {
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-load-more:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+
+/* Empty State */
+.cli-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 24px;
+  text-align: center;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px dashed #cbd5e1;
+}
+
+.cli-empty-icon {
+  font-size: 48px;
+  color: #cbd5e1;
+  margin-bottom: 16px;
+}
+
+.cli-empty-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 8px 0;
+}
+
+.cli-empty-desc {
+  font-size: 14px;
+  color: #64748b;
+  margin: 0;
+}

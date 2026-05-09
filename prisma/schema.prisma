@@ -1,0 +1,381 @@
+// ==========================================
+// THIẾT LẬP KẾT NỐI (DATASOURCE & GENERATOR)
+// ==========================================
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ==========================================
+// ĐỊNH NGHĨA CÁC ENUMS (KIỂU DỮ LIỆU ĐẶC BIỆT)
+// ==========================================
+enum Role {
+  STUDENT
+  ADMIN
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum ProgressStatus {
+  LOCKED
+  ACTIVE
+  COMPLETED
+}
+
+// ==========================================
+// KHỐI 1: NGƯỜI DÙNG & BẢO MẬT
+// ==========================================
+
+model User {
+  id             Int       @id @default(autoincrement())
+  fullName       String?   @map("full_name") @db.VarChar(100)
+  email          String    @unique @db.VarChar(150)
+  passwordHash   String    @map("password_hash") @db.VarChar(255)
+  avatarUrl      String?   @map("avatar_url") @db.Text
+  role           Role      @default(STUDENT)
+  level          Int       @default(1)
+  streak         Int       @default(0)
+  totalStudyTime Int       @default(0) @map("total_study_time") // Phút
+  isActive       Boolean   @default(true) @map("is_active")
+  lastLogin      DateTime? @map("last_login")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  deletedAt      DateTime? @map("deleted_at") // Xóa mềm
+
+  // Quan hệ (Relations)
+  refreshTokens  RefreshToken[]
+  passwordResetTokens PasswordResetToken[]
+  progress       UserProgress[]
+  examResults    ExamResult[]
+  notes          UserNote[]
+  activities     UserActivity[]
+  badges         UserBadge[]
+  adminLogs      AdminLog[]     
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  token     String   @unique @db.VarChar(500)
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
+}
+
+model PasswordResetToken {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  tokenHash String   @unique @map("token_hash") @db.VarChar(255)
+  expiresAt DateTime @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("password_reset_tokens")
+}
+
+// ==========================================
+// KHỐI 2: NỘI DUNG KHÓA HỌC (ROADMAP)
+// ==========================================
+
+model Course {
+  id            String    @id @db.VarChar(10) // vđ: c1, c2
+  code          String    @db.VarChar(10)     // vđ: ITN, SRWE
+  title         String    @db.VarChar(200)
+  description   String?   @db.Text
+  thumbnailUrl  String?   @map("thumbnail_url") @db.Text
+  level         String    @default("BEGINNER") @db.VarChar(50)
+  status        String    @default("DRAFT") @db.VarChar(50)
+  orderIndex    Int       @default(0) @map("order_index")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  deletedAt     DateTime? @map("deleted_at")
+
+  modules     Module[]
+  topics      CourseTopic[]
+  labs        Lab[]
+  exams       Exam[]
+  progress    UserProgress[]
+  resources   Resource[]
+
+  @@map("courses")
+}
+
+model CourseTopic {
+  id         Int      @id @default(autoincrement())
+  courseId   String   @map("course_id") @db.VarChar(10)
+  title      String   @db.VarChar(500) // Ví dụ: "IPv4 & IPv6"
+  orderIndex Int      @default(0) @map("order_index")
+
+  course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@map("course_topics")
+}
+
+
+model Module {
+  id          String    @id @db.VarChar(10) // vđ: m1
+  courseId    String    @map("course_id") @db.VarChar(10)
+  title       String    @db.VarChar(200)
+  description String?   @db.Text
+  orderIndex  Int       @map("order_index")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  course      Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessons     Lesson[]
+  labs        Lab[]
+  exams       Exam[]
+  progress    UserProgress[]
+
+  @@map("modules")
+}
+
+model Lesson {
+  id            Int       @id @default(autoincrement())
+  moduleId      String    @map("module_id") @db.VarChar(10)
+  title         String    @db.VarChar(200)
+  sectionNumber String?   @map("section_number") @db.VarChar(20)
+  contentHtml   String?   @map("content_html") @db.Text
+  videoUrl      String?   @map("video_url") @db.Text
+  videoDuration String?   @map("video_duration") @db.VarChar(20)
+  orderIndex    Int       @map("order_index")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  deletedAt     DateTime? @map("deleted_at")
+
+  module        Module    @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  progress      UserProgress[]
+  notes         UserNote[]
+
+  @@map("lessons")
+}
+
+model Lab {
+  id              Int        @id @default(autoincrement())
+  title           String     @db.VarChar(1000)
+  category        String?    @db.VarChar(50)
+  difficulty      Difficulty @default(EASY)
+  duration        String?    @db.VarChar(20)
+  imageUrl        String?    @map("image_url") @db.Text // Ảnh đại diện bài Lab
+  topologyImgUrl  String?    @map("topology_img_url") @db.Text // Ảnh sơ đồ mạng
+  objective       String?    @db.Text // Mục tiêu bài tập
+  tools           Json?      // Danh sách công cụ (Packet Tracer...)
+  fileUrl         String?    @map("file_url") @db.Text // File bài tập .pka/.pkt
+  steps           Json?      // Các bước hướng dẫn (Array of objects)
+  guideContent    String?    @map("guide_content") @db.Text // Mô tả/Hướng dẫn chung
+  status          String     @default("DRAFT") @db.VarChar(50)
+  courseId        String?    @map("course_id") @db.VarChar(10)
+  moduleId        String?    @map("module_id") @db.VarChar(10)
+  createdAt       DateTime   @default(now()) @map("created_at")
+  deletedAt       DateTime?  @map("deleted_at")
+
+  course       Course?    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  module       Module?    @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  progress     UserProgress[]
+
+  @@map("labs")
+}
+
+// ==========================================
+// KHỐI 3: KHẢO THÍ (THI TRẮC NGHIỆM)
+// ==========================================
+
+model Exam {
+  id              Int       @id @default(autoincrement())
+  title           String    @db.VarChar(200)
+  examCode        String?   @map("exam_code") @db.VarChar(20)
+  totalQuestions  Int       @map("total_questions")
+  durationMinutes Int       @map("duration_minutes")
+  passingScore    Int       @default(70) @map("passing_score")
+  difficulty      String?   @db.VarChar(20)
+  courseId        String?   @map("course_id") @db.VarChar(10)
+  moduleId        String?   @map("module_id") @db.VarChar(10)
+  createdAt       DateTime  @default(now()) @map("created_at")
+  deletedAt       DateTime? @map("deleted_at")
+  status          String    @default("DRAFT") @db.VarChar(20)
+
+  course          Course?   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  module          Module?   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  questions       ExamQuestion[]
+  results         ExamResult[]
+
+  @@map("exams")
+}
+
+model ExamQuestion {
+  id            Int       @id @default(autoincrement())
+  examId        Int       @map("exam_id")
+  question      String    @db.Text
+  imageUrl      String?   @map("image_url") @db.Text
+  options       Json      // Các đáp án (Lưu dạng mảng JSON)
+  correctAnswer Json      @map("correct_answer") // Array of indices [0, 2]
+  explanation   String?   @db.Text
+  orderIndex    Int       @map("order_index")
+
+  exam          Exam      @relation(fields: [examId], references: [id], onDelete: Cascade)
+
+  @@map("exam_questions")
+}
+
+model ExamResult {
+  id             Int       @id @default(autoincrement())
+  userId         Int       @map("user_id")
+  examId         Int       @map("exam_id")
+  score          Int
+  totalQuestions Int       @map("total_questions")
+  percentage     Decimal   @db.Decimal(5, 2)
+  isPassed       Boolean   @map("is_passed")
+  answers        Json      // Lịch sử người dùng đã chọn những gì
+  timeSpent      Int       @map("time_spent") // Tính bằng giây
+  takenAt        DateTime  @default(now()) @map("taken_at")
+
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exam           Exam      @relation(fields: [examId], references: [id], onDelete: Cascade)
+
+  @@map("exam_results")
+}
+
+// ==========================================
+// KHỐI 4: TƯƠNG TÁC & THEO DÕI NGƯỜI DÙNG
+// ==========================================
+
+model UserProgress {
+  id              Int            @id @default(autoincrement())
+  userId          Int            @map("user_id")
+  courseId        String         @map("course_id") @db.VarChar(10)
+  moduleId        String?        @map("module_id") @db.VarChar(10)
+  lessonId        Int?           @map("lesson_id")
+  labId           Int?           @map("lab_id")
+  status          ProgressStatus @default(LOCKED)
+  progressPercent Int            @default(0) @map("progress_percent")
+  completedAt     DateTime?      @map("completed_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course          Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  module          Module?        @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  lesson          Lesson?        @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lab             Lab?           @relation(fields: [labId], references: [id], onDelete: Cascade)
+
+  @@map("user_progress")
+}
+
+model Resource {
+  id        Int       @id @default(autoincrement())
+  title     String    @db.VarChar(300)
+  type      String    @db.VarChar(20)
+  size      String?   @db.VarChar(20)
+  fileUrl   String?   @map("file_url") @db.Text
+  courseId  String?   @map("course_id") @db.VarChar(10)
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  course    Course?   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@map("resources")
+}
+
+model UserBadge {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  badgeName String   @map("badge_name") @db.VarChar(100)
+  badgeIcon String?  @map("badge_icon") @db.VarChar(50)
+  earnedAt  DateTime @default(now()) @map("earned_at")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_badges")
+}
+
+model UserActivity {
+  id          Int      @id @default(autoincrement())
+  userId      Int      @map("user_id")
+  title       String   @db.VarChar(200)
+  type        String   @db.VarChar(50)
+  referenceId Int?     @map("reference_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_activity")
+}
+
+model UserNote {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  lessonId  Int      @map("lesson_id")
+  content   String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson    Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, lessonId])
+  @@map("user_notes")
+}
+
+// ==========================================
+// KHỐI 5: HỆ THỐNG NHẬT KÝ (LOGS)
+// ==========================================
+
+model AdminLog {
+  id          Int      @id @default(autoincrement())
+  adminId     Int      @map("admin_id") // Liên kết với User.id (Những người có role Admin)
+  action      String   @db.VarChar(50)
+  targetTable String   @map("target_table") @db.VarChar(50)
+  targetId    Int      @map("target_id")
+  description String?  @db.Text
+  ipAddress   String?  @map("ip_address") @db.VarChar(45)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  admin       User     @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@map("admin_logs")
+}
+// Khối mới thêm: CÔNG CỤ HỖ TRỢ
+model Tool {
+  id          Int       @id @default(autoincrement())
+  title       String    @db.VarChar(100)       // Tên công cụ (vd: Trình tính toán Subnet)
+  description String?   @db.Text               // Mô tả ngắn
+  iconName    String?   @map("icon_name") @db.VarChar(50) // Tên icon để React hiển thị
+  linkUrl     String?   @map("link_url") @db.Text // Đường dẫn khi click vào
+  isActive    Boolean   @default(true) @map("is_active")
+  orderIndex  Int       @default(0) @map("order_index") // Vị trí sắp xếp
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  @@map("tools") // Tên bảng sẽ hiển thị trong DBeaver
+}
+
+// Khối mới thêm: NGÂN HÀNG CÂU HỎI & KỊCH BẢN (DOMAIN-SPECIFIC FEATURES)
+model QuestionBank {
+  id              Int       @id @default(autoincrement())
+  title           String    @db.VarChar(200)
+  type            String    @db.VarChar(50)  // Ví dụ: "MULTIPLE_CHOICE", "CLI_SIMULATION", "AI_PROMPT"
+  content         String    @db.Text         // Nội dung câu hỏi / kịch bản CLI
+  topologyImgUrl  String?   @map("topology_img_url") @db.Text // Hình ảnh sơ đồ mạng (tuỳ chọn)
+  configData      Json?     // Cấu hình mạng mẫu (dành cho CLI simulation)
+  aiPromptContext String?   @map("ai_prompt_context") @db.Text // Context hoặc prompt cho trợ lý AI
+  options         Json?     // Đáp án hoặc data mở rộng
+  correctAnswer   String?   @map("correct_answer") @db.Text // Đáp án / lệnh đúng
+  difficulty      Difficulty @default(MEDIUM)
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  @@map("question_bank")
+}
+
