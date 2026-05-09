@@ -276,6 +276,71 @@ module.exports.updateProgress = async (req, res, next) => {
           referenceId: lessonId || labId || null
         }
       });
+
+      // 🔧 CẬP NHẬT PROGRESS CẤP COURSE KHI LESSON/LAB HOÀN THÀNH
+      if (lessonId || labId) {
+        // Tính progress cấp course từ tất cả lessons + labs đã hoàn thành
+        const completedItems = await prisma.userProgress.count({
+          where: {
+            userId,
+            courseId,
+            status: 'COMPLETED',
+            OR: [
+              { lessonId: { not: null } },
+              { labId: { not: null } }
+            ]
+          }
+        });
+
+        // Tính tổng số lessons + labs trong course
+        const totalLessons = await prisma.lesson.count({
+          where: { module: { courseId, deletedAt: null }, deletedAt: null }
+        });
+
+        const totalLabs = await prisma.lab.count({
+          where: { courseId, deletedAt: null }
+        });
+
+        const totalItems = totalLessons + totalLabs;
+        const courseProgressPercent = totalItems > 0 
+          ? Math.round((completedItems / totalItems) * 100)
+          : 0;
+
+        // Tìm progress cấp course hiện tại
+        const courseProgress = await prisma.userProgress.findFirst({
+          where: {
+            userId,
+            courseId,
+            moduleId: null,
+            lessonId: null,
+            labId: null
+          }
+        });
+
+        // Cập nhật hoặc tạo progress cấp course
+        if (courseProgress) {
+          await prisma.userProgress.update({
+            where: { id: courseProgress.id },
+            data: {
+              progressPercent: courseProgressPercent,
+              status: courseProgressPercent >= 100 ? 'COMPLETED' : 'ACTIVE',
+              completedAt: courseProgressPercent >= 100 
+                ? (courseProgress.completedAt || new Date())
+                : courseProgress.completedAt
+            }
+          });
+        } else {
+          await prisma.userProgress.create({
+            data: {
+              userId,
+              courseId,
+              progressPercent: courseProgressPercent,
+              status: courseProgressPercent >= 100 ? 'COMPLETED' : 'ACTIVE',
+              completedAt: courseProgressPercent >= 100 ? new Date() : null
+            }
+          });
+        }
+      }
     }
 
     res.json({ data: result });
