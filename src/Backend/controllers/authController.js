@@ -10,6 +10,7 @@ const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
 const { getPrisma } = require('../config/database');
+const { sendResetPasswordEmail } = require('../config/email');
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -200,8 +201,13 @@ module.exports.forgotPassword = async (req, res, next) => {
 
     const resetUrl = buildResetPasswordUrl(rawToken);
 
-    if (process.env.NODE_ENV !== 'production') {
-      console.log(`[forgot-password] Reset link for ${user.email}: ${resetUrl}`);
+    // 6. Gửi email khôi phục mật khẩu thực tế
+    try {
+      await sendResetPasswordEmail(user.email, user.fullName, resetUrl);
+    } catch (emailError) {
+      // Nếu lỗi gửi email, chúng ta vẫn trả về 200 để tránh bị lộ email tồn tại (Security Best Practice)
+      // nhưng log lỗi để Admin biết
+      console.error('Email sending failed, but continuing response:', emailError);
     }
 
     return res.json({

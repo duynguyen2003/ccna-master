@@ -370,8 +370,9 @@ module.exports.updateLab = async (req, res, next) => {
 module.exports.deleteLab = async (req, res, next) => {
   try {
     const { id } = req.params;
-    await prisma.lab.delete({
-      where: { id: parseInt(id) }
+    await prisma.lab.update({
+      where: { id: parseInt(id) },
+      data: { deletedAt: new Date() }
     });
     res.json({ message: 'Xóa bài Lab thành công' });
   } catch (error) {

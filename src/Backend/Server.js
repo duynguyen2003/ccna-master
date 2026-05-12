@@ -9,6 +9,7 @@
 
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
 require('dotenv').config();
 
 const { initializeDatabase, disconnectDatabase, checkDatabaseHealth } = require('./config/database');
@@ -19,6 +20,11 @@ const routes = require('./routes');
 // Initialize Express app
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// Security Middleware
+app.use(helmet({
+  crossOriginResourcePolicy: false, // Để load được ảnh từ Cloudinary/localhost
+}));
 
 /**
  * ============================================================

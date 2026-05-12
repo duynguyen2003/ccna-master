@@ -7,7 +7,6 @@ const ROLES = { ADMIN: 'ADMIN', STUDENT: 'STUDENT' };
 const STATUS = { ACTIVE: 'active', INACTIVE: 'inactive' };
 const DAY_LABELS = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
 const MAX_NOTE_LENGTH = 10000;
-const TOTAL_LABS = 50;
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -134,15 +133,14 @@ module.exports.getProfileMe = async (req, res, next) => {
     const userId = req.user.id;
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
-    const [user, completedLabs] = await Promise.all([
+    const [user, completedLabs, totalLabsCount] = await Promise.all([
       prisma.user.findUnique({
         where: { id: userId },
         select: {
           id: true, fullName: true, email: true, role: true,
           isActive: true, avatarUrl: true, createdAt: true,
           level: true, streak: true, totalStudyTime: true,
-
-          // Tiến độ cấp độ khóa học
+          // ... (rest of the fields)
           progress: {
             where: { moduleId: null, lessonId: null, labId: null, progressPercent: { gt: 0 } },
             select: {
@@ -151,8 +149,6 @@ module.exports.getProfileMe = async (req, res, next) => {
               course: { select: { id: true, title: true } }
             }
           },
-
-          // Hoạt động trong 7 ngày gần nhất
           activities: {
             where: { createdAt: { gte: sevenDaysAgo } },
             orderBy: { createdAt: 'desc' },
@@ -161,31 +157,24 @@ module.exports.getProfileMe = async (req, res, next) => {
               createdAt: true, referenceId: true,
             }
           },
-
-          // Thành tích
           badges: {
             orderBy: { earnedAt: 'desc' },
             select: { id: true, badgeName: true, badgeIcon: true, earnedAt: true }
           },
-
-          // Kết quả thi
           examResults: {
             select: { percentage: true, isPassed: true, takenAt: true }
           },
-
-          // [FIX] StudyLog: lấy trong 7 ngày gần nhất
           studyLogs: {
             where: { date: { gte: sevenDaysAgo } },
             orderBy: { date: 'asc' },
-            // [FIX] select rõ ràng thay vì lấy toàn bộ
             select: { date: true, duration: true }
           }
         }
       }),
-
       prisma.userProgress.count({
         where: { userId, labId: { not: null }, status: 'COMPLETED' }
-      })
+      }),
+      prisma.lab.count({ where: { deletedAt: null } })
     ]);
 
     if (!user) {
@@ -258,7 +247,7 @@ module.exports.getProfileMe = async (req, res, next) => {
           avgScore: averageScore,
           examCount: examResults.length,
           labsDone: completedLabs,
-          totalLabs: TOTAL_LABS,
+          totalLabs: totalLabsCount,
         }
       }
     });
