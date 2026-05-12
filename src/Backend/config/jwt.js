@@ -7,18 +7,23 @@
  */
 
 const JWT_CONFIG = {
-  // Access token: short-lived (15 minutes)
+  // Access token: short-lived (15 minutes or from .env)
   ACCESS_TOKEN: {
-    secret: process.env.JWT_SECRET || 'netmastery_secret_key_2026',
-    expiresIn: '15m'
+    secret: process.env.JWT_SECRET,
+    expiresIn: process.env.JWT_EXPIRES_IN || '15m'
   },
 
   // Refresh token: long-lived (7 days)
   REFRESH_TOKEN: {
-    secret: process.env.JWT_REFRESH_SECRET || 'netmastery_refresh_2026',
+    secret: process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET, // Fallback to main secret if refresh secret is missing
     expiresIn: '7d'
   }
 };
+
+if (!JWT_CONFIG.ACCESS_TOKEN.secret) {
+  console.error('FATAL ERROR: JWT_SECRET is not defined.');
+  process.exit(1);
+}
 
 /**
  * Get JWT secret (access token)

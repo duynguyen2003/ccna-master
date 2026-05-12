@@ -26,7 +26,7 @@ module.exports.verifyToken = (req, res, next) => {
     }
 
     // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'ccna_master_secret_2024');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
     // Attach user to request
     req.user = decoded;
@@ -57,7 +57,7 @@ module.exports.optionalAuth = (req, res, next) => {
     }
 
     // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'ccna_master_secret_2024');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded;
     next();
   } catch (error) {

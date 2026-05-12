@@ -129,7 +129,7 @@ module.exports.login = async (req, res, next) => {
     // 4. Generate JWT
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET || 'ccna_master_secret_2024',
+      process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
     );
 
@@ -332,6 +332,27 @@ module.exports.getProfile = async (req, res, next) => {
 };
 
 /**
+ * @desc    Logout user
+ * @route   POST /api/auth/logout
+ * @access  Private
+ */
+module.exports.logout = async (req, res, next) => {
+  try {
+    // If using refresh tokens in DB, delete them here:
+    if (req.user && req.user.id) {
+      await prisma.refreshToken.deleteMany({
+        where: { userId: req.user.id }
+      });
+    }
+
+    res.json({ message: 'Đăng xuất thành công' });
+  } catch (error) {
+    console.error('Logout error:', error);
+    next(error);
+  }
+};
+
+/**
  * @desc    Authenticate user via Google
  * @route   POST /api/auth/google
  * @access  Public
@@ -403,7 +424,7 @@ module.exports.googleLogin = async (req, res, next) => {
     // Generate our system JWT
     const accessToken = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET || 'ccna_master_secret_2024',
+      process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
     );
 
