@@ -17,7 +17,7 @@ const MiniSparkline = ({ data, color = '#3b82f6' }) => {
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={chartData}>
           <defs>
-            <linearGradient id={`gradient-${color}`} x1="0" y2="1">
+            <linearGradient id={`gradient-${color.replace('#', '')}`} x1="0" y2="1">
               <stop offset="5%" stopColor={color} stopOpacity={0.3} />
               <stop offset="95%" stopColor={color} stopOpacity={0} />
             </linearGradient>
@@ -28,7 +28,7 @@ const MiniSparkline = ({ data, color = '#3b82f6' }) => {
             stroke={color}
             strokeWidth={2}
             fillOpacity={1}
-            fill={`url(#gradient-${color})`}
+            fill={`url(#gradient-${color.replace('#', '')})`}
             isAnimationActive={true}
           />
         </AreaChart>

@@ -23,8 +23,19 @@ const request = async (url, options = {}, errorMsg = 'Lỗi không xác định'
       throw new Error('Phiên làm việc hết hạn');
     }
 
-    const data = await response.json();
-    if (!response.ok) throw new Error(getErrorMessage(data, errorMsg));
+    // Đọc phản hồi dưới dạng text trước để tránh crash nếu server trả về HTML lỗi
+    const responseText = await response.text();
+    let data;
+    try {
+      data = responseText ? JSON.parse(responseText) : {};
+    } catch (e) {
+      data = { message: `Lỗi định dạng phản hồi (${response.status})` };
+    }
+
+    if (!response.ok) {
+      throw new Error(getErrorMessage(data, errorMsg));
+    }
+    
     return data;
   } finally {
     clearTimeout(timeout);

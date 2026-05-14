@@ -1,6 +1,6 @@
 // src/components/Admin/Views/Dashboard.js
 import React, { useState, useEffect, useCallback, useContext } from 'react';
-import { Users, BookOpen, Award, TrendingUp, ArrowRight, AlertCircle, RefreshCw } from 'lucide-react';
+import { Users, BookOpen, Award, TrendingUp, AlertCircle } from 'lucide-react';
 import { adminApi } from '../../../services/api/adminApi';
 import { AuthContext } from '../../../context/AuthContext';
 import StatsCard from '../Components/StatsCard';
