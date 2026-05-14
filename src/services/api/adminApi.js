@@ -16,6 +16,13 @@ const request = async (url, options = {}, errorMsg = 'Lỗi không xác định'
 
   try {
     const response = await fetch(url, { ...options, signal: controller.signal });
+    
+    // Nếu hết hạn (401), báo cho AuthContext để logout
+    if (response.status === 401) {
+      window.dispatchEvent(new Event('unauthorized'));
+      throw new Error('Phiên làm việc hết hạn');
+    }
+
     const data = await response.json();
     if (!response.ok) throw new Error(getErrorMessage(data, errorMsg));
     return data;

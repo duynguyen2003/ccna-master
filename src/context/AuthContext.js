@@ -1,6 +1,21 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { api } from '../services/Api';
 
+/**
+ * Kiểm tra JWT token có còn hợp lệ (chưa hết hạn) không.
+ * Trả về true nếu token hợp lệ, false nếu hết hạn hoặc không hợp lệ.
+ */
+const isTokenValid = (token) => {
+  if (!token) return false;
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    // exp là Unix timestamp (giây), so với hiện tại (ms)
+    return payload.exp * 1000 > Date.now();
+  } catch {
+    return false; // Token không parse được → coi như invalid
+  }
+};
+
 // Tạo Context
 export const AuthContext = createContext(null);
 
@@ -20,14 +35,22 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true); // loading ban đầu khi đọc localStorage
   const [pendingToast, setPendingToast] = useState(null); // Toast to show after navigation
 
-  // Khởi tạo: đọc localStorage khi app load
+  // Khởi tạo: đọc localStorage khi app load, kiểm tra token còn hạn không
   useEffect(() => {
     try {
       const savedToken = localStorage.getItem('accessToken');
       const savedUser = localStorage.getItem('userData');
       if (savedToken && savedUser) {
-        setToken(savedToken);
-        setUser(JSON.parse(savedUser));
+        // ✅ Kiểm tra token hết hạn trước khi restore session
+        if (isTokenValid(savedToken)) {
+          setToken(savedToken);
+          setUser(JSON.parse(savedUser));
+        } else {
+          // Token hết hạn → xóa sạch, buộc đăng nhập lại
+          console.warn('Token đã hết hạn, xóa session.');
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('userData');
+        }
       }
     } catch (error) {
       console.error('Lỗi đọc localStorage:', error);

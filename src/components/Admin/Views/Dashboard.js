@@ -1,6 +1,6 @@
 // src/components/Admin/Views/Dashboard.js
-import React, { useState, useEffect, useContext } from 'react';
-import { Users, BookOpen, Award, TrendingUp, ArrowRight, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useContext } from 'react';
+import { Users, BookOpen, Award, TrendingUp, ArrowRight, AlertCircle, RefreshCw } from 'lucide-react';
 import { adminApi } from '../../../services/api/adminApi';
 import { AuthContext } from '../../../context/AuthContext';
 import StatsCard from '../Components/StatsCard';
@@ -43,49 +43,80 @@ const Dashboard = () => {
     logs: null
   });
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!token) return;
+  const fetchData = useCallback(async () => {
+    if (!token) return;
 
-      // 1. Fetch Summary
-      adminApi.getDashboardSummary(token)
-        .then(data => setSummary(data))
-        .catch(err => setErrors(prev => ({ ...prev, summary: err.message })))
-        .finally(() => setLoadings(prev => ({ ...prev, summary: false })));
+    setLoadings({
+      summary: true,
+      activity: true,
+      distribution: true,
+      trends: true,
+      students: true,
+      logs: true
+    });
 
-      // 2. Fetch Activity
-      adminApi.getDashboardActivity(token)
-        .then(data => setActivity(data))
-        .catch(err => setErrors(prev => ({ ...prev, activity: err.message })))
-        .finally(() => setLoadings(prev => ({ ...prev, activity: false })));
+    // 1. Fetch Summary
+    adminApi.getDashboardSummary(token)
+      .then(data => {
+        setSummary(data);
+        setErrors(prev => ({ ...prev, summary: null }));
+      })
+      .catch(err => setErrors(prev => ({ ...prev, summary: err.message })))
+      .finally(() => setLoadings(prev => ({ ...prev, summary: false })));
 
-      // 3. Fetch Distribution
-      adminApi.getDashboardDistribution(token)
-        .then(data => setDistribution(data))
-        .catch(err => setErrors(prev => ({ ...prev, distribution: err.message })))
-        .finally(() => setLoadings(prev => ({ ...prev, distribution: false })));
+    // 2. Fetch Activity
+    adminApi.getDashboardActivity(token)
+      .then(data => {
+        setActivity(data);
+        setErrors(prev => ({ ...prev, activity: null }));
+      })
+      .catch(err => setErrors(prev => ({ ...prev, activity: err.message })))
+      .finally(() => setLoadings(prev => ({ ...prev, activity: false })));
 
-      // 4. Fetch Trends
-      adminApi.getDashboardTrends(token)
-        .then(data => setTrends(data))
-        .catch(err => setErrors(prev => ({ ...prev, trends: err.message })))
-        .finally(() => setLoadings(prev => ({ ...prev, trends: false })));
+    // 3. Fetch Distribution
+    adminApi.getDashboardDistribution(token)
+      .then(data => {
+        setDistribution(data);
+        setErrors(prev => ({ ...prev, distribution: null }));
+      })
+      .catch(err => setErrors(prev => ({ ...prev, distribution: err.message })))
+      .finally(() => setLoadings(prev => ({ ...prev, distribution: false })));
 
-      // 5. Fetch Students
-      adminApi.getRecentStudents(token)
-        .then(data => setStudents(data))
-        .catch(err => setErrors(prev => ({ ...prev, students: err.message })))
-        .finally(() => setLoadings(prev => ({ ...prev, students: false })));
+    // 4. Fetch Trends
+    adminApi.getDashboardTrends(token)
+      .then(data => {
+        setTrends(data);
+        setErrors(prev => ({ ...prev, trends: null }));
+      })
+      .catch(err => setErrors(prev => ({ ...prev, trends: err.message })))
+      .finally(() => setLoadings(prev => ({ ...prev, trends: false })));
 
-      // 6. Fetch Logs
-      adminApi.getLogs(token, 1, 20)
-        .then(data => setLogs(data.data || []))
-        .catch(err => setErrors(prev => ({ ...prev, logs: err.message })))
-        .finally(() => setLoadings(prev => ({ ...prev, logs: false })));
-    };
+    // 5. Fetch Students
+    adminApi.getRecentStudents(token)
+      .then(data => {
+        setStudents(data);
+        setErrors(prev => ({ ...prev, students: null }));
+      })
+      .catch(err => setErrors(prev => ({ ...prev, students: err.message })))
+      .finally(() => setLoadings(prev => ({ ...prev, students: false })));
 
-    fetchData();
+    // 6. Fetch Logs
+    adminApi.getLogs(token, 1, 20)
+      .then(data => {
+        setLogs(data.data || []);
+        setErrors(prev => ({ ...prev, logs: null }));
+      })
+      .catch(err => setErrors(prev => ({ ...prev, logs: err.message })))
+      .finally(() => setLoadings(prev => ({ ...prev, logs: false })));
   }, [token]);
+
+  useEffect(() => {
+    fetchData();
+
+    // Tự động làm mới khi quay lại tab (Window Focus)
+    window.addEventListener('focus', fetchData);
+    return () => window.removeEventListener('focus', fetchData);
+  }, [fetchData]);
 
   const renderError = (msg) => (
     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#ef4444', fontSize: '13px', padding: '20px' }}>
@@ -98,8 +129,12 @@ const Dashboard = () => {
       {/* Welcome Banner */}
       <div className="admin-welcome">
         <div className="admin-welcome-info">
-          <h2>Tổng quan hệ thống</h2>
-          <p>Welcome back, {user?.fullName || 'Admin'} — đây là tổng quan nền tảng CCNA của bạn hôm nay.</p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <h2>Tổng quan hệ thống</h2>
+              <p>Welcome back, {user?.fullName || 'Admin'} — đây là tổng quan nền tảng CCNA của bạn hôm nay.</p>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -107,10 +142,11 @@ const Dashboard = () => {
       <div className="admin-stats-grid">
         <StatsCard
           title="Tổng học viên"
-          value={summary?.totalUsers ?? 0}
+          value={errors.summary ? 'Lỗi' : (summary?.totalUsers ?? 0)}
           icon={Users}
           trend={summary?.recentUsersCount > 0 ? 'up' : 'neutral'}
           trendValue={summary?.recentUsersCount > 0 ? `+${summary.recentUsersCount} tuần này` : 'Chưa có mới'}
+          sparkData={summary?.history?.users}
           colorName="blue"
           loading={loadings.summary}
         />
@@ -120,6 +156,7 @@ const Dashboard = () => {
           icon={TrendingUp}
           trend={summary?.avgProgress > 50 ? 'up' : 'neutral'}
           trendValue="Khóa học đang hoạt động"
+          sparkData={summary?.history?.progress}
           colorName="green"
           loading={loadings.summary}
         />
@@ -129,6 +166,7 @@ const Dashboard = () => {
           icon={BookOpen}
           trend="up"
           trendValue="Tổng tất cả học viên"
+          sparkData={summary?.history?.lessons}
           colorName="purple"
           loading={loadings.summary}
         />
@@ -138,6 +176,7 @@ const Dashboard = () => {
           icon={Award}
           trend={summary?.examPassRate >= 70 ? 'up' : summary?.examPassRate > 0 ? 'down' : 'neutral'}
           trendValue={summary?.examPassRate > 0 ? 'Dựa trên tất cả lượt thi' : 'Chưa có lượt thi'}
+          sparkData={summary?.history?.exams}
           colorName="orange"
           loading={loadings.summary}
         />

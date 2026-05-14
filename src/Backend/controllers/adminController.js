@@ -70,6 +70,11 @@ module.exports.getAdminLogs = async (req, res, next) => {
  */
 module.exports.getDashboardSummary = async (req, res, next) => {
   try {
+    // Chặn Cache trình duyệt để dữ liệu luôn mới nhất
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
     const [
@@ -131,7 +136,60 @@ module.exports.getDashboardSummary = async (req, res, next) => {
       ? Math.round((passedResults / totalResults) * 100)
       : 0;
 
-    const avgProgress = Math.round(avgProgressResult._avg.progressPercent || 0);
+    const avgProgress = Math.round(avgProgressResult?._avg?.progressPercent || 0);
+
+    // ── Lấy dữ liệu lịch sử 7 ngày cho Sparklines ──────────────────────
+    const last7Days = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() - (6 - i));
+      d.setHours(0, 0, 0, 0);
+      return d;
+    });
+
+    // Helper để chạy query an toàn
+    const safeQuery = async (p, fallback = 0) => {
+      try { return await p; } catch (e) { console.error("Dashboard Query Error:", e); return fallback; }
+    };
+
+    const dailyUsers = await Promise.all(last7Days.map(date => 
+      safeQuery(prisma.user.count({
+        where: {
+          role: 'STUDENT',
+          deletedAt: null,
+          createdAt: { gte: date, lt: new Date(date.getTime() + 24 * 60 * 60 * 1000) }
+        }
+      }))
+    ));
+
+    const dailyLessons = await Promise.all(last7Days.map(date =>
+      safeQuery(prisma.userProgress.count({
+        where: {
+          status: 'COMPLETED',
+          lessonId: { not: null },
+          updatedAt: { gte: date, lt: new Date(date.getTime() + 24 * 60 * 60 * 1000) }
+        }
+      }))
+    ));
+
+    const dailyExams = await Promise.all(last7Days.map(date =>
+      safeQuery(prisma.examResult.count({
+        where: {
+          takenAt: { gte: date, lt: new Date(date.getTime() + 24 * 60 * 60 * 1000) }
+        }
+      }))
+    ));
+
+    const dailyProgress = await Promise.all(last7Days.map(date =>
+      safeQuery(prisma.userProgress.aggregate({
+        _avg: { progressPercent: true },
+        where: {
+          status: 'ACTIVE',
+          lessonId: null,
+          labId: null,
+          updatedAt: { lte: new Date(date.getTime() + 24 * 60 * 60 * 1000) }
+        }
+      }).then(res => Math.round(res?._avg?.progressPercent || 0)))
+    ));
 
     res.json({
       totalUsers,
@@ -141,7 +199,13 @@ module.exports.getDashboardSummary = async (req, res, next) => {
       onlineToday,
       completedLessons,
       examPassRate,
-      avgProgress
+      avgProgress,
+      history: {
+        users: dailyUsers,
+        lessons: dailyLessons,
+        exams: dailyExams,
+        progress: dailyProgress
+      }
     });
   } catch (error) {
     next(error);
