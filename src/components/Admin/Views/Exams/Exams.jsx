@@ -62,6 +62,7 @@ const Exams = () => {
     handleQuestionOptionChange,
     handleQuestionImageUpload,
     handleBulkImportQuestions,
+    handleRawTextImport,
     handleSaveQuestion,
     handleEditQuestion,
     handleDeleteQuestion,
@@ -105,6 +106,7 @@ const Exams = () => {
           handleQuestionOptionChange={handleQuestionOptionChange}
           handleQuestionImageUpload={handleQuestionImageUpload}
           handleBulkImportQuestions={handleBulkImportQuestions}
+          handleRawTextImport={handleRawTextImport}
           handleSaveQuestion={handleSaveQuestion}
           handleEditQuestion={handleEditQuestion}
           handleDeleteQuestion={handleDeleteQuestion}

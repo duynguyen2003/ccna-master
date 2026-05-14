@@ -9,10 +9,11 @@ import {
   ChevronRight,
   Plus,
   Upload,
-  Info
+  Info,
+  Type
 } from 'lucide-react';
 import CustomSelect from '../../Components/CustomSelect';
-import QuestionDrawer, { QuestionList, ImportModal } from './QuestionEditor';
+import QuestionDrawer, { QuestionList, ImportModal, TextImportModal } from './QuestionEditor';
 import { difficultyOptions } from './constants';
 
 const ExamEditor = ({
@@ -36,6 +37,7 @@ const ExamEditor = ({
   handleQuestionOptionChange,
   handleQuestionImageUpload,
   handleBulkImportQuestions,
+  handleRawTextImport,
   handleSaveQuestion,
   handleEditQuestion,
   handleDeleteQuestion,
@@ -46,6 +48,7 @@ const ExamEditor = ({
   const [currentStep, setCurrentStep] = useState(1);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isTextModalOpen, setIsTextModalOpen] = useState(false);
 
   const handleDownloadCsvTemplate = () => {
     const sampleCsv = [
@@ -324,6 +327,9 @@ const ExamEditor = ({
                 <button type="button" className="efb-btn-secondary" onClick={() => setIsImportModalOpen(true)}>
                   <Upload size={16} /> Nhập từ File (CSV)
                 </button>
+                <button type="button" className="efb-btn-secondary" onClick={() => setIsTextModalOpen(true)} style={{ background: '#f0f9ff', color: '#0369a1', borderColor: '#bae6fd' }}>
+                  <Type size={16} /> Nhập nhanh từ văn bản (Word/PDF)
+                </button>
               </div>
 
               {questions.length === 0 ? (
@@ -361,6 +367,13 @@ const ExamEditor = ({
             onClose={() => setIsImportModalOpen(false)}
             onDownloadTemplate={handleDownloadCsvTemplate}
             onFileChange={handleBulkImportQuestions}
+            importMessage={importMessage}
+          />
+
+          <TextImportModal
+            isOpen={isTextModalOpen}
+            onClose={() => setIsTextModalOpen(false)}
+            onImport={handleRawTextImport}
             importMessage={importMessage}
           />
         </div>

@@ -165,7 +165,10 @@ const ReviewExam = () => {
                   background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '0.5rem',
                   padding: '0.75rem', cursor: 'pointer', fontWeight: 600, fontSize: '0.9rem', width: '100%', color: '#1e293b'
                 }}
-                onClick={() => navigate(`/exam/result/${examId}`, { state: result })}
+                onClick={() => {
+                  const targetId = result.resultId || examId; 
+                  navigate(`/exam/result/${targetId}`, { state: result });
+                }}
              >
                 ← Quay lại trang kết quả
              </button>

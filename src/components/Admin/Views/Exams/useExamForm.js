@@ -8,7 +8,8 @@ import {
 import { 
   normalizeQuestionFromApi, 
   toImportedQuestionsFromCsv, 
-  normalizeImportedQuestion 
+  normalizeImportedQuestion,
+  parseQuestionsFromRawText
 } from './utils';
 
 export const useExamForm = (token, onSuccess) => {
@@ -215,6 +216,25 @@ export const useExamForm = (token, onSuccess) => {
     }
   };
 
+  const handleRawTextImport = (text) => {
+    try {
+      setError('');
+      setImportMessage('');
+      if (!text.trim()) throw new Error('Vui lòng dán nội dung câu hỏi.');
+
+      const imported = parseQuestionsFromRawText(text);
+      if (imported.length === 0) {
+        throw new Error('Không nhận diện được câu hỏi nào. Vui lòng kiểm tra lại định dạng.');
+      }
+
+      const nextQuestions = [...questions, ...imported];
+      syncQuestions(nextQuestions);
+      setImportMessage(`Đã nhập thành công ${imported.length} câu hỏi từ văn bản.`);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
   const handleSaveQuestion = () => {
     const trimmedQuestion = questionDraft.question.trim();
     const cleanedOptions = questionDraft.options.map((option) => option.trim());
@@ -322,6 +342,7 @@ export const useExamForm = (token, onSuccess) => {
     handleQuestionOptionChange,
     handleQuestionImageUpload,
     handleBulkImportQuestions,
+    handleRawTextImport,
     handleSaveQuestion,
     handleEditQuestion,
     handleDeleteQuestion,

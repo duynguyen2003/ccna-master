@@ -141,3 +141,94 @@ export const formatExamDate = (value) => {
   if (Number.isNaN(date.getTime())) return '--/--/----';
   return date.toLocaleDateString('vi-VN');
 };
+
+/**
+ * Phân tách văn bản thô thành danh sách câu hỏi
+ * Hỗ trợ mẫu: Câu hỏi... (A)... (B)... (C)... (D)... Đáp án đúng: (X) Giải thích:...
+ */
+export const parseQuestionsFromRawText = (rawText) => {
+  if (!rawText || !rawText.trim()) return [];
+
+  // Tách các khối câu hỏi dựa trên từ khóa "Câu [số]" hoặc khoảng trắng lớn
+  // Nhưng ở đây ta sẽ dùng logic dòng để linh hoạt hơn
+  const lines = rawText.split('\n').map(l => l.trim()).filter(l => l !== '');
+  const questions = [];
+  let currentQ = null;
+
+  lines.forEach((line) => {
+    // Nếu dòng bắt đầu bằng (A), (B), (C), (D) -> Là phương án
+    const optionMatch = line.match(/^\(([A-F])\)\s*(.*)/i);
+    // Nếu dòng chứa đáp án đúng (Linh hoạt: có thể có ✓, có thể có hoặc không có dấu :, có thể có hoặc không có ngoặc đơn)
+    const answerMatch = line.match(/(?:✓\s*)?Đáp án đúng(?:\s*là)?[:\s]*\(?([A-F])\)?/i);
+    // Nếu dòng chứa giải thích
+    const explanationMatch = line.match(/^Giải thích:\s*(.*)/i);
+    // Nếu là tiêu đề câu (Câu 88...) -> Bỏ qua số câu, chỉ lấy làm dấu hiệu ngắt
+    const isNewQuestionMarker = line.match(/^Câu\s*\d+/i);
+
+    if (optionMatch) {
+      if (currentQ) {
+        currentQ.options.push(optionMatch[2].trim());
+      }
+    } else if (answerMatch) {
+      if (currentQ) {
+        const letter = answerMatch[1].toUpperCase();
+        const idx = OPTION_LABELS.indexOf(letter);
+        if (idx !== -1) currentQ.correctAnswer = [idx];
+      }
+    } else if (explanationMatch) {
+      if (currentQ) {
+        currentQ.explanation = explanationMatch[1].trim();
+        currentQ.isReadingExplanation = true;
+      }
+    } else if (isNewQuestionMarker) {
+      // Bắt đầu khối mới, lưu khối cũ
+      if (currentQ && currentQ.question) {
+        questions.push(finalizeQuestion(currentQ));
+      }
+      currentQ = createEmptyQuestion();
+    } else {
+      // Là nội dung câu hỏi hoặc phần tiếp theo của giải thích
+      if (!currentQ) {
+        currentQ = createEmptyQuestion();
+        currentQ.question = line;
+      } else if (currentQ.isReadingExplanation) {
+        currentQ.explanation += ' ' + line;
+      } else if (currentQ.options.length > 0) {
+        // Có thể là dòng văn bản nằm giữa các option hoặc sau option cuối
+        // Thường là rác hoặc phần giải thích chưa có tag
+      } else {
+        // Nối thêm vào nội dung câu hỏi
+        currentQ.question += (currentQ.question ? ' ' : '') + line;
+      }
+    }
+  });
+
+  if (currentQ && currentQ.question) {
+    questions.push(finalizeQuestion(currentQ));
+  }
+
+  return questions;
+};
+
+const createEmptyQuestion = () => ({
+  question: '',
+  options: [],
+  correctAnswer: [],
+  explanation: '',
+  imageUrl: '',
+  isReadingExplanation: false
+});
+
+const finalizeQuestion = (q) => ({
+  question: q.question.trim(),
+  options: q.options.length >= 4 ? q.options.slice(0, 4) : fillOptions(q.options),
+  correctAnswer: q.correctAnswer,
+  explanation: q.explanation.trim(),
+  imageUrl: ''
+});
+
+const fillOptions = (opts) => {
+  const newOpts = [...opts];
+  while (newOpts.length < 4) newOpts.push('');
+  return newOpts;
+};

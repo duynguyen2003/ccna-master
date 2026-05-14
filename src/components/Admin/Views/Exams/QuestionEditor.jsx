@@ -7,7 +7,8 @@ import {
   PencilLine,
   Trash2,
   Image as ImageIcon,
-  Download
+  Download,
+  Type
 } from 'lucide-react';
 import { OPTION_LABELS } from './constants';
 import SimpleRTE from './SimpleRTE';
@@ -220,6 +221,71 @@ export const ImportModal = ({
               hidden
             />
           </label>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─── TextImportModal ──────────────────────────────────────────────────────────
+
+export const TextImportModal = ({
+  isOpen,
+  onClose,
+  onImport,
+  importMessage
+}) => {
+  const [text, setText] = React.useState('');
+
+  if (!isOpen) return null;
+
+  const handleProcess = () => {
+    onImport(text);
+    if (text.trim()) {
+      setText('');
+      onClose();
+    }
+  };
+
+  return (
+    <div className={`efb-modal-overlay ${isOpen ? 'open' : ''}`} onClick={onClose}>
+      <div className="efb-modal-content" style={{ maxWidth: '800px' }} onClick={(e) => e.stopPropagation()}>
+        <div className="efb-modal-header">
+          <div>
+            <h3>Nhập Nhanh Từ Văn Bản</h3>
+            <p>Dán nội dung từ Word/PDF theo đúng định dạng mẫu</p>
+          </div>
+          <button type="button" className="efb-drawer-close" onClick={onClose}>
+            <X size={20} />
+          </button>
+        </div>
+
+        <div className="efb-modal-body">
+          <div style={{ background: '#f0f9ff', padding: '12px', borderRadius: '8px', border: '1px solid #bae6fd', marginBottom: '16px' }}>
+            <p style={{ margin: 0, fontSize: '13px', color: '#0369a1', fontWeight: 600 }}>Định dạng hỗ trợ:</p>
+            <pre style={{ margin: '8px 0 0', fontSize: '11px', color: '#0c4a6e', background: 'rgba(255,255,255,0.5)', padding: '8px', borderRadius: '4px' }}>
+{`Câu 1: Nội dung câu hỏi...
+(A) Phương án 1
+(B) Phương án 2...
+✓ Đáp án đúng: (A)
+Giải thích: Nội dung giải thích...`}
+            </pre>
+          </div>
+
+          <textarea
+            className="efb-input"
+            style={{ minHeight: '300px', resize: 'vertical', fontFamily: 'monospace', fontSize: '13px', lineHeight: '1.6' }}
+            placeholder="Dán nội dung tại đây..."
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+          />
+        </div>
+
+        <div className="efb-modal-footer" style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', padding: '16px 24px', borderTop: '1px solid #e2e8f0' }}>
+          <button type="button" className="efb-btn-ghost" onClick={onClose} style={{ padding: '0 16px', height: '40px' }}>Hủy</button>
+          <button type="button" className="efb-btn-primary" onClick={handleProcess} style={{ padding: '0 24px', height: '40px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Type size={16} /> Bắt đầu phân tích & Nhập
+          </button>
         </div>
       </div>
     </div>

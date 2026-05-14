@@ -76,7 +76,8 @@ const ExamResult = () => {
     examTitle: exam?.title || `CCNA Exam ${examId}`,
     userAnswers: answers,
     questions: exam?.questions || [],
-    examId
+    examId,
+    resultId // Lưu lại ID của lượt thi này
   };
 
   return (
