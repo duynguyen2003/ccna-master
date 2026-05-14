@@ -36,19 +36,25 @@ const getYoutubeVideoId = (url) => {
    return null;
 };
 
-const VideoPlayer = ({ url, lessonId, courseId, moduleId, token, onProgressChange }) => {
+const VideoPlayer = ({ url, lessonId, courseId, moduleId, token, user, onProgressChange }) => {
    const playerRef = useRef(null);
    const intervalRef = useRef(null);
    const lastReportedTimeRef = useRef(0);
+   const maxViewedTimeRef = useRef(0); // [ANTI-CHEAT] Lưu mốc thời gian lớn nhất học viên đã xem
    const youtubeId = getYoutubeVideoId(url);
-   const [videoData, setVideoData] = useState({ lastPosition: 0, watchedSeconds: 0 });
+   const [videoData, setVideoData] = useState({ lastPosition: 0, watchedSeconds: 0, isCompleted: false });
+
+   const isAdmin = user?.role === 'ADMIN';
 
    // 1. Lấy tiến độ cũ để Resume
    useEffect(() => {
       if (lessonId && token) {
          api.getVideoProgress(token, lessonId)
             .then(res => {
-               if (res.data) setVideoData(res.data);
+               if (res.data) {
+                  setVideoData(res.data);
+                  maxViewedTimeRef.current = res.data.lastPosition || 0;
+               }
             })
             .catch(err => console.error("Error fetching video progress:", err));
       }
@@ -59,22 +65,47 @@ const VideoPlayer = ({ url, lessonId, courseId, moduleId, token, onProgressChang
       lastReportedTimeRef.current = Math.floor(player.getCurrentTime());
 
       intervalRef.current = setInterval(() => {
-         const currentTime = Math.floor(player.getCurrentTime());
+         const currentTime = player.getCurrentTime();
          const duration = player.getDuration();
-         const delta = currentTime - lastReportedTimeRef.current;
+         const floorTime = Math.floor(currentTime);
+
+         // [ANTI-CHEAT] Chặn tua nhanh đối với Học viên
+         if (!isAdmin && floorTime > maxViewedTimeRef.current + 3) {
+            player.seekTo(maxViewedTimeRef.current);
+            return;
+         }
+
+         // Cập nhật mốc thời gian lớn nhất đã xem
+         if (floorTime > maxViewedTimeRef.current) {
+            maxViewedTimeRef.current = floorTime;
+         }
+
+         const delta = floorTime - lastReportedTimeRef.current;
 
          // Nếu user xem được ít nhất 5s thực tế (không phải nhảy cóc)
          if (delta >= 5 && delta < 15) { 
+            const isFinished = (floorTime / duration) >= 0.9 || videoData.isCompleted;
+            
             api.updateVideoProgress(token, {
                lessonId,
                watchedSeconds: delta,
-               lastPosition: currentTime
+               lastPosition: floorTime,
+               isCompleted: isFinished
             }).catch(e => console.error("Failed to sync video time:", e));
             
-            lastReportedTimeRef.current = currentTime;
+            if (isFinished && !videoData.isCompleted) {
+               setVideoData(prev => ({ ...prev, isCompleted: true }));
+               // Mark hoàn thành bài học ở bảng UserProgress
+               api.updateUserProgress(token, {
+                  courseId, moduleId, lessonId,
+                  progressPercent: 100,
+                  status: 'COMPLETED'
+               });
+            }
+
+            lastReportedTimeRef.current = floorTime;
          } else if (delta < 0 || delta >= 15) {
-            // User vừa nhảy video (seek), cập nhật lại mốc để tính delta tiếp theo
-            lastReportedTimeRef.current = currentTime;
+            lastReportedTimeRef.current = floorTime;
          }
 
          // Cập nhật UI Progress bar
@@ -82,19 +113,11 @@ const VideoPlayer = ({ url, lessonId, courseId, moduleId, token, onProgressChang
             const percent = (currentTime / duration) * 100;
             onProgressChange && onProgressChange({
                played: percent / 100,
-               playedSeconds: currentTime,
+               playedSeconds: floorTime,
                loaded: 1,
                loadedSeconds: duration,
+               isCompleted: videoData.isCompleted || percent >= 90
             });
-
-            // Nếu đạt >90% thì mark hoàn thành bài học
-            if (percent >= 90) {
-               api.updateUserProgress(token, {
-                  courseId, moduleId, lessonId,
-                  progressPercent: Math.round(percent),
-                  status: 'COMPLETED'
-               });
-            }
          }
       }, 1000);
    };
@@ -158,7 +181,7 @@ const Lesson = () => {
    const navigate = useNavigate();
    const [searchParams] = useSearchParams();
    const courseId = searchParams.get('course');
-   const { token } = useAuth();
+   const { token, user } = useAuth();
 
    const [viewportWidth, setViewportWidth] = useState(getViewportWidth);
    const [leftOpen, setLeftOpen] = useState(() => getViewportWidth() >= MOBILE_BREAKPOINT);
@@ -378,12 +401,10 @@ const Lesson = () => {
       const playedRatio = state.played || 0;
       const loadedRatio = state.loaded || 0;
 
-      // Guard: nếu video chưa load thực sự (loaded=0) thì bỏ qua
-      // ReactPlayer có thể báo played=1 khi video source lỗi/rỗng
       if (loadedRatio === 0 && playedRatio >= 0.95) return;
-      if (state.playedSeconds < 1 && playedRatio >= 0.95) return;
-
-      const completed = playedRatio >= 0.95 && state.playedSeconds > 10;
+      
+      // Sử dụng trạng thái hoàn thành từ VideoPlayer truyền lên
+      const completed = state.isCompleted;
 
       setLessonProgress((currentProgress) => ({
          ...currentProgress,
@@ -610,6 +631,7 @@ const Lesson = () => {
                            courseId={courseId}
                            moduleId={activeModule?.id}
                            token={token}
+                           user={user}
                            onProgressChange={(state) => handleProgress(selectedLesson.id, state)}
                         />
                      ) : (

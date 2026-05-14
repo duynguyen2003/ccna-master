@@ -603,15 +603,17 @@ module.exports.updateVideoProgress = async (req, res, next) => {
       prisma.videoProgress.upsert({
         where: { userId_lessonId: { userId, lessonId } },
         update: {
-          // [FIX] Chỉ tăng watchedSeconds, không giảm nếu tua lùi
           watchedSeconds: { increment: watchedSeconds },
           lastPosition,
+          // [FIX] Chỉ cho phép chuyển từ false -> true, không bao giờ ngược lại
+          isCompleted: req.body.isCompleted === true ? true : undefined,
         },
         create: {
           userId,
           lessonId,
           watchedSeconds,
           lastPosition,
+          isCompleted: req.body.isCompleted === true,
         }
       }),
 

@@ -391,6 +391,7 @@ model VideoProgress {
   lessonId        Int      @map("lesson_id")
   watchedSeconds  Int      @default(0) @map("watched_seconds")
   lastPosition    Int      @default(0) @map("last_position")
+  isCompleted     Boolean  @default(false) @map("is_completed")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
