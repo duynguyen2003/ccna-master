@@ -56,7 +56,7 @@
 .admin-table th {
   font-weight: 600;
   color: var(--admin-text-secondary);
-  background-color: #f8fafc;
+  background-color: #ffffff;
   text-transform: uppercase;
   font-size: 11px;
   letter-spacing: 0.5px;
@@ -67,7 +67,7 @@
 }
 
 .admin-table tbody tr:hover {
-  background-color: #f8fafc;
+  background-color: #ffffff;
 }
 
 .admin-table tbody tr:last-child td {

@@ -6,7 +6,7 @@
   --doc-primary: #1e40af;
   /* Navy/Blue */
   --doc-primary-hover: #1e3a8a;
-  --doc-bg: #f8fafc;
+  --doc-bg: var(--bg-color, #ffffff);
   --doc-card-bg: #ffffff;
   --doc-text-main: #1e293b;
   --doc-text-sub: #64748b;
@@ -17,7 +17,7 @@
   max-width: 1200px;
   margin: 0 auto;
   padding: 3rem 2rem;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--system-ui);
   color: var(--doc-text-main);
 }
 
@@ -239,7 +239,7 @@
 
 .list-header {
   display: flex;
-  background-color: #f8fafc;
+  background-color: #ffffff;
   padding: 1rem 1.5rem;
   border-bottom: 1px solid var(--doc-border);
   font-size: 0.75rem;
@@ -270,7 +270,7 @@
 }
 
 .list-row:hover {
-  background-color: #f8fafc;
+  background-color: #ffffff;
 }
 
 .cell-flex {

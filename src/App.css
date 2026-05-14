@@ -1,10 +1,12 @@
-@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap');
+/* Icons (Required) */
 @import url('https://fonts.googleapis.com/icon?family=Material+Icons+Round');
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
 
+/* Text Fonts removed for system default */
+
 :root {
   --primary-color: #007AFF;
-  --bg-color: #F8FAFC;
+  --bg-color: #ffffff;
   --text-color: #0f172a;
   --card-bg: #ffffff;
   --border-color: #e2e8f0;
@@ -43,7 +45,7 @@
   --primary-light: #eff6ff;
   --success: #16a34a;
   --danger: #dc2626;
-  --bg-page: #f8fafc;
+  --bg-page: #ffffff;
   --bg-card: #ffffff;
   --text-main: #1e293b;
   --text-sub: #64748b;
@@ -51,7 +53,7 @@
 }
 
 body {
-  font-family: 'Be Vietnam Pro', 'Inter', var(--system-ui);
+  font-family: var(--system-ui);
   background-color: var(--bg-color);
   color: var(--text-color);
   transition: background-color 0.3s, color 0.3s;

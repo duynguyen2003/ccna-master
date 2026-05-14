@@ -320,7 +320,7 @@
 }
 
 .lc-alert-box {
-    background: #f8fafc;
+    background: #ffffff;
     border-left: 4px solid #64748b;
     padding: 1.25rem 1.5rem;
     border-radius: 0.5rem;
@@ -425,7 +425,7 @@
     padding: 1.5rem;
     border-radius: 0.75rem;
     overflow-x: auto;
-    font-family: monospace;
+    font-family: var(--system-ui);
     font-size: 0.9rem;
 }
 
@@ -478,7 +478,7 @@
     padding: 0.75rem;
     border-radius: 0.5rem;
     border: 1px solid #e2e8f0;
-    background: #f8fafc;
+    background: #ffffff;
     text-decoration: none;
     text-align: left;
     cursor: pointer;
@@ -525,7 +525,7 @@
     border: 1px solid #e2e8f0;
     font-size: 0.85rem;
     resize: none;
-    background: #f8fafc;
+    background: #ffffff;
     box-sizing: border-box;
 }
 
@@ -815,7 +815,7 @@
     justify-content: center;
     font-size: 1.1rem;
     color: #64748b;
-    background: #f8fafc;
+    background: #ffffff;
 }
 
 /* Scrollbar styling */

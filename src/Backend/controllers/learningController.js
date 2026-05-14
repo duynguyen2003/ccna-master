@@ -1,5 +1,6 @@
 const { getPrisma } = require('../config/database');
 const { uploadBufferToCloudinary } = require('../config/cloudinary');
+const { adminActionLogger } = require('../middleware/logging');
 const prisma = getPrisma();
 
 module.exports.getCourses = async (req, res, next) => {
@@ -146,6 +147,9 @@ module.exports.createCourse = async (req, res, next) => {
       }
     });
 
+    // Log action
+    await adminActionLogger('CREATE_COURSE', req.user.id, `Tạo khóa học mới: ${title} (${code})`, 'courses');
+
     res.status(201).json({ message: 'Tạo khóa học thành công', course });
   } catch (error) {
     next(error);
@@ -192,6 +196,9 @@ module.exports.updateCourse = async (req, res, next) => {
       data: dataToUpdate
     });
 
+    // Log action
+    await adminActionLogger('UPDATE_COURSE', req.user.id, `Cập nhật khóa học: ${course.title}`, 'courses');
+
     res.json({ message: 'Cập nhật khóa học thành công', course });
   } catch (error) {
     next(error);
@@ -201,10 +208,14 @@ module.exports.updateCourse = async (req, res, next) => {
 module.exports.deleteCourse = async (req, res, next) => {
   try {
     const { id } = req.params;
-    await prisma.course.update({
+    const deletedCourse = await prisma.course.update({
       where: { id },
       data: { deletedAt: new Date(), status: 'DRAFT' }
     });
+
+    // Log action
+    await adminActionLogger('DELETE_COURSE', req.user.id, `Xóa khóa học (soft delete): ${deletedCourse.title}`, 'courses');
+
     res.json({ message: 'Xóa khóa học thành công' });
   } catch (error) {
     next(error);

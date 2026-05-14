@@ -31,45 +31,21 @@ export default function Profile() {
   const { token } = useAuth();
   const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
+
   const [loading, setLoading] = useState(true);
 
-  const fetchProfile = async () => {
-    try {
-      const data = await api.getUserProfile(token);
-      setProfile(data);
-    } catch (error) {
-      console.error("Failed to fetch profile", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Fetch profile lần đầu tiên
   useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const data = await api.getUserProfile(token);
+        setProfile(data);
+      } catch (error) {
+        console.error("Failed to fetch profile", error);
+      } finally {
+        setLoading(false);
+      }
+    };
     if (token) fetchProfile();
-  }, [token]);
-
-  // 🔄 Refresh profile khi window focus hoặc visible (user quay lại từ lesson)
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (!document.hidden && token) {
-        fetchProfile();
-      }
-    };
-
-    const handleWindowFocus = () => {
-      if (token) {
-        fetchProfile();
-      }
-    };
-
-    window.addEventListener('focus', handleWindowFocus);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    return () => {
-      window.removeEventListener('focus', handleWindowFocus);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
   }, [token]);
 
   if (loading) {

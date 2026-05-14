@@ -1,5 +1,6 @@
 const bcrypt = require('bcrypt');
 const { getPrisma } = require('../config/database');
+const { adminActionLogger } = require('../middleware/logging');
 const prisma = getPrisma();
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -415,6 +416,9 @@ module.exports.createUser = async (req, res, next) => {
       select: { id: true, fullName: true, email: true, role: true, isActive: true }
     });
 
+    // Log action
+    await adminActionLogger('CREATE', req.user.id, `Tạo người dùng mới: ${email}`, 'users');
+
     res.status(201).json({ message: 'Tạo tài khoản thành công', user: newUser });
   } catch (error) {
     next(error);
@@ -438,6 +442,9 @@ module.exports.updateRole = async (req, res, next) => {
       select: { id: true, fullName: true, email: true, role: true }
     });
 
+    // Log action
+    await adminActionLogger('UPDATE_ROLE', req.user.id, `Cập nhật quyền cho ${updatedUser.email} thành ${role}`, 'users');
+
     res.json({ message: 'Cập nhật quyền thành công', user: updatedUser });
   } catch (error) {
     next(error);
@@ -458,6 +465,14 @@ module.exports.toggleActive = async (req, res, next) => {
       select: { id: true, fullName: true, email: true, isActive: true }
     });
 
+    // Log action
+    await adminActionLogger(
+      updatedUser.isActive ? 'ACTIVATE' : 'DEACTIVATE', 
+      req.user.id, 
+      `${updatedUser.isActive ? 'Kích hoạt' : 'Vô hiệu hóa'} người dùng: ${updatedUser.email}`, 
+      'users'
+    );
+
     res.json({
       message: `Đã ${updatedUser.isActive ? 'kích hoạt' : 'vô hiệu hóa'} tài khoản`,
       user: updatedUser,
@@ -472,10 +487,14 @@ module.exports.toggleActive = async (req, res, next) => {
 module.exports.deleteUser = async (req, res, next) => {
   try {
     const { id } = req.params;
-    await prisma.user.update({
+    const deletedUser = await prisma.user.update({
       where: { id: parseInt(id) },
       data: { deletedAt: new Date(), isActive: false }
     });
+
+    // Log action
+    await adminActionLogger('DELETE', req.user.id, `Xóa người dùng (soft delete): ${deletedUser.email}`, 'users');
+
     res.json({ message: 'Xóa tài khoản thành công' });
   } catch (error) {
     next(error);

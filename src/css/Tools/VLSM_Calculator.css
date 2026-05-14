@@ -94,7 +94,7 @@
   border-radius: 12px;
   cursor: pointer;
   font-size: 13px;
-  font-family: inherit;
+  font-family: var(--system-ui);
   color: var(--slate-600);
   transition: all 0.2s;
 }
@@ -281,9 +281,9 @@
   border: 1.5px solid var(--slate-200);
   border-radius: 10px;
   font-size: 14px;
-  font-family: inherit;
+  font-family: var(--system-ui);
   color: var(--slate-900);
-  background: var(--bg-color, #f8fafc);
+  background: var(--bg-color, #ffffff);
   transition: border-color 0.2s, box-shadow 0.2s;
   outline: none;
   box-sizing: border-box;
@@ -304,9 +304,9 @@
   border: 1.5px solid var(--slate-200);
   border-radius: 10px;
   font-size: 14px;
-  font-family: inherit;
+  font-family: var(--system-ui);
   color: var(--slate-900);
-  background: var(--bg-color, #f8fafc);
+  background: var(--bg-color, #ffffff);
   transition: border-color 0.2s, box-shadow 0.2s;
   outline: none;
   cursor: pointer;
@@ -349,7 +349,7 @@
   padding: 6px 14px;
   font-size: 12px;
   font-weight: 700;
-  font-family: inherit;
+  font-family: var(--system-ui);
   color: var(--blue-600);
   background: #eff6ff;
   border: 1.5px solid #bfdbfe;
@@ -520,7 +520,7 @@
   padding: 14px 25px;
   font-size: 14px;
   font-weight: 800;
-  font-family: inherit;
+  font-family: var(--system-ui);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--text-color);
@@ -610,7 +610,7 @@
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: var(--slate-500);
-  background: #f8fafc;
+  background: #ffffff;
   border-bottom: 1px solid var(--border-color, #e2e8f0);
   text-align: left;
   white-space: nowrap;
@@ -662,7 +662,7 @@
 }
 
 .vlsm-cell-mono {
-  font-family: 'SFMono-Regular', 'Menlo', 'Consolas', 'Liberation Mono', monospace;
+  font-family: var(--system-ui);
   font-size: 13px;
 }
 
@@ -700,7 +700,7 @@
   flex-wrap: wrap;
   gap: 0;
   padding: 16px 28px;
-  background: #f8fafc;
+  background: #ffffff;
   border-top: 1px solid var(--border-color, #e2e8f0);
 }
 
@@ -724,7 +724,7 @@
   font-size: 16px;
   font-weight: 800;
   color: var(--slate-900);
-  font-family: 'SFMono-Regular', 'Menlo', 'Consolas', monospace;
+  font-family: var(--system-ui);
 }
 
 .vlsm-summary-percent {

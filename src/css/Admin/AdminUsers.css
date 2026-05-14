@@ -1,4 +1,4 @@
-﻿/* src/css/Admin/AdminUsers.css */
+/* src/css/Admin/AdminUsers.css */
 
 .admin-users-toolbar {
   --admin-users-control-height: 46px;
@@ -429,7 +429,7 @@
 }
 
 .admin-users-action-menu-item:hover {
-  background: #f8fafc;
+  background: #ffffff;
 }
 
 .admin-users-tooltip-trigger {
@@ -515,7 +515,7 @@
 }
 
 .admin-users-page-btn:hover:not(:disabled) {
-  background: #f8fafc;
+  background: #ffffff;
 }
 
 .admin-users-page-btn:disabled {

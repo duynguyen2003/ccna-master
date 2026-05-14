@@ -1,6 +1,7 @@
 const { getPrisma } = require('../config/database');
 const { uploadBufferToCloudinary } = require('../config/cloudinary');
 const { ValidationError } = require('../errors/validation-error');
+const { adminActionLogger } = require('../middleware/logging');
 
 const prisma = getPrisma();
 
@@ -135,6 +136,9 @@ module.exports.createExam = async (req, res, next) => {
       include: { questions: true },
     });
 
+    // Log action
+    await adminActionLogger('CREATE_EXAM', req.user.id, `Tạo đề thi mới: ${exam.title}`, 'exams', exam.id);
+
     res.status(201).json({ message: 'Tạo bài thi thành công', exam });
   } catch (error) {
     if (error.name === 'ValidationError') {
@@ -219,6 +223,9 @@ module.exports.updateExam = async (req, res, next) => {
       include: { questions: { orderBy: { orderIndex: 'asc' } } },
     });
 
+    // Log action
+    await adminActionLogger('UPDATE_EXAM', req.user.id, `Cập nhật đề thi: ${exam.title}`, 'exams', exam.id);
+
     res.json({ message: 'Cập nhật bài thi thành công', exam });
   } catch (error) {
     if (error.name === 'ValidationError') {
@@ -248,6 +255,9 @@ module.exports.deleteExam = async (req, res, next) => {
       where: { id: examId },
       data: { deletedAt: new Date() },
     });
+
+    // Log action
+    await adminActionLogger('DELETE_EXAM', req.user.id, `Xóa đề thi (soft delete): ${existing.title}`, 'exams', examId);
 
     res.json({ message: 'Xóa bài thi thành công' });
   } catch (error) {

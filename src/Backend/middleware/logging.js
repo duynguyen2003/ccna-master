@@ -3,6 +3,9 @@
  * PURPOSE: Log HTTP requests and admin actions
  */
 
+const { getPrisma } = require('../config/database');
+const prisma = getPrisma();
+
 const requestLogger = (req, res, next) => {
   const start = Date.now();
 
@@ -17,23 +20,35 @@ const requestLogger = (req, res, next) => {
       ip: req.ip,
       userAgent: req.get('user-agent'),
     };
+    // Chỉ log console để tránh làm nặng DB với request thông thường
     console.log('[REQUEST LOG]', JSON.stringify(log));
   });
 
   next();
 };
 
-const adminActionLogger = (action, userId, details) => {
+/**
+ * Ghi log hành động admin vào Database
+ */
+const adminActionLogger = async (action, adminId, details, targetTable = '', targetId = null) => {
   try {
-    const log = {
-      timestamp: new Date().toISOString(),
+    const logData = {
       action,
-      userId,
-      details,
+      adminId: parseInt(adminId),
+      details: typeof details === 'string' ? details : JSON.stringify(details),
+      targetTable,
+      targetId: targetId ? String(targetId) : null,
+      ipAddress: ''
     };
-    console.log('[ADMIN ACTION LOG]', JSON.stringify(log));
+
+    const newLog = await prisma.adminLog.create({
+      data: logData
+    });
+
+    console.log('[ADMIN ACTION LOG SAVED]', newLog.id);
+    return newLog;
   } catch (error) {
-    console.log('[ADMIN ACTION LOG]', action, userId, details);
+    console.error('[ADMIN ACTION LOG ERROR]', error.message);
   }
 };
 

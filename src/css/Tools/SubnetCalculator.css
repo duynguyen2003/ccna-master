@@ -128,9 +128,9 @@
   border: 1.5px solid var(--slate-200);
   border-radius: 10px;
   font-size: 14px;
-  font-family: inherit;
+  font-family: var(--system-ui);
   color: var(--slate-900);
-  background: var(--bg-color, #f8fafc);
+  background: var(--bg-color, #ffffff);
   transition: border-color 0.2s, box-shadow 0.2s;
   outline: none;
 }
@@ -155,9 +155,9 @@
   border: 1.5px solid var(--slate-200);
   border-radius: 10px;
   font-size: 14px;
-  font-family: inherit;
+  font-family: var(--system-ui);
   color: var(--slate-900);
-  background: var(--bg-color, #f8fafc);
+  background: var(--bg-color, #ffffff);
   transition: border-color 0.2s, box-shadow 0.2s;
   outline: none;
   cursor: pointer;
@@ -182,7 +182,7 @@
   padding: 10px 22px;
   font-size: 14px;
   font-weight: 700;
-  font-family: inherit;
+  font-family: var(--system-ui);
   color: #fff;
   background: linear-gradient(135deg, var(--navy-800) 0%, var(--slate-800) 100%);
   border: none;
@@ -291,7 +291,7 @@
   text-transform: uppercase;
   color: var(--slate-500);
   border-bottom: 1px solid var(--border-color, #e2e8f0);
-  background: var(--bg-color, #f8fafc);
+  background: var(--bg-color, #ffffff);
 }
 
 .subnet-result-card-header .material-icons-round {
@@ -333,7 +333,7 @@
 
 .value-cell {
   color: var(--slate-800);
-  font-family: 'SFMono-Regular', 'Menlo', 'Consolas', monospace;
+  font-family: var(--system-ui);
   font-size: 14px;
 }
 
@@ -363,7 +363,7 @@
   font-size: 11px;
   color: var(--slate-400);
   margin-top: 4px;
-  font-family: 'SFMono-Regular', 'Menlo', 'Consolas', monospace;
+  font-family: var(--system-ui);
   letter-spacing: 0.02em;
 }
 
@@ -384,7 +384,7 @@
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--slate-500);
-  background: var(--bg-color, #f8fafc);
+  background: var(--bg-color, #ffffff);
   border-bottom: 1px solid var(--border-color, #e2e8f0);
   position: sticky;
   top: 0;
@@ -400,7 +400,7 @@
 
 .list-table tbody td {
   border-bottom: 1px solid #f1f5f9;
-  font-family: 'SFMono-Regular', 'Menlo', 'Consolas', monospace;
+  font-family: var(--system-ui);
   font-size: 13.5px;
   color: var(--slate-700);
 }

@@ -349,7 +349,7 @@
   height: 32px;
   border: 1px solid #dbe3ef;
   border-radius: 10px;
-  background: #f8fafc;
+  background: #ffffff;
   color: #475569;
   display: inline-flex;
   align-items: center;
@@ -367,7 +367,7 @@
 .exam-builder-answer-item {
   border: 1px solid #dbe3ef;
   border-radius: 12px;
-  background: #f8fafc;
+  background: #ffffff;
   padding: 12px;
   display: flex;
   flex-direction: column;
@@ -400,7 +400,7 @@
 
 .exam-builder-explanation>div {
   border-radius: 12px;
-  background: #f8fafc;
+  background: #ffffff;
   border: 1px solid #dbe3ef;
   padding: 12px;
 }
@@ -430,7 +430,7 @@
   margin-top: 14px;
   border: 1px solid #dbe3ef;
   border-radius: 14px;
-  background: #f8fafc;
+  background: #ffffff;
   padding: 12px 14px;
   color: #475569;
   font-size: 13px;
@@ -560,7 +560,7 @@
   background: #f9fafb;
   color: #111827;
   font-size: 14px;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--system-ui);
   outline: none;
   transition: 0.18s;
 }
@@ -646,7 +646,7 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  background: #f8fafc;
+  background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 14px;
   padding: 16px;
@@ -734,7 +734,7 @@
   outline: none;
   font-size: 13px;
   color: #374151;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--system-ui);
 }
 
 .efb-option-input::placeholder {
@@ -883,7 +883,7 @@
 .efb-qexplan {
   font-size: 12px;
   color: #64748b;
-  background: #f8fafc;
+  background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   padding: 8px 12px;
@@ -1054,7 +1054,7 @@
 .efb-page {
   display: flex;
   flex-direction: column;
-  background: #f8fafc;
+  background: #ffffff;
   min-height: 100%;
 }
 
@@ -1200,7 +1200,7 @@
 }
 
 .efb-btn-secondary:hover {
-  background: #f8fafc;
+  background: #ffffff;
   border-color: #cbd5e1;
   color: #1e293b;
 }
@@ -1273,7 +1273,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #f8fafc;
+  background: #ffffff;
 }
 
 .efb-drawer-header h3 {
@@ -1312,7 +1312,7 @@
 .efb-drawer-footer {
   padding: 16px 24px;
   border-top: 1px solid #e2e8f0;
-  background: #f8fafc;
+  background: #ffffff;
   display: flex;
   justify-content: flex-end;
   gap: 12px;
@@ -1333,7 +1333,7 @@
   align-items: center;
   gap: 4px;
   padding: 8px 12px;
-  background: #f8fafc;
+  background: #ffffff;
   border-bottom: 1px solid #e2e8f0;
 }
 
@@ -1383,7 +1383,7 @@
   background: #f1f5f9;
   padding: 12px;
   border-radius: 8px;
-  font-family: 'Consolas', monospace;
+  font-family: var(--system-ui);
   overflow-x: auto;
 }
 
@@ -1397,7 +1397,7 @@
   align-items: center;
   justify-content: center;
   gap: 12px;
-  background: #f8fafc;
+  background: #ffffff;
   cursor: pointer;
   transition: 0.2s;
   text-align: center;
@@ -1508,7 +1508,7 @@
 /* ─── Segmented Button ─── */
 .efb-segment-btn {
   padding: 10px 16px;
-  background: #f8fafc;
+  background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   font-size: 13px;

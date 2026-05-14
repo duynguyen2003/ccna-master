@@ -1,5 +1,5 @@
 /* Exam.css */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 
 :root {
   --primary: #2563eb;
@@ -9,7 +9,7 @@
   /* Màu xanh lá (đúng) */
   --danger: #dc2626;
   /* Màu đỏ (sai/cảnh báo) */
-  --bg-page: #f8fafc;
+  --bg-page: #ffffff;
   /* Màu nền trang */
   --bg-card: #ffffff;
   /* Màu nền thẻ */
@@ -26,7 +26,7 @@
   background-color: var(--bg-page);
   min-height: 100vh;
   padding: 2rem 1rem;
-  font-family: 'Inter', var(--system-ui, sans-serif);
+  font-family: var(--system-ui);
 }
 
 .container {
@@ -68,7 +68,7 @@
   background: #f1f5f9;
   border-radius: 8px;
   font-weight: bold;
-  font-family: 'Inter', var(--system-ui, sans-serif);
+  font-family: var(--system-ui);
   font-size: 1.1rem;
   color: var(--text-main);
 }
@@ -146,7 +146,7 @@
 }
 
 .option-label:hover {
-  background-color: #f8fafc;
+  background-color: #ffffff;
   border-color: #cbd5e1;
 }
 

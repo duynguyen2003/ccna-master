@@ -411,7 +411,7 @@
   text-align: center;
   color: #6e7681;
   font-size: 0.78rem;
-  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-family: var(--system-ui);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -467,7 +467,7 @@
 }
 
 .lab-topology-pre {
-  font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
+  font-family: var(--system-ui);
   font-size: 0.72rem;
   color: #e6edf3;
   background: rgba(255, 255, 255, 0.04);
@@ -599,7 +599,7 @@
   border: 1px solid rgba(255, 255, 255, 0.06);
   padding: 1rem 1.25rem;
   overflow-y: auto;
-  font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
+  font-family: var(--system-ui);
 }
 
 .lab-cli-line {

@@ -82,7 +82,7 @@
 }
 
 .acm-ghost-btn:hover {
-  background-color: #f8fafc;
+  background-color: #ffffff;
 }
 
 .acm-secondary-btn {
@@ -114,7 +114,7 @@
 
 .acm-btn-outline:hover {
   border-color: #94a3b8;
-  background-color: #f8fafc;
+  background-color: #ffffff;
 }
 
 .acm-stats-grid {
@@ -212,11 +212,11 @@
   color: var(--admin-text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  background-color: #f8fafc;
+  background-color: #ffffff;
 }
 
 .acm-course-table tbody tr:hover {
-  background-color: #f8fafc;
+  background-color: #ffffff;
 }
 
 .acm-course-name-cell {
@@ -245,7 +245,7 @@
   align-items: center;
   justify-content: center;
   border: 1px solid #e2e8f0;
-  background: #f8fafc;
+  background: #ffffff;
   color: #94a3b8;
   overflow: hidden;
 }
@@ -409,7 +409,7 @@
 
 .acm-input.mono,
 .mono {
-  font-family: 'Consolas', 'Courier New', monospace;
+  font-family: var(--system-ui);
 }
 
 .acm-textarea {
@@ -473,7 +473,7 @@
   flex: 1;
   border: 1px dashed #cbd5e1;
   border-radius: 12px;
-  background-color: #f8fafc;
+  background-color: #ffffff;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -628,7 +628,7 @@
 }
 
 .acm-select-trigger:hover {
-  background-color: #f8fafc;
+  background-color: #ffffff;
   border-color: #94a3b8;
 }
 
@@ -1168,7 +1168,7 @@
   align-items: center;
   gap: 6px;
   border-bottom: 1px solid #e2e8f0;
-  background-color: #f8fafc;
+  background-color: #ffffff;
 }
 
 .acm-editor-toolbar button {
@@ -1200,7 +1200,7 @@
   min-height: 180px;
   border: none;
   border-radius: 0;
-  font-family: 'Consolas', 'Courier New', monospace;
+  font-family: var(--system-ui);
   resize: vertical;
 }
 

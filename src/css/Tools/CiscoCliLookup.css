@@ -2,7 +2,7 @@
   padding: 24px;
   max-width: 1200px;
   margin: 0 auto;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--system-ui);
   color: #1a202c;
 }
 
@@ -100,7 +100,7 @@
 }
 
 .cli-category-pill:hover {
-  background: #f8fafc;
+  background: #ffffff;
   border-color: #cbd5e1;
 }
 
@@ -196,7 +196,7 @@
 }
 
 .cli-command-title {
-  font-family: 'Fira Code', 'Courier New', monospace;
+  font-family: var(--system-ui);
   font-size: 20px;
   font-weight: 700;
   color: #111827;
@@ -233,7 +233,7 @@
 .cli-terminal pre {
   margin: 0;
   color: #a3b8cc;
-  font-family: 'Fira Code', 'Courier New', monospace;
+  font-family: var(--system-ui);
   font-size: 13px;
   line-height: 1.6;
   white-space: pre-wrap;
@@ -282,7 +282,7 @@
   cursor: pointer;
   margin-left: 4px;
   transition: color 0.2s;
-  font-family: 'Fira Code', 'Courier New', monospace;
+  font-family: var(--system-ui);
   font-weight: 500;
 }
 
@@ -309,7 +309,7 @@
 }
 
 .btn-load-more:hover {
-  background: #f8fafc;
+  background: #ffffff;
   border-color: #94a3b8;
 }
 

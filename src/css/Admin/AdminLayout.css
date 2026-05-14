@@ -1,5 +1,5 @@
 /* css/Admin/AdminLayout.css â€” NetMastery Corporate Layout */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 
 /* Main Layout */
 .admin-layout {
@@ -8,7 +8,7 @@
   width: 100vw;
   background-color: var(--admin-bg);
   color: var(--admin-text-primary);
-  font-family: 'Inter', sans-serif;
+  font-family: var(--system-ui);
   overflow: hidden;
 }
 

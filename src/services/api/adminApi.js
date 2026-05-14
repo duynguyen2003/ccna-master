@@ -36,6 +36,22 @@ export const adminApi = {
       'Lỗi lấy nhật ký'
     ),
 
+  // --- MODULAR DASHBOARD ---
+  getDashboardSummary: (token) =>
+    request(`${API_URL}/admin/dashboard/summary`, { headers: getHeaders(token) }, 'Lỗi lấy tổng quan dashboard'),
+    
+  getDashboardActivity: (token) =>
+    request(`${API_URL}/admin/dashboard/activity`, { headers: getHeaders(token) }, 'Lỗi lấy hoạt động dashboard'),
+    
+  getDashboardDistribution: (token) =>
+    request(`${API_URL}/admin/dashboard/distribution`, { headers: getHeaders(token) }, 'Lỗi lấy phân bổ dashboard'),
+    
+  getDashboardTrends: (token) =>
+    request(`${API_URL}/admin/dashboard/trends`, { headers: getHeaders(token) }, 'Lỗi lấy xu hướng dashboard'),
+    
+  getRecentStudents: (token) =>
+    request(`${API_URL}/admin/dashboard/students`, { headers: getHeaders(token) }, 'Lỗi lấy danh sách học viên mới'),
+
   // --- USERS ---
   getUsers: (token, page = 1, search = '', options = {}) => {
     const params = new URLSearchParams({ page: String(page), search: search || '' });

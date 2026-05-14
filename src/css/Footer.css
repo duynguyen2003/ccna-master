@@ -20,7 +20,7 @@
   background-color: var(--footer-bg);
   color: var(--footer-text-muted);
   border-top: 1px solid var(--footer-border);
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: var(--system-ui);
   font-size: 14px;
   line-height: 1.6;
 }

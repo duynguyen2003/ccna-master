@@ -11,6 +11,13 @@ router.use(checkRole(['ADMIN']));
 router.get('/stats', adminController.getStats);
 router.get('/logs', adminController.getAdminLogs);
 
+// New Modular Dashboard Endpoints
+router.get('/dashboard/summary', adminController.getDashboardSummary);
+router.get('/dashboard/activity', adminController.getDashboardActivity);
+router.get('/dashboard/distribution', adminController.getDashboardDistribution);
+router.get('/dashboard/trends', adminController.getDashboardTrends);
+router.get('/dashboard/students', adminController.getRecentStudents);
+
 // Users Management (Admin)
 router.get('/users', userController.getAll);
 router.post('/users', userController.createUser);

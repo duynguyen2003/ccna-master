@@ -343,8 +343,8 @@ model AdminLog {
   adminId     Int      @map("admin_id") // Liên kết với User.id (Những người có role Admin)
   action      String   @db.VarChar(50)
   targetTable String   @map("target_table") @db.VarChar(50)
-  targetId    Int      @map("target_id")
-  description String?  @db.Text
+  targetId    String?  @map("target_id") @db.VarChar(50)
+  details     String?  @db.Text
   ipAddress   String?  @map("ip_address") @db.VarChar(45)
   createdAt   DateTime @default(now()) @map("created_at")
 
