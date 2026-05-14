@@ -150,6 +150,10 @@ const VideoPlayer = ({ url, lessonId, courseId, moduleId, token, user, onProgres
       return () => stopTracking();
    }, []);
 
+   const onError = (event) => {
+      console.warn("YouTube Player Error:", event.data);
+   };
+
    if (youtubeId) {
       return (
          <YouTube
@@ -164,6 +168,7 @@ const VideoPlayer = ({ url, lessonId, courseId, moduleId, token, user, onProgres
             }}
             onReady={onReady}
             onStateChange={onStateChange}
+            onError={onError}
             containerClassName="video-player-container"
             style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
          />
@@ -649,12 +654,12 @@ const Lesson = () => {
                         Tiến độ video
                      </h4>
                      <p className="lc-alert-text">
-                        Đã xem: {Math.round((lessonProgress[selectedLesson.id]?.played ?? 0) * 100)}% | Thời gian xem: {Math.round(lessonProgress[selectedLesson.id]?.playedSeconds ?? 0)}s | Trạng thái: {lessonProgress[selectedLesson.id]?.completed ? 'Hoàn thành' : 'Đang học'}
+                        Đã xem: {Math.round((lessonProgress[selectedLesson?.id]?.played ?? 0) * 100)}% | Thời gian xem: {Math.round(lessonProgress[selectedLesson?.id]?.playedSeconds ?? 0)}s | Trạng thái: {lessonProgress[selectedLesson?.id]?.completed ? 'Hoàn thành' : 'Đang học'}
                      </p>
                   </div>
 
                   <div className="lc-text-content">
-                     {selectedLesson.contentHtml ? (
+                     {selectedLesson?.contentHtml ? (
                         <MarkdownRenderer content={selectedLesson.contentHtml} />
                      ) : (
                         <p className="lc-paragraph">Chưa có nội dung văn bản cho bài học này.</p>

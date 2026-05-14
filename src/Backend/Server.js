@@ -65,6 +65,9 @@ app.use(requestLogger);
  * ============================================================
  */
 
+// Debug route
+app.get('/api/debug-ping', (req, res) => res.json({ message: 'pong' }));
+
 // Mount API routes
 app.use('/api', routes);
 

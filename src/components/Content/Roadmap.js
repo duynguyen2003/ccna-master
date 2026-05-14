@@ -164,7 +164,7 @@ export const Roadmap = () => {
                     <div className="roadmap-card-info">
                       <div className="roadmap-card-header">
                         <h2 className="roadmap-card-title">
-                          {course.title}
+                          {course.title.replace(' (Updated)', '')}
                         </h2>
                         {isCompleted && (
                           <span className="roadmap-card-badge roadmap-card-badge-completed">✓ Hoàn thành</span>

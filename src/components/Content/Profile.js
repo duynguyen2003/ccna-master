@@ -31,8 +31,10 @@ export default function Profile() {
   const { token } = useAuth();
   const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
-
   const [loading, setLoading] = useState(true);
+  const [studyPeriod, setStudyPeriod] = useState('week');
+  const [studyChartData, setStudyChartData] = useState([]);
+  const [studyChartLoading, setStudyChartLoading] = useState(false);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -47,6 +49,22 @@ export default function Profile() {
     };
     if (token) fetchProfile();
   }, [token]);
+
+  useEffect(() => {
+    const fetchStudyChart = async () => {
+      if (!token) return;
+      setStudyChartLoading(true);
+      try {
+        const data = await api.getStudyTimeStats(token, studyPeriod);
+        setStudyChartData(data);
+      } catch (e) {
+        console.error('Failed to fetch study time stats', e);
+      } finally {
+        setStudyChartLoading(false);
+      }
+    };
+    fetchStudyChart();
+  }, [token, studyPeriod]);
 
   if (loading) {
     return (
@@ -63,9 +81,9 @@ export default function Profile() {
   const courseProgress = profile.progress || [];
   const { stats, weeklyScores, dailyStudyTime } = profile;
 
-  const formatTime = (seconds) => {
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
+  const formatTime = (minutes) => {
+    const h = Math.floor(minutes / 60);
+    const m = Math.floor(minutes % 60);
     return `${h}h ${m}m`;
   };
 
@@ -230,28 +248,59 @@ export default function Profile() {
           </div>
 
           <div className="section-card span-2">
-            <div className="card-title">
-              <BarChart2 size={20} />
-              <h2>Thời gian học theo ngày</h2>
+            <div className="card-title" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <BarChart2 size={20} />
+                <h2>Thời gian học</h2>
+              </div>
+              {/* Period Tabs */}
+              <div style={{ display: 'flex', gap: '4px', background: '#f1f5f9', borderRadius: '8px', padding: '3px' }}>
+                {[
+                  { key: 'week',    label: 'Tuần' },
+                  { key: 'month',   label: 'Tháng' },
+                  { key: 'quarter', label: '3 Tháng' },
+                ].map(({ key, label }) => (
+                  <button
+                    key={key}
+                    onClick={() => setStudyPeriod(key)}
+                    style={{
+                      padding: '4px 12px',
+                      borderRadius: '6px',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontSize: '0.78rem',
+                      fontWeight: studyPeriod === key ? 700 : 400,
+                      background: studyPeriod === key ? '#fff' : 'transparent',
+                      color: studyPeriod === key ? '#2563eb' : '#64748b',
+                      boxShadow: studyPeriod === key ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
             </div>
             <div className="chart-container">
-              {dailyStudyTime && dailyStudyTime.length > 0 ? (
+              {studyChartLoading ? (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                  <Loader2 className="spin" size={24} color="#2563eb" />
+                </div>
+              ) : studyChartData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={dailyStudyTime}>
+                  <BarChart data={studyChartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                    <XAxis dataKey="day" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
+                    <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
                     <YAxis tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
                     <Tooltip
                       contentStyle={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                       formatter={(value) => [`${value} phút`, 'Thời gian']}
                     />
-                    <Bar dataKey="minutes" fill="#0ea5e9" radius={[4, 4, 0, 0]} barSize={20} />
-
-
+                    <Bar dataKey="minutes" fill="#0ea5e9" radius={[4, 4, 0, 0]} barSize={24} />
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
-                <p className="empty-text">Chưa có dữ liệu học tập.</p>
+                <p className="empty-text">Chưa có dữ liệu học tập trong khoảng này.</p>
               )}
             </div>
           </div>

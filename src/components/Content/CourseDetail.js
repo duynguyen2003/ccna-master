@@ -116,7 +116,7 @@ const CourseDetail = () => {
             </button>
 
             <h1 className="cdp-hero-title">
-              {course.fullTitle || course.title}
+              {(course.fullTitle || course.title).replace(' (Updated)', '')}
             </h1>
             <p className="cdp-hero-subtitle">
               {course.longDescription || course.description}

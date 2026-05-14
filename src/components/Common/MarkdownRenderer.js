@@ -51,12 +51,17 @@ marked.setOptions({
 
 const parseMarkdown = (content) => {
   if (!content) return '';
-  // Support standalone [!TYPE] tags
-  const processed = content.replace(/^\[!(NOTE|WARNING|TIP|IMPORTANT|CAUTION)\](?:\s*\n|$)([\s\S]*?)(?=\n\[!|\n#|\n$)/gmi, (match, type, body) => {
-    const lines = body.trim().split('\n');
-    return `> [!${type.toUpperCase()}]\n> ` + lines.join('\n> ') + '\n\n';
-  });
-  return marked.parse(processed);
+  try {
+    // Support standalone [!TYPE] tags
+    const processed = content.replace(/^\[!(NOTE|WARNING|TIP|IMPORTANT|CAUTION)\](?:\s*\n|$)([\s\S]*?)(?=\n\[!|\n#|\n$)/gmi, (match, type, body) => {
+      const lines = body.trim().split('\n');
+      return `> [!${type.toUpperCase()}]\n> ` + lines.join('\n> ') + '\n\n';
+    });
+    return marked.parse(processed);
+  } catch (error) {
+    console.error('[MarkdownRenderer] Lỗi parse nội dung:', error);
+    return `<p>${content}</p>`;
+  }
 };
 
 const MarkdownRenderer = ({ content, className = "" }) => {

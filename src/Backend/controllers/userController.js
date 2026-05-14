@@ -259,6 +259,73 @@ module.exports.getProfileMe = async (req, res, next) => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * GET /users/stats/study-time?period=week|month|quarter
+ * Returns aggregated study time for chart display
+ */
+module.exports.getStudyTimeStats = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const period = req.query.period || 'week';
+
+    let daysBack;
+    if (period === 'month') daysBack = 30;
+    else if (period === 'quarter') daysBack = 90;
+    else daysBack = 7; // week
+
+    const since = new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000);
+
+    const logs = await prisma.studyLog.findMany({
+      where: { userId, date: { gte: since } },
+      orderBy: { date: 'asc' },
+      select: { date: true, duration: true }
+    });
+
+    let chartData = [];
+
+    if (period === 'week') {
+      // Group by day-of-week label: CN, T2 ... T7
+      const map = Object.fromEntries(DAY_LABELS.map(d => [d, 0]));
+      logs.forEach(log => {
+        const label = DAY_LABELS[new Date(log.date).getDay()];
+        map[label] += Math.round((log.duration || 0) / 60);
+      });
+      chartData = DAY_LABELS.map(day => ({ label: day, minutes: map[day] }));
+
+    } else if (period === 'month') {
+      // Group by week-of-month: Tuần 1 → Tuần 4
+      const map = { 'Tuần 1': 0, 'Tuần 2': 0, 'Tuần 3': 0, 'Tuần 4': 0 };
+      logs.forEach(log => {
+        const date = new Date(log.date);
+        const weekNum = Math.ceil(date.getDate() / 7);
+        const key = `Tuần ${Math.min(weekNum, 4)}`;
+        map[key] += Math.round((log.duration || 0) / 60);
+      });
+      chartData = Object.entries(map).map(([label, minutes]) => ({ label, minutes }));
+
+    } else if (period === 'quarter') {
+      // Group by month: Tháng X
+      const map = {};
+      logs.forEach(log => {
+        const date = new Date(log.date);
+        const key = `T${date.getMonth() + 1}`;
+        if (!map[key]) map[key] = 0;
+        map[key] += Math.round((log.duration || 0) / 60);
+      });
+      // Preserve chronological order
+      const orderedKeys = [...new Set(logs.map(l => `T${new Date(l.date).getMonth() + 1}`))];
+      chartData = orderedKeys.map(label => ({ label, minutes: map[label] || 0 }));
+    }
+
+    return res.json({ data: chartData });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+
 module.exports.getUserProgress = async (req, res, next) => {
   try {
     const userId = req.user.id;

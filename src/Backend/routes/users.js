@@ -15,6 +15,9 @@ router.post('/progress', verifyToken, userController.updateProgress);
 router.get('/progress/video/:lessonId', verifyToken, userController.getVideoProgress);
 router.post('/progress/video', verifyToken, userController.updateVideoProgress);
 
+// Thống kê thời gian học theo khoảng (week/month/quarter)
+router.get('/stats/study-time', verifyToken, userController.getStudyTimeStats);
+
 // Học viên lưu ghi chú cá nhân
 
 router.get('/notes/:lessonId', verifyToken, userController.getUserNote);

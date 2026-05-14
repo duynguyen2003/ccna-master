@@ -295,6 +295,11 @@ export const api = {
       body: JSON.stringify(videoData),
     }),
 
+  getStudyTimeStats: async (token, period = 'week') => {
+    const json = await safeApiFetch(`/users/stats/study-time?period=${period}`, token, { data: [] });
+    return json.data || [];
+  },
+
   // ── Exams ─────────────────────────────────────────────────────────────────
 
   getExams: async (token) => {
