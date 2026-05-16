@@ -195,6 +195,9 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   position: relative;
   transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  height: 100%; /* Đảm bảo các card trong cùng hàng cao bằng nhau */
 }
 
 .tc-mock-card:hover {
@@ -241,6 +244,13 @@
   font-weight: 700;
   color: var(--text-main, #1e293b);
   margin: 0 0 0.75rem;
+  line-height: 1.4;
+  /* Khống chế tối đa 2 dòng, không cho chữ nhỏ đi */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  height: 3.1rem; /* Cố định chiều cao cho tiêu đề */
 }
 
 .tc-mock-card__meta {
@@ -250,6 +260,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
+  flex-grow: 1; /* Đẩy phần actions xuống dưới */
 }
 
 .tc-mock-card__meta li {

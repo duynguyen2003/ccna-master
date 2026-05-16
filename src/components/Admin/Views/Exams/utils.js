@@ -156,10 +156,10 @@ export const parseQuestionsFromRawText = (rawText) => {
   let currentQ = null;
 
   lines.forEach((line) => {
-    // Nếu dòng bắt đầu bằng (A), (B), (C), (D) -> Là phương án
-    const optionMatch = line.match(/^\(([A-F])\)\s*(.*)/i);
-    // Nếu dòng chứa đáp án đúng (Linh hoạt: có thể có ✓, có thể có hoặc không có dấu :, có thể có hoặc không có ngoặc đơn)
-    const answerMatch = line.match(/(?:✓\s*)?Đáp án đúng(?:\s*là)?[:\s]*\(?([A-F])\)?/i);
+    // Nếu dòng bắt đầu bằng (A), A., A), [A] -> Là phương án
+    const optionMatch = line.match(/^[(\[]?([A-F])[.)\]]?\s+(.*)/i);
+    // Nếu dòng chứa đáp án đúng (Linh hoạt: hỗ trợ nhiều đáp án như A, B hoặc A và C)
+    const answerMatch = line.match(/(?:[=>✓\s]*)?Đáp án đúng(?:\s*là)?[:\s]*(.*)/i);
     // Nếu dòng chứa giải thích
     const explanationMatch = line.match(/^Giải thích:\s*(.*)/i);
     // Nếu là tiêu đề câu (Câu 88...) -> Bỏ qua số câu, chỉ lấy làm dấu hiệu ngắt
@@ -171,9 +171,17 @@ export const parseQuestionsFromRawText = (rawText) => {
       }
     } else if (answerMatch) {
       if (currentQ) {
-        const letter = answerMatch[1].toUpperCase();
-        const idx = OPTION_LABELS.indexOf(letter);
-        if (idx !== -1) currentQ.correctAnswer = [idx];
+        const rawText = answerMatch[1].toUpperCase();
+        // Chỉ tìm các chữ cái A-F đứng riêng lẻ hoặc có dấu ngăn cách, không nằm trong từ
+        const foundLetters = rawText.match(/\b([A-F])\b|[([ ]([A-F])[)\] ]/g) || [];
+        // Làm sạch để chỉ lấy chữ cái
+        const cleanLetters = foundLetters.map(l => l.match(/[A-F]/i)[0]);
+        
+        const indices = cleanLetters
+          .map(letter => OPTION_LABELS.indexOf(letter))
+          .filter(idx => idx !== -1);
+        
+        currentQ.correctAnswer = indices;
       }
     } else if (explanationMatch) {
       if (currentQ) {
@@ -186,6 +194,12 @@ export const parseQuestionsFromRawText = (rawText) => {
         questions.push(finalizeQuestion(currentQ));
       }
       currentQ = createEmptyQuestion();
+      
+      // Lấy phần văn bản còn lại sau chữ "Câu X" (nếu có)
+      const questionText = line.replace(/^Câu\s*\d+[:\s]*/i, '').trim();
+      if (questionText) {
+        currentQ.question = questionText;
+      }
     } else {
       // Là nội dung câu hỏi hoặc phần tiếp theo của giải thích
       if (!currentQ) {

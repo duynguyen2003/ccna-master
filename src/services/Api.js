@@ -118,16 +118,18 @@ const mapLesson = (lesson) => ({
   orderIndex: lesson.orderIndex,
 });
 
-const mapModule = (module, idx) => ({
+const mapModule = (module, idx, isStarted) => ({
   ...module,
-  // Mở khóa chương đầu tiên mặc định, các chương sau tạm khóa
-  status: idx === 0 ? "active" : "locked",
+  // Backend trả về status (completed, active, locked). 
+  // Nếu chưa ghi danh thì khóa toàn bộ.
+  status: isStarted ? (module.status || (idx === 0 ? "active" : "locked")) : "locked",
   lessonCount: module._count?.lessons || module.lessons?.length || 0,
   lessons: (module.lessons || []).map(mapLesson),
 });
 
 const mapCourse = (course) => {
   const metadata = getCourseMetadata(course.code);
+  const isStarted = course.isStarted || course.progress > 0;
   return {
     ...course,
     ...metadata,
@@ -136,7 +138,7 @@ const mapCourse = (course) => {
     fullTitle: course.title,
     longDescription: course.description,
     progress: course.progress ?? 0,
-    modules: (course.modules || []).map(mapModule),
+    modules: (course.modules || []).map((m, idx) => mapModule(m, idx, isStarted)),
   };
 };
 
@@ -255,6 +257,13 @@ export const api = {
       }
       if (p.lessonId) {
         progressMap[`lesson_${p.lessonId}`] = {
+          percent: p.progressPercent || 0,
+          status: p.status,
+          completedAt: p.completedAt,
+        };
+      }
+      if (p.labId) {
+        progressMap[`lab_${p.labId}`] = {
           percent: p.progressPercent || 0,
           status: p.status,
           completedAt: p.completedAt,

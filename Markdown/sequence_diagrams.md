@@ -199,3 +199,55 @@ sequenceDiagram
     BE-->>FE: Đặt lại thành công
     FE-->>User: Chuyển đến trang đăng nhập
 ```
+
+---
+
+## 5. Xem danh sách khóa học
+
+```mermaid
+sequenceDiagram
+    actor User as Người dùng
+    participant FE as Giao diện (Home.js)
+    participant API as Dịch vụ API
+    participant BE as Máy chủ
+    participant DB as CSDL
+
+    User->>FE: Truy cập trang chủ
+    FE->>FE: Kiểm tra trạng thái đăng nhập (AuthContext)
+
+    FE->>API: getCourses(token)
+    API->>BE: GET /api/learning/courses
+    Note over API,BE: Token đính kèm nếu đã đăng nhập (Bearer)
+
+    BE->>BE: Xác định quyền (optionalAuth)
+
+    alt Chưa đăng nhập (Guest)
+        BE->>DB: Truy vấn khóa học (status = PUBLISHED | OPEN)
+        DB-->>BE: Danh sách khóa học công khai
+        BE->>BE: Tính thống kê (tổng giờ, tổng bài)
+        Note over BE: Không có tiến độ cá nhân
+        BE-->>FE: Trả về danh sách + progress = 0
+        FE->>FE: Hiển thị thẻ khóa học (không có thanh tiến độ)
+        FE-->>User: Xem danh sách khóa học
+    else Đã đăng nhập (User)
+        BE->>DB: Truy vấn khóa học (status = PUBLISHED | OPEN)
+        DB-->>BE: Danh sách khóa học
+        BE->>DB: Truy vấn tiến độ học viên (UserProgress)
+        DB-->>BE: Bảng tiến độ (lesson + lab)
+        BE->>BE: Tính % tiến độ từng khóa học
+        Note over BE: (bài học xong + lab xong) / (tổng bài + tổng lab)
+        BE->>BE: Tính trạng thái từng module (locked/active/completed)
+        BE-->>FE: Trả về danh sách + progress thực tế
+        FE->>FE: Ánh xạ icon, ảnh nền, statusText
+        FE->>FE: Hiển thị thẻ khóa học + thanh tiến độ
+        FE-->>User: Xem danh sách khóa học (có tiến độ cá nhân)
+
+        opt Có khóa học đang học dở (0% < progress < 100%)
+            FE->>FE: Hiển thị banner "Tiếp tục bài học"
+            FE-->>User: Gợi ý tiếp tục khóa học đang học
+        end
+    end
+
+    User->>FE: Nhấn "Xem chi tiết" trên một khóa học
+    FE-->>User: Điều hướng đến /course/:courseId
+```

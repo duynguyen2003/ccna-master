@@ -86,15 +86,28 @@ const CourseDetail = () => {
   }
 
   const colors = COURSE_GRADIENTS[course.code] || DEFAULT_GRADIENT;
-  const isStarted = course.progress > 0;
+  const isStarted = course.isStarted || course.progress > 0;
   const totalLessons = course.modules?.reduce((sum, m) => sum + (m.lessonCount || 0), 0) || 0;
   const instInitial = (course.instructor?.name || 'G').charAt(0).toUpperCase();
-  const handleStartLearning = () => {
+  const handleStartLearning = async () => {
     if (!isAuthenticated) {
       navigate('/login');
       return;
     }
-    navigate(`/lesson?course=${courseId}`);
+    
+    try {
+       // Nếu chưa học (chưa có record trong UserProgress), tạo 1 record đánh dấu đã ghi danh
+       if (!isStarted) {
+          await api.updateUserProgress(token, {
+             courseId,
+             progressPercent: 0,
+             status: 'ACTIVE'
+          });
+       }
+       navigate(`/lesson?course=${courseId}`);
+    } catch (e) {
+       console.error("Lỗi khi ghi danh khóa học:", e);
+    }
   };
 
   return (
@@ -307,7 +320,7 @@ const CourseDetail = () => {
                     ) : isStarted ? (
                       <><Play size={16} fill="white" /> Tiếp tục học</>
                     ) : (
-                      <>Ghi danh miễn phí <span className="material-icons-round" style={{ fontSize: 18 }}>arrow_forward</span></>
+                      <>Bắt đầu học <span className="material-icons-round" style={{ fontSize: 18 }}>arrow_forward</span></>
                     )}
                   </button>
 

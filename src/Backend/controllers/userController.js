@@ -132,6 +132,7 @@ module.exports.getById = async (req, res, next) => {
 module.exports.getProfileMe = async (req, res, next) => {
   try {
     const userId = req.user.id;
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
     const [user, completedLabs, totalLabsCount] = await Promise.all([
@@ -151,8 +152,9 @@ module.exports.getProfileMe = async (req, res, next) => {
             }
           },
           activities: {
-            where: { createdAt: { gte: sevenDaysAgo } },
+            where: { createdAt: { gte: thirtyDaysAgo } },
             orderBy: { createdAt: 'desc' },
+            take: 10,
             select: {
               id: true, title: true, type: true,
               createdAt: true, referenceId: true,
@@ -241,7 +243,7 @@ module.exports.getProfileMe = async (req, res, next) => {
         totalProgress,
         weeklyScores,
         dailyStudyTime,
-        recentActivities: activities,
+        activities: activities,
         badges: user.badges,
         stats: {
           totalStudyTime: user.totalStudyTime, // unit: minutes
@@ -341,7 +343,12 @@ module.exports.getUserProgress = async (req, res, next) => {
 module.exports.updateProgress = async (req, res, next) => {
   try {
     const userId = req.user.id;
-    const { courseId, moduleId, lessonId, labId, status } = req.body;
+    // Đảm bảo các ID là số nguyên nếu có giá trị
+    const courseId = req.body.courseId; 
+    const moduleId = req.body.moduleId ? parseInt(req.body.moduleId) : null;
+    const lessonId = req.body.lessonId ? parseInt(req.body.lessonId) : null;
+    const labId = req.body.labId ? parseInt(req.body.labId) : null;
+    const status = req.body.status;
 
     if (!courseId) {
       return res.status(400).json({ message: 'courseId là bắt buộc' });
@@ -389,14 +396,23 @@ module.exports.updateProgress = async (req, res, next) => {
     // Ghi activity khi hoàn thành lần đầu
     const isFirstCompletion = isCompleted && (!existing || existing.status !== 'COMPLETED');
     if (isFirstCompletion) {
-      const activityType =
-        lessonId ? 'LESSON_COMPLETED' :
-          labId ? 'LAB_COMPLETED' : 'COURSE_COMPLETED';
+      let activityTitle = `Đã hoàn thành: ${courseId}`;
+      let activityType = 'COURSE_COMPLETED';
+
+      if (lessonId) {
+        const lesson = await prisma.lesson.findUnique({ where: { id: lessonId }, select: { title: true } });
+        activityTitle = `Đã hoàn thành bài học: ${lesson?.title || lessonId}`;
+        activityType = 'LESSON_COMPLETED';
+      } else if (labId) {
+        const lab = await prisma.lab.findUnique({ where: { id: labId }, select: { title: true } });
+        activityTitle = `Đã hoàn thành bài thực hành: ${lab?.title || labId}`;
+        activityType = 'LAB_COMPLETED';
+      }
 
       await prisma.userActivity.create({
         data: {
           userId,
-          title: `Đã hoàn thành: ${lessonId || labId || courseId}`,
+          title: activityTitle,
           type: activityType,
           referenceId: lessonId || labId || null,
         }

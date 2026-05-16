@@ -276,10 +276,30 @@ export const Labs = () => {
   const { token } = useAuth();
 
   useEffect(() => {
-    api.getLabs(token)
-      .then((data) => setLabs(data))
-      .catch((err) => console.error("Failed to load labs", err))
-      .finally(() => setLoading(false));
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        const [labsData, progressMap] = await Promise.all([
+          api.getLabs(token),
+          api.getUserProgress(token)
+        ]);
+        
+        setLabs(labsData);
+        
+        // Trích xuất các lab đã hoàn thành từ progressMap
+        const done = Object.entries(progressMap)
+          .filter(([key, val]) => key.startsWith('lab_') && val.status === 'COMPLETED')
+          .map(([key]) => key.replace('lab_', '')); // Giữ nguyên dạng string
+        
+        setCompletedLabs(done);
+      } catch (err) {
+        console.error("Failed to load labs data", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (token) loadData();
   }, [token]);
 
   const filteredLabs = labs.filter((lab) => {
@@ -355,9 +375,24 @@ export const Labs = () => {
         <LabGuideModal
           lab={selectedLab}
           onClose={() => setSelectedLab(null)}
-          onComplete={(id) => {
-            if (!completedLabs.includes(id)) {
-              setCompletedLabs((prev) => [...prev, id]);
+          onComplete={async (id) => {
+            try {
+              // Lưu vào cơ sở dữ liệu
+              await api.updateUserProgress(token, {
+                labId: id,
+                status: 'COMPLETED',
+                progressPercent: 100,
+                // Lấy courseId từ lab (nếu có) để cập nhật tiến độ tổng quát của khóa học
+                courseId: selectedLab.courseId 
+              });
+
+              if (!completedLabs.includes(id)) {
+                setCompletedLabs((prev) => [...prev, id]);
+              }
+              showToast("Chúc mừng! Bạn đã hoàn thành bài thực hành.", "success");
+            } catch (err) {
+              console.error("Failed to save lab progress", err);
+              showToast("Không thể lưu tiến độ. Vui lòng thử lại sau.", "error");
             }
             setSelectedLab(null);
           }}

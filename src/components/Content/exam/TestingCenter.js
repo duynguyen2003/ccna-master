@@ -272,7 +272,7 @@ const TestingCenter = () => {
                 <div className="tc-mock-card__icon">📄</div>
                 <h3>{exam.title}</h3>
                 <ul className="tc-mock-card__meta">
-                    <li><span>⏱</span>{exam.duration} phút</li>
+                    <li><span>⏱</span>{exam.durationMinutes || 0} phút</li>
                     <li><span>❓</span>{exam.totalQuestions} câu hỏi</li>
                 </ul>
                 <div className="tc-mock-card__actions">

@@ -312,20 +312,66 @@ export default function Profile() {
               <h2>Hoạt động gần đây</h2>
             </div>
             <div className="activity-list">
-              {recentActivities.length > 0 ? recentActivities.map((act) => (
-                <div className="activity-item" key={act.id}>
-                  <div className="activity-left">
-                    <div className="activity-icon">
-                      {act.type === 'Lesson' ? <MonitorPlay size={20} /> : <FileText size={20} />}
+              {recentActivities.length > 0 ? recentActivities.map((act) => {
+                // Xác định icon, nhãn và đường dẫn dựa trên loại hoạt động
+                let icon, badge, badgeColor, reviewPath;
+                switch (act.type) {
+                  case 'LESSON_COMPLETED':
+                    icon = <MonitorPlay size={20} />;
+                    badge = 'Bài học';
+                    badgeColor = '#dbeafe';
+                    reviewPath = `/lesson/${act.referenceId}`;
+                    break;
+                  case 'LAB_COMPLETED':
+                    icon = <CheckCircle2 size={20} />;
+                    badge = 'Lab thực hành';
+                    badgeColor = '#dcfce7';
+                    reviewPath = `/labs`;
+                    break;
+                  case 'EXAM_COMPLETED':
+                  case 'EXAM_PASSED':
+                    icon = <FileText size={20} />;
+                    badge = 'Bài thi';
+                    badgeColor = '#fef9c3';
+                    reviewPath = `/exam`;
+                    break;
+                  default:
+                    icon = <Activity size={20} />;
+                    badge = 'Hoạt động';
+                    badgeColor = '#f1f5f9';
+                    reviewPath = null;
+                }
+
+                return (
+                  <div className="activity-item" key={act.id}>
+                    <div className="activity-left">
+                      <div className="activity-icon">{icon}</div>
+                      <div className="activity-text">
+                        <h3>{act.title}</h3>
+                        <p style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <span style={{
+                            fontSize: '0.72rem', fontWeight: 700,
+                            padding: '1px 8px', borderRadius: '9999px',
+                            background: badgeColor, color: '#1e293b'
+                          }}>{badge}</span>
+                          {new Date(act.createdAt).toLocaleDateString('vi-VN', {
+                            day: '2-digit', month: '2-digit', year: 'numeric',
+                            hour: '2-digit', minute: '2-digit'
+                          })}
+                        </p>
+                      </div>
                     </div>
-                    <div className="activity-text">
-                      <h3>{act.title}</h3>
-                      <p>{new Date(act.createdAt).toLocaleDateString()}</p>
-                    </div>
+                    {reviewPath && (
+                      <button
+                        className="btn-secondary"
+                        onClick={() => navigate(reviewPath)}
+                      >
+                        Xem lại
+                      </button>
+                    )}
                   </div>
-                  <button className="btn-secondary">Xem lại</button>
-                </div>
-              )) : (
+                );
+              }) : (
                 <div className="empty-state wide">
                   <div className="empty-icon">🕒</div>
                   <div>

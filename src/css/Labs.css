@@ -344,8 +344,8 @@
   background: #0d1117;
   border-radius: 14px;
   width: 100%;
-  max-width: 900px;
-  max-height: 88vh;
+  max-width: 1200px;
+  max-height: 92vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -443,7 +443,7 @@
 
 /* ── Sidebar ── */
 .lab-modal-sidebar {
-  width: 240px;
+  width: 320px;
   flex-shrink: 0;
   background: #161b22;
   border-right: 1px solid rgba(255, 255, 255, 0.06);
