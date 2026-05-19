@@ -6,6 +6,7 @@
 
 ```mermaid
 sequenceDiagram
+    autonumber
     actor User as Người dùng
     participant FE as Giao diện
     participant Google as Google
@@ -42,13 +43,13 @@ sequenceDiagram
 
 ---
 
-## 2. Xem bài học & Theo dõi tiến độ video
+## 2.1. Tải danh sách bài học và tiến độ
 
 ```mermaid
 sequenceDiagram
+    autonumber
     actor User as Học viên
     participant FE as Giao diện
-    participant YT as YouTube
     participant BE as Máy chủ
     participant DB as CSDL
 
@@ -63,6 +64,20 @@ sequenceDiagram
     DB-->>BE: Dữ liệu tiến độ
     BE-->>FE: Trả về tiến độ
     FE-->>User: Hiển thị bài học + tiến độ
+```
+
+---
+
+## 2.2. Theo dõi tiến độ video và hoàn thành bài học
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as Học viên
+    participant FE as Giao diện
+    participant YT as YouTube
+    participant BE as Máy chủ
+    participant DB as CSDL
 
     User->>FE: Chọn bài học có video
     FE->>BE: Lấy vị trí xem trước đó
@@ -90,10 +105,11 @@ sequenceDiagram
 
 ---
 
-## 3. Làm bài thi trắc nghiệm & Nộp bài
+## 3.1. Tải đề thi và làm bài
 
 ```mermaid
 sequenceDiagram
+    autonumber
     actor User as Học viên
     participant FE as Giao diện
     participant BE as Máy chủ
@@ -119,6 +135,19 @@ sequenceDiagram
         User->>FE: Chọn đáp án
         FE->>FE: Lưu câu trả lời
     end
+```
+
+---
+
+## 3.2. Nộp bài và xem kết quả
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as Học viên
+    participant FE as Giao diện
+    participant BE as Máy chủ
+    participant DB as CSDL
 
     User->>FE: Nộp bài (hoặc hết giờ)
     FE->>BE: Gửi bài làm
@@ -148,6 +177,7 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
+    autonumber
     actor User as Người dùng
     participant FE as Giao diện
     participant BE as Máy chủ
@@ -202,52 +232,86 @@ sequenceDiagram
 
 ---
 
-## 5. Xem danh sách khóa học
+## 5.1. Xem danh sách khóa học (Chưa đăng nhập)
 
 ```mermaid
 sequenceDiagram
-    actor User as Người dùng
+    autonumber
+    actor User as Khách (Guest)
     participant FE as Giao diện (Home.js)
-    participant API as Dịch vụ API
+    participant BE as Máy chủ
+    participant DB as CSDL
+
+    User->>FE: Truy cập trang chủ
+    FE->>FE: Kiểm tra trạng thái đăng nhập (Guest)
+    FE->>BE: GET /api/learning/courses
+    BE->>BE: Xác định quyền (Guest)
+    BE->>DB: Truy vấn khóa học (status = PUBLISHED)
+    DB-->>BE: Danh sách khóa học công khai
+    BE->>BE: Tính thống kê (tổng giờ, tổng bài)
+    Note over BE: Không có tiến độ cá nhân
+    BE-->>FE: Trả về danh sách (progress = 0)
+    FE->>FE: Hiển thị thẻ khóa học (không thanh tiến độ)
+    FE-->>User: Xem danh sách khóa học
+```
+
+---
+
+## 5.2. Xem danh sách khóa học (Đã đăng nhập)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as Học viên
+    participant FE as Giao diện (Home.js)
     participant BE as Máy chủ
     participant DB as CSDL
 
     User->>FE: Truy cập trang chủ
     FE->>FE: Kiểm tra trạng thái đăng nhập (AuthContext)
+    FE->>BE: GET /api/learning/courses
+    Note over FE,BE: Gửi kèm Token (Bearer)
 
-    FE->>API: getCourses(token)
-    API->>BE: GET /api/learning/courses
-    Note over API,BE: Token đính kèm nếu đã đăng nhập (Bearer)
+    BE->>BE: Xác thực Token
 
-    BE->>BE: Xác định quyền (optionalAuth)
-
-    alt Chưa đăng nhập (Guest)
-        BE->>DB: Truy vấn khóa học (status = PUBLISHED | OPEN)
-        DB-->>BE: Danh sách khóa học công khai
-        BE->>BE: Tính thống kê (tổng giờ, tổng bài)
-        Note over BE: Không có tiến độ cá nhân
-        BE-->>FE: Trả về danh sách + progress = 0
-        FE->>FE: Hiển thị thẻ khóa học (không có thanh tiến độ)
-        FE-->>User: Xem danh sách khóa học
-    else Đã đăng nhập (User)
-        BE->>DB: Truy vấn khóa học (status = PUBLISHED | OPEN)
+    alt Token không hợp lệ / hết hạn
+        BE-->>FE: 401 Unauthorized
+        FE-->>User: Chuyển hướng đến trang đăng nhập
+    else Token hợp lệ
+        BE->>DB: Truy vấn khóa học (status = PUBLISHED)
         DB-->>BE: Danh sách khóa học
         BE->>DB: Truy vấn tiến độ học viên (UserProgress)
-        DB-->>BE: Bảng tiến độ (lesson + lab)
+        DB-->>BE: Dữ liệu tiến độ cá nhân
         BE->>BE: Tính % tiến độ từng khóa học
-        Note over BE: (bài học xong + lab xong) / (tổng bài + tổng lab)
-        BE->>BE: Tính trạng thái từng module (locked/active/completed)
-        BE-->>FE: Trả về danh sách + progress thực tế
-        FE->>FE: Ánh xạ icon, ảnh nền, statusText
-        FE->>FE: Hiển thị thẻ khóa học + thanh tiến độ
-        FE-->>User: Xem danh sách khóa học (có tiến độ cá nhân)
+        Note over BE: Tính dựa trên bài học và lab đã xong
+        BE->>BE: Tính trạng thái module (locked/active)
+        BE-->>FE: Trả về danh sách + tiến độ thực tế
+        FE->>FE: Ánh xạ giao diện (thanh tiến độ, màu sắc)
+        FE-->>User: Hiển thị danh sách khóa học + tiến độ
 
-        opt Có khóa học đang học dở (0% < progress < 100%)
+        opt Có khóa học đang học dở
             FE->>FE: Hiển thị banner "Tiếp tục bài học"
-            FE-->>User: Gợi ý tiếp tục khóa học đang học
+            FE-->>User: Gợi ý bài học tiếp theo
         end
     end
+```
 
-    User->>FE: Nhấn "Xem chi tiết" trên một khóa học
-    FE-->>User: Điều hướng đến /course/:courseId
+---
+
+## 5.3. Điều hướng xem chi tiết khóa học
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as Người dùng
+    participant FE as Giao diện (Home.js)
+    participant BE as Máy chủ
+    participant DB as CSDL
+
+    User->>FE: Nhấn "Xem chi tiết" trên thẻ khóa học
+    FE->>BE: GET /api/learning/courses/:courseId
+    BE->>DB: Truy vấn chi tiết khóa học + danh sách module
+    DB-->>BE: Dữ liệu chi tiết
+    BE-->>FE: Trả về thông tin khóa học
+    FE-->>User: Điều hướng và hiển thị trang /course/:courseId
 ```

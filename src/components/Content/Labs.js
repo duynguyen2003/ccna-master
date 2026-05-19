@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import {
   Download, Clock, Terminal, Search, Loader2,
   X, ChevronLeft, ChevronRight, Copy, Check,
-  BookOpen, Network, Zap, AlertCircle
+  BookOpen, Network, Zap, AlertCircle, FileText
 } from "lucide-react";
 import { api } from "../../services/Api.js";
 import { useAuth } from "../../context/AuthContext";
@@ -91,6 +91,19 @@ const LabGuideModal = ({ lab, onClose, onComplete, isGuestView, onGuestBlocked }
               </div>
               <p className="lab-objective-text">{lab.objective || 'Chưa có mô tả mục tiêu'}</p>
             </div>
+
+            {lab.guideContent && (
+              <div className="lab-sidebar-section">
+                <div className="lab-sidebar-label">
+                  <FileText size={13} /> Nội dung hướng dẫn
+                </div>
+                <div 
+                  className="lab-guide-rich-text"
+                  style={{ fontSize: '0.85rem', color: '#c9d1d9', marginTop: '8px', lineHeight: '1.5', wordBreak: 'break-word' }}
+                  dangerouslySetInnerHTML={{ __html: lab.guideContent }}
+                />
+              </div>
+            )}
 
             <div className="lab-sidebar-section">
               <div className="lab-sidebar-label">
