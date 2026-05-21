@@ -335,12 +335,13 @@
 
 .cdp-lesson-item {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   padding: 0.625rem 0;
   border-bottom: 1px dashed #f1f5f9;
   cursor: pointer;
   transition: color 0.2s;
+  gap: 1rem;
 }
 
 .cdp-lesson-item:last-child {
@@ -353,13 +354,18 @@
 
 .cdp-lesson-item-left {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.75rem;
+  flex: 1;
+  min-width: 0;
+  padding-right: 1.5rem;
 }
 
 .cdp-lesson-item-left .material-icons-round {
   font-size: 18px;
   color: #94a3b8;
+  margin-top: 2px;
+  flex-shrink: 0;
 }
 
 .cdp-lesson-item:hover .cdp-lesson-item-left .material-icons-round {
@@ -369,12 +375,15 @@
 .cdp-lesson-item-title {
   font-size: 0.85rem;
   font-weight: 500;
+  line-height: 1.4;
 }
 
 .cdp-lesson-item-right {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.75rem;
+  flex-shrink: 0;
+  margin-top: 2px;
 }
 
 .cdp-lesson-duration {
