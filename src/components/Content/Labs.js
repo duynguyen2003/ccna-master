@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   Download, Clock, Terminal, Search, Loader2,
   X, ChevronLeft, ChevronRight, Copy, Check,
@@ -279,6 +280,9 @@ export const Labs = () => {
   const { showToast, ToastComponent } = useToast();
   const isGuest = !isAuthenticated;
 
+  const [searchParams, setSearchParams] = useSearchParams();
+  const labIdParam = searchParams.get('labId');
+
   const [labs, setLabs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("All");
@@ -288,21 +292,50 @@ export const Labs = () => {
 
   const { token } = useAuth();
 
+  // Tự động mở bài Lab nếu có labIdParam trong URL
+  useEffect(() => {
+    if (labs.length > 0 && labIdParam) {
+      const foundLab = labs.find(l => l.id.toString() === labIdParam);
+      if (foundLab) {
+        setSelectedLab(foundLab);
+      }
+    }
+  }, [labs, labIdParam]);
+
+  // Đồng bộ trạng thái selectedLab và URL query parameter
+  useEffect(() => {
+    if (selectedLab) {
+      const currentParam = searchParams.get('labId');
+      if (currentParam !== selectedLab.id.toString()) {
+        setSearchParams({ labId: selectedLab.id.toString() }, { replace: true });
+      }
+    } else {
+      const currentParam = searchParams.get('labId');
+      if (currentParam) {
+        const newParams = new URLSearchParams(searchParams);
+        newParams.delete('labId');
+        setSearchParams(newParams, { replace: true });
+      }
+    }
+  }, [selectedLab, searchParams, setSearchParams]);
+
   useEffect(() => {
     const loadData = async () => {
       try {
         setLoading(true);
-        const [labsData, progressMap] = await Promise.all([
-          api.getLabs(token),
-          api.getUserProgress(token)
-        ]);
         
+        // Luôn tải danh sách lab (hỗ trợ cả tài khoản guest)
+        const labsData = await api.getLabs(token);
         setLabs(labsData);
         
-        // Trích xuất các lab đã hoàn thành từ progressMap
-        const done = Object.entries(progressMap)
-          .filter(([key, val]) => key.startsWith('lab_') && val.status === 'COMPLETED')
-          .map(([key]) => key.replace('lab_', '')); // Giữ nguyên dạng string
+        let done = [];
+        // Chỉ tải tiến độ học tập nếu tài khoản đã đăng nhập
+        if (token) {
+          const progressMap = await api.getUserProgress(token);
+          done = Object.entries(progressMap)
+            .filter(([key, val]) => key.startsWith('lab_') && val.status === 'COMPLETED')
+            .map(([key]) => key.replace('lab_', ''));
+        }
         
         setCompletedLabs(done);
       } catch (err) {
@@ -312,7 +345,7 @@ export const Labs = () => {
       }
     };
 
-    if (token) loadData();
+    loadData();
   }, [token]);
 
   const filteredLabs = labs.filter((lab) => {

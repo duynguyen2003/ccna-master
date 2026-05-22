@@ -229,6 +229,29 @@ export const Home = () => {
         const mapped = data.map((c, idx) => {
           // Lấy progress đã tính toán từ Backend
           const progress = c.progress || 0;
+
+          // Tìm bài học chưa hoàn thành đầu tiên
+          let nextLessonTitle = '';
+          if (c.modules) {
+            let foundNext = false;
+            for (const mod of c.modules) {
+              if (foundNext) break;
+              if (mod.lessons) {
+                for (const lesson of mod.lessons) {
+                  const lessonProg = progressMap[`lesson_${lesson.id}`];
+                  if (!lessonProg || (lessonProg.percent < 100 && lessonProg.status !== 'COMPLETED')) {
+                    nextLessonTitle = `Bài học tiếp theo: ${lesson.title}`;
+                    foundNext = true;
+                    break;
+                  }
+                }
+              }
+            }
+          }
+          if (!nextLessonTitle) {
+            nextLessonTitle = 'Bài học tiếp theo: Tiếp tục lộ trình hiện tại';
+          }
+
           return {
             id: c.id, // Dùng ID thật từ DB
             courseId: c.id,
@@ -238,6 +261,7 @@ export const Home = () => {
             progress: progress,
             statusText: getStatusText(progress),
             backgroundImage: courseBackgrounds[idx] || courseBackgrounds[courseBackgrounds.length - 1],
+            nextLessonTitle
           };
         });
         setCourses(mapped);
@@ -267,7 +291,7 @@ export const Home = () => {
   };
 
   const resumeNextLessonText = resumeCourse
-    ? (NEXT_LESSON_BY_COURSE[resumeCourse.courseId] || 'Bài học tiếp theo: Tiếp tục lộ trình hiện tại')
+    ? resumeCourse.nextLessonTitle
     : '';
   const ResumeIcon = resumeCourse?.icon || FALLBACK_ICON;
 
@@ -331,7 +355,7 @@ export const Home = () => {
             </div>
 
             <div className="continue-learning-content">
-              <h2 className="continue-learning-title">{resumeCourse.title}</h2>
+              <h2 className="continue-learning-title">{resumeCourse.title.replace(/\s*\(Updated\)/gi, '')}</h2>
               <p className="continue-learning-next-lesson">{resumeNextLessonText}</p>
               <div className="continue-learning-progress-wrap">
                 <div className="continue-learning-progress-track">

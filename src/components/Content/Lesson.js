@@ -193,7 +193,7 @@ const Lesson = () => {
    const [rightOpen, setRightOpen] = useState(() => getViewportWidth() >= RESOURCE_BREAKPOINT);
 
    const [course, setCourse] = useState(null);
-   const [, setModules] = useState([]);
+   const [modules, setModules] = useState([]);
    const [activeModule, setActiveModule] = useState(null);
    const [lessons, setLessons] = useState([]);
    const [selectedLessonId, setSelectedLessonId] = useState(null);
@@ -264,14 +264,32 @@ const Lesson = () => {
             setLessonProgress(initialProgress);
 
             if (courseModules.length > 0) {
-               const firstModule = courseModules[0];
-               setActiveModule(firstModule);
+               // Check if a specific lesson is requested in URL
+               const targetLessonParam = searchParams.get('lesson');
+               let targetModule = courseModules[0];
+               let targetLessonId = null;
 
-               // 3. Fetch Lessons for the first module
-               const moduleLessons = await api.getLessonsByModule(token, firstModule.id);
+               if (targetLessonParam) {
+                  const parsedLessonId = parseInt(targetLessonParam, 10);
+                  // Find module containing the lesson
+                  const foundModule = courseModules.find(m => 
+                     m.lessons && m.lessons.some(l => l.id === parsedLessonId)
+                  );
+                  if (foundModule) {
+                     targetModule = foundModule;
+                     targetLessonId = parsedLessonId;
+                  }
+               }
+
+               setActiveModule(targetModule);
+
+               // 3. Fetch Lessons for the target module
+               const moduleLessons = await api.getLessonsByModule(token, targetModule.id);
                setLessons(moduleLessons);
 
-               if (moduleLessons.length > 0) {
+               if (targetLessonId) {
+                  setSelectedLessonId(targetLessonId);
+               } else if (moduleLessons.length > 0) {
                   setSelectedLessonId(moduleLessons[0].id);
                }
             }
@@ -283,6 +301,44 @@ const Lesson = () => {
       };
       initLesson();
    }, [courseId, token]);
+
+   // Đồng bộ lessonId ngược lại URL khi selectedLessonId thay đổi
+   useEffect(() => {
+      if (selectedLessonId && courseId) {
+         navigate(`/lesson?course=${courseId}&lesson=${selectedLessonId}`, { replace: true });
+      }
+   }, [selectedLessonId, courseId, navigate]);
+
+   // Lắng nghe sự thay đổi của tham số URL ?lesson để chuyển bài học (khi click từ ô tìm kiếm)
+   useEffect(() => {
+      const lessonParam = searchParams.get('lesson');
+      if (!lessonParam || modules.length === 0) return;
+
+      const parsedLessonId = parseInt(lessonParam, 10);
+      if (selectedLessonId === parsedLessonId) return;
+
+      // Tìm module chứa bài học này
+      const foundModule = modules.find(m => 
+         m.lessons && m.lessons.some(l => l.id === parsedLessonId)
+      );
+
+      if (foundModule) {
+         const selectTargetLesson = async () => {
+            try {
+               setLoading(true);
+               setActiveModule(foundModule);
+               const moduleLessons = await api.getLessonsByModule(token, foundModule.id);
+               setLessons(moduleLessons);
+               setSelectedLessonId(parsedLessonId);
+            } catch (err) {
+               console.error("Error shifting to target lesson:", err);
+            } finally {
+               setLoading(false);
+            }
+         };
+         selectTargetLesson();
+      }
+   }, [searchParams, modules, token]);
 
    // 1. Fetch note mỗi khi đổi lesson
    useEffect(() => {

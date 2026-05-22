@@ -4,7 +4,7 @@
    ========================================== */
 
 :root {
-  --auth-primary: #008C9E;
+  --auth-primary: #008c9e;
   --auth-primary-hover: #007685;
   --auth-text-dark: #1e293b;
   --auth-text-gray: #64748b;
@@ -63,7 +63,7 @@
   max-width: 760px;
   min-height: 550px;
   background-color: #fff;
-  border-radius: 20px;
+  border-radius: 15px;
   flex-shrink: 0;
   overflow: hidden;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
@@ -111,7 +111,11 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, rgba(14, 27, 46, 0.85) 0%, rgba(14, 27, 46, 0.6) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(14, 27, 46, 0.85) 0%,
+    rgba(14, 27, 46, 0.6) 100%
+  );
 }
 
 /* Glassmorphism Portal Card */
@@ -282,7 +286,7 @@
   outline: none;
 }
 
-.form-input:focus+.form-input-icon {
+.form-input:focus + .form-input-icon {
   color: var(--auth-primary);
 }
 
@@ -351,7 +355,7 @@
 
 .auth-divider::before,
 .auth-divider::after {
-  content: '';
+  content: "";
   flex: 1;
   height: 1px;
   background: #e2e8f0;
@@ -505,10 +509,14 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  box-shadow:
+    0 10px 25px -5px rgba(0, 0, 0, 0.1),
+    0 8px 10px -6px rgba(0, 0, 0, 0.1);
   border: 1px solid #e2e8f0;
   transform: translateX(120%);
-  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s;
+  transition:
+    transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+    opacity 0.3s;
   opacity: 0;
 }
 

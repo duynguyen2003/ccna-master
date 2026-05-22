@@ -10,7 +10,7 @@ const AdminModal = ({
   children,
   confirmText = 'Xác nhận',
   minWidth = '480px',
-  maxWidth = '600px',
+  maxWidth = '800px',
   bodyMaxHeight = '60vh',
   className = ''
 }) => {

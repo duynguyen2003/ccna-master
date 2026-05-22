@@ -1,11 +1,4 @@
-/**
- * ============================================================
- * FILE: Server.js (REFACTORED)
- * PURPOSE: Express server setup and initialization
- * REFACTORED: From monolithic to modular MVC structure
- * TASKS: Task 1.1 - MVC Folder Structure
- * ============================================================
- */
+
 
 const express = require('express');
 const cors = require('cors');
@@ -26,13 +19,6 @@ app.use(helmet({
   crossOriginResourcePolicy: false, // Để load được ảnh từ Cloudinary/localhost
 }));
 
-/**
- * ============================================================
- * MIDDLEWARE SETUP
- * ============================================================
- */
-
-// Security & parsing middleware
 app.use(cors({
   origin: (origin, callback) => {
     const allowedOrigins = [
@@ -76,12 +62,6 @@ app.use(notFoundHandler);
 
 // Global error handler (MUST be last middleware)
 app.use(errorHandler);
-
-/**
- * ============================================================
- * SERVER START
- * ============================================================
- */
 
 const startServer = async () => {
   try {
