@@ -34,7 +34,7 @@ const Register = () => {
       if (data.user.role === 'ADMIN') {
         navigate('/admin/dashboard');
       } else {
-        navigate('/roadmap');
+        navigate('/');
       }
     } catch (error) {
       setGlobalError(error.message || 'Đăng ký/Đăng nhập Google thất bại');
@@ -157,7 +157,7 @@ const Register = () => {
               className={`form-input ${errors.email ? 'input-error' : ''}`}
               type="email"
               name="email"
-              placeholder="nhap-email@example.com"
+              placeholder="email@example.com"
               value={formData.email}
               onChange={handleChange}
               autoComplete="email"

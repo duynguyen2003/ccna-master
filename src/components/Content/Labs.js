@@ -36,11 +36,18 @@ const CopyButton = ({ text }) => {
 
 const LabGuideModal = ({ lab, onClose, onComplete, isGuestView, onGuestBlocked }) => {
   const [step, setStep] = useState(0);
+  const [isZoomed, setIsZoomed] = useState(false);
   const totalSteps = lab.steps?.length || 0;
 
   const handleKey = useCallback((e) => {
-    if (e.key === "Escape") onClose();
-  }, [onClose]);
+    if (e.key === "Escape") {
+      if (isZoomed) {
+        setIsZoomed(false);
+      } else {
+        onClose();
+      }
+    }
+  }, [onClose, isZoomed]);
 
   useEffect(() => {
     document.addEventListener("keydown", handleKey);
@@ -78,7 +85,18 @@ const LabGuideModal = ({ lab, onClose, onComplete, isGuestView, onGuestBlocked }
                 <Network size={13} /> Sơ đồ mạng (Topology)
               </div>
               {lab.topologyImgUrl ? (
-                <div className="lab-topology-img-wrap" style={{ marginTop: '8px', borderRadius: '8px', overflow: 'hidden', border: '1px solid #30363d' }}>
+                <div 
+                  className="lab-topology-img-wrap" 
+                  style={{ 
+                    marginTop: '8px', 
+                    borderRadius: '8px', 
+                    overflow: 'hidden', 
+                    border: '1px solid #30363d',
+                    cursor: 'zoom-in'
+                  }}
+                  onClick={() => setIsZoomed(true)}
+                  title="Click để phóng to sơ đồ mạng"
+                >
                   <img src={lab.topologyImgUrl} alt="Topology" style={{ width: '100%', display: 'block' }} />
                 </div>
               ) : (
@@ -211,6 +229,23 @@ const LabGuideModal = ({ lab, onClose, onComplete, isGuestView, onGuestBlocked }
           </div>
         </div>
       </div>
+
+      {/* Zoom Overlay */}
+      {isZoomed && (
+        <div className="lab-topology-zoom-overlay" onClick={() => setIsZoomed(false)}>
+          <div className="lab-topology-zoom-container" onClick={(e) => e.stopPropagation()}>
+            <button className="lab-topology-zoom-close" onClick={() => setIsZoomed(false)} title="Đóng">
+              <X size={20} />
+            </button>
+            <img 
+              src={lab.topologyImgUrl} 
+              alt="Topology Zoomed" 
+              className="lab-topology-zoom-img" 
+              onClick={() => setIsZoomed(false)} 
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

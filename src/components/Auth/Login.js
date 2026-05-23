@@ -39,7 +39,7 @@ const Login = () => {
       if (data.user.role === 'ADMIN') {
         navigate('/admin/dashboard');
       } else {
-        const from = location.state?.from?.pathname || '/roadmap';
+        const from = location.state?.from?.pathname || '/';
         navigate(from);
       }
     } catch (error) {
@@ -98,7 +98,7 @@ const Login = () => {
       if (data.user.role === 'ADMIN') {
         navigate('/admin');
       } else {
-        const redirectPath = location.state?.from || '/roadmap';
+        const redirectPath = location.state?.from || '/';
         navigate(redirectPath);
       }
     } catch (error) {
@@ -132,7 +132,7 @@ const Login = () => {
               className={`form-input ${errors.email ? 'input-error' : ''}`}
               type="email"
               name="email"
-              placeholder="nhap-email@example.com"
+              placeholder="email@example.com"
               value={formData.email}
               onChange={handleChange}
               autoComplete="email"

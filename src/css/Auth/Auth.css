@@ -4,8 +4,8 @@
    ========================================== */
 
 :root {
-  --auth-primary: #008c9e;
-  --auth-primary-hover: #007685;
+  --auth-primary: var(--primary-color);
+  --auth-primary-hover: var(--blue-hover);
   --auth-text-dark: #1e293b;
   --auth-text-gray: #64748b;
   --auth-bg-light: #ffffff;
@@ -161,7 +161,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 0 30px rgba(0, 140, 158, 0.4);
+  box-shadow: 0 0 30px rgba(0, 122, 255, 0.4);
 }
 
 .portal-logo .material-icons-round {
@@ -282,7 +282,7 @@
 .form-input:focus {
   background: white;
   border-color: var(--auth-primary);
-  box-shadow: 0 0 0 4px rgba(0, 140, 158, 0.1);
+  box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
   outline: none;
 }
 
@@ -333,7 +333,6 @@
 .auth-submit:hover:not(:disabled) {
   background: var(--auth-primary-hover);
   transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(0, 140, 158, 0.3);
 }
 
 .auth-submit:active {
