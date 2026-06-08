@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Plus, Trash2, Image, BookOpen, Search, Loader2, GraduationCap, ListChecks, Pencil, ImagePlus } from 'lucide-react';
 import { adminApi } from '../../../services/api/adminApi';
 import { AuthContext } from '../../../context/AuthContext';
+import { BACKEND_URL } from '../../../services/Api.js';
 import AdminModal from '../Components/AdminModal';
 import CustomSelect from '../Components/CustomSelect';
 import AdminPagination from '../Components/AdminPagination';
@@ -23,7 +24,7 @@ const resolveMediaUrl = (url) => {
   if (String(url).startsWith('http://') || String(url).startsWith('https://')) {
     return url;
   }
-  return `http://localhost:5000${url}`;
+  return `${BACKEND_URL}${url}`;
 };
 
 const levelOptions = [

@@ -5,7 +5,7 @@ import {
   X, ChevronLeft, ChevronRight, Copy, Check,
   BookOpen, Network, Zap, AlertCircle, FileText
 } from "lucide-react";
-import { api } from "../../services/Api.js";
+import { api, BACKEND_URL } from "../../services/Api.js";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../Toast";
 
@@ -14,7 +14,7 @@ const getLabFileUrl = (fileUrl) => {
   if (!fileUrl || fileUrl === '#') return '#';
   if (fileUrl.startsWith('http')) return fileUrl;
   // File local: trỏ tới backend server
-  return `http://localhost:5000${fileUrl}`;
+  return `${BACKEND_URL}${fileUrl}`;
 };
 
 const CopyButton = ({ text }) => {

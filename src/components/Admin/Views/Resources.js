@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { Plus, Trash2, FileDown, File } from 'lucide-react';
 import { adminApi } from '../../../services/api/adminApi';
 import { AuthContext } from '../../../context/AuthContext';
+import { BACKEND_URL } from '../../../services/Api.js';
 import AdminModal from '../Components/AdminModal';
 import AdminPagination from '../Components/AdminPagination';
 import '../../../css/Admin/AdminViews.css';
@@ -111,7 +112,7 @@ const Resources = () => {
                 <td>{r.size || '—'}</td>
                 <td>
                   <div style={{ display: 'flex', gap: '5px' }}>
-                    <a href={r.fileUrl?.startsWith('http') ? r.fileUrl : `http://localhost:5000${r.fileUrl}`} target="_blank" rel="noreferrer" className="admin-action-btn" title="Tải xuống" style={{color: 'var(--admin-primary)'}}>
+                    <a href={r.fileUrl?.startsWith('http') ? r.fileUrl : `${BACKEND_URL}${r.fileUrl}`} target="_blank" rel="noreferrer" className="admin-action-btn" title="Tải xuống" style={{color: 'var(--admin-primary)'}}>
                       <FileDown size={16} />
                     </a>
                     <button className="admin-action-btn delete" title="Xóa" onClick={() => handleDelete(r.id)}>
