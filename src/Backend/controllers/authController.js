@@ -371,14 +371,16 @@ module.exports.googleLogin = async (req, res, next) => {
       return res.status(400).json({ message: 'Không có token từ Google' });
     }
 
-    // Verify the Google token
-    const ticket = await googleClient.verifyIdToken({
-      idToken: token,
-      audience: process.env.GOOGLE_CLIENT_ID,
-    });
+    // Fetch user info from Google using access_token
+    const googleResponse = await fetch(
+      `https://www.googleapis.com/oauth2/v3/userinfo?access_token=${token}`
+    );
 
-    const payload = ticket.getPayload();
-    const { email, name, picture } = payload;
+    if (!googleResponse.ok) {
+      return res.status(401).json({ message: 'Token Google không hợp lệ' });
+    }
+
+    const { email, name, picture } = await googleResponse.json();
 
     if (!email) {
       return res.status(400).json({ message: 'Không thể lấy email từ tài khoản Google' });
