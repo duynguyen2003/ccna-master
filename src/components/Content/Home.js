@@ -419,7 +419,7 @@ export const Home = () => {
                   <div className="icon-box">
                     <Icon size={32} strokeWidth={1.5} />
                   </div>
-                  <h3 className="course-title">{course.title.replace(' (Updated)', '')}</h3>
+                  <h3 className="course-title">{course.title.replace(' (Updated)', '').replace(/,/g, ', ')}</h3>
                   <p className="course-desc">{course.desc}</p>
 
                   {isAuthenticated && (
