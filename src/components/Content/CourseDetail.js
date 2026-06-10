@@ -153,7 +153,7 @@ const CourseDetail = () => {
           </div>
 
           {/* Spacer to push content left (sidebar floats right in body) */}
-          <div style={{ width: 360, flexShrink: 0 }} />
+          <div className="cdp-hero-spacer" />
         </div>
       </div>
 

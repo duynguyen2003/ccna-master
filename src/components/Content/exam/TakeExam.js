@@ -93,7 +93,7 @@ const TakeExam = () => {
   }, [examId, token]);
 
   const duration = loadingData ? 0 : (exam?.durationMinutes ? exam.durationMinutes * 60 : EXAM_DURATION);
-  const { timeLeft, elapsed, isWarning, formatted, ready } = useTimer(duration, initialTime);
+  const { timeLeft, elapsed, isWarning, formatted } = useTimer(duration, initialTime);
 
   // Lưu session vào localStorage
   useEffect(() => {

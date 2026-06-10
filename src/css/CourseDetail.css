@@ -102,6 +102,11 @@
 }
 
 /* ---- Sidebar (right sticky card) ---- */
+.cdp-hero-spacer {
+  width: 360px;
+  flex-shrink: 0;
+}
+
 .cdp-sidebar {
   width: 340px;
   flex-shrink: 0;
@@ -410,6 +415,7 @@
   .cdp-competencies-grid { grid-template-columns: 1fr; }
   .cdp-hero-title { font-size: 1.5rem; }
   .cdp-lesson-list { padding-left: 1.25rem; }
+  .cdp-hero-spacer { display: none; }
 }
 
 /* =========================================
