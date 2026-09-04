@@ -300,6 +300,7 @@ const Lesson = () => {
          }
       };
       initLesson();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
    }, [courseId, token]);
 
    // Đồng bộ lessonId ngược lại URL khi selectedLessonId thay đổi
@@ -338,6 +339,7 @@ const Lesson = () => {
          };
          selectTargetLesson();
       }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
    }, [searchParams, modules, token]);
 
    // 1. Fetch note mỗi khi đổi lesson

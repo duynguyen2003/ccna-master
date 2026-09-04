@@ -7,9 +7,7 @@ import {
   Trophy,
   BookOpen,
   Activity,
-  Clock,
   CheckCircle2,
-  Star,
   FileText,
   MonitorPlay,
   ChevronRight,
@@ -79,7 +77,7 @@ export default function Profile() {
   const recentActivities = profile.activities || [];
   const badges = profile.badges || [];
   const courseProgress = profile.progress || [];
-  const { stats, weeklyScores, dailyStudyTime } = profile;
+  const { stats, weeklyScores } = profile;
 
   const formatTime = (minutes) => {
     const h = Math.floor(minutes / 60);

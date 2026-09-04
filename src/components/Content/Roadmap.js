@@ -2,11 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   CheckCircle,
-  Lock,
   ArrowRight,
   Play,
-  Loader2,
-  AlertCircle,
   BookOpen,
   ChevronRight,
   Map,

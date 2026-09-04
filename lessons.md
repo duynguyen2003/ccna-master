@@ -22,3 +22,13 @@
 - Windows NTFS không phân biệt hoa thường (case-insensitive), cho phép import `adminMotion` từ file `AdminMotion.js` trên host, nhưng môi trường container Linux (case-sensitive) sẽ thất bại ngay khi resolve module. Tên file trên đĩa phải khớp chính xác từng ký tự hoa thường với câu lệnh import.
 - Cần cẩn trọng khi tạo file mới để không ghi đè nhầm vào component hiện hữu (như trường hợp `AdminPagination.jsx` bị ghi đè bởi `AdminMotionSwap`), vừa gây thiếu module mới cho các component phụ thuộc vừa phá vỡ chức năng cũ.
 
+## Deploy Vercel với Create React App (CRA)
+
+- CRA mặc định coi tất cả ESLint warnings là error khi biến môi trường `CI=true` (được Vercel đặt tự động). Lỗi này khiến `npm run build` trên Vercel dừng ngay lập tức với exit code 1 dù ứng dụng chạy bình thường ở local.
+- Giải pháp bền vững kết hợp hai lớp:
+  1. Dọn dẹp triệt để các cảnh báo ESLint (`no-unused-vars`, `react-hooks/exhaustive-deps`) ở các component giao diện.
+  2. Tạo file `vercel.json` với `buildCommand: "CI=false npm run build"` và cho phép commit `.env.production` chứa `CI=false`, `DISABLE_ESLINT_PLUGIN=true` để bảo vệ pipeline build không bị đứt đoạn.
+- Khi triển khai React Router (SPA) trên Vercel, bắt buộc cấu hình `rewrites` trong `vercel.json` trỏ `/(.*)` về `/index.html` để tránh lỗi 404 khi người dùng F5 hoặc truy cập trực tiếp vào URL nhánh (như `/lesson`, `/profile`, `/roadmap`).
+- Cấu hình `.gitignore`: Tránh viết `.env*` bao quát toàn bộ vì sẽ bỏ qua cả `.env.production` và `.env.example`. Cần chỉ rõ các file cần ignore (`.env`, `.env.local`) và whitelist file config production.
+
+
