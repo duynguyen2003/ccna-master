@@ -1,5 +1,5 @@
 // src/components/Admin/Views/Dashboard.js
-import React, { useState, useEffect, useCallback, useContext } from 'react';
+import React, { useState, useEffect, useCallback, useContext, useRef } from 'react';
 import { Users, BookOpen, Award, TrendingUp, AlertCircle } from 'lucide-react';
 import { adminApi } from '../../../services/api/adminApi';
 import { AuthContext } from '../../../context/AuthContext';
@@ -9,9 +9,11 @@ import CoursePieChart from '../Charts/CoursePieChart';
 import RegistrationLineChart from '../Charts/RegistrationLineChart';
 import RecentStudentsTable from '../Components/RecentStudentsTable';
 import QuickActions from '../Components/QuickActions';
+import { gsap, useGSAP } from '../../../utils/adminMotion';
 import '../../../css/Admin/AdminViews.css';
 
 const Dashboard = () => {
+  const dashboardRef = useRef(null);
   const { token, user } = useContext(AuthContext);
   const [activeTab, setActiveTab] = useState('week');
 
@@ -42,6 +44,38 @@ const Dashboard = () => {
     students: null,
     logs: null
   });
+
+  useGSAP(() => {
+    const media = gsap.matchMedia();
+
+    media.add('(prefers-reduced-motion: no-preference)', () => {
+      const timeline = gsap.timeline({ defaults: { ease: 'power3.out' } });
+
+      timeline
+        .from('.admin-welcome', {
+          autoAlpha: 0,
+          y: 12,
+          duration: 0.35,
+          clearProps: 'opacity,visibility,transform'
+        })
+        .from('.admin-stats-card', {
+          autoAlpha: 0,
+          y: 18,
+          duration: 0.45,
+          stagger: 0.08,
+          clearProps: 'opacity,visibility,transform'
+        }, '-=0.16')
+        .from('.dashboard-card', {
+          autoAlpha: 0,
+          y: 16,
+          duration: 0.4,
+          stagger: 0.06,
+          clearProps: 'opacity,visibility,transform'
+        }, '-=0.2');
+    });
+
+    return () => media.revert();
+  }, { scope: dashboardRef });
 
   const fetchData = useCallback(async () => {
     if (!token) return;
@@ -125,7 +159,7 @@ const Dashboard = () => {
   );
 
   return (
-    <div className="dashboard-wrapper">
+    <div className="dashboard-wrapper" ref={dashboardRef}>
       {/* Welcome Banner */}
       <div className="admin-welcome">
         <div className="admin-welcome-info">

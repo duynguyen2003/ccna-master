@@ -1,20 +1,74 @@
 // src/components/Admin/Components/StatsCard.js
-import React from 'react';
+import React, { useMemo, useRef } from 'react';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import MiniSparkline from '../Charts/MiniSparkline';
 import { DASHBOARD_COLORS } from '../../../config/dashboardConfig';
+import { gsap, useGSAP } from '../../../utils/adminMotion';
 
-const StatsCard = ({ 
-  title, 
-  value, 
-  icon: Icon, 
-  trend, 
-  trendValue, 
-  sparkData, 
+const StatsCard = ({
+  title,
+  value,
+  icon: Icon,
+  trend,
+  trendValue,
+  sparkData,
   colorName = 'blue',
-  loading = false 
+  loading = false
 }) => {
+  const valueRef = useRef(null);
   const color = DASHBOARD_COLORS[colorName] || DASHBOARD_COLORS.blue;
+  const animatedValue = useMemo(() => {
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      return { number: value, suffix: '' };
+    }
+
+    if (typeof value === 'string') {
+      const match = value.trim().match(/^(-?\d+(?:\.\d+)?)(%)?$/);
+      if (match) {
+        return { number: Number(match[1]), suffix: match[2] || '' };
+      }
+    }
+
+    return null;
+  }, [value]);
+
+  useGSAP(() => {
+    if (loading || !animatedValue || !valueRef.current) return undefined;
+
+    const media = gsap.matchMedia();
+    const formatValue = (currentValue) => (
+      `${Math.round(currentValue).toLocaleString('vi-VN')}${animatedValue.suffix}`
+    );
+
+    media.add({
+      reduceMotion: '(prefers-reduced-motion: reduce)',
+      allowMotion: '(prefers-reduced-motion: no-preference)'
+    }, ({ conditions }) => {
+      if (conditions.reduceMotion) {
+        valueRef.current.textContent = formatValue(animatedValue.number);
+        return undefined;
+      }
+
+      const counter = { current: 0 };
+      gsap.to(counter, {
+        current: animatedValue.number,
+        duration: 0.8,
+        ease: 'power2.out',
+        onUpdate: () => {
+          if (valueRef.current) {
+            valueRef.current.textContent = formatValue(counter.current);
+          }
+        }
+      });
+
+      return undefined;
+    });
+
+    return () => media.revert();
+  }, {
+    dependencies: [animatedValue, loading],
+    revertOnUpdate: true
+  });
 
   if (loading) {
     return (
@@ -45,10 +99,10 @@ const StatsCard = ({
       <div className="admin-stats-card-header">
         <div className="admin-stats-info">
           <h3>{title}</h3>
-          <p>{typeof value === 'number' ? value.toLocaleString('vi-VN') : value}</p>
+          <p ref={valueRef}>{typeof value === 'number' ? value.toLocaleString('vi-VN') : value}</p>
         </div>
-        <div className="admin-stats-icon-container" style={{ 
-          backgroundColor: `${color}15`, 
+        <div className="admin-stats-icon-container" style={{
+          backgroundColor: `${color}15`,
           color: color,
           padding: '10px',
           borderRadius: '12px',
@@ -59,7 +113,7 @@ const StatsCard = ({
           <Icon size={22} />
         </div>
       </div>
-      
+
       <div className="admin-stats-card-footer">
         {renderTrend()}
         <MiniSparkline data={sparkData} color={color} />

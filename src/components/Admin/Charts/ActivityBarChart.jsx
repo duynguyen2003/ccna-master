@@ -2,25 +2,32 @@
 import React from 'react';
 import { BarChart2 } from 'lucide-react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell } from 'recharts';
+import AdminMotionSwap from '../Components/AdminMotionSwap';
 
 const ActivityBarChart = ({ data, loading = false }) => {
   if (loading) {
-    return <div className="skeleton" style={{ width: '100%', height: '300px' }}></div>;
+    return (
+      <AdminMotionSwap stateKey="loading">
+        <div className="skeleton" style={{ width: '100%', height: '300px' }}></div>
+      </AdminMotionSwap>
+    );
   }
 
   if (!data || data.length === 0 || data.every(d => d.value === 0)) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 300, color: '#94a3b8', gap: '8px' }}>
-        <BarChart2 size={32} strokeWidth={1.5} />
-        <p style={{ fontSize: '13px', margin: 0 }}>Chưa có dữ liệu học tập trong 7 ngày qua</p>
-      </div>
+      <AdminMotionSwap stateKey="empty">
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 300, color: '#94a3b8', gap: '8px' }}>
+          <BarChart2 size={32} strokeWidth={1.5} />
+          <p style={{ fontSize: '13px', margin: 0 }}>Chưa có dữ liệu học tập trong 7 ngày qua</p>
+        </div>
+      </AdminMotionSwap>
     );
   }
 
   const maxValue = Math.max(...data.map(d => d.value));
 
   return (
-    <div style={{ width: '100%', height: 300 }}>
+    <AdminMotionSwap stateKey="ready" style={{ width: '100%', height: 300 }}>
       <ResponsiveContainer>
         <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
@@ -57,7 +64,7 @@ const ActivityBarChart = ({ data, loading = false }) => {
           </Bar>
         </BarChart>
       </ResponsiveContainer>
-    </div>
+    </AdminMotionSwap>
   );
 };
 

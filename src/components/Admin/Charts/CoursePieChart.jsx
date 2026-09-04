@@ -2,22 +2,29 @@
 import React from 'react';
 import { PieChart as PieIcon } from 'lucide-react';
 import { PieChart, Pie, Cell, Tooltip } from 'recharts';
+import AdminMotionSwap from '../Components/AdminMotionSwap';
 
 const COLORS = ['#3b82f6', '#22c55e', '#f59e0b', '#a855f7', '#ef4444'];
 
 const CoursePieChart = ({ data, loading = false }) => {
   if (loading) {
-    return <div className="skeleton" style={{ width: '100%', height: '120px' }}></div>;
+    return (
+      <AdminMotionSwap stateKey="loading">
+        <div className="skeleton" style={{ width: '100%', height: '120px' }}></div>
+      </AdminMotionSwap>
+    );
   }
 
   const hasData = data && data.length > 0 && data.some(d => d.value > 0);
 
   if (!hasData) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 100, color: '#94a3b8', gap: '12px' }}>
-        <PieIcon size={24} strokeWidth={1.5} />
-        <p style={{ fontSize: '12px', margin: 0 }}>Chưa có dữ liệu</p>
-      </div>
+      <AdminMotionSwap stateKey="empty">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 100, color: '#94a3b8', gap: '12px' }}>
+          <PieIcon size={24} strokeWidth={1.5} />
+          <p style={{ fontSize: '12px', margin: 0 }}>Chưa có dữ liệu</p>
+        </div>
+      </AdminMotionSwap>
     );
   }
 
@@ -27,7 +34,7 @@ const CoursePieChart = ({ data, loading = false }) => {
   }));
 
   return (
-    <div className="donut-wrap">
+    <AdminMotionSwap stateKey="ready" className="donut-wrap">
       {/* Cố định kích thước để tránh donut bị phình to */}
       <PieChart width={90} height={90}>
         <Pie
@@ -44,9 +51,9 @@ const CoursePieChart = ({ data, loading = false }) => {
             <Cell key={`cell-${index}`} fill={entry.color} />
           ))}
         </Pie>
-        <Tooltip 
+        <Tooltip
           contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', fontSize: '11px' }}
-          formatter={(v, n) => [`${v} HV`, n]} 
+          formatter={(v, n) => [`${v} HV`, n]}
         />
       </PieChart>
 
@@ -59,7 +66,7 @@ const CoursePieChart = ({ data, loading = false }) => {
           </div>
         ))}
       </div>
-    </div>
+    </AdminMotionSwap>
   );
 };
 
