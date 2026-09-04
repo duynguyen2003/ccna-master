@@ -31,4 +31,12 @@
 - Khi triển khai React Router (SPA) trên Vercel, bắt buộc cấu hình `rewrites` trong `vercel.json` trỏ `/(.*)` về `/index.html` để tránh lỗi 404 khi người dùng F5 hoặc truy cập trực tiếp vào URL nhánh (như `/lesson`, `/profile`, `/roadmap`).
 - Cấu hình `.gitignore`: Tránh viết `.env*` bao quát toàn bộ vì sẽ bỏ qua cả `.env.production` và `.env.example`. Cần chỉ rõ các file cần ignore (`.env`, `.env.local`) và whitelist file config production.
 
+## Thiết lập CI/CD bằng GitHub Actions & Vercel
+
+- Tab Actions trên GitHub chỉ xuất hiện và kích hoạt khi có ít nhất một file định nghĩa workflow (`.yml`) nằm trong thư mục `.github/workflows/`.
+- Pipeline CI/CD chuẩn nên tách thành 2 tầng rõ rệt:
+  1. Quality Gate (`test-and-build`): Chạy `npm ci --legacy-peer-deps`, sinh Prisma Client qua `npx prisma generate`, chạy lint và build bundle với `npm run build`. Tầng này đảm bảo mã nguồn hoàn toàn hợp lệ trước khi cho phép deploy.
+  2. Deployment (`deploy-vercel`): Có thể dùng Vercel CLI Action với các secrets (`VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`). Cần xử lý điều kiện kiểm tra sự tồn tại của Token để workflow không bị crash nếu người dùng dùng song song Vercel Git App Integration.
+
+
 

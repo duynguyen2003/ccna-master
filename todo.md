@@ -207,8 +207,8 @@
 - [x] Tao file `vercel.json` voi `buildCommand: "CI=false npm run build"`, `outputDirectory: "build"` va rewrites cho React Router SPA.
 - [x] Dieu chinh `.gitignore` de theo doi `.env.production` va `.env.example`.
 - [x] Chay `npm run build` kiem tra build local (thanh cong).
-- [ ] Commit va push len branch `developer`.
-- [ ] Ghi nhan ket qua vao `todo.md` va `lessons.md`.
+- [x] Commit va push len branch `developer` (`9635110`).
+- [x] Ghi nhan ket qua vao `todo.md` va `lessons.md`.
 
 ## Giai thich thay doi
 
@@ -221,6 +221,40 @@
 
 - `npx eslint src/components/Content/Lesson.js src/components/Content/Profile.js src/components/Content/Roadmap.js`: Dat ket qua sach se hoan toan (0 errors, 0 warnings).
 - `npm run build`: Thanh cong, compiled optimized production build khong loi.
+
+---
+
+# Thiet lap GitHub Actions CI/CD Pipeline (Test -> Build -> Vercel Deploy)
+
+## Muc tieu do duoc
+
+- Tao workflow GitHub Actions tai `.github/workflows/ci-cd.yml` hoat dong tu dong khi co push/PR len `developer` va `main`.
+- Pipeline chay qua 2 giai doan:
+  1. `test-and-build`: Cai dat dependencies, generate Prisma Client, kiem tra ESLint va thuc hien build production.
+  2. `deploy-vercel`: Chi thuc thi khi build pass; tu dong deploy len Vercel neu co secret hoac dong vai tro quality gate cho Vercel Git integration.
+- Commit va push len `origin/developer` de tab Actions tren GitHub hien thi workflow va trigger lan chay dau tien.
+
+## File du kien thay doi
+
+- `.github/workflows/ci-cd.yml` (moi)
+- `todo.md`
+- `lessons.md`
+
+## Ke hoach
+
+- [x] Tao file `.github/workflows/ci-cd.yml` voi cau hinh 2 job `test-and-build` va `deploy-vercel`.
+- [x] Kiem tra cu phap YAML va dam bao cac buoc `npm ci --legacy-peer-deps` va `prisma generate` day du.
+- [ ] Stage, commit va push len branch `developer`.
+- [ ] Cap nhat ket qua vao `todo.md` va `lessons.md`.
+- [ ] Huong dan chi tiet cach lay secret tren Vercel de ket noi day du.
+
+## Giai thich thay doi
+
+- `.github/workflows/ci-cd.yml`: Thiet lap quy trinh CI/CD tu dong tren GitHub Actions gom 2 giai doan:
+  1. `test-and-build`: Khoi tao moi truong Node 20, cai package sach qua `npm ci --legacy-peer-deps`, sinh client Prisma, chay lint va build bundle san xuat (`CI=false`).
+  2. `deploy-vercel`: Phuc vu deploy len Vercel sau khi build thanh cong. Tich hop co che fallback thong minh (neu chua nhap `VERCEL_TOKEN` vao GitHub Secrets thi thong bao va de Vercel Git App tu deploy, khong lam do workflow).
+
+
 
 
 
