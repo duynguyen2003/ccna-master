@@ -37,6 +37,11 @@
 - Pipeline CI/CD chuẩn nên tách thành 2 tầng rõ rệt:
   1. Quality Gate (`test-and-build`): Chạy `npm ci --legacy-peer-deps`, sinh Prisma Client qua `npx prisma generate`, chạy lint và build bundle với `npm run build`. Tầng này đảm bảo mã nguồn hoàn toàn hợp lệ trước khi cho phép deploy.
   2. Deployment (`deploy-vercel`): Có thể dùng Vercel CLI Action với các secrets (`VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`). Cần xử lý điều kiện kiểm tra sự tồn tại của Token để workflow không bị crash nếu người dùng dùng song song Vercel Git App Integration.
+- Lỗi `exit code 152` trong `npm ci`: Đây là lỗi crash nội bộ của tiến trình npm CLI (thường do "Exit handler never called" hoặc ngắt kết nối mạng khi tải cây dependency khổng lồ). Để giải quyết:
+  + Nâng cấp lên Node 22 (LTS) có phiên bản npm mới nhất ổn định hơn.
+  + Cấu hình `npm config set fetch-retries 5` và nới rộng timeout.
+  + Tránh dùng `cache: 'npm'` của `setup-node` khi repo có nhiều packages dễ gây xung đột checksum cache trên runner.
+
 
 
 

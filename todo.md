@@ -244,15 +244,48 @@
 
 - [x] Tao file `.github/workflows/ci-cd.yml` voi cau hinh 2 job `test-and-build` va `deploy-vercel`.
 - [x] Kiem tra cu phap YAML va dam bao cac buoc `npm ci --legacy-peer-deps` va `prisma generate` day du.
-- [ ] Stage, commit va push len branch `developer`.
-- [ ] Cap nhat ket qua vao `todo.md` va `lessons.md`.
-- [ ] Huong dan chi tiet cach lay secret tren Vercel de ket noi day du.
+- [x] Stage, commit va push len branch `developer` (`eed9eea`).
+- [x] Cap nhat ket qua vao `todo.md` va `lessons.md`.
+- [x] Huong dan chi tiet cach lay secret tren Vercel de ket noi day du.
 
 ## Giai thich thay doi
 
 - `.github/workflows/ci-cd.yml`: Thiet lap quy trinh CI/CD tu dong tren GitHub Actions gom 2 giai doan:
   1. `test-and-build`: Khoi tao moi truong Node 20, cai package sach qua `npm ci --legacy-peer-deps`, sinh client Prisma, chay lint va build bundle san xuat (`CI=false`).
   2. `deploy-vercel`: Phuc vu deploy len Vercel sau khi build thanh cong. Tich hop co che fallback thong minh (neu chua nhap `VERCEL_TOKEN` vao GitHub Secrets thi thong bao va de Vercel Git App tu deploy, khong lam do workflow).
+
+---
+
+# Khac phuc loi GitHub Actions exit code 152 tai buoc Install dependencies
+
+## Muc tieu do duoc
+
+- Khac phuc loi exit code 152 ("Exit handler never called") khi chay `npm ci --legacy-peer-deps` tren GitHub runner.
+- Nang cap `node-version` tu 20 len 22 de loai bo canh bao "Node.js 20 is deprecated", dong bo voi `Dockerfile`.
+- Bo sung cau hinh retry mang (`fetch-retries 5`, timeout dai hon) va bo cache de tranh file tarball loi trong cache runner.
+- Commit va push len branch `developer` de GitHub Actions chay lai thanh cong.
+
+## File du kien thay doi
+
+- `.github/workflows/ci-cd.yml`
+- `todo.md`
+- `lessons.md`
+
+## Ke hoach
+
+- [x] Cap nhat `.github/workflows/ci-cd.yml` chuyen sang Node 22, cau hinh npm network retry.
+- [x] Kiem tra lai cu phap YAML cua file workflow.
+- [ ] Commit va push len `origin/developer`.
+- [ ] Ghi nhan ket qua vao `todo.md` va `lessons.md`.
+
+## Giai thich thay doi
+
+- `ci-cd.yml`:
+  1. Nang cấp `node-version: 22` de dong bo voi Dockerfile va tranh warning deprecation cua Node 20 tren GitHub Actions runner.
+  2. Bo cờ `cache: 'npm'` cua `setup-node` de tranh loi phan ranh cache khi tai kho package lon (>1500 packages).
+  3. Thiet lap `fetch-retries: 5` va timeout dai hon de loai bo loi exit code 152 ("Exit handler never called") khi mang runner bi nghẽn luc download tarball.
+
+
 
 
 
