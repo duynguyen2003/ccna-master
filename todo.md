@@ -294,3 +294,100 @@
 
 
 
+# Cap nhat dac ta va trien khai CLI Lab Phase 1
+
+## Muc tieu do duoc
+
+- `lab.md` duoc chuyen thanh dac ta phu hop voi kien truc React JavaScript + Express + Prisma hien tai, co pham vi va tieu chi nghiem thu Phase 1 ro rang.
+- CLI parser dung command tree khai bao, ho tro mode, prefix/ambiguous matching, `?`, Tab, `no`, `exit`, `end` va vi tri loi.
+- Backend quan ly attempt, device state, command history va cham diem semantic; client khong tu gan ket qua hoan thanh.
+- Hoc vien mo CLI Lab tu mot bai Lab `CLI_SIMULATION`, go lenh tren terminal web, tiep tuc attempt va nop bai.
+- Lab huong dan/Packet Tracer hien tai tiep tuc hoat dong nhu cu.
+- Prisma generate, backend unit test, frontend test/build va Docker build hoan tat thanh cong.
+
+## File du kien thay doi
+
+- `lab.md`
+- `package.json`, `package-lock.json`
+- `prisma/schema.prisma`
+- `src/Backend/simulation/commandProfiles/ccna-basic.json` (moi)
+- `src/Backend/simulation/deviceState.js` (moi)
+- `src/Backend/simulation/cliParser.js` (moi)
+- `src/Backend/simulation/gradingEngine.js` (moi)
+- `src/Backend/simulation/cliSimulation.test.js` (moi)
+- `src/Backend/validation/cliLabSchema.js` (moi)
+- `src/Backend/controllers/labAttemptController.js` (moi)
+- `src/Backend/routes/labAttempts.js` (moi)
+- `src/Backend/routes/index.js`
+- `src/Backend/controllers/learningController.js`
+- `src/components/Content/Labs.js`
+- `src/components/Content/CliLabWorkspace.js` (moi)
+- `src/css/Labs.css`
+- `src/services/Api.js`
+- `Dockerfile` (neu can bo sung file simulation vao backend image)
+- `todo.md`, `lessons.md`
+
+## Ke hoach
+
+- [x] Doc lai `Agent.md`, `lab.md` va doi chieu schema/API/UI/Docker hien tai.
+- [x] Cap nhat `lab.md`: sua mau thuan browser-only/microservice, chot kien truc va acceptance criteria Phase 1.
+- [x] Mo rong Prisma cho loai lab mo phong, attempt va command history ma khong pha lab cu.
+- [x] Xay parser/state/grading engine khai bao va bo unit test backend.
+- [x] Them API bat dau/tiep tuc attempt, thuc thi lenh, lay goi y va nop cham diem.
+- [x] Tich hop terminal web va luong CLI_SIMULATION vao trang Labs hien tai.
+- [x] Cap nhat admin/backend mapping toi thieu de co the tao noi dung CLI lab.
+- [x] Chay generate/test/lint/build, sua loi den khi dat.
+- [x] Build Docker va kiem tra smoke test neu moi truong cho phep.
+- [x] Ra soat diff, ghi giai thich/ket qua vao `todo.md` va bai hoc vao `lessons.md`.
+
+## Giai thich huong thay doi
+
+- Phase 1 giu Express/Prisma lam backend authoritative de tan dung auth, Lab CRUD va deployment hien co; FastAPI, Redis va WebSocket duoc de lai cho phase sau khi topology nhieu thiet bi tao ra nhu cau thuc.
+- Lab cu va CLI Lab cung ton tai qua truong `labType`; du lieu simulation/grading dung JSON declarative de mo rong ma khong sua parser core.
+- Cham diem dung semantic assertions, con LLM chi la lop giai thich tuy chon o phase sau.
+
+## Giai thich thay doi Phase 1
+
+- `lab.md`: thay kien truc polyglot qua lon bang dac ta incremental theo React + Express + Prisma, chot ro scope, data contract, API va acceptance criteria.
+- `prisma/schema.prisma`: them `LabType`, metadata simulation, `LabAttempt` va `LabCommand`; lab Packet Tracer cu mac dinh giu nguyen qua `PACKET_TRACER`.
+- `src/Backend/simulation/`: command profile JSON la nguon khai bao; parser xu ly mode/prefix/help/no/error position; state engine mo phong Router/Switch; grader cham theo state thay vi so chuoi lenh.
+- `src/Backend/controllers/labAttemptController.js`, routes va validation: backend so huu state/score, rang buoc attempt theo user, transaction hoa history/progress, rate limit command va validate noi dung lab.
+- `src/components/Content/CliLabWorkspace.js`, `Labs.js`, `Labs.css`, `Api.js`: terminal xterm, keyboard history/Tab/`?`, task panel, feedback va luong mo CLI Lab ngay trong trang `/labs`; luong Packet Tracer cu van duoc giu.
+- `src/components/Admin/Views/Labs.js`, `learningController.js`: admin chon `CLI_SIMULATION` va nhap `initialState`/`gradingSpec` JSON, duoc backend validate truoc khi luu/upload.
+- `package.json`, `package-lock.json`: them `@xterm/xterm`, `@xterm/addon-fit` va script `test:cli`.
+
+## Ket qua kiem tra Phase 1
+
+- `npx prisma generate`: dat (Prisma Client 7.8.0).
+- `npm run test:cli`: dat 10/10 test, 0 fail.
+- ESLint cac file frontend Phase 1: dat, 0 warning cua source (chi co canh bao Browserslist data cu).
+- `node --check` cac controller/schema backend thay doi: dat.
+- `npm run build`: lan dau bi Windows khoa artifact `build/manifest.json` (`EPERM`); build lai qua `BUILD_PATH=.tmp-build-phase1-final` dat va thu muc tam da duoc xoa.
+- `docker compose build backend frontend`: dat; frontend production bundle compile thanh cong.
+- Docker smoke test: `db`, `backend`, `frontend` deu `healthy`; `GET http://localhost:3000/api/debug-ping` tra `pong`; route attempt chua dang nhap tra HTTP 401.
+- Prisma/PostgreSQL smoke test cho advisory transaction lock: dat (`advisory-lock-ok`); API public tra 0 truong `gradingSpec`/`initialState` bi lo.
+- Luu y dependency tree hien tai bao 58 npm audit findings (11 low, 15 moderate, 31 high, 1 critical); khong chay `npm audit fix --force` trong Phase 1 vi co nguy co breaking change ngoai pham vi.
+
+---
+
+# Khac phuc loi Google OAuth crash trang trang do thieu REACT_APP_GOOGLE_CLIENT_ID tren Vercel
+
+## Muc tieu do duoc
+
+- Khi `REACT_APP_GOOGLE_CLIENT_ID` chua duoc cau hinh tren Vercel, trang `/login` va `/register` khong bi crash trang trang.
+- Tach `useGoogleLogin` vao component con, chi mount khi client id ton tai.
+- Cung cap fallback cho `GoogleOAuthProvider` va thong bao nguoi dung khi bam nut Google neu chua cau hinh.
+- `npm run build` hoan tat thanh cong khong co loi.
+
+## File thay doi
+
+- `src/index.js`
+- `src/components/Auth/Login.js`
+- `src/components/Auth/Register.js`
+- `todo.md`
+- `lessons.md`
+
+## Ket qua kiem tra
+
+- `npm run build`: compile thanh cong (bundle `main.130dd5a8.js`).
+- Hook `useGoogleLogin` khong con duoc thuc thi vo dieu kien tren moi truong thieu Client ID.

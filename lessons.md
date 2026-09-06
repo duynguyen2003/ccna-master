@@ -42,6 +42,21 @@
   + Cấu hình `npm config set fetch-retries 5` và nới rộng timeout.
   + Tránh dùng `cache: 'npm'` của `setup-node` khi repo có nhiều packages dễ gây xung đột checksum cache trên runner.
 
+## CLI Lab Phase 1
 
+- Khi React Strict Mode co the khoi tao effect hai lan, endpoint `start attempt` phai idempotent o backend. PostgreSQL advisory lock theo cap `(userId, labId)` trong transaction ngan hai request dong thoi tao hai attempt ma khong can unique index tam thoi hay `--accept-data-loss`.
+- `pg_advisory_xact_lock` tra ve PostgreSQL `void`, Prisma `$queryRaw` khong deserialize truc tiep duoc; can cast ket qua sang `text` (hoac mot kieu duoc ho tro) trong cau `SELECT` va xac minh tren chinh driver/container dang deploy.
+- Khong nen dung `prisma db push --accept-data-loss` chi de vuot qua canh bao index trong entrypoint Docker. Neu thay doi lam container restart, uu tien thiet ke lai rang buoc hoac dung migration duoc kiem soat.
+- CLI simulator an toan nen parse command tree khai bao va goi cac handler da dang ky; khong map input nguoi dung vao shell, `eval` hay process he dieu hanh.
+- Cham diem theo state cuoi cho phep hoc vien dung nhieu chuoi lenh hop le khac nhau. So khop transcript/chuoi lenh se de loai nham dap an dung va khong phu hop muc tiêu thuc hanh Cisco.
+- Client terminal chi nen quan ly hien thi va thao tac ban phim. Device state, history chinh thuc, score va viec danh dau tien do phai nam o backend de reload duoc va khong the gia mao tu trinh duyet.
+- Voi Windows, artifact CRA trong `build/` co the bi process khac khoa va gay `EPERM`; dat `BUILD_PATH` sang thu muc tam rieng giup phan biet loi filesystem voi loi compile, sau do xoa thu muc tam bang duong dan tuyet doi da xac minh.
 
+## Google OAuth và Xử lý Lỗi Thiếu Client ID trên Production
 
+- Thư viện `@react-oauth/google` và script Google Identity Services (`accounts.google.com/gsi/client`) sẽ ném ngoại lệ đồng bộ `Error: Missing required parameter client_id` ngay khi hook `useGoogleLogin` được gọi nếu `clientId` bị `undefined` hoặc rỗng (do quên cấu hình biến môi trường trên Vercel/Netlify).
+- Khi lỗi này xảy ra trong chu kỳ render của React component, React sẽ unmount toàn bộ DOM tree dẫn đến màn hình trắng xóa (blank screen) khi người dùng truy cập trang `/login` hoặc `/register`.
+- Giải pháp phòng thủ (defensive rendering):
+  1. Cung cấp fallback an toàn cho `GoogleOAuthProvider clientId={process.env.REACT_APP_GOOGLE_CLIENT_ID || '...'}` để không làm sập provider gốc.
+  2. Không gọi `useGoogleLogin` trực tiếp ở component cha; bọc hook này trong một component con riêng biệt và chỉ mount khi `process.env.REACT_APP_GOOGLE_CLIENT_ID` tồn tại.
+  3. Khi thiếu Client ID, hiển thị nút thông báo fallback. Nhờ đó, người dùng vẫn có thể đăng nhập / đăng ký bằng Email và Mật khẩu truyền thống bình thường mà ứng dụng không bao giờ bị crash.
