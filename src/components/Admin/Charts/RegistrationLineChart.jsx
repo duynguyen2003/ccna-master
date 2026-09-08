@@ -1,22 +1,27 @@
 // src/components/Admin/Charts/RegistrationLineChart.jsx
 import React from 'react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
+import { TrendingUp } from 'lucide-react';
 import AdminMotionSwap from '../Components/AdminMotionSwap';
 
 const RegistrationLineChart = ({ data, loading = false }) => {
-  const chartData = data || [
-    { name: 'T1', value: 0 },
-    { name: 'T2', value: 1 },
-    { name: 'T3', value: 2 },
-    { name: 'T4', value: 2 },
-    { name: 'T5', value: 4 },
-    { name: 'T6', value: 5 },
-  ];
+  const chartData = Array.isArray(data) ? data : [];
 
   if (loading) {
     return (
       <AdminMotionSwap stateKey="loading">
         <div className="skeleton" style={{ width: '100%', height: '200px' }}></div>
+      </AdminMotionSwap>
+    );
+  }
+
+  if (chartData.length === 0 || chartData.every((entry) => Number(entry.value) === 0)) {
+    return (
+      <AdminMotionSwap stateKey="empty">
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 230, color: '#94a3b8', gap: '8px' }}>
+          <TrendingUp size={30} strokeWidth={1.5} />
+          <p style={{ fontSize: '13px', margin: 0 }}>Chưa có dữ liệu đăng ký</p>
+        </div>
       </AdminMotionSwap>
     );
   }
