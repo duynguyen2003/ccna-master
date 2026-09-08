@@ -25,7 +25,7 @@
 - Nhánh hiện tại: `developer`, base `a32ef6c`; nhánh local `dev` tạo nhầm đã xóa.
 - Đã tạo 8 commit riêng theo nhóm: simulator, dependency/Prisma, API/attempt, UI lab, Home, admin chart, CI/Docker và tài liệu.
 - CLI 33 pass/1 skip, component 7/7, lint cấu hình CI đạt; quét file thay đổi không phát hiện secret/token và `.env` không được đưa vào commit.
-- Push `origin/developer` đạt sau khi xác thực GitHub; local và remote cùng trỏ tới `d7540a417f0adc49a730ddc06fa3ef58d2efa44f`.
+- Push `origin/developer` đạt sau khi xác thực GitHub; local và remote đã được xác minh cùng trỏ tới HEAD sau lần push cuối.
 
 # Khắc phục npm audit có kiểm soát — 2026-09-08
 
