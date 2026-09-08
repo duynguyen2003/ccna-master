@@ -1098,3 +1098,29 @@ Giữ React/Express/PostgreSQL, dùng simulator version mới cho topology; gi�
 - Image được chạy cùng PostgreSQL 16 Alpine trong network test cô lập. `prisma db push` đồng bộ schema, database connected, healthcheck đạt `healthy`, và `GET /api/debug-ping` trả HTTP 200.
 - `docker compose -f compose.yaml -f compose.scale.yaml config --quiet` đạt, xác nhận cấu hình stack/scale vẫn parse được sau thay đổi.
 - Đã xóa image test, container và network test. Không chạm stack `ccna-master-*` đang có. Docker frontend chưa build trong đợt này vì mục tiêu nghiệm thu là image backend bị thiếu trước đó.
+# Sửa Vercel deploy trong GitHub Actions — 2026-09-08
+
+## Mục tiêu đo được
+
+- Thay action Vercel đang lỗi Project Settings bằng quy trình CLI chính thức: `vercel pull`, `vercel build`, `vercel deploy --prebuilt`.
+- Chỉ chạy deploy khi đủ `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`; thiếu secret phải chuyển sang thông báo hướng dẫn mà không làm job quality gate thất bại.
+- Không commit thư mục `.vercel`, token hoặc environment value; kiểm tra YAML/workflow và giữ build/test hiện hữu.
+- Ghi kết quả kiểm tra và giới hạn: xác thực deployment thật vẫn phụ thuộc secret hợp lệ và quyền của Vercel project.
+
+## File dự kiến thay đổi
+
+- `.github/workflows/ci-cd.yml`: thay Vercel action bằng CLI flow, kiểm tra secrets và truyền project scope qua environment.
+- `todo.md`, `lessons.md`: checklist và bài học về liên kết project Vercel trong CI.
+
+## Checklist
+
+- [x] Sửa workflow deploy Vercel.
+- [x] Kiểm tra cấu hình YAML, secret gate và không rò rỉ secret.
+- [x] Chạy các kiểm tra cục bộ liên quan và ghi kết quả.
+
+## Kết quả sửa Vercel — 2026-09-08
+
+- Bỏ `amondnet/vercel-action@v25`, thay bằng CLI flow chính thức: `vercel pull --yes --environment=production`, `vercel build --prod`, `vercel deploy --prebuilt --prod`.
+- Job kiểm tra đủ ba secret trước khi chạy; khi thiếu secret, quality gate vẫn kết thúc bằng thông báo hướng dẫn và không chạy deploy.
+- YAML parse, kiểm tra trigger/step/command, `git diff --check`, CLI 33 pass/1 skip, component 7/7 và quét secret trên file thay đổi đều đạt.
+- Chưa thể xác nhận deployment Vercel thật trong môi trường local vì cần secret hợp lệ và quyền đúng trên project; nếu ID/token sai, bước `vercel pull` sẽ báo rõ project không truy cập được.
