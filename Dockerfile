@@ -7,6 +7,9 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 COPY package.json package-lock.json ./
+COPY prisma ./prisma
+COPY prisma.config.ts ./prisma.config.ts
+COPY scripts/prisma-postinstall.cjs ./scripts/prisma-postinstall.cjs
 RUN npm ci --legacy-peer-deps
 
 
@@ -45,6 +48,7 @@ ENV PORT=5000
 COPY prisma ./prisma
 COPY prisma.config.ts ./prisma.config.ts
 COPY src/Backend ./src/Backend
+COPY src/shared ./src/shared
 COPY src/uploads ./src/uploads
 
 RUN npx prisma generate
