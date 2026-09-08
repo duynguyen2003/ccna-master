@@ -18,7 +18,7 @@
 - [x] Fetch và xác nhận nhánh đích `developer`, kiểm tra các file chuẩn bị commit.
 - [x] Chạy kiểm thử CLI/component và kiểm tra lint/whitespace cho trạng thái bàn giao.
 - [x] Tạo 8 commit theo nhóm, kiểm tra nội dung staged trước từng commit.
-- [ ] Push `origin/developer` và xác minh remote trùng HEAD local.
+- [x] Push `origin/developer` và xác minh remote trùng HEAD local.
 
 ## Kết quả chia commit trước khi push
 
