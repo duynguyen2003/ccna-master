@@ -1,0 +1,11 @@
+# Apply schema once with the normal stack before enabling replicas.
+services:
+  backend:
+    # Replicas are reached through Nginx; a fixed host port cannot be shared.
+    ports: !reset []
+    command: ["node", "src/Backend/Server.js"]
+    deploy:
+      replicas: 2
+  frontend:
+    volumes:
+      - ./docker/nginx.scale.conf:/etc/nginx/conf.d/default.conf:ro
