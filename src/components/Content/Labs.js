@@ -1,13 +1,17 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   Download, Clock, Terminal, Search, Loader2,
   X, ChevronLeft, ChevronRight, Copy, Check,
-  BookOpen, Network, Zap, AlertCircle, FileText
+  BookOpen, Network, Zap, AlertCircle, FileText,
+  Laptop
 } from "lucide-react";
 import { api, BACKEND_URL } from "../../services/Api.js";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../Toast";
+import CliLabWorkspace from "./CliLabWorkspace";
+import { gsap, useGSAP, prefersReducedMotion } from "../../utils/labMotion";
+import { sanitizeHtml } from "../../shared/sanitizeHtml";
 
 // Giải quyết URL file lab: local path hoặc Cloudinary URL
 const getLabFileUrl = (fileUrl) => {
@@ -37,17 +41,26 @@ const CopyButton = ({ text }) => {
 const LabGuideModal = ({ lab, onClose, onComplete, isGuestView, onGuestBlocked }) => {
   const [step, setStep] = useState(0);
   const [isZoomed, setIsZoomed] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
+  const closeTimer = useRef(null);
   const totalSteps = lab.steps?.length || 0;
+
+  const requestClose = useCallback(() => {
+    if (isClosing) return;
+    setIsClosing(true);
+    const delay = prefersReducedMotion() ? 0 : 220;
+    closeTimer.current = window.setTimeout(onClose, delay);
+  }, [isClosing, onClose]);
 
   const handleKey = useCallback((e) => {
     if (e.key === "Escape") {
       if (isZoomed) {
         setIsZoomed(false);
       } else {
-        onClose();
+        requestClose();
       }
     }
-  }, [onClose, isZoomed]);
+  }, [isZoomed, requestClose]);
 
   useEffect(() => {
     document.addEventListener("keydown", handleKey);
@@ -55,17 +68,26 @@ const LabGuideModal = ({ lab, onClose, onComplete, isGuestView, onGuestBlocked }
     return () => {
       document.removeEventListener("keydown", handleKey);
       document.body.style.overflow = "";
+      if (closeTimer.current) window.clearTimeout(closeTimer.current);
     };
   }, [handleKey]);
 
   const currentStep = lab.steps?.[step];
 
   return (
-    <div className="lab-modal-overlay" onClick={onClose}>
-      <div className="lab-modal" onClick={(e) => e.stopPropagation()}>
+    <div className={`lab-modal-overlay ${isClosing ? 'is-closing' : ''}`} onClick={requestClose}>
+      <div className="lab-guide-mobile-fallback" role="status">
+        <div className="cli-mobile-fallback-card">
+          <div className="cli-mobile-fallback-icon"><Laptop size={36} /></div>
+          <h3>Chức năng này cần dùng trên Laptop</h3>
+          <p>Hướng dẫn lab có sơ đồ, terminal và nhiều bước thao tác; hãy mở lại trên màn hình rộng hơn.</p>
+          <button type="button" className="cli-mobile-fallback-btn" onClick={requestClose}>Quay lại danh sách bài học</button>
+        </div>
+      </div>
+      <div className={`lab-modal ${isClosing ? 'is-closing' : ''}`} onClick={(e) => e.stopPropagation()}>
         <div className="lab-modal-topbar">
           <div className="lab-modal-dots">
-            <span className="dot-red" onClick={onClose} title="Đóng" />
+            <span className="dot-red" onClick={requestClose} title="Đóng" />
             <span className="dot-yellow" />
             <span className="dot-green" />
           </div>
@@ -73,7 +95,7 @@ const LabGuideModal = ({ lab, onClose, onComplete, isGuestView, onGuestBlocked }
             <Terminal size={13} style={{ marginRight: 6 }} />
             cisco-lab - {lab.title}
           </span>
-          <button className="lab-modal-close" onClick={onClose}>
+          <button className="lab-modal-close" onClick={requestClose}>
             <X size={16} />
           </button>
         </div>
@@ -119,7 +141,7 @@ const LabGuideModal = ({ lab, onClose, onComplete, isGuestView, onGuestBlocked }
                 <div 
                   className="lab-guide-rich-text"
                   style={{ fontSize: '0.85rem', color: '#c9d1d9', marginTop: '8px', lineHeight: '1.5', wordBreak: 'break-word' }}
-                  dangerouslySetInnerHTML={{ __html: lab.guideContent }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(lab.guideContent) }}
                 />
               </div>
             )}
@@ -259,8 +281,9 @@ const difficultyConfig = {
   Hard: { label: "Khó", cls: "badge-hard" }
 };
 
-const LabCard = ({ lab, isCompleted, onSelect, isGuestView, onGuestBlocked }) => {
+const LabCard = ({ lab, isCompleted, onSelect, onStartCli, isGuestView, onGuestBlocked }) => {
   const diff = difficultyConfig[lab.difficulty] || { label: lab.difficulty, cls: "badge-gray" };
+  const isCliLab = lab.labType === 'CLI_SIMULATION';
 
   return (
     <div className="lab-card">
@@ -272,6 +295,11 @@ const LabCard = ({ lab, isCompleted, onSelect, isGuestView, onGuestBlocked }) =>
               <Check size={10} /> ĐÃ XONG
             </span>
           )}
+          {isCliLab ? (
+            <span className="lab-badge lab-badge-cli" style={{ position: "relative", top: 0, right: 0 }}>
+              WEB CLI
+            </span>
+          ) : null}
           <span className={`lab-badge ${diff.cls}`} style={{ position: "relative", top: 0, right: 0 }}>
             {diff.label}
           </span>
@@ -289,26 +317,35 @@ const LabCard = ({ lab, isCompleted, onSelect, isGuestView, onGuestBlocked }) =>
         </div>
 
         <div className="lab-card-actions">
-          {isGuestView ? (
-            <button type="button" className="lab-btn-outline" onClick={onGuestBlocked}>
-              <Download size={14} /> Tải file
+          {isCliLab ? (
+            <button
+              className="lab-btn-primary"
+              onClick={() => (isGuestView ? onGuestBlocked() : onStartCli(lab))}
+            >
+              <Terminal size={14} /> Mở CLI Lab
             </button>
           ) : (
-            <a href={getLabFileUrl(lab.fileUrl)} className="lab-btn-outline" download>
-              <Download size={14} /> Tải file
-            </a>
-          )}
+            <>
+              {isGuestView ? (
+                <button type="button" className="lab-btn-outline" onClick={onGuestBlocked}>
+                  <Download size={14} /> Tải file
+                </button>
+              ) : (
+                <a href={getLabFileUrl(lab.fileUrl)} className="lab-btn-outline" download>
+                  <Download size={14} /> Tải file
+                </a>
+              )}
 
-          <button className="lab-btn-primary" onClick={() => onSelect(lab)}>
-            <BookOpen size={14} /> Xem hướng dẫn
-          </button>
+              <button className="lab-btn-primary" onClick={() => onSelect(lab)}>
+                <BookOpen size={14} /> Xem hướng dẫn
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>
   );
 };
-
-const CATEGORIES = ["All", "Switching", "Routing", "Security", "Services", "Automation"];
 
 export const Labs = () => {
   const { isAuthenticated } = useAuth();
@@ -323,6 +360,7 @@ export const Labs = () => {
   const [filter, setFilter] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedLab, setSelectedLab] = useState(null);
+  const [selectedCliLab, setSelectedCliLab] = useState(null);
   const [completedLabs, setCompletedLabs] = useState([]);
 
   const { token } = useAuth();
@@ -332,17 +370,24 @@ export const Labs = () => {
     if (labs.length > 0 && labIdParam) {
       const foundLab = labs.find(l => l.id.toString() === labIdParam);
       if (foundLab) {
-        setSelectedLab(foundLab);
+        if (foundLab.labType === 'CLI_SIMULATION' && isAuthenticated) {
+          setSelectedLab(null);
+          setSelectedCliLab(foundLab);
+        } else {
+          setSelectedCliLab(null);
+          setSelectedLab(foundLab);
+        }
       }
     }
-  }, [labs, labIdParam]);
+  }, [labs, labIdParam, isAuthenticated]);
 
   // Đồng bộ trạng thái selectedLab và URL query parameter
   useEffect(() => {
-    if (selectedLab) {
+    const activeLab = selectedCliLab || selectedLab;
+    if (activeLab) {
       const currentParam = searchParams.get('labId');
-      if (currentParam !== selectedLab.id.toString()) {
-        setSearchParams({ labId: selectedLab.id.toString() }, { replace: true });
+      if (currentParam !== activeLab.id.toString()) {
+        setSearchParams({ labId: activeLab.id.toString() }, { replace: true });
       }
     } else {
       const currentParam = searchParams.get('labId');
@@ -352,7 +397,7 @@ export const Labs = () => {
         setSearchParams(newParams, { replace: true });
       }
     }
-  }, [selectedLab, searchParams, setSearchParams]);
+  }, [selectedLab, selectedCliLab, searchParams, setSearchParams]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -383,19 +428,63 @@ export const Labs = () => {
     loadData();
   }, [token]);
 
+  const allCategories = React.useMemo(() => {
+    const list = ["All", "Switching", "Routing", "Security", "Services", "Automation"];
+    const set = new Set(list);
+    labs.forEach((l) => {
+      if (l.category) {
+        const formatted = l.category.charAt(0).toUpperCase() + l.category.slice(1).toLowerCase();
+        set.add(formatted);
+      }
+    });
+    return Array.from(set);
+  }, [labs]);
+
   const filteredLabs = labs.filter((lab) => {
-    const matchCat = filter === "All" || lab.category === filter;
+    const matchCat = filter === "All" || (lab.category && lab.category.toLowerCase() === filter.toLowerCase());
     const matchSearch = lab.title.toLowerCase().includes(searchTerm.toLowerCase());
     return matchCat && matchSearch;
   });
+
+  const containerRef = useRef(null);
+
+  useGSAP(() => {
+    if (loading || prefersReducedMotion()) return;
+    const tl = gsap.timeline({ defaults: { ease: "power2.out" } });
+    tl.fromTo(".labs-header",
+      { opacity: 0, y: -12 },
+      { opacity: 1, y: 0, duration: 0.35, clearProps: "all" }
+    )
+    .fromTo(".filter-btn",
+      { opacity: 0, y: 8 },
+      { opacity: 1, y: 0, stagger: 0.03, duration: 0.25, clearProps: "all" },
+      "-=0.15"
+    )
+    .fromTo(".lab-card",
+      { opacity: 0, y: 15 },
+      { opacity: 1, y: 0, stagger: 0.04, duration: 0.35, clearProps: "all" },
+      "-=0.15"
+    );
+  }, { dependencies: [loading], scope: containerRef });
 
   const notifyGuestBlocked = useCallback(() => {
     showToast("Guest chỉ được xem thông tin lab. Vui lòng đăng nhập để thực hành.", "info");
   }, [showToast]);
 
   return (
-    <div className="labs-page">
+    <div className="labs-page" ref={containerRef}>
       {ToastComponent}
+
+      {/* Thông báo thiết bị di động */}
+      <div className="lab-mobile-notice" role="note">
+        <Laptop size={20} className="lab-mobile-notice-icon" />
+        <div className="lab-mobile-notice-content">
+          <div className="lab-mobile-notice-title">Chức năng này cần dùng trên Laptop</div>
+          <p className="lab-mobile-notice-desc">
+            Để gõ lệnh Cisco CLI và thao tác sơ đồ mạng topology mô phỏng chính xác nhất, bạn nên sử dụng máy tính hoặc Laptop.
+          </p>
+        </div>
+      </div>
 
       <div className="labs-header">
         <div className="labs-header-text">
@@ -416,11 +505,11 @@ export const Labs = () => {
       </div>
 
       <div className="filter-bar">
-        {CATEGORIES.map((cat) => (
+        {allCategories.map((cat) => (
           <button
             key={cat}
             onClick={() => setFilter(cat)}
-            className={`filter-btn ${filter === cat ? "active" : ""}`}
+            className={`filter-btn ${filter.toLowerCase() === cat.toLowerCase() ? "active" : ""}`}
           >
             {cat}
           </button>
@@ -445,6 +534,7 @@ export const Labs = () => {
               lab={lab}
               isCompleted={completedLabs.includes(lab.id)}
               onSelect={setSelectedLab}
+              onStartCli={setSelectedCliLab}
               isGuestView={isGuest}
               onGuestBlocked={notifyGuestBlocked}
             />
@@ -481,6 +571,17 @@ export const Labs = () => {
           onGuestBlocked={notifyGuestBlocked}
         />
       )}
+
+      {selectedCliLab ? (
+        <CliLabWorkspace
+          lab={selectedCliLab}
+          onClose={() => setSelectedCliLab(null)}
+          onPassed={(id) => {
+            if (!completedLabs.includes(id)) setCompletedLabs((previous) => [...previous, id]);
+          }}
+          onNotify={showToast}
+        />
+      ) : null}
     </div>
   );
 };

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext, useRef, useCallback, useMemo } from 'react';
+import TopologyEditor from './TopologyEditor';
 import {
   ArrowLeft,
   Plus,
@@ -25,8 +26,50 @@ import '../../../css/Admin/AdminViews.css';
 const LAB_TABS = [
   { id: 'basic', label: 'Thông tin cơ bản' },
   { id: 'content', label: 'Nội dung & Các bước' },
+  { id: 'simulation', label: 'CLI Simulation' },
   { id: 'media', label: 'Tài nguyên & Công cụ' }
 ];
+
+const LAB_TYPE_OPTIONS = [
+  { value: 'PACKET_TRACER', label: 'Hướng dẫn / Packet Tracer' },
+  { value: 'CLI_SIMULATION', label: 'CLI Simulation trên web' }
+];
+
+const DEFAULT_INITIAL_STATE = {
+  deviceType: 'ROUTER',
+  hostname: 'Router',
+  interfaces: ['GigabitEthernet0/0', 'GigabitEthernet0/1']
+};
+
+const DEFAULT_GRADING_SPEC = {
+  passingScore: 70,
+  checks: [
+    {
+      id: 'hostname',
+      title: 'Đổi hostname thành R1',
+      type: 'hostname_equals',
+      expected: 'R1',
+      points: 20,
+      hint: 'Dùng lệnh hostname trong global configuration mode.'
+    },
+    {
+      id: 'g0_0_ip',
+      title: 'Gán IP cho GigabitEthernet0/0',
+      type: 'interface_ip_equals',
+      interface: 'GigabitEthernet0/0',
+      expectedIp: '192.168.1.1',
+      expectedMask: '255.255.255.0',
+      points: 50
+    },
+    {
+      id: 'g0_0_up',
+      title: 'Bật GigabitEthernet0/0',
+      type: 'interface_enabled',
+      interface: 'GigabitEthernet0/0',
+      points: 30
+    }
+  ]
+};
 
 const CATEGORY_OPTIONS = [
   { value: '', label: '-- Chọn danh mục --' },
@@ -76,6 +119,10 @@ const createInitialFormData = () => ({
   filePka: null,
   thumbnailImg: null,
   topologyImg: null,
+  labType: 'PACKET_TRACER',
+  commandProfile: 'ccna-basic-v1',
+  initialStateText: JSON.stringify(DEFAULT_INITIAL_STATE, null, 2),
+  gradingSpecText: JSON.stringify(DEFAULT_GRADING_SPEC, null, 2),
   steps: [{ title: '', commands: '', note: '' }]
 });
 
@@ -127,6 +174,10 @@ const mapLabToFormData = (lab) => {
     filePka: null,
     thumbnailImg: null,
     topologyImg: null,
+    labType: String(lab?.labType || 'PACKET_TRACER'),
+    commandProfile: String(lab?.commandProfile || 'ccna-basic-v1'),
+    initialStateText: JSON.stringify(lab?.initialState || DEFAULT_INITIAL_STATE, null, 2),
+    gradingSpecText: JSON.stringify(lab?.gradingSpec || DEFAULT_GRADING_SPEC, null, 2),
     steps: normalizedSteps
   };
 };
@@ -411,6 +462,15 @@ const Labs = () => {
     setError('');
 
     try {
+      if (formData.labType === 'CLI_SIMULATION') {
+        if (!formData.courseId) {
+          setActiveTab('basic');
+          throw new Error('CLI Lab phải thuộc một khóa học');
+        }
+        JSON.parse(formData.initialStateText);
+        JSON.parse(formData.gradingSpecText);
+      }
+
       const payload = new FormData();
       payload.append('title', title);
       payload.append('category', formData.category);
@@ -420,6 +480,12 @@ const Labs = () => {
       payload.append('guideContent', hasRichTextContent(formData.guideContent) ? formData.guideContent : '');
       payload.append('objective', formData.objective.trim());
       payload.append('tools', JSON.stringify(toolsPreview));
+      payload.append('labType', formData.labType);
+      if (formData.labType === 'CLI_SIMULATION') {
+        payload.append('commandProfile', formData.commandProfile);
+        payload.append('initialState', formData.initialStateText);
+        payload.append('gradingSpec', formData.gradingSpecText);
+      }
 
       if (formData.courseId) payload.append('courseId', formData.courseId);
       if (formData.moduleId) payload.append('moduleId', formData.moduleId);
@@ -508,6 +574,15 @@ const Labs = () => {
                 </div>
 
                 <div className="labm-grid-3">
+                  <div className="acm-field">
+                    <span>Loại Lab</span>
+                    <CustomSelect
+                      value={formData.labType}
+                      onChange={(value) => setFormData((prev) => ({ ...prev, labType: value }))}
+                      options={LAB_TYPE_OPTIONS}
+                    />
+                  </div>
+
                   <div className="acm-field">
                     <span>Danh mục</span>
                     <CustomSelect
@@ -652,6 +727,55 @@ const Labs = () => {
                         </div>
                       </div>
                     ))}
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
+            {activeTab === 'simulation' ? (
+              <div className="labm-tab-panel">
+                {formData.labType === 'CLI_SIMULATION' && <TopologyEditor value={formData.initialStateText}
+                  onChange={(initialStateText) => setFormData((prev) => ({ ...prev, initialStateText, commandProfile: 'ccna-network-v2' }))}
+                  onTemplate={(initialStateText, gradingSpecText) => setFormData((prev) => ({ ...prev, initialStateText, gradingSpecText, commandProfile: 'ccna-network-v2' }))} />}
+                {formData.labType !== 'CLI_SIMULATION' ? (
+                  <div className="labm-form-error-banner">
+                    Chọn loại “CLI Simulation trên web” ở tab Thông tin cơ bản để dùng cấu hình này.
+                  </div>
+                ) : null}
+
+                <div className="acm-field">
+                  <span>Command profile</span>
+                  <input
+                    className="acm-input"
+                    value={formData.commandProfile}
+                    onChange={(event) => setFormData((prev) => ({ ...prev, commandProfile: event.target.value }))}
+                    disabled={formData.labType !== 'CLI_SIMULATION'}
+                  />
+                  <p className="acm-field-hint">Một thiết bị: ccna-basic-v1. Topology: ccna-network-v2 (máy chủ tự chọn theo cấu hình).</p>
+                </div>
+
+                <div className="labm-grid-2">
+                  <div className="acm-field">
+                    <span>Initial state (JSON)</span>
+                    <textarea
+                      className="acm-textarea labm-code-input"
+                      rows="18"
+                      value={formData.initialStateText}
+                      onChange={(event) => setFormData((prev) => ({ ...prev, initialStateText: event.target.value }))}
+                      disabled={formData.labType !== 'CLI_SIMULATION'}
+                      spellCheck="false"
+                    />
+                  </div>
+                  <div className="acm-field">
+                    <span>Grading spec (JSON)</span>
+                    <textarea
+                      className="acm-textarea labm-code-input"
+                      rows="18"
+                      value={formData.gradingSpecText}
+                      onChange={(event) => setFormData((prev) => ({ ...prev, gradingSpecText: event.target.value }))}
+                      disabled={formData.labType !== 'CLI_SIMULATION'}
+                      spellCheck="false"
+                    />
                   </div>
                 </div>
               </div>
