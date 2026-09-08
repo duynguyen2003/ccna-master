@@ -347,7 +347,11 @@ module.exports.updateProgress = async (req, res, next) => {
     const courseId = req.body.courseId; 
     const moduleId = req.body.moduleId ? parseInt(req.body.moduleId) : null;
     const lessonId = req.body.lessonId ? parseInt(req.body.lessonId) : null;
-    const labId = req.body.labId ? parseInt(req.body.labId) : null;
+      const labId = req.body.labId ? parseInt(req.body.labId) : null;
+      if (labId) {
+        const targetLab = await prisma.lab.findUnique({ where: { id: labId }, select: { labType: true } });
+        if (targetLab?.labType === 'CLI_SIMULATION') return res.status(403).json({ message: 'CLI Lab chỉ được cập nhật tiến độ qua chấm cấu hình ở máy chủ.' });
+      }
     const status = req.body.status;
 
     if (!courseId) {

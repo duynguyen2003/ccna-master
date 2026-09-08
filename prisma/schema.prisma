@@ -30,6 +30,17 @@ enum ProgressStatus {
   COMPLETED
 }
 
+enum LabType {
+  PACKET_TRACER
+  CLI_SIMULATION
+}
+
+enum LabAttemptStatus {
+  IN_PROGRESS
+  PASSED
+  FAILED
+}
+
 // ==========================================
 // KHỐI 1: NGƯỜI DÙNG & BẢO MẬT
 // ==========================================
@@ -51,17 +62,17 @@ model User {
   deletedAt      DateTime? @map("deleted_at") // Xóa mềm
 
   // Quan hệ (Relations)
-  refreshTokens  RefreshToken[]
+  refreshTokens       RefreshToken[]
   passwordResetTokens PasswordResetToken[]
-  progress       UserProgress[]
-  examResults    ExamResult[]
-  notes          UserNote[]
-  activities     UserActivity[]
-  badges         UserBadge[]
-  adminLogs      AdminLog[]     
-  videoProgress  VideoProgress[]
-  studyLogs      StudyLog[]
-
+  progress            UserProgress[]
+  examResults         ExamResult[]
+  notes               UserNote[]
+  activities          UserActivity[]
+  badges              UserBadge[]
+  adminLogs           AdminLog[]
+  videoProgress       VideoProgress[]
+  studyLogs           StudyLog[]
+  labAttempts         LabAttempt[]
 
   @@map("users")
 }
@@ -73,20 +84,20 @@ model RefreshToken {
   expiresAt DateTime @map("expires_at")
   createdAt DateTime @default(now()) @map("created_at")
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("refresh_tokens")
 }
 
 model PasswordResetToken {
-  id        Int      @id @default(autoincrement())
-  userId    Int      @map("user_id")
-  tokenHash String   @unique @map("token_hash") @db.VarChar(255)
-  expiresAt DateTime @map("expires_at")
+  id        Int       @id @default(autoincrement())
+  userId    Int       @map("user_id")
+  tokenHash String    @unique @map("token_hash") @db.VarChar(255)
+  expiresAt DateTime  @map("expires_at")
   usedAt    DateTime? @map("used_at")
-  createdAt DateTime @default(now()) @map("created_at")
+  createdAt DateTime  @default(now()) @map("created_at")
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([expiresAt])
@@ -98,38 +109,37 @@ model PasswordResetToken {
 // ==========================================
 
 model Course {
-  id            String    @id @db.VarChar(10) // vđ: c1, c2
-  code          String    @db.VarChar(10)     // vđ: ITN, SRWE
-  title         String    @db.VarChar(200)
-  description   String?   @db.Text
-  thumbnailUrl  String?   @map("thumbnail_url") @db.Text
-  level         String    @default("BEGINNER") @db.VarChar(50)
-  status        String    @default("DRAFT") @db.VarChar(50)
-  orderIndex    Int       @default(0) @map("order_index")
-  createdAt     DateTime  @default(now()) @map("created_at")
-  deletedAt     DateTime? @map("deleted_at")
+  id           String    @id @db.VarChar(10) // vđ: c1, c2
+  code         String    @db.VarChar(10) // vđ: ITN, SRWE
+  title        String    @db.VarChar(200)
+  description  String?   @db.Text
+  thumbnailUrl String?   @map("thumbnail_url") @db.Text
+  level        String    @default("BEGINNER") @db.VarChar(50)
+  status       String    @default("DRAFT") @db.VarChar(50)
+  orderIndex   Int       @default(0) @map("order_index")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  deletedAt    DateTime? @map("deleted_at")
 
-  modules     Module[]
-  topics      CourseTopic[]
-  labs        Lab[]
-  exams       Exam[]
-  progress    UserProgress[]
-  resources   Resource[]
+  modules   Module[]
+  topics    CourseTopic[]
+  labs      Lab[]
+  exams     Exam[]
+  progress  UserProgress[]
+  resources Resource[]
 
   @@map("courses")
 }
 
 model CourseTopic {
-  id         Int      @id @default(autoincrement())
-  courseId   String   @map("course_id") @db.VarChar(10)
-  title      String   @db.VarChar(500) // Ví dụ: "IPv4 & IPv6"
-  orderIndex Int      @default(0) @map("order_index")
+  id         Int    @id @default(autoincrement())
+  courseId   String @map("course_id") @db.VarChar(10)
+  title      String @db.VarChar(500) // Ví dụ: "IPv4 & IPv6"
+  orderIndex Int    @default(0) @map("order_index")
 
-  course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   @@map("course_topics")
 }
-
 
 model Module {
   id          String    @id @db.VarChar(10) // vđ: m1
@@ -140,11 +150,11 @@ model Module {
   createdAt   DateTime  @default(now()) @map("created_at")
   deletedAt   DateTime? @map("deleted_at")
 
-  course      Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  lessons     Lesson[]
-  labs        Lab[]
-  exams       Exam[]
-  progress    UserProgress[]
+  course   Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessons  Lesson[]
+  labs     Lab[]
+  exams    Exam[]
+  progress UserProgress[]
 
   @@map("modules")
 }
@@ -161,39 +171,86 @@ model Lesson {
   createdAt     DateTime  @default(now()) @map("created_at")
   deletedAt     DateTime? @map("deleted_at")
 
-  module        Module    @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  module        Module          @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   progress      UserProgress[]
   notes         UserNote[]
   videoProgress VideoProgress[]
-
 
   @@map("lessons")
 }
 
 model Lab {
-  id              Int        @id @default(autoincrement())
-  title           String     @db.VarChar(1000)
-  category        String?    @db.VarChar(50)
-  difficulty      Difficulty @default(EASY)
-  duration        String?    @db.VarChar(20)
-  imageUrl        String?    @map("image_url") @db.Text // Ảnh đại diện bài Lab
-  topologyImgUrl  String?    @map("topology_img_url") @db.Text // Ảnh sơ đồ mạng
-  objective       String?    @db.Text // Mục tiêu bài tập
-  tools           Json?      // Danh sách công cụ (Packet Tracer...)
-  fileUrl         String?    @map("file_url") @db.Text // File bài tập .pka/.pkt
-  steps           Json?      // Các bước hướng dẫn (Array of objects)
-  guideContent    String?    @map("guide_content") @db.Text // Mô tả/Hướng dẫn chung
-  status          String     @default("DRAFT") @db.VarChar(50)
-  courseId        String?    @map("course_id") @db.VarChar(10)
-  moduleId        String?    @map("module_id") @db.VarChar(10)
-  createdAt       DateTime   @default(now()) @map("created_at")
-  deletedAt       DateTime?  @map("deleted_at")
+  id               Int        @id @default(autoincrement())
+  title            String     @db.VarChar(1000)
+  category         String?    @db.VarChar(50)
+  difficulty       Difficulty @default(EASY)
+  duration         String?    @db.VarChar(20)
+  imageUrl         String?    @map("image_url") @db.Text // Ảnh đại diện bài Lab
+  topologyImgUrl   String?    @map("topology_img_url") @db.Text // Ảnh sơ đồ mạng
+  objective        String?    @db.Text // Mục tiêu bài tập
+  tools            Json? // Danh sách công cụ (Packet Tracer...)
+  fileUrl          String?    @map("file_url") @db.Text // File bài tập .pka/.pkt
+  steps            Json? // Các bước hướng dẫn (Array of objects)
+  guideContent     String?    @map("guide_content") @db.Text // Mô tả/Hướng dẫn chung
+  status           String     @default("DRAFT") @db.VarChar(50)
+  labType          LabType    @default(PACKET_TRACER) @map("lab_type")
+  simulatorVersion String?    @map("simulator_version") @db.VarChar(20)
+  commandProfile   String?    @map("command_profile") @db.VarChar(50)
+  initialState     Json?      @map("initial_state")
+  gradingSpec      Json?      @map("grading_spec")
+  courseId         String?    @map("course_id") @db.VarChar(10)
+  moduleId         String?    @map("module_id") @db.VarChar(10)
+  createdAt        DateTime   @default(now()) @map("created_at")
+  deletedAt        DateTime?  @map("deleted_at")
 
-  course       Course?    @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  module       Module?    @relation(fields: [moduleId], references: [id], onDelete: Cascade)
-  progress     UserProgress[]
+  course   Course?        @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  module   Module?        @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  progress UserProgress[]
+  attempts LabAttempt[]
 
   @@map("labs")
+}
+
+model LabAttempt {
+  definition       Json?
+  members          Json?
+  id               String           @id @default(uuid()) @db.Uuid
+  userId           Int              @map("user_id")
+  labId            Int              @map("lab_id")
+  status           LabAttemptStatus @default(IN_PROGRESS)
+  deviceState      Json             @map("device_state")
+  score            Int?
+  feedback         Json?
+  simulatorVersion String           @map("simulator_version") @db.VarChar(20)
+  startedAt        DateTime         @default(now()) @map("started_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
+  submittedAt      DateTime?        @map("submitted_at")
+
+  user     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lab      Lab          @relation(fields: [labId], references: [id], onDelete: Cascade)
+  commands LabCommand[]
+
+  @@index([userId, labId, status])
+  @@map("lab_attempts")
+}
+
+model LabCommand {
+  action    Json?
+  id        Int      @id @default(autoincrement())
+  attemptId String   @map("attempt_id") @db.Uuid
+  sequence  Int
+  command   String   @db.VarChar(500)
+  mode      String   @db.VarChar(30)
+  prompt    String   @db.VarChar(100)
+  output    String?  @db.Text
+  isError   Boolean  @default(false) @map("is_error")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  attempt LabAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+
+  @@unique([attemptId, sequence])
+  @@index([attemptId, createdAt])
+  @@map("lab_commands")
 }
 
 // ==========================================
@@ -214,43 +271,43 @@ model Exam {
   deletedAt       DateTime? @map("deleted_at")
   status          String    @default("DRAFT") @db.VarChar(20)
 
-  course          Course?   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  module          Module?   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
-  questions       ExamQuestion[]
-  results         ExamResult[]
+  course    Course?        @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  module    Module?        @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  questions ExamQuestion[]
+  results   ExamResult[]
 
   @@map("exams")
 }
 
 model ExamQuestion {
-  id            Int       @id @default(autoincrement())
-  examId        Int       @map("exam_id")
-  question      String    @db.Text
-  imageUrl      String?   @map("image_url") @db.Text
-  options       Json      // Các đáp án (Lưu dạng mảng JSON)
-  correctAnswer Json      @map("correct_answer") // Array of indices [0, 2]
-  explanation   String?   @db.Text
-  orderIndex    Int       @map("order_index")
+  id            Int     @id @default(autoincrement())
+  examId        Int     @map("exam_id")
+  question      String  @db.Text
+  imageUrl      String? @map("image_url") @db.Text
+  options       Json // Các đáp án (Lưu dạng mảng JSON)
+  correctAnswer Json    @map("correct_answer") // Array of indices [0, 2]
+  explanation   String? @db.Text
+  orderIndex    Int     @map("order_index")
 
-  exam          Exam      @relation(fields: [examId], references: [id], onDelete: Cascade)
+  exam Exam @relation(fields: [examId], references: [id], onDelete: Cascade)
 
   @@map("exam_questions")
 }
 
 model ExamResult {
-  id             Int       @id @default(autoincrement())
-  userId         Int       @map("user_id")
-  examId         Int       @map("exam_id")
+  id             Int      @id @default(autoincrement())
+  userId         Int      @map("user_id")
+  examId         Int      @map("exam_id")
   score          Int
-  totalQuestions Int       @map("total_questions")
-  percentage     Decimal   @db.Decimal(5, 2)
-  isPassed       Boolean   @map("is_passed")
-  answers        Json      // Lịch sử người dùng đã chọn những gì
-  timeSpent      Int       @map("time_spent") // Tính bằng giây
-  takenAt        DateTime  @default(now()) @map("taken_at")
+  totalQuestions Int      @map("total_questions")
+  percentage     Decimal  @db.Decimal(5, 2)
+  isPassed       Boolean  @map("is_passed")
+  answers        Json // Lịch sử người dùng đã chọn những gì
+  timeSpent      Int      @map("time_spent") // Tính bằng giây
+  takenAt        DateTime @default(now()) @map("taken_at")
 
-  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  exam           Exam      @relation(fields: [examId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exam Exam @relation(fields: [examId], references: [id], onDelete: Cascade)
 
   @@map("exam_results")
 }
@@ -271,25 +328,25 @@ model UserProgress {
   completedAt     DateTime?      @map("completed_at")
   updatedAt       DateTime       @updatedAt @map("updated_at")
 
-  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  course          Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  module          Module?        @relation(fields: [moduleId], references: [id], onDelete: Cascade)
-  lesson          Lesson?        @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-  lab             Lab?           @relation(fields: [labId], references: [id], onDelete: Cascade)
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  module Module? @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  lesson Lesson? @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lab    Lab?    @relation(fields: [labId], references: [id], onDelete: Cascade)
 
   @@map("user_progress")
 }
 
 model Resource {
-  id        Int       @id @default(autoincrement())
-  title     String    @db.VarChar(300)
-  type      String    @db.VarChar(20)
-  size      String?   @db.VarChar(20)
-  fileUrl   String?   @map("file_url") @db.Text
-  courseId  String?   @map("course_id") @db.VarChar(10)
-  createdAt DateTime  @default(now()) @map("created_at")
+  id        Int      @id @default(autoincrement())
+  title     String   @db.VarChar(300)
+  type      String   @db.VarChar(20)
+  size      String?  @db.VarChar(20)
+  fileUrl   String?  @map("file_url") @db.Text
+  courseId  String?  @map("course_id") @db.VarChar(10)
+  createdAt DateTime @default(now()) @map("created_at")
 
-  course    Course?   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  course Course? @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   @@map("resources")
 }
@@ -301,7 +358,7 @@ model UserBadge {
   badgeIcon String?  @map("badge_icon") @db.VarChar(50)
   earnedAt  DateTime @default(now()) @map("earned_at")
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("user_badges")
 }
@@ -314,7 +371,7 @@ model UserActivity {
   referenceId Int?     @map("reference_id")
   createdAt   DateTime @default(now()) @map("created_at")
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("user_activity")
 }
@@ -327,8 +384,8 @@ model UserNote {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  lesson    Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 
   @@unique([userId, lessonId])
   @@map("user_notes")
@@ -348,54 +405,54 @@ model AdminLog {
   ipAddress   String?  @map("ip_address") @db.VarChar(45)
   createdAt   DateTime @default(now()) @map("created_at")
 
-  admin       User     @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  admin User @relation(fields: [adminId], references: [id], onDelete: Cascade)
 
   @@map("admin_logs")
 }
+
 // Khối mới thêm: CÔNG CỤ HỖ TRỢ
 model Tool {
-  id          Int       @id @default(autoincrement())
-  title       String    @db.VarChar(100)       // Tên công cụ (vd: Trình tính toán Subnet)
-  description String?   @db.Text               // Mô tả ngắn
-  iconName    String?   @map("icon_name") @db.VarChar(50) // Tên icon để React hiển thị
-  linkUrl     String?   @map("link_url") @db.Text // Đường dẫn khi click vào
-  isActive    Boolean   @default(true) @map("is_active")
-  orderIndex  Int       @default(0) @map("order_index") // Vị trí sắp xếp
-  createdAt   DateTime  @default(now()) @map("created_at")
+  id          Int      @id @default(autoincrement())
+  title       String   @db.VarChar(100) // Tên công cụ (vd: Trình tính toán Subnet)
+  description String?  @db.Text // Mô tả ngắn
+  iconName    String?  @map("icon_name") @db.VarChar(50) // Tên icon để React hiển thị
+  linkUrl     String?  @map("link_url") @db.Text // Đường dẫn khi click vào
+  isActive    Boolean  @default(true) @map("is_active")
+  orderIndex  Int      @default(0) @map("order_index") // Vị trí sắp xếp
+  createdAt   DateTime @default(now()) @map("created_at")
 
   @@map("tools") // Tên bảng sẽ hiển thị trong DBeaver
 }
 
 // Khối mới thêm: NGÂN HÀNG CÂU HỎI & KỊCH BẢN (DOMAIN-SPECIFIC FEATURES)
 model QuestionBank {
-  id              Int       @id @default(autoincrement())
-  title           String    @db.VarChar(200)
-  type            String    @db.VarChar(50)  // Ví dụ: "MULTIPLE_CHOICE", "CLI_SIMULATION", "AI_PROMPT"
-  content         String    @db.Text         // Nội dung câu hỏi / kịch bản CLI
-  topologyImgUrl  String?   @map("topology_img_url") @db.Text // Hình ảnh sơ đồ mạng (tuỳ chọn)
-  configData      Json?     // Cấu hình mạng mẫu (dành cho CLI simulation)
-  aiPromptContext String?   @map("ai_prompt_context") @db.Text // Context hoặc prompt cho trợ lý AI
-  options         Json?     // Đáp án hoặc data mở rộng
-  correctAnswer   String?   @map("correct_answer") @db.Text // Đáp án / lệnh đúng
+  id              Int        @id @default(autoincrement())
+  title           String     @db.VarChar(200)
+  type            String     @db.VarChar(50) // Ví dụ: "MULTIPLE_CHOICE", "CLI_SIMULATION", "AI_PROMPT"
+  content         String     @db.Text // Nội dung câu hỏi / kịch bản CLI
+  topologyImgUrl  String?    @map("topology_img_url") @db.Text // Hình ảnh sơ đồ mạng (tuỳ chọn)
+  configData      Json? // Cấu hình mạng mẫu (dành cho CLI simulation)
+  aiPromptContext String?    @map("ai_prompt_context") @db.Text // Context hoặc prompt cho trợ lý AI
+  options         Json? // Đáp án hoặc data mở rộng
+  correctAnswer   String?    @map("correct_answer") @db.Text // Đáp án / lệnh đúng
   difficulty      Difficulty @default(MEDIUM)
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
+  createdAt       DateTime   @default(now()) @map("created_at")
+  updatedAt       DateTime   @updatedAt @map("updated_at")
 
   @@map("question_bank")
 }
 
-
 model VideoProgress {
-  id              Int      @id @default(autoincrement())
-  userId          Int      @map("user_id")
-  lessonId        Int      @map("lesson_id")
-  watchedSeconds  Int      @default(0) @map("watched_seconds")
-  lastPosition    Int      @default(0) @map("last_position")
-  isCompleted     Boolean  @default(false) @map("is_completed")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  id             Int      @id @default(autoincrement())
+  userId         Int      @map("user_id")
+  lessonId       Int      @map("lesson_id")
+  watchedSeconds Int      @default(0) @map("watched_seconds")
+  lastPosition   Int      @default(0) @map("last_position")
+  isCompleted    Boolean  @default(false) @map("is_completed")
+  updatedAt      DateTime @updatedAt @map("updated_at")
 
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  lesson          Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 
   @@unique([userId, lessonId])
   @@map("video_progress")
@@ -407,7 +464,7 @@ model StudyLog {
   date     DateTime @default(now()) @db.Date
   duration Int      @default(0) // Giây
 
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, date])
   @@map("study_logs")
