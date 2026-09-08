@@ -38,6 +38,7 @@
   1. Quality Gate (`test-and-build`): Chạy `npm ci --legacy-peer-deps`, sinh Prisma Client qua `npx prisma generate`, chạy lint và build bundle với `npm run build`. Tầng này đảm bảo mã nguồn hoàn toàn hợp lệ trước khi cho phép deploy.
   2. Deployment (`deploy-vercel`): Dùng Vercel CLI theo thứ tự `vercel pull`, `vercel build --prod`, `vercel deploy --prebuilt --prod` với các secrets (`VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`). Cần kiểm tra đủ cả ba secret để workflow không chạy deploy khi project chưa được liên kết.
 - Lỗi `Could not retrieve Project Settings` thường xuất hiện khi CLI chưa có liên kết project trong runner hoặc ID/token không có quyền truy cập. `vercel pull --yes` với `VERCEL_ORG_ID` và `VERCEL_PROJECT_ID` tạo liên kết `.vercel` tạm thời trong CI; thư mục này không được commit.
+- GitHub secret tồn tại chỉ chứng minh tên secret đã được tạo, không chứng minh giá trị còn đúng hoặc token có quyền trên project. Cần đối chiếu lại `orgId`/`projectId` trong `.vercel/project.json` sau khi chạy `vercel link` và cấp token đúng team.
 - Lỗi `exit code 152` trong `npm ci`: Đây là lỗi crash nội bộ của tiến trình npm CLI (thường do "Exit handler never called" hoặc ngắt kết nối mạng khi tải cây dependency khổng lồ). Để giải quyết:
   + Nâng cấp lên Node 22 (LTS) có phiên bản npm mới nhất ổn định hơn.
   + Cấu hình `npm config set fetch-retries 5` và nới rộng timeout.
