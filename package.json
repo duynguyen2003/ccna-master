@@ -52,6 +52,9 @@
     "test:cli": "node --test src/Backend/simulation/*.test.js",
     "bench:cli": "node src/Backend/simulation/benchmark.js",
     "prisma:generate": "prisma generate",
+    "format": "npx prettier --write \"src/**/*.{js,jsx,css,json}\" \"scripts/**/*.{js,cjs}\"",
+    "ui:review:build": "node ../lab-ui-review/build.cjs",
+    "ui:review:serve": "node ../lab-ui-review/serve.cjs",
     "postinstall": "node scripts/prisma-postinstall.cjs",
     "eject": "react-scripts eject"
   },

@@ -1,5 +1,36 @@
 # Bài học triển khai
 
+## CORS local và backend Docker — 2026-09-09
+
+- Không dùng `startsWith` để kiểm tra origin vì hostname giả mạo có thể mang tiền tố giống origin hợp lệ. Chuẩn hóa rồi so khớp toàn bộ origin bằng allowlist chính xác.
+- `CORS_ORIGIN` nên nhận danh sách phân tách bằng dấu phẩy để hỗ trợ nhiều frontend local/deployment; trim khoảng trắng và dấu `/` cuối trước khi đưa vào allowlist.
+- Khi cổng API do Docker publish, sửa source trên host chưa thay đổi tiến trình đang phục vụ. Phải rebuild/recreate đúng service rồi kiểm tra preflight và request thật trên cổng publish.
+- Kiểm tra CORS cần xác nhận cả ca hợp lệ lẫn origin gần giống nhưng không hợp lệ; status thành công mà thiếu `Access-Control-Allow-Origin` vẫn khiến trình duyệt chặn response.
+
+## Sửa lỗi Zod và asset CRA — 2026-09-09
+
+- CRA có thể chọn file-loader cho nhánh CommonJS `.cjs` của một package; `require('zod')` khi đó trả URL asset thay vì module, làm named export `z` thành `undefined` trong browser.
+- Với module dùng chung cho Node và browser, giữ schema CJS ở backend nhưng chọn một bridge ESM nhỏ ở nhánh browser theo `typeof window`; cách này tránh nhân bản contract và vẫn giữ import đồng bộ.
+- Các file mặc định của Create React App như `logo192.png`, `logo512.png`, `favicon.ico` không nên để trong manifest/index nếu repo không chứa chúng; request fallback HTML khiến Chrome báo ảnh không hợp lệ.
+- Build mặc định có thể bị `EPERM` do artifact cũ bị tiến trình khác giữ; dùng `BUILD_PATH` tạm để xác nhận source/build mà không xóa dữ liệu đang bị khóa.
+
+## Tích hợp MCP vào VS Code — 2026-09-09
+
+- Cấu hình MCP của VS Code dùng khóa workspace `servers` trong `.vscode/mcp.json`; ví dụ generic của từng MCP client có thể dùng `mcpServers`, nên cần theo đúng schema của VS Code.
+- Nên pin hành vi an toàn bằng `--isolated` cho Chrome DevTools MCP và Playwright MCP. Chế độ gắn vào Chrome đang dùng phải là lựa chọn riêng với profile debug không chứa dữ liệu cá nhân.
+- Không đoán danh sách capability từ tài liệu cũ: `@playwright/mcp@latest --help` hiện chấp nhận `--caps=devtools`, còn network/storage đã có trong server mặc định; `testing,network,storage` làm server không khởi động đúng.
+- Chỉ cần cấu hình MCP và extension recommendation, không thêm package MCP vào `package.json`; `npx` tải server theo cache của máy và giữ dependency ứng dụng gọn hơn.
+
+## Thiết kế lại UI lab Cisco — 2026-09-09
+
+- Tính tiến độ từ grader trên bản sao state cho từng action/read/replay; không gọi submit để cập nhật checklist. Chỉ gửi metadata cần thiết, giữ cấu hình đáp án ở server.
+- Khi đổi JSON sang form, phải giữ mặc định ngầm của engine: cổng router mặc định shutdown, switch/PC mặc định bật. Sửa mô tả không được vô tình thay đổi trạng thái cổng.
+- Parse JSON thành công chưa đủ để render form. Giá trị `null`, phần tử mảng sai và reference hỏng cần được chặn trước builder; văn bản lỗi phải giữ nguyên và save phải validate lại kể cả khi đổi tab.
+- Test component không phát hiện đủ vấn đề lớp phủ và accessibility. Browser thật đã bắt lỗi onboarding bị SVG che và node replay mang `aria-disabled` trái với hành vi cho chọn thiết bị.
+- Harness webpack tùy chỉnh phải phân loại đúng CommonJS. Lỗi module trong harness không chứng minh CRA production lỗi; kiểm tra build CRA trước khi sửa engine đang hoạt động.
+- Mỗi sub-agent sở hữu nhóm file rõ ràng; gửi lỗi review cụ thể và chỉ chạy lại kiểm tra liên quan. Giữ nguyên các thay đổi do người dùng/tiến trình khác tạo đồng thời.
+- Dùng một nguồn token cho cả admin và học viên; tránh CSS keyframe cùng điều khiển transform/box-shadow với GSAP trên một phần tử.
+
 ## GSAP trong React admin
 
 - Dùng `@gsap/react` và scope bằng ref giúp GSAP tự cleanup khi component unmount hoặc dependency thay đổi; selector không rò sang component khác.
