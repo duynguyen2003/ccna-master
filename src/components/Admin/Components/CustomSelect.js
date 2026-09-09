@@ -5,7 +5,7 @@ const CustomSelect = ({ value, onChange, options, placeholder = 'Chọn...' }) =
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef(null);
 
-  const selectedOption = options.find(opt => opt.value === value);
+  const selectedOption = options.find((opt) => opt.value === value);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -19,7 +19,7 @@ const CustomSelect = ({ value, onChange, options, placeholder = 'Chọn...' }) =
 
   return (
     <div className="acm-custom-select" ref={containerRef}>
-      <div 
+      <div
         className={`acm-select-trigger ${isOpen ? 'active' : ''}`}
         onClick={() => setIsOpen(!isOpen)}
       >

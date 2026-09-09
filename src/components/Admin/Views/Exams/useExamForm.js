@@ -1,15 +1,11 @@
 import { useState, useCallback } from 'react';
 import { adminApi } from '../../../../services/api/adminApi';
-import { 
-  defaultFormData, 
-  defaultQuestionDraft, 
-  OPTION_LABELS 
-} from './constants';
-import { 
-  normalizeQuestionFromApi, 
-  toImportedQuestionsFromCsv, 
+import { defaultFormData, defaultQuestionDraft, OPTION_LABELS } from './constants';
+import {
+  normalizeQuestionFromApi,
+  toImportedQuestionsFromCsv,
   normalizeImportedQuestion,
-  parseQuestionsFromRawText
+  parseQuestionsFromRawText,
 } from './utils';
 
 export const useExamForm = (token, onSuccess) => {
@@ -28,25 +24,28 @@ export const useExamForm = (token, onSuccess) => {
   const [shuffleQuestions, setShuffleQuestions] = useState(false);
   const [hideResult, setHideResult] = useState(false);
 
-  const fetchModules = useCallback(async (courseId) => {
-    if (!courseId) {
-      setModules([]);
-      return;
-    }
-    try {
-      const res = await adminApi.getModules(token, courseId);
-      setModules(res.data || []);
-    } catch (err) {
-      console.error(err);
-      setModules([]);
-    }
-  }, [token]);
+  const fetchModules = useCallback(
+    async (courseId) => {
+      if (!courseId) {
+        setModules([]);
+        return;
+      }
+      try {
+        const res = await adminApi.getModules(token, courseId);
+        setModules(res.data || []);
+      } catch (err) {
+        console.error(err);
+        setModules([]);
+      }
+    },
+    [token]
+  );
 
   const syncQuestions = (nextQuestions) => {
     setQuestions(nextQuestions);
     setFormData((prev) => ({
       ...prev,
-      totalQuestions: nextQuestions.length
+      totalQuestions: nextQuestions.length,
     }));
   };
 
@@ -89,13 +88,15 @@ export const useExamForm = (token, onSuccess) => {
       difficulty: exam.difficulty || '',
       courseId: exam.courseId || '',
       moduleId: exam.moduleId || '',
-      status: exam.status || 'DRAFT'
+      status: exam.status || 'DRAFT',
     });
     setIsModalOpen(true);
     try {
       const examDetailRes = await adminApi.getExamById(token, exam.id);
       const examDetail = examDetailRes.exam || exam;
-      const mappedQuestions = (examDetail.questions || []).map((questionItem) => normalizeQuestionFromApi(questionItem));
+      const mappedQuestions = (examDetail.questions || []).map((questionItem) =>
+        normalizeQuestionFromApi(questionItem)
+      );
 
       setSelectedExam(examDetail);
       setFormData({
@@ -107,7 +108,7 @@ export const useExamForm = (token, onSuccess) => {
         difficulty: examDetail.difficulty || '',
         courseId: examDetail.courseId || '',
         moduleId: examDetail.moduleId || '',
-        status: examDetail.status || 'DRAFT'
+        status: examDetail.status || 'DRAFT',
       });
       syncQuestions(mappedQuestions);
 
@@ -126,7 +127,7 @@ export const useExamForm = (token, onSuccess) => {
     setFormData((prev) => ({
       ...prev,
       courseId,
-      moduleId: ''
+      moduleId: '',
     }));
     await fetchModules(courseId);
   };
@@ -134,7 +135,7 @@ export const useExamForm = (token, onSuccess) => {
   const handleQuestionOptionChange = (index, value) => {
     setQuestionDraft((prev) => ({
       ...prev,
-      options: prev.options.map((option, optionIndex) => (optionIndex === index ? value : option))
+      options: prev.options.map((option, optionIndex) => (optionIndex === index ? value : option)),
     }));
   };
 
@@ -155,7 +156,7 @@ export const useExamForm = (token, onSuccess) => {
       }
       setQuestionDraft((prev) => ({
         ...prev,
-        imageUrl: response.imageUrl
+        imageUrl: response.imageUrl,
       }));
     } catch (err) {
       setError(err.message || 'Không thể tải ảnh câu hỏi.');
@@ -251,7 +252,7 @@ export const useExamForm = (token, onSuccess) => {
       options: cleanedOptions,
       correctAnswer: questionDraft.correctAnswer, // Lưu dạng mảng index
       explanation: questionDraft.explanation.trim(),
-      imageUrl: questionDraft.imageUrl?.trim() || ''
+      imageUrl: questionDraft.imageUrl?.trim() || '',
     };
     const nextQuestions = [...questions];
     if (editingQuestionIndex !== null) {
@@ -271,7 +272,7 @@ export const useExamForm = (token, onSuccess) => {
       options: [...targetQuestion.options],
       correctAnswer: targetQuestion.correctAnswer,
       explanation: targetQuestion.explanation || '',
-      imageUrl: targetQuestion.imageUrl || ''
+      imageUrl: targetQuestion.imageUrl || '',
     });
     setEditingQuestionIndex(index);
   };
@@ -301,7 +302,7 @@ export const useExamForm = (token, onSuccess) => {
         courseId: formData.courseId || null,
         moduleId: formData.moduleId || null,
         status: formData.status || 'DRAFT',
-        questions
+        questions,
       };
 
       if (isEditMode && selectedExam) {
@@ -347,6 +348,6 @@ export const useExamForm = (token, onSuccess) => {
     handleEditQuestion,
     handleDeleteQuestion,
     handleSubmitExam,
-    resetQuestionDraft
+    resetQuestionDraft,
   };
 };

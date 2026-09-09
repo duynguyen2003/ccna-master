@@ -33,17 +33,25 @@ const Resources = () => {
         setTotalItems(res.pagination.total || 0);
         setCurrentPage(res.pagination.page || 1);
       }
-    } catch (err) { console.error(err); }
-    finally { setLoading(false); }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  useEffect(() => { fetchResources(currentPage); fetchCourses(); }, [currentPage]);
+  useEffect(() => {
+    fetchResources(currentPage);
+    fetchCourses();
+  }, [currentPage]);
 
   const fetchCourses = async () => {
     try {
       const res = await adminApi.getCourses(token, 1);
       setCourses(res.data || []);
-    } catch (err) { console.error(err); }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const handleCreate = async () => {
@@ -60,23 +68,43 @@ const Resources = () => {
       setIsModalOpen(false);
       setFormData({ title: '', type: '', courseId: '', file: null });
       fetchResources();
-    } catch (err) { setError(err.message); }
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
   const handleDelete = async (id) => {
     if (window.confirm('Xóa tài liệu này?')) {
-      try { await adminApi.deleteResource(token, id); fetchResources(); }
-      catch (err) { alert(err.message); }
+      try {
+        await adminApi.deleteResource(token, id);
+        fetchResources();
+      } catch (err) {
+        alert(err.message);
+      }
     }
   };
 
-  const typeColors = { pdf: '#EA4335', doc: '#4285F4', docx: '#4285F4', pptx: '#FBBC04', xlsx: '#34A853', png: '#9C27B0', jpg: '#9C27B0' };
+  const typeColors = {
+    pdf: '#EA4335',
+    doc: '#4285F4',
+    docx: '#4285F4',
+    pptx: '#FBBC04',
+    xlsx: '#34A853',
+    png: '#9C27B0',
+    jpg: '#9C27B0',
+  };
 
   return (
     <div className="users-wrapper">
       <div className="admin-table-header" style={{ padding: '0 0 20px 0', border: 'none' }}>
         <h3>Quản lý Tài liệu (Resources)</h3>
-        <button className="admin-btn-primary" onClick={() => { setError(''); setIsModalOpen(true); }}>
+        <button
+          className="admin-btn-primary"
+          onClick={() => {
+            setError('');
+            setIsModalOpen(true);
+          }}
+        >
           <Plus size={18} /> Tải lên
         </button>
       </div>
@@ -93,36 +121,77 @@ const Resources = () => {
             </tr>
           </thead>
           <tbody>
-            {loading ? <tr><td colSpan="5" style={{textAlign: 'center'}}>Đang tải...</td></tr> :
-             resources.length > 0 ? resources.map(r => (
-              <tr key={r.id}>
-                <td>{r.id}</td>
-                <td>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <div style={{width: '36px', height: '36px', borderRadius: '6px', backgroundColor: `${typeColors[r.type] || '#666'}20`, color: typeColors[r.type] || '#666', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-                      <File size={18} />
-                    </div>
-                    <div>
-                      <div style={{fontWeight: 500}}>{r.title}</div>
-                      <div style={{fontSize: '12px', color: 'var(--admin-text-secondary)'}}>{r.fileUrl?.split('/').pop()}</div>
-                    </div>
-                  </div>
-                </td>
-                <td><span className="admin-badge student" style={{textTransform: 'uppercase'}}>{r.type}</span></td>
-                <td>{r.size || '—'}</td>
-                <td>
-                  <div style={{ display: 'flex', gap: '5px' }}>
-                    <a href={r.fileUrl?.startsWith('http') ? r.fileUrl : `${BACKEND_URL}${r.fileUrl}`} target="_blank" rel="noreferrer" className="admin-action-btn" title="Tải xuống" style={{color: 'var(--admin-primary)'}}>
-                      <FileDown size={16} />
-                    </a>
-                    <button className="admin-action-btn delete" title="Xóa" onClick={() => handleDelete(r.id)}>
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
+            {loading ? (
+              <tr>
+                <td colSpan="5" style={{ textAlign: 'center' }}>
+                  Đang tải...
                 </td>
               </tr>
-            )) : (
-              <tr><td colSpan="5" style={{textAlign: 'center'}}>Chưa có tài liệu nào</td></tr>
+            ) : resources.length > 0 ? (
+              resources.map((r) => (
+                <tr key={r.id}>
+                  <td>{r.id}</td>
+                  <td>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div
+                        style={{
+                          width: '36px',
+                          height: '36px',
+                          borderRadius: '6px',
+                          backgroundColor: `${typeColors[r.type] || '#666'}20`,
+                          color: typeColors[r.type] || '#666',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <File size={18} />
+                      </div>
+                      <div>
+                        <div style={{ fontWeight: 500 }}>{r.title}</div>
+                        <div style={{ fontSize: '12px', color: 'var(--admin-text-secondary)' }}>
+                          {r.fileUrl?.split('/').pop()}
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <span className="admin-badge student" style={{ textTransform: 'uppercase' }}>
+                      {r.type}
+                    </span>
+                  </td>
+                  <td>{r.size || '—'}</td>
+                  <td>
+                    <div style={{ display: 'flex', gap: '5px' }}>
+                      <a
+                        href={
+                          r.fileUrl?.startsWith('http') ? r.fileUrl : `${BACKEND_URL}${r.fileUrl}`
+                        }
+                        target="_blank"
+                        rel="noreferrer"
+                        className="admin-action-btn"
+                        title="Tải xuống"
+                        style={{ color: 'var(--admin-primary)' }}
+                      >
+                        <FileDown size={16} />
+                      </a>
+                      <button
+                        className="admin-action-btn delete"
+                        title="Xóa"
+                        onClick={() => handleDelete(r.id)}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="5" style={{ textAlign: 'center' }}>
+                  Chưa có tài liệu nào
+                </td>
+              </tr>
             )}
           </tbody>
         </table>
@@ -136,16 +205,48 @@ const Resources = () => {
         onPageChange={setCurrentPage}
       />
 
-      <AdminModal title="Tải Lên Tài Liệu" isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onConfirm={handleCreate}>
+      <AdminModal
+        title="Tải Lên Tài Liệu"
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onConfirm={handleCreate}
+      >
         {error && <p style={{ color: 'var(--admin-danger)', marginBottom: '10px' }}>{error}</p>}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
           <div>
-            <label style={{ display: 'block', marginBottom: '5px', color: 'var(--admin-text-secondary)' }}>Tên tài liệu *</label>
-            <input className="admin-search-input" style={{ width: '100%', boxSizing: 'border-box' }} placeholder="VD: Slide Bài giảng Chương 1" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} />
+            <label
+              style={{
+                display: 'block',
+                marginBottom: '5px',
+                color: 'var(--admin-text-secondary)',
+              }}
+            >
+              Tên tài liệu *
+            </label>
+            <input
+              className="admin-search-input"
+              style={{ width: '100%', boxSizing: 'border-box' }}
+              placeholder="VD: Slide Bài giảng Chương 1"
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+            />
           </div>
           <div>
-            <label style={{ display: 'block', marginBottom: '5px', color: 'var(--admin-text-secondary)' }}>Loại file</label>
-            <select className="admin-search-input" style={{ width: '100%', boxSizing: 'border-box' }} value={formData.type} onChange={e => setFormData({...formData, type: e.target.value})}>
+            <label
+              style={{
+                display: 'block',
+                marginBottom: '5px',
+                color: 'var(--admin-text-secondary)',
+              }}
+            >
+              Loại file
+            </label>
+            <select
+              className="admin-search-input"
+              style={{ width: '100%', boxSizing: 'border-box' }}
+              value={formData.type}
+              onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+            >
               <option value="">Tự nhận diện</option>
               <option value="pdf">PDF</option>
               <option value="Packet Tracer">Packet Tracer (.pkt)</option>
@@ -156,8 +257,21 @@ const Resources = () => {
             </select>
           </div>
           <div>
-            <label style={{ display: 'block', marginBottom: '5px', color: 'var(--admin-text-secondary)' }}>Chọn file *</label>
-            <input type="file" className="admin-search-input" style={{ width: '100%', boxSizing: 'border-box' }} onChange={e => setFormData({...formData, file: e.target.files[0]})} />
+            <label
+              style={{
+                display: 'block',
+                marginBottom: '5px',
+                color: 'var(--admin-text-secondary)',
+              }}
+            >
+              Chọn file *
+            </label>
+            <input
+              type="file"
+              className="admin-search-input"
+              style={{ width: '100%', boxSizing: 'border-box' }}
+              onChange={(e) => setFormData({ ...formData, file: e.target.files[0] })}
+            />
           </div>
         </div>
       </AdminModal>

@@ -33,7 +33,7 @@
   background: #2563eb !important;
   color: #ffffff;
   height: 40px;
-  border-radius: 13px;
+  border-radius: 6px;
   padding: 0 15px;
   display: inline-flex;
   align-items: center;
@@ -58,7 +58,7 @@
 
 .exam-hub-stat-card {
   border: 1px solid #e3e8f0;
-  border-radius: 16px;
+  border-radius: 8px;
   background: #ffffff;
   padding: 18px 20px;
   display: flex;
@@ -74,7 +74,7 @@
 .exam-hub-stat-icon {
   width: 48px;
   height: 48px;
-  border-radius: 14px;
+  border-radius: 6px;
   background: #eaf0fb;
   color: #2b64e8;
   display: inline-flex;
@@ -118,7 +118,7 @@
 
 .exam-hub-toolbar-shell {
   border: 1px solid #e2e8f0;
-  border-radius: 18px;
+  border-radius: 8px;
   background: #ffffff;
   padding: 12px;
 }
@@ -148,7 +148,7 @@
   width: 100%;
   height: 50px;
   border: 1px solid #dde4ef;
-  border-radius: 14px;
+  border-radius: 6px;
   background: #f7f9fc;
   color: #1e2f4d;
   outline: none;
@@ -173,12 +173,15 @@
   display: flex;
   align-items: center;
   border: 1px solid #dde4ef;
-  border-radius: 14px;
+  border-radius: 6px;
   background: #ffffff;
   height: 50px;
   min-width: 220px;
   padding: 0 12px 0 16px;
-  transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    background-color 0.18s ease;
 }
 
 .exam-hub-select-wrap.is-open {
@@ -227,7 +230,7 @@
   width: 100%;
   background: #ffffff;
   border: 1px solid #dde4ef;
-  border-radius: 14px;
+  border-radius: 8px;
   box-shadow: 0 16px 32px rgba(15, 23, 42, 0.12);
   overflow: hidden;
 }
@@ -245,7 +248,9 @@
   font-size: 14px;
   text-align: left;
   cursor: pointer;
-  transition: background-color 0.16s ease, color 0.16s ease;
+  transition:
+    background-color 0.16s ease,
+    color 0.16s ease;
 }
 
 .exam-hub-select-option:hover {
@@ -267,7 +272,7 @@
   width: 50px;
   height: 50px;
   border: 1px solid #dde4ef;
-  border-radius: 12px;
+  border-radius: 6px;
   background: #ffffff;
   color: #7f91ad;
   display: inline-flex;
@@ -283,7 +288,7 @@
 
 .exam-hub-empty {
   border: 1px dashed #d6dfec;
-  border-radius: 16px;
+  border-radius: 8px;
   background: #f9fbfd;
   color: #6a7a95;
   font-size: 15px;
@@ -293,7 +298,7 @@
 
 .exam-hub-list-shell {
   border: 1px solid #e2e8f0;
-  border-radius: 20px;
+  border-radius: 8px;
   background: #ffffff;
   overflow: hidden;
 }
@@ -354,7 +359,7 @@
 .exam-hub-exam-icon {
   width: 64px;
   height: 64px;
-  border-radius: 14px;
+  border-radius: 6px;
   background: #e8f0fd;
   color: #1f56de;
   display: inline-flex;
@@ -393,7 +398,7 @@
 
 .exam-hub-chip {
   height: 24px;
-  border-radius: 999px;
+  border-radius: 4px;
   background: #eef2f8;
   color: #7c8ea9;
   font-size: 12px;
@@ -418,7 +423,7 @@
 
 .exam-hub-course-pill {
   height: 30px;
-  border-radius: 999px;
+  border-radius: 6px;
   padding: 0 16px;
   display: inline-flex;
   align-items: center;
@@ -434,7 +439,7 @@
   gap: 8px 10px;
 }
 
-.exam-hub-col-detail>div {
+.exam-hub-col-detail > div {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -453,7 +458,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 999px;
+  border-radius: 6px;
   padding: 0 14px;
   height: 30px;
   font-size: 13px;
@@ -491,7 +496,7 @@
   height: 34px;
   border: none;
   background: transparent;
-  border-radius: 8px;
+  border-radius: 6px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -534,7 +539,7 @@
 .exam-hub-card {
   background: linear-gradient(160deg, #ffffff 0%, #f8fbff 100%);
   border: 1px solid #d7dce2;
-  border-radius: 18px;
+  border-radius: 8px;
   padding: 18px;
   display: flex;
   flex-direction: column;
@@ -571,9 +576,9 @@
   gap: 10px;
 }
 
-.exam-hub-mini-stats>div {
+.exam-hub-mini-stats > div {
   border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  border-radius: 6px;
   padding: 10px;
   display: flex;
   flex-direction: column;
@@ -582,17 +587,17 @@
   min-height: 86px;
 }
 
-.exam-hub-mini-stats>div svg {
+.exam-hub-mini-stats > div svg {
   color: #66758f;
 }
 
-.exam-hub-mini-stats>div strong {
+.exam-hub-mini-stats > div strong {
   font-size: 18px;
   color: #111827;
   line-height: 1.15;
 }
 
-.exam-hub-mini-stats>div span {
+.exam-hub-mini-stats > div span {
   font-size: 12px;
   color: #66758f;
 }
@@ -611,7 +616,7 @@
   background: #eceff3;
   border: 1px solid #d1d5db;
   height: 28px;
-  border-radius: 999px;
+  border-radius: 6px;
   padding: 0 11px;
   display: inline-flex;
   align-items: center;
@@ -626,7 +631,7 @@
 .exam-hub-actions button {
   height: 32px;
   border: 1px solid #d0d5dc;
-  border-radius: 10px;
+  border-radius: 6px;
   background: #f9fafb;
   color: #374151;
   padding: 0 10px;
@@ -711,10 +716,11 @@
 }
 
 @media (max-width: 1200px) {
-
   .exam-hub-list-head,
   .exam-hub-list-row {
-    grid-template-columns: minmax(280px, 2.2fr) minmax(100px, 0.8fr) minmax(210px, 1.35fr) minmax(120px, 0.8fr) minmax(110px, 0.7fr);
+    grid-template-columns:
+      minmax(280px, 2.2fr) minmax(100px, 0.8fr) minmax(210px, 1.35fr) minmax(120px, 0.8fr)
+      minmax(110px, 0.7fr);
   }
 }
 

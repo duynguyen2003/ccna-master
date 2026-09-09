@@ -13,7 +13,7 @@ const AdminModal = ({
   minWidth = '480px',
   maxWidth = '600px',
   bodyMaxHeight = '60vh',
-  className = ''
+  className = '',
 }) => {
   const [shouldRender, setShouldRender] = useState(isOpen);
   const overlayRef = useRef(null);
@@ -34,77 +34,98 @@ const AdminModal = ({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  useGSAP(() => {
-    if (!shouldRender || !overlayRef.current) return undefined;
+  useGSAP(
+    () => {
+      if (!shouldRender || !overlayRef.current) return undefined;
 
-    const overlay = overlayRef.current;
-    const modal = overlay.querySelector('.admin-modal-container');
-    if (!modal) return undefined;
+      const overlay = overlayRef.current;
+      const modal = overlay.querySelector('.admin-modal-container');
+      if (!modal) return undefined;
 
-    const media = gsap.matchMedia();
+      const media = gsap.matchMedia();
 
-    media.add({
-      reduceMotion: '(prefers-reduced-motion: reduce)',
-      allowMotion: '(prefers-reduced-motion: no-preference)'
-    }, ({ conditions }) => {
-      if (conditions.reduceMotion) {
-        gsap.set([overlay, modal], {
-          clearProps: 'opacity,visibility,transform,pointerEvents'
-        });
-        if (!isOpen) setShouldRender(false);
-        return;
-      }
+      media.add(
+        {
+          reduceMotion: '(prefers-reduced-motion: reduce)',
+          allowMotion: '(prefers-reduced-motion: no-preference)',
+        },
+        ({ conditions }) => {
+          if (conditions.reduceMotion) {
+            gsap.set([overlay, modal], {
+              clearProps: 'opacity,visibility,transform,pointerEvents',
+            });
+            if (!isOpen) setShouldRender(false);
+            return;
+          }
 
-      if (isOpen) {
-        gsap.set(overlay, { pointerEvents: 'auto' });
-        gsap.timeline()
-          .fromTo(overlay, {
-            autoAlpha: 0
-          }, {
-            autoAlpha: 1,
-            duration: 0.2,
-            ease: 'power1.out',
-            clearProps: 'opacity,visibility'
-          })
-          .fromTo(modal, {
-            autoAlpha: 0,
-            y: 20,
-            scale: 0.98
-          }, {
-            autoAlpha: 1,
-            y: 0,
-            scale: 1,
-            duration: 0.3,
-            ease: 'power3.out',
-            clearProps: 'opacity,visibility,transform'
-          }, 0);
-        return;
-      }
+          if (isOpen) {
+            gsap.set(overlay, { pointerEvents: 'auto' });
+            gsap
+              .timeline()
+              .fromTo(
+                overlay,
+                {
+                  autoAlpha: 0,
+                },
+                {
+                  autoAlpha: 1,
+                  duration: 0.2,
+                  ease: 'power1.out',
+                  clearProps: 'opacity,visibility',
+                }
+              )
+              .fromTo(
+                modal,
+                {
+                  autoAlpha: 0,
+                  y: 20,
+                  scale: 0.98,
+                },
+                {
+                  autoAlpha: 1,
+                  y: 0,
+                  scale: 1,
+                  duration: 0.3,
+                  ease: 'power3.out',
+                  clearProps: 'opacity,visibility,transform',
+                },
+                0
+              );
+            return;
+          }
 
-      gsap.set(overlay, { pointerEvents: 'none' });
-      gsap.timeline({
-        onComplete: () => setShouldRender(false)
-      })
-        .to(modal, {
-          autoAlpha: 0,
-          y: 12,
-          scale: 0.985,
-          duration: 0.16,
-          ease: 'power2.in'
-        })
-        .to(overlay, {
-          autoAlpha: 0,
-          duration: 0.14,
-          ease: 'power1.in'
-        }, '-=0.06');
-    });
+          gsap.set(overlay, { pointerEvents: 'none' });
+          gsap
+            .timeline({
+              onComplete: () => setShouldRender(false),
+            })
+            .to(modal, {
+              autoAlpha: 0,
+              y: 12,
+              scale: 0.985,
+              duration: 0.16,
+              ease: 'power2.in',
+            })
+            .to(
+              overlay,
+              {
+                autoAlpha: 0,
+                duration: 0.14,
+                ease: 'power1.in',
+              },
+              '-=0.06'
+            );
+        }
+      );
 
-    return () => media.revert();
-  }, {
-    scope: overlayRef,
-    dependencies: [isOpen, shouldRender],
-    revertOnUpdate: true
-  });
+      return () => media.revert();
+    },
+    {
+      scope: overlayRef,
+      dependencies: [isOpen, shouldRender],
+      revertOnUpdate: true,
+    }
+  );
 
   if (!shouldRender) return null;
 
@@ -120,7 +141,7 @@ const AdminModal = ({
         className={`admin-modal-container ${className}`}
         style={{
           minWidth,
-          maxWidth
+          maxWidth,
         }}
       >
         <div className="admin-modal-header">

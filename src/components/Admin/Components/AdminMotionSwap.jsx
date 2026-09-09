@@ -4,37 +4,40 @@ import { gsap, useGSAP } from '../../../utils/adminMotion';
 const AdminMotionSwap = ({ stateKey, children, className = '', style }) => {
   const containerRef = useRef(null);
 
-  useGSAP(() => {
-    if (!containerRef.current) return undefined;
+  useGSAP(
+    () => {
+      if (!containerRef.current) return undefined;
 
-    const media = gsap.matchMedia();
+      const media = gsap.matchMedia();
 
-    media.add('(prefers-reduced-motion: no-preference)', () => {
-      gsap.fromTo(containerRef.current, {
-        autoAlpha: 0,
-        y: 6
-      }, {
-        autoAlpha: 1,
-        y: 0,
-        duration: 0.28,
-        ease: 'power2.out',
-        clearProps: 'opacity,visibility,transform'
+      media.add('(prefers-reduced-motion: no-preference)', () => {
+        gsap.fromTo(
+          containerRef.current,
+          {
+            autoAlpha: 0,
+            y: 6,
+          },
+          {
+            autoAlpha: 1,
+            y: 0,
+            duration: 0.28,
+            ease: 'power2.out',
+            clearProps: 'opacity,visibility,transform',
+          }
+        );
       });
-    });
 
-    return () => media.revert();
-  }, {
-    scope: containerRef,
-    dependencies: [stateKey],
-    revertOnUpdate: true
-  });
+      return () => media.revert();
+    },
+    {
+      scope: containerRef,
+      dependencies: [stateKey],
+      revertOnUpdate: true,
+    }
+  );
 
   return (
-    <div
-      ref={containerRef}
-      className={`admin-motion-swap ${className}`.trim()}
-      style={style}
-    >
+    <div ref={containerRef} className={`admin-motion-swap ${className}`.trim()} style={style}>
       {children}
     </div>
   );

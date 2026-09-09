@@ -6,14 +6,14 @@ export const getDifficultyLabel = (difficulty) => {
   const mapping = {
     EASY: 'Dễ',
     MEDIUM: 'Trung bình',
-    HARD: 'Khó'
+    HARD: 'Khó',
   };
   return mapping[difficulty] || 'Chưa đặt';
 };
 
 export const normalizeQuestionFromApi = (questionItem) => {
   const options = Array.isArray(questionItem?.options) ? questionItem.options : ['', '', '', ''];
-  
+
   let correctAnswers = questionItem?.correctAnswer;
   // Xử lý dữ liệu từ DB (Json/Int)
   if (!Array.isArray(correctAnswers)) {
@@ -26,7 +26,7 @@ export const normalizeQuestionFromApi = (questionItem) => {
     options: options,
     correctAnswer: correctAnswers,
     explanation: `${questionItem?.explanation || ''}`,
-    imageUrl: `${questionItem?.imageUrl || ''}`
+    imageUrl: `${questionItem?.imageUrl || ''}`,
   };
 };
 
@@ -35,13 +35,14 @@ export const parseCorrectAnswer = (value) => {
   if (!valStr) return [];
 
   // Hỗ trợ cả single choice (A, 0) và multiple choice (A,B hoặc 0,2)
-  return valStr.split(/[,;|]/)
-    .map(s => s.trim())
-    .map(s => {
+  return valStr
+    .split(/[,;|]/)
+    .map((s) => s.trim())
+    .map((s) => {
       const idx = OPTION_LABELS.indexOf(s.toUpperCase());
       return idx !== -1 ? idx : parseInt(s, 10);
     })
-    .filter(n => !Number.isNaN(n) && n >= 0);
+    .filter((n) => !Number.isNaN(n) && n >= 0);
 };
 
 export const parseCsvLine = (line) => {
@@ -88,7 +89,9 @@ export const toImportedQuestionsFromCsv = (csvText) => {
   if (rows.length === 0) return [];
 
   const firstRow = rows[0].map((value) => value.toLowerCase());
-  const hasHeader = firstRow.includes('question') && (firstRow.includes('optiona') || firstRow.includes('option_a'));
+  const hasHeader =
+    firstRow.includes('question') &&
+    (firstRow.includes('optiona') || firstRow.includes('option_a'));
   const dataRows = hasHeader ? rows.slice(1) : rows;
 
   return dataRows.map((row) => ({
@@ -99,7 +102,7 @@ export const toImportedQuestionsFromCsv = (csvText) => {
     optionD: row[4] || '',
     correctAnswer: row[5] || '',
     explanation: row[6] || '',
-    imageUrl: row[7] || ''
+    imageUrl: row[7] || '',
   }));
 };
 
@@ -110,15 +113,15 @@ export const normalizeImportedQuestion = (rawQuestion, index) => {
   }
 
   const options = Array.isArray(rawQuestion?.options)
-    ? rawQuestion.options.map(opt => `${opt || ''}`.trim())
+    ? rawQuestion.options.map((opt) => `${opt || ''}`.trim())
     : [
         `${rawQuestion?.optionA || rawQuestion?.a || ''}`.trim(),
         `${rawQuestion?.optionB || rawQuestion?.b || ''}`.trim(),
         `${rawQuestion?.optionC || rawQuestion?.c || ''}`.trim(),
         `${rawQuestion?.optionD || rawQuestion?.d || ''}`.trim(),
         `${rawQuestion?.optionE || rawQuestion?.e || ''}`.trim(),
-        `${rawQuestion?.optionF || rawQuestion?.f || ''}`.trim()
-      ].filter(opt => opt !== '');
+        `${rawQuestion?.optionF || rawQuestion?.f || ''}`.trim(),
+      ].filter((opt) => opt !== '');
 
   if (options.length < 2) {
     throw new Error(`Dòng ${index + 1}: cần ít nhất 2 đáp án.`);
@@ -131,7 +134,7 @@ export const normalizeImportedQuestion = (rawQuestion, index) => {
     options,
     correctAnswer,
     explanation: `${rawQuestion?.explanation || ''}`.trim(),
-    imageUrl: `${rawQuestion?.imageUrl || ''}`.trim()
+    imageUrl: `${rawQuestion?.imageUrl || ''}`.trim(),
   };
 };
 
@@ -151,7 +154,10 @@ export const parseQuestionsFromRawText = (rawText) => {
 
   // Tách các khối câu hỏi dựa trên từ khóa "Câu [số]" hoặc khoảng trắng lớn
   // Nhưng ở đây ta sẽ dùng logic dòng để linh hoạt hơn
-  const lines = rawText.split('\n').map(l => l.trim()).filter(l => l !== '');
+  const lines = rawText
+    .split('\n')
+    .map((l) => l.trim())
+    .filter((l) => l !== '');
   const questions = [];
   let currentQ = null;
 
@@ -175,12 +181,12 @@ export const parseQuestionsFromRawText = (rawText) => {
         // Chỉ tìm các chữ cái A-F đứng riêng lẻ hoặc có dấu ngăn cách, không nằm trong từ
         const foundLetters = rawText.match(/\b([A-F])\b|[([ ]([A-F])[)\] ]/g) || [];
         // Làm sạch để chỉ lấy chữ cái
-        const cleanLetters = foundLetters.map(l => l.match(/[A-F]/i)[0]);
-        
+        const cleanLetters = foundLetters.map((l) => l.match(/[A-F]/i)[0]);
+
         const indices = cleanLetters
-          .map(letter => OPTION_LABELS.indexOf(letter))
-          .filter(idx => idx !== -1);
-        
+          .map((letter) => OPTION_LABELS.indexOf(letter))
+          .filter((idx) => idx !== -1);
+
         currentQ.correctAnswer = indices;
       }
     } else if (explanationMatch) {
@@ -194,7 +200,7 @@ export const parseQuestionsFromRawText = (rawText) => {
         questions.push(finalizeQuestion(currentQ));
       }
       currentQ = createEmptyQuestion();
-      
+
       // Lấy phần văn bản còn lại sau chữ "Câu X" (nếu có)
       const questionText = line.replace(/^Câu\s*\d+[:\s]*/i, '').trim();
       if (questionText) {
@@ -230,7 +236,7 @@ const createEmptyQuestion = () => ({
   correctAnswer: [],
   explanation: '',
   imageUrl: '',
-  isReadingExplanation: false
+  isReadingExplanation: false,
 });
 
 const finalizeQuestion = (q) => ({
@@ -238,7 +244,7 @@ const finalizeQuestion = (q) => ({
   options: q.options.length >= 4 ? q.options.slice(0, 4) : fillOptions(q.options),
   correctAnswer: q.correctAnswer,
   explanation: q.explanation.trim(),
-  imageUrl: ''
+  imageUrl: '',
 });
 
 const fillOptions = (opts) => {

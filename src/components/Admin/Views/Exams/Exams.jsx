@@ -36,7 +36,7 @@ const Exams = () => {
     setCurrentPage,
     totalPages,
     totalItems,
-    pageSize
+    pageSize,
   } = useExams();
 
   const {
@@ -68,13 +68,16 @@ const Exams = () => {
     handleDeleteQuestion,
     handleSubmitExam,
     resetQuestionDraft,
-    modules
+    modules,
   } = useExamForm(token, fetchExams);
 
-  const courseOptions = useMemo(() => [
-    { value: '', label: 'Chọn khóa học' },
-    ...courses.map((c) => ({ value: c.id, label: `${c.code} – ${c.title}` }))
-  ], [courses]);
+  const courseOptions = useMemo(
+    () => [
+      { value: '', label: 'Chọn khóa học' },
+      ...courses.map((c) => ({ value: c.id, label: `${c.code} – ${c.title}` })),
+    ],
+    [courses]
+  );
 
   const openViewModal = (exam) => {
     setSelectedExamForView(exam);
@@ -176,16 +179,40 @@ const Exams = () => {
       >
         {selectedExamForView && (
           <div className="exam-view-details">
-            <div><b>Tiêu đề:</b> {selectedExamForView.title}</div>
-            <div><b>Mã đề:</b> {selectedExamForView.examCode || '---'}</div>
-            <div><b>Khóa học:</b> {selectedExamForView.course?.title || 'Không gán khóa học'}</div>
-            <div><b>Chương:</b> {selectedExamForView.module?.title || selectedExamForView.moduleId || 'Không gán chương'}</div>
-            <div><b>Số câu hỏi:</b> {selectedExamForView.totalQuestions}</div>
-            <div><b>Thời gian:</b> {selectedExamForView.durationMinutes} phút</div>
-            <div><b>Điểm đạt:</b> {selectedExamForView.passingScore}%</div>
-            <div><b>Độ khó:</b> {getDifficultyLabel(selectedExamForView.difficulty)}</div>
-            <div><b>Lượt dự thi:</b> {selectedExamForView?._count?.results || 0}</div>
-            <div><b>Trạng thái:</b> {getStatusFromExam(selectedExamForView) === 'OPEN' ? 'Đang mở' : 'Nháp'}</div>
+            <div>
+              <b>Tiêu đề:</b> {selectedExamForView.title}
+            </div>
+            <div>
+              <b>Mã đề:</b> {selectedExamForView.examCode || '---'}
+            </div>
+            <div>
+              <b>Khóa học:</b> {selectedExamForView.course?.title || 'Không gán khóa học'}
+            </div>
+            <div>
+              <b>Chương:</b>{' '}
+              {selectedExamForView.module?.title ||
+                selectedExamForView.moduleId ||
+                'Không gán chương'}
+            </div>
+            <div>
+              <b>Số câu hỏi:</b> {selectedExamForView.totalQuestions}
+            </div>
+            <div>
+              <b>Thời gian:</b> {selectedExamForView.durationMinutes} phút
+            </div>
+            <div>
+              <b>Điểm đạt:</b> {selectedExamForView.passingScore}%
+            </div>
+            <div>
+              <b>Độ khó:</b> {getDifficultyLabel(selectedExamForView.difficulty)}
+            </div>
+            <div>
+              <b>Lượt dự thi:</b> {selectedExamForView?._count?.results || 0}
+            </div>
+            <div>
+              <b>Trạng thái:</b>{' '}
+              {getStatusFromExam(selectedExamForView) === 'OPEN' ? 'Đang mở' : 'Nháp'}
+            </div>
           </div>
         )}
       </AdminModal>

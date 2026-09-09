@@ -8,28 +8,28 @@ const ExamStats = ({ stats }) => {
       value: stats.total,
       label: 'Tổng đề thi',
       mod: '',
-      iconMod: ''
+      iconMod: '',
     },
     {
       icon: <CheckCircle2 size={20} />,
       value: stats.openCount,
       label: 'Đang mở',
       mod: 'is-open',
-      iconMod: 'success'
+      iconMod: 'success',
     },
     {
       icon: <Users size={20} />,
       value: stats.totalAttempts,
       label: 'Tổng lượt thi',
       mod: '',
-      iconMod: 'warning'
+      iconMod: 'warning',
     },
     {
       icon: <Target size={20} />,
       value: `${stats.avgPassing}/100`,
       label: 'Điểm sàn TB',
       mod: '',
-      iconMod: 'purple'
+      iconMod: 'purple',
     },
   ];
 

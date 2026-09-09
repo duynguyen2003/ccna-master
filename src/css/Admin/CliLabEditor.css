@@ -1,0 +1,690 @@
+@import '../CliLabTokens.css';
+
+/* Scoped aliases share the student palette in both authoring themes. */
+.cli-lab-editor {
+  --cli-surface: var(--surface-primary);
+  --cli-surface-muted: var(--surface-muted);
+  --cli-surface-raised: var(--surface-secondary);
+  --cli-text: var(--text-primary);
+  --cli-text-muted: var(--text-secondary);
+  --cli-border: var(--border-subtle);
+  --cli-accent: var(--text-accent);
+  --cli-accent-soft: var(--bg-accent);
+  --cli-danger: var(--text-danger);
+  --cli-danger-soft: var(--bg-danger);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  color: var(--cli-text);
+}
+
+/* The preview is a second modal owned by the student workspace. Keep it in a
+ * separate stacking context so the admin editor's sticky footer cannot trap
+ * focus or paint above the workspace. */
+.cli-admin-preview-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  isolation: isolate;
+  pointer-events: none;
+}
+
+.cli-admin-preview-layer > .cli-lab-theme,
+.cli-admin-preview-layer > .cli-workspace-overlay {
+  pointer-events: auto;
+}
+
+.cli-editor-toolbar,
+.cli-editor-section,
+.cli-editor-mode-row,
+.cli-editor-integrity-note {
+  background: var(--cli-surface);
+  border: 1px solid var(--cli-border);
+  border-radius: var(--radius-panel);
+}
+
+.cli-editor-toolbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 16px;
+}
+
+.cli-editor-profile {
+  min-width: 0;
+  flex: 1;
+}
+
+.cli-editor-profile .cli-editor-field {
+  max-width: 480px;
+}
+
+.cli-editor-field,
+.cli-editor-inline-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  color: var(--cli-text);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.cli-editor-field > span,
+.cli-editor-inline-field > span {
+  color: var(--cli-text-muted);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+}
+
+.cli-editor-field small,
+.cli-editor-inline-field small,
+.cli-editor-profile-description,
+.cli-editor-field-hint {
+  color: var(--cli-text-muted);
+  font-size: 11px;
+  line-height: 1.45;
+  font-weight: 400;
+}
+
+.cli-editor-profile-description {
+  margin: 7px 0 0;
+}
+
+.cli-lab-editor select.cli-editor-native-select,
+.cli-lab-editor input.acm-input,
+.cli-lab-editor select.acm-input,
+.cli-lab-editor textarea.acm-textarea {
+  /* Legacy AdminCourseManagement input rules are !important; override only
+   * their colors inside the CLI editor so its theme remains independent. */
+  background-color: var(--cli-surface-raised) !important;
+  border-color: var(--cli-border) !important;
+  color: var(--cli-text) !important;
+}
+
+.cli-lab-editor .cli-editor-native-select option {
+  color: var(--text-primary);
+  background: var(--surface-secondary);
+}
+
+.cli-editor-toolbar-actions,
+.cli-editor-add-device,
+.cli-editor-template-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cli-editor-template-actions {
+  align-items: flex-end;
+}
+
+.cli-editor-template-actions .cli-editor-native-select {
+  min-width: 190px;
+}
+
+.cli-editor-theme-toggle,
+.cli-editor-icon-button,
+.cli-editor-link-delete {
+  border: 1px solid var(--cli-border);
+  background: var(--cli-surface-raised);
+  color: var(--cli-text-muted);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.cli-editor-theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 11px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.cli-editor-theme-toggle:hover,
+.cli-editor-icon-button:hover:not(:disabled),
+.cli-editor-link-delete:hover:not(:disabled) {
+  border-color: var(--cli-accent);
+  color: var(--cli-accent);
+}
+
+.cli-editor-profile .cli-editor-compatibility {
+  margin-top: 8px;
+}
+
+.cli-editor-compatibility {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  width: fit-content;
+  padding: 4px 8px;
+  border: 1px solid var(--cli-border);
+  border-radius: 4px;
+  color: var(--cli-text-muted);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.cli-editor-compatibility.compatible {
+  color: #15803d;
+  border-color: #86efac;
+  background: #f0fdf4;
+}
+
+.cli-editor-compatibility.warning {
+  color: #b45309;
+  border-color: #fcd34d;
+  background: #fffbeb;
+}
+
+.cli-editor-section {
+  padding: 16px;
+}
+
+.cli-editor-section-heading,
+.cli-editor-device-heading,
+.cli-editor-ports-heading,
+.cli-editor-links-heading,
+.cli-editor-section-footer,
+.cli-editor-mode-row,
+.cli-editor-integrity-note {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cli-editor-section-heading {
+  margin-bottom: 14px;
+}
+
+.cli-editor-section-heading h3,
+.cli-editor-device-heading h4 {
+  margin: 2px 0 0;
+  color: var(--cli-text);
+  font-size: 17px;
+}
+
+.cli-editor-section-heading p,
+.cli-editor-ports-heading small,
+.cli-editor-links-heading small {
+  display: block;
+  margin: 4px 0 0;
+  color: var(--cli-text-muted);
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+.cli-editor-eyebrow {
+  color: var(--cli-accent);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.cli-editor-device-card,
+.cli-editor-check-card,
+.cli-editor-port-card,
+.cli-editor-links {
+  border: 1px solid var(--cli-border);
+  border-radius: 8px;
+  background: var(--cli-surface-raised);
+}
+
+.cli-editor-device-card {
+  padding: 14px;
+}
+
+.cli-editor-device-meta,
+.cli-editor-check-meta,
+.cli-editor-check-fields,
+.cli-editor-feedback-grid,
+.cli-editor-port-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.cli-editor-device-meta,
+.cli-editor-check-meta {
+  margin-top: 12px;
+}
+
+.cli-editor-ports-heading {
+  margin: 18px 0 10px;
+}
+
+.cli-editor-port-list,
+.cli-editor-check-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cli-editor-port-card,
+.cli-editor-check-card {
+  padding: 12px;
+}
+
+.cli-editor-port-card-header,
+.cli-editor-check-header,
+.cli-editor-check-id {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cli-editor-port-card-header {
+  justify-content: space-between;
+  margin-bottom: 10px;
+  color: var(--cli-text);
+  font-size: 12px;
+}
+
+.cli-editor-check-header {
+  align-items: flex-start;
+}
+
+.cli-editor-check-index {
+  flex: 0 0 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--cli-accent-soft);
+  color: var(--cli-accent);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.cli-editor-check-type {
+  flex: 1;
+  min-width: 0;
+}
+
+.cli-editor-check-type > label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cli-editor-check-type > label > span {
+  flex: 0 0 auto;
+  color: var(--cli-text-muted);
+  font-size: 11px;
+}
+
+.cli-editor-check-type > label select {
+  min-width: min(420px, 100%);
+}
+
+.cli-editor-check-type > small {
+  display: block;
+  margin-top: 5px;
+  color: var(--cli-text-muted);
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.cli-editor-check-fields {
+  margin-top: 10px;
+}
+
+.cli-editor-field-wide {
+  grid-column: span 2;
+}
+
+.cli-editor-icon-button {
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cli-editor-icon-button.danger {
+  color: var(--cli-danger);
+}
+
+.cli-editor-feedback-details {
+  margin-top: 12px;
+  border-top: 1px solid var(--cli-border);
+  padding-top: 10px;
+}
+
+.cli-editor-feedback-details summary {
+  cursor: pointer;
+  color: var(--cli-accent);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.cli-editor-feedback-grid {
+  margin-top: 10px;
+}
+
+.cli-editor-check-id {
+  margin-top: 10px;
+  color: var(--cli-text-muted);
+  font-size: 10px;
+}
+
+.cli-editor-check-id code,
+.cli-editor-link-row code {
+  color: var(--cli-accent);
+}
+
+.cli-editor-section-footer {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--cli-border);
+  color: var(--cli-text-muted);
+  font-size: 12px;
+}
+
+.cli-editor-topology-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.65fr) minmax(220px, 0.65fr);
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.cli-editor-topology-preview {
+  min-height: 260px;
+  overflow: hidden;
+  border: 1px solid var(--cli-border);
+  border-radius: 8px;
+  background: var(--cli-surface-muted);
+}
+
+.cli-editor-topology-preview .network-topology {
+  width: 100%;
+  min-height: 260px;
+  display: block;
+  background: var(--surface-canvas);
+  border-color: var(--border-subtle);
+}
+
+.cli-lab-editor .network-topology text { fill: var(--text-primary); }
+.cli-lab-editor .network-node rect {
+  fill: var(--surface-muted);
+  stroke: var(--border-strong);
+}
+.cli-lab-editor .network-node.selected rect,
+.cli-lab-editor .network-node:focus-visible rect {
+  fill: var(--bg-accent);
+  stroke: var(--text-accent);
+}
+.cli-lab-editor .network-topology .link-up { stroke: var(--border-strong); }
+.cli-lab-editor .network-topology .link-down { stroke: var(--border-danger); }
+.cli-lab-editor .network-topology .link-blocked { stroke: var(--text-warning); }
+.cli-lab-editor .network-topology .network-link-hit {
+  stroke: transparent;
+  stroke-width: 30;
+  pointer-events: stroke;
+}
+.cli-lab-editor .network-link.selected .link-up,
+.cli-lab-editor .network-link:focus-visible .network-link-hit {
+  stroke: var(--text-accent);
+  stroke-width: 7;
+}
+
+.cli-editor-device-picker {
+  padding: 12px;
+  border: 1px solid var(--cli-border);
+  border-radius: 8px;
+  background: var(--cli-surface-raised);
+}
+
+.cli-editor-field-hint {
+  margin: 10px 0 0;
+}
+
+.cli-editor-checkbox-row {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--cli-text);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.cli-editor-checkbox-row input,
+.cli-editor-advanced-toggle input {
+  accent-color: var(--cli-accent);
+}
+
+.cli-editor-links {
+  margin-top: 14px;
+  padding: 12px;
+}
+
+.cli-editor-link-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.cli-editor-link-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-top: 10px;
+}
+
+.cli-editor-link-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--cli-border);
+  border-radius: 8px;
+  color: var(--cli-text);
+  font-size: 11px;
+}
+
+.cli-editor-link-delete {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 8px;
+  color: var(--cli-danger);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.cli-editor-muted {
+  color: var(--cli-text-muted);
+  font-size: 11px;
+}
+
+.cli-editor-json-footnote,
+.cli-editor-integrity-note {
+  justify-content: space-between;
+  color: var(--cli-text-muted);
+  font-size: 10px;
+}
+
+.cli-editor-json-footnote {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.cli-editor-mode-row,
+.cli-editor-integrity-note {
+  padding: 11px 14px;
+}
+
+.cli-editor-mode-row > div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 12px;
+}
+
+.cli-editor-mode-row > div span {
+  color: var(--cli-text-muted);
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.cli-editor-mode-badge {
+  border-radius: 4px;
+  background: var(--cli-accent-soft);
+  color: var(--cli-accent);
+  padding: 5px 9px;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.cli-editor-advanced-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 11px 14px;
+  border: 1px dashed var(--cli-border);
+  border-radius: 6px;
+  background: var(--cli-surface-muted);
+  color: var(--cli-text);
+  font-size: 11px;
+}
+
+.cli-editor-advanced-toggle label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 700;
+}
+
+.cli-editor-advanced-toggle small {
+  color: var(--cli-text-muted);
+  font-size: 10px;
+}
+
+.cli-editor-code-area {
+  width: 100%;
+  min-height: 430px;
+  resize: vertical;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.55;
+  tab-size: 2;
+}
+
+.cli-editor-json-error,
+.cli-editor-inline-error {
+  margin-top: 8px;
+  padding: 9px 11px;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  background: var(--cli-danger-soft);
+  color: var(--cli-danger);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.cli-editor-validation-summary {
+  padding: 11px 14px;
+  border: 1px solid #fcd34d;
+  border-radius: 6px;
+  background: #fffbeb;
+  color: #92400e;
+  font-size: 11px;
+}
+
+.cli-editor-validation-summary strong {
+  font-size: 12px;
+}
+
+.cli-editor-validation-summary ul {
+  margin: 7px 0 0;
+  padding-left: 18px;
+}
+
+.cli-editor-validation-summary li {
+  margin: 3px 0;
+}
+
+.cli-editor-empty-state {
+  padding: 20px;
+  border: 1px dashed var(--cli-border);
+  border-radius: 8px;
+  color: var(--cli-text-muted);
+  text-align: center;
+}
+
+@media (max-width: 900px) {
+  .cli-editor-toolbar,
+  .cli-editor-section-heading,
+  .cli-editor-mode-row,
+  .cli-editor-integrity-note {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .cli-editor-toolbar-actions {
+    justify-content: flex-start;
+  }
+
+  .cli-editor-device-meta,
+  .cli-editor-check-meta,
+  .cli-editor-check-fields,
+  .cli-editor-feedback-grid,
+  .cli-editor-port-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .cli-editor-topology-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .cli-editor-device-meta,
+  .cli-editor-check-meta,
+  .cli-editor-check-fields,
+  .cli-editor-feedback-grid,
+  .cli-editor-port-grid,
+  .cli-editor-link-controls {
+    grid-template-columns: 1fr;
+  }
+
+  .cli-editor-field-wide {
+    grid-column: auto;
+  }
+
+  .cli-editor-check-type > label {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .cli-editor-check-type > label select {
+    min-width: 0;
+  }
+
+  .cli-editor-link-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cli-lab-editor *,
+  .cli-lab-editor *::before,
+  .cli-lab-editor *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -11,16 +11,18 @@ const AdminLayout = ({ children }) => {
     <div className={`admin-layout ${collapsed ? 'sidebar-collapsed' : ''}`}>
       <div
         className="admin-sidebar-container"
-        onMouseEnter={() => collapsed && document.querySelector('.admin-layout').classList.add('sidebar-hover')}
-        onMouseLeave={() => collapsed && document.querySelector('.admin-layout').classList.remove('sidebar-hover')}
+        onMouseEnter={() =>
+          collapsed && document.querySelector('.admin-layout').classList.add('sidebar-hover')
+        }
+        onMouseLeave={() =>
+          collapsed && document.querySelector('.admin-layout').classList.remove('sidebar-hover')
+        }
       >
         <Sidebar collapsed={collapsed} />
       </div>
       <div className="admin-main-content">
         <TopBar onToggleSidebar={() => setCollapsed(!collapsed)} />
-        <div className="admin-page-content">
-          {children}
-        </div>
+        <div className="admin-page-content">{children}</div>
       </div>
     </div>
   );

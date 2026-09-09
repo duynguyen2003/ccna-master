@@ -4,12 +4,12 @@ export const difficultyOptions = [
   { value: '', label: 'Không chọn' },
   { value: 'EASY', label: 'Dễ' },
   { value: 'MEDIUM', label: 'Trung bình' },
-  { value: 'HARD', label: 'Khó' }
+  { value: 'HARD', label: 'Khó' },
 ];
 
 export const correctAnswerOptions = OPTION_LABELS.map((lbl, i) => ({
   value: i,
-  label: `Đáp án ${lbl}`
+  label: `Đáp án ${lbl}`,
 }));
 
 export const defaultFormData = {
@@ -21,7 +21,7 @@ export const defaultFormData = {
   difficulty: '',
   courseId: '',
   moduleId: '',
-  status: 'DRAFT'
+  status: 'DRAFT',
 };
 
 export const defaultQuestionDraft = {
@@ -29,11 +29,11 @@ export const defaultQuestionDraft = {
   options: ['', '', '', ''],
   correctAnswer: [], // Array of indices
   explanation: '',
-  imageUrl: ''
+  imageUrl: '',
 };
 
 export const STATUS_FILTER_OPTIONS = [
   { value: 'ALL', label: 'Tất cả' },
   { value: 'OPEN', label: 'Đang mở' },
-  { value: 'DRAFT', label: 'Nháp' }
+  { value: 'DRAFT', label: 'Nháp' },
 ];

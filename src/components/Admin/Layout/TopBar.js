@@ -20,13 +20,13 @@ const TopBar = ({ onToggleSidebar }) => {
     exams: 'Quản lý bài thi',
     labs: 'Quản lý bài thực hành',
     resources: 'Quản lý tài liệu',
-    tools: 'Quản lý công cụ'
+    tools: 'Quản lý công cụ',
   };
 
   const getPageTitle = () => {
     const segments = location.pathname.split('/').filter(Boolean);
     // segments: ['admin', 'courses', '1'] or ['admin', 'courses']
-    
+
     if (segments.length >= 2) {
       const module = segments[1];
       if (segments.length > 2 && module === 'courses') {
@@ -34,7 +34,7 @@ const TopBar = ({ onToggleSidebar }) => {
       }
       return pageTitles[module] || module.charAt(0).toUpperCase() + module.slice(1);
     }
-    
+
     return 'Admin Dashboard';
   };
 
@@ -51,9 +51,7 @@ const TopBar = ({ onToggleSidebar }) => {
           <LogOut size={16} />
           <span>Logout</span>
         </button>
-        <div className="admin-topbar-avatar">
-          {user?.fullName?.charAt(0)?.toUpperCase() || 'A'}
-        </div>
+        <div className="admin-topbar-avatar">{user?.fullName?.charAt(0)?.toUpperCase() || 'A'}</div>
       </div>
     </div>
   );

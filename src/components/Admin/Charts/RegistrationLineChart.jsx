@@ -1,6 +1,14 @@
 // src/components/Admin/Charts/RegistrationLineChart.jsx
 import React from 'react';
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+} from 'recharts';
 import { TrendingUp } from 'lucide-react';
 import AdminMotionSwap from '../Components/AdminMotionSwap';
 
@@ -18,7 +26,17 @@ const RegistrationLineChart = ({ data, loading = false }) => {
   if (chartData.length === 0 || chartData.every((entry) => Number(entry.value) === 0)) {
     return (
       <AdminMotionSwap stateKey="empty">
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 230, color: '#94a3b8', gap: '8px' }}>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: 230,
+            color: '#94a3b8',
+            gap: '8px',
+          }}
+        >
           <TrendingUp size={30} strokeWidth={1.5} />
           <p style={{ fontSize: '13px', margin: 0 }}>Chưa có dữ liệu đăng ký</p>
         </div>
@@ -44,13 +62,13 @@ const RegistrationLineChart = ({ data, loading = false }) => {
             tick={{ fill: '#94a3b8', fontSize: 11 }}
             dy={10}
           />
-          <YAxis
-            axisLine={false}
-            tickLine={false}
-            tick={{ fill: '#94a3b8', fontSize: 11 }}
-          />
+          <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11 }} />
           <Tooltip
-            contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+            contentStyle={{
+              borderRadius: '8px',
+              border: 'none',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+            }}
           />
           <Area
             type="monotone"

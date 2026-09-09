@@ -8,7 +8,7 @@ import {
   Trash2,
   Image as ImageIcon,
   Download,
-  Type
+  Type,
 } from 'lucide-react';
 import { OPTION_LABELS } from './constants';
 import SimpleRTE from './SimpleRTE';
@@ -26,7 +26,7 @@ export const QuestionDrawer = ({
   onRemoveImage,
   uploadingImage,
   onSave,
-  error
+  error,
 }) => {
   if (!isOpen) return null;
 
@@ -65,11 +65,24 @@ export const QuestionDrawer = ({
                   <p style={{ color: '#6366f1', fontWeight: 600 }}>Tải ảnh sơ đồ mạng</p>
                   <span>Định dạng JPG, PNG, tối đa 5MB</span>
                 </div>
-                <input type="file" accept="image/*" disabled={uploadingImage} onChange={onImageUpload} hidden />
+                <input
+                  type="file"
+                  accept="image/*"
+                  disabled={uploadingImage}
+                  onChange={onImageUpload}
+                  hidden
+                />
               </label>
             ) : (
-              <div className="efb-image-preview" style={{ position: 'relative', display: 'inline-block' }}>
-                <img src={draft.imageUrl} alt="Sơ đồ mạng" style={{ width: '100%', borderRadius: '12px', border: '1px solid #e2e8f0' }} />
+              <div
+                className="efb-image-preview"
+                style={{ position: 'relative', display: 'inline-block' }}
+              >
+                <img
+                  src={draft.imageUrl}
+                  alt="Sơ đồ mạng"
+                  style={{ width: '100%', borderRadius: '12px', border: '1px solid #e2e8f0' }}
+                />
                 <button
                   type="button"
                   className="efb-btn-secondary"
@@ -84,11 +97,18 @@ export const QuestionDrawer = ({
 
           {/* Options vertically stacked */}
           <div className="efb-field">
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', alignItems: 'center' }}>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                marginBottom: '8px',
+                alignItems: 'center',
+              }}
+            >
               <span style={{ fontWeight: 600 }}>Đáp án & Đáp án đúng *</span>
-              <button 
-                type="button" 
-                className="efb-btn-secondary" 
+              <button
+                type="button"
+                className="efb-btn-secondary"
                 onClick={() => onDraftChange('options', [...draft.options, ''])}
                 style={{ padding: '4px 12px', fontSize: '12px' }}
               >
@@ -97,12 +117,13 @@ export const QuestionDrawer = ({
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {draft.options.map((opt, i) => {
-                const isCorrect = Array.isArray(draft.correctAnswer) && draft.correctAnswer.includes(i);
-                
+                const isCorrect =
+                  Array.isArray(draft.correctAnswer) && draft.correctAnswer.includes(i);
+
                 const toggleCorrect = () => {
                   let next;
                   if (isCorrect) {
-                    next = draft.correctAnswer.filter(idx => idx !== i);
+                    next = draft.correctAnswer.filter((idx) => idx !== i);
                   } else {
                     next = [...draft.correctAnswer, i];
                   }
@@ -114,18 +135,28 @@ export const QuestionDrawer = ({
                   const nextOptions = draft.options.filter((_, idx) => idx !== i);
                   // Update correct answers to reflect new indices
                   const nextCorrect = draft.correctAnswer
-                    .filter(idx => idx !== i)
-                    .map(idx => (idx > i ? idx - 1 : idx));
+                    .filter((idx) => idx !== i)
+                    .map((idx) => (idx > i ? idx - 1 : idx));
                   onDraftChange('options', nextOptions);
                   onDraftChange('correctAnswer', nextCorrect);
                 };
 
                 return (
-                  <div key={i} className={`efb-option-item ${isCorrect ? 'efb-option-correct' : ''}`} style={{ padding: '10px 14px' }}>
+                  <div
+                    key={i}
+                    className={`efb-option-item ${isCorrect ? 'efb-option-correct' : ''}`}
+                    style={{ padding: '10px 14px' }}
+                  >
                     <button type="button" className="efb-option-radio" onClick={toggleCorrect}>
-                      {isCorrect ? <CheckCircle2 size={18} color="#4f46e5" /> : <span className="efb-radio-dot" />}
+                      {isCorrect ? (
+                        <CheckCircle2 size={18} color="#4f46e5" />
+                      ) : (
+                        <span className="efb-radio-dot" />
+                      )}
                     </button>
-                    <div style={{ fontWeight: 600, color: '#64748b', width: '20px' }}>{OPTION_LABELS[i]}</div>
+                    <div style={{ fontWeight: 600, color: '#64748b', width: '20px' }}>
+                      {OPTION_LABELS[i]}
+                    </div>
                     <input
                       className="efb-option-input"
                       placeholder={`Nội dung đáp án ${OPTION_LABELS[i]}`}
@@ -134,7 +165,12 @@ export const QuestionDrawer = ({
                       style={{ fontSize: '14px' }}
                     />
                     {draft.options.length > 2 && (
-                      <button type="button" className="efb-icon-btn efb-icon-danger" onClick={removeOption} style={{ marginLeft: '8px' }}>
+                      <button
+                        type="button"
+                        className="efb-icon-btn efb-icon-danger"
+                        onClick={removeOption}
+                        style={{ marginLeft: '8px' }}
+                      >
                         <X size={14} />
                       </button>
                     )}
@@ -156,7 +192,12 @@ export const QuestionDrawer = ({
         </div>
 
         <div className="efb-drawer-footer">
-          <button type="button" className="efb-btn-ghost" onClick={onClose} style={{ padding: '0 16px', color: '#64748b', textDecoration: 'none' }}>
+          <button
+            type="button"
+            className="efb-btn-ghost"
+            onClick={onClose}
+            style={{ padding: '0 16px', color: '#64748b', textDecoration: 'none' }}
+          >
             Hủy
           </button>
           <button type="button" className="efb-btn-primary" onClick={onSave}>
@@ -175,7 +216,7 @@ export const ImportModal = ({
   onClose,
   onDownloadTemplate,
   onFileChange,
-  importMessage
+  importMessage,
 }) => {
   const fileInputRef = useRef(null);
 
@@ -196,10 +237,27 @@ export const ImportModal = ({
 
         <div className="efb-modal-body">
           {importMessage && <p className="exam-builder-success">{importMessage}</p>}
-          
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', padding: '12px', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
-            <span style={{ fontSize: '13px', color: '#475569' }}>Cấu trúc: question, optionA..D, correctAnswer...</span>
-            <button type="button" className="efb-btn-secondary" onClick={onDownloadTemplate} style={{ height: '32px' }}>
+
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              background: '#f8fafc',
+              padding: '12px',
+              borderRadius: '10px',
+              border: '1px solid #e2e8f0',
+            }}
+          >
+            <span style={{ fontSize: '13px', color: '#475569' }}>
+              Cấu trúc: question, optionA..D, correctAnswer...
+            </span>
+            <button
+              type="button"
+              className="efb-btn-secondary"
+              onClick={onDownloadTemplate}
+              style={{ height: '32px' }}
+            >
               <Download size={14} /> Tải file mẫu
             </button>
           </div>
@@ -229,12 +287,7 @@ export const ImportModal = ({
 
 // ─── TextImportModal ──────────────────────────────────────────────────────────
 
-export const TextImportModal = ({
-  isOpen,
-  onClose,
-  onImport,
-  importMessage
-}) => {
+export const TextImportModal = ({ isOpen, onClose, onImport, importMessage }) => {
   const [text, setText] = React.useState('');
 
   if (!isOpen) return null;
@@ -249,7 +302,11 @@ export const TextImportModal = ({
 
   return (
     <div className={`efb-modal-overlay ${isOpen ? 'open' : ''}`} onClick={onClose}>
-      <div className="efb-modal-content" style={{ maxWidth: '800px' }} onClick={(e) => e.stopPropagation()}>
+      <div
+        className="efb-modal-content"
+        style={{ maxWidth: '800px' }}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="efb-modal-header">
           <div>
             <h3>Nhập Nhanh Từ Văn Bản</h3>
@@ -261,10 +318,29 @@ export const TextImportModal = ({
         </div>
 
         <div className="efb-modal-body">
-          <div style={{ background: '#f0f9ff', padding: '12px', borderRadius: '8px', border: '1px solid #bae6fd', marginBottom: '16px' }}>
-            <p style={{ margin: 0, fontSize: '13px', color: '#0369a1', fontWeight: 600 }}>Định dạng hỗ trợ:</p>
-            <pre style={{ margin: '8px 0 0', fontSize: '11px', color: '#0c4a6e', background: 'rgba(255,255,255,0.5)', padding: '8px', borderRadius: '4px' }}>
-{`Câu 1: Nội dung câu hỏi...
+          <div
+            style={{
+              background: '#f0f9ff',
+              padding: '12px',
+              borderRadius: '8px',
+              border: '1px solid #bae6fd',
+              marginBottom: '16px',
+            }}
+          >
+            <p style={{ margin: 0, fontSize: '13px', color: '#0369a1', fontWeight: 600 }}>
+              Định dạng hỗ trợ:
+            </p>
+            <pre
+              style={{
+                margin: '8px 0 0',
+                fontSize: '11px',
+                color: '#0c4a6e',
+                background: 'rgba(255,255,255,0.5)',
+                padding: '8px',
+                borderRadius: '4px',
+              }}
+            >
+              {`Câu 1: Nội dung câu hỏi...
 (A) Phương án 1
 (B) Phương án 2...
 ✓ Đáp án đúng: (A)
@@ -274,16 +350,49 @@ Giải thích: Nội dung giải thích...`}
 
           <textarea
             className="efb-input"
-            style={{ minHeight: '300px', resize: 'vertical', fontFamily: 'monospace', fontSize: '13px', lineHeight: '1.6' }}
+            style={{
+              minHeight: '300px',
+              resize: 'vertical',
+              fontFamily: 'monospace',
+              fontSize: '13px',
+              lineHeight: '1.6',
+            }}
             placeholder="Dán nội dung tại đây..."
             value={text}
             onChange={(e) => setText(e.target.value)}
           />
         </div>
 
-        <div className="efb-modal-footer" style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', padding: '16px 24px', borderTop: '1px solid #e2e8f0' }}>
-          <button type="button" className="efb-btn-ghost" onClick={onClose} style={{ padding: '0 16px', height: '40px' }}>Hủy</button>
-          <button type="button" className="efb-btn-primary" onClick={handleProcess} style={{ padding: '0 24px', height: '40px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div
+          className="efb-modal-footer"
+          style={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: '12px',
+            padding: '16px 24px',
+            borderTop: '1px solid #e2e8f0',
+          }}
+        >
+          <button
+            type="button"
+            className="efb-btn-ghost"
+            onClick={onClose}
+            style={{ padding: '0 16px', height: '40px' }}
+          >
+            Hủy
+          </button>
+          <button
+            type="button"
+            className="efb-btn-primary"
+            onClick={handleProcess}
+            style={{
+              padding: '0 24px',
+              height: '40px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+            }}
+          >
             <Type size={16} /> Bắt đầu phân tích & Nhập
           </button>
         </div>
@@ -301,7 +410,9 @@ export const QuestionList = ({ questions, onEdit, onDelete }) => {
     <div className="efb-qlist" style={{ marginTop: '20px' }}>
       <div className="efb-qlist-header">
         <FileText size={16} color="#6366f1" />
-        <span style={{ color: '#0f172a', fontSize: '16px' }}>Danh Sách Câu Hỏi ({questions.length})</span>
+        <span style={{ color: '#0f172a', fontSize: '16px' }}>
+          Danh Sách Câu Hỏi ({questions.length})
+        </span>
       </div>
 
       {questions.map((q, idx) => (
@@ -313,7 +424,11 @@ export const QuestionList = ({ questions, onEdit, onDelete }) => {
               <button type="button" className="efb-icon-btn" onClick={() => onEdit(idx)}>
                 <PencilLine size={14} />
               </button>
-              <button type="button" className="efb-icon-btn efb-icon-danger" onClick={() => onDelete(idx)}>
+              <button
+                type="button"
+                className="efb-icon-btn efb-icon-danger"
+                onClick={() => onDelete(idx)}
+              >
                 <Trash2 size={14} />
               </button>
             </div>
@@ -324,10 +439,20 @@ export const QuestionList = ({ questions, onEdit, onDelete }) => {
               const isCorrect = Array.isArray(q.correctAnswer) && q.correctAnswer.includes(oi);
               return (
                 <div key={oi} className={`efb-qoption ${isCorrect ? 'correct' : ''}`}>
-                  {isCorrect
-                    ? <CheckCircle2 size={15} className="efb-qoption-correct-icon" />
-                    : <span className="efb-qoption-dot" />}
-                  <span style={{ fontWeight: 600, marginRight: '4px', color: isCorrect ? '#15803d' : '#64748b' }}>{OPTION_LABELS[oi]}.</span>
+                  {isCorrect ? (
+                    <CheckCircle2 size={15} className="efb-qoption-correct-icon" />
+                  ) : (
+                    <span className="efb-qoption-dot" />
+                  )}
+                  <span
+                    style={{
+                      fontWeight: 600,
+                      marginRight: '4px',
+                      color: isCorrect ? '#15803d' : '#64748b',
+                    }}
+                  >
+                    {OPTION_LABELS[oi]}.
+                  </span>
                   <span>{opt || `(Trống)`}</span>
                 </div>
               );
@@ -342,7 +467,11 @@ export const QuestionList = ({ questions, onEdit, onDelete }) => {
 
           {q.explanation && (
             <div className="efb-qexplan">
-              <span>Giải thích:</span> <div dangerouslySetInnerHTML={{ __html: q.explanation }} style={{ display: 'inline' }} />
+              <span>Giải thích:</span>{' '}
+              <div
+                dangerouslySetInnerHTML={{ __html: q.explanation }}
+                style={{ display: 'inline' }}
+              />
             </div>
           )}
         </div>
