@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, ChevronLeft, ChevronRight, Code2, Router, Shield, TerminalSquare } from 'lucide-react';
 import { A1, A5, A4 } from '../../image';
@@ -7,6 +7,7 @@ import course2 from '../../image/course2.jpg';
 import course3 from '../../image/course3.jpg';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/Api';
+import { gsap, useGSAP, ScrollTrigger, prefersReducedMotion } from '../../utils/homeMotion';
 
 /* ===============================
    STATIC DATA
@@ -207,6 +208,8 @@ export const Home = () => {
   const navigate = useNavigate();
   const [current, setCurrent] = useState(0);
   const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const containerRef = useRef(null);
   const resumeCourse = courses.find((c) => c.progress > 0 && c.progress < 100) || null;
 
   // Tự động chuyển banner
@@ -220,12 +223,14 @@ export const Home = () => {
 
   // Lấy dữ liệu khóa học thực từ API và tiến độ người dùng
   useEffect(() => {
+    let isMounted = true;
     const fetchData = async () => {
       try {
         const [data, progressMap] = await Promise.all([
           api.getCourses(token),
           isAuthenticated && token ? api.getUserProgress(token) : Promise.resolve({})
         ]);
+        if (!isMounted) return;
         const mapped = data.map((c, idx) => {
           // Lấy progress đã tính toán từ Backend
           const progress = c.progress || 0;
@@ -267,10 +272,137 @@ export const Home = () => {
         setCourses(mapped);
       } catch (err) {
         console.error('Home: không thể tải dữ liệu', err);
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
     fetchData();
+    return () => {
+      isMounted = false;
+    };
   }, [token, isAuthenticated]);
+
+  // Tự động chạy GSAP timeline & ScrollTrigger (fade in khi cuộn xuống, fade out khi cuộn ngược lên)
+  useGSAP(() => {
+    if (loading || prefersReducedMotion()) return;
+
+    // 1. Entrance timeline cho phần đầu trang (Banner & Thống kê)
+    const tl = gsap.timeline({ defaults: { ease: 'power2.out' } });
+
+    tl.fromTo(
+      '.banner-container',
+      { opacity: 0, y: -16 },
+      { opacity: 1, y: 0, duration: 0.45, clearProps: 'opacity,transform' }
+    )
+    .fromTo(
+      '.stat-card',
+      { opacity: 0, y: 16, scale: 0.98 },
+      { opacity: 1, y: 0, scale: 1, stagger: 0.06, duration: 0.35, clearProps: 'opacity,transform' },
+      '-=0.2'
+    );
+
+    // 2. Continue learning section (nếu có bài học đang dở)
+    if (containerRef.current?.querySelector('.continue-learning')) {
+      gsap.fromTo(
+        '.continue-learning',
+        { opacity: 0, y: 20 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.45,
+          ease: 'power2.out',
+          scrollTrigger: {
+            trigger: '.continue-learning',
+            start: 'top 90%',
+            end: 'bottom 10%',
+            toggleActions: 'play reverse play reverse',
+          },
+        }
+      );
+    }
+
+    // 3. Lộ trình khóa học: Fade in khi cuộn vào tầm nhìn, Fade out khi cuộn ngược lên
+    if (containerRef.current?.querySelector('.curriculum')) {
+      gsap.fromTo(
+        '.curriculum .section-header',
+        { opacity: 0, y: 24 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.4,
+          ease: 'power2.out',
+          scrollTrigger: {
+            trigger: '.curriculum',
+            start: 'top 85%',
+            end: 'bottom 15%',
+            toggleActions: 'play reverse play reverse',
+          },
+        }
+      );
+
+      if (containerRef.current?.querySelector('.course-card')) {
+        gsap.fromTo(
+          '.curriculum .course-card',
+          { opacity: 0, y: 28 },
+          {
+            opacity: 1,
+            y: 0,
+            stagger: 0.08,
+            duration: 0.45,
+            ease: 'power2.out',
+            scrollTrigger: {
+              trigger: '.course-grid-container',
+              start: 'top 85%',
+              end: 'bottom 15%',
+              toggleActions: 'play reverse play reverse',
+            },
+          }
+        );
+      }
+    }
+
+    // 4. Công cụ hỗ trợ: Fade in khi cuộn vào tầm nhìn, Fade out khi cuộn ngược lên
+    if (containerRef.current?.querySelector('.features')) {
+      gsap.fromTo(
+        '.features .section-header',
+        { opacity: 0, y: 24 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.4,
+          ease: 'power2.out',
+          scrollTrigger: {
+            trigger: '.features',
+            start: 'top 85%',
+            end: 'bottom 15%',
+            toggleActions: 'play reverse play reverse',
+          },
+        }
+      );
+
+      gsap.fromTo(
+        '.feat-card',
+        { opacity: 0, y: 24 },
+        {
+          opacity: 1,
+          y: 0,
+          stagger: 0.06,
+          duration: 0.4,
+          ease: 'power2.out',
+          scrollTrigger: {
+            trigger: '.features-grid',
+            start: 'top 85%',
+            end: 'bottom 15%',
+            toggleActions: 'play reverse play reverse',
+          },
+        }
+      );
+    }
+
+    ScrollTrigger.refresh();
+  }, { dependencies: [loading], scope: containerRef });
 
   const next = () =>
     setCurrent((prev) => (prev + 1) % bannerData.length);
@@ -296,7 +428,7 @@ export const Home = () => {
   const ResumeIcon = resumeCourse?.icon || FALLBACK_ICON;
 
   return (
-    <div className="home-wrapper">
+    <div className="home-wrapper" ref={containerRef}>
       {/* ================= Banner ================= */}
       <section className="banner-section">
         <div className="banner-container">
@@ -407,6 +539,10 @@ export const Home = () => {
                     cursor: 'pointer',
                     textDecoration: 'none',
                     color: 'inherit',
+                    backgroundImage: `linear-gradient(180deg, rgba(15, 23, 42, 0.42), rgba(15, 23, 42, 0.74)), url(${course.backgroundImage})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    backgroundRepeat: 'no-repeat',
                     '--course-bg-image': `url(${course.backgroundImage})`,
                   }}
                   onClick={() => isAuthenticated

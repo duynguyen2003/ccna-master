@@ -231,6 +231,46 @@ export const api = {
     return labs.map(mapLab);
   },
 
+  startCliLabAttempt: async (token, labId) => {
+    const json = await apiFetch(`/lab-attempts/labs/${labId}/start`, token, { method: 'POST' });
+    return json.data;
+  },
+
+  getCliLabAttempt: async (token, attemptId, deviceId, after = 0) => {
+    const params = new URLSearchParams({ after, ...(deviceId ? { deviceId } : {}) });
+    const json = await apiFetch(`/lab-attempts/${attemptId}?${params}`, token);
+    return json.data;
+  },
+
+  runCliLabCommand: async (token, attemptId, command, expectedRevision, deviceId) => {
+    const json = await apiFetch(`/lab-attempts/${attemptId}/commands`, token, {
+      method: 'POST',
+      body: JSON.stringify({ command, expectedRevision, deviceId }),
+    });
+    return json.data;
+  },
+
+  getCliLabCompletions: async (token, attemptId, input, deviceId) => {
+    const params = new URLSearchParams({ input, ...(deviceId ? { deviceId } : {}) });
+    const json = await apiFetch(`/lab-attempts/${attemptId}/completions?${params}`, token);
+    return json.data;
+  },
+
+  submitCliLabAttempt: async (token, attemptId) => {
+    const json = await apiFetch(`/lab-attempts/${attemptId}/submit`, token, { method: 'POST' });
+    return json.data;
+  },
+  restartCliLabAttempt: async (token, attemptId, labId) => {
+    await apiFetch(`/lab-attempts/${attemptId}/restart`, token, { method: 'POST' });
+    return (await apiFetch(`/lab-attempts/labs/${labId}/start`, token, { method: 'POST' })).data;
+  },
+
+  cliAction: async (token, id, action, expectedRevision) => (await apiFetch(`/lab-attempts/${id}/actions`, token, { method: 'POST', body: JSON.stringify({ action, expectedRevision }) })).data,
+  cliReplay: async (token, id, sequence) => (await apiFetch(`/lab-attempts/${id}/replay?sequence=${sequence}`, token)).data,
+  cliMembers: async (token, id, userId, remove = false) => (await apiFetch(`/lab-attempts/${id}/members`, token, { method: 'POST', body: JSON.stringify({ userId, remove }) })).data,
+  cliExplain: async (token, id) => (await apiFetch(`/lab-attempts/${id}/explain`, token, { method: 'POST' })).data,
+  cliAchievements: async (token) => (await apiFetch('/lab-attempts/achievements', token)).data,
+
   // ── Resources ─────────────────────────────────────────────────────────────
 
   // [OPT-02] Trả về { data: [] } thống nhất với các hàm list khác

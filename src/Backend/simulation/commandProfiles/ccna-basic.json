@@ -1,0 +1,198 @@
+{
+  "id": "ccna-basic-v1",
+  "version": "1.0.0",
+  "commands": [
+    {
+      "id": "enable",
+      "modes": ["USER_EXEC"],
+      "tokens": [{ "keyword": "enable", "help": "Turn on privileged commands" }],
+      "handler": "enable"
+    },
+    {
+      "id": "disable",
+      "modes": ["PRIVILEGED_EXEC"],
+      "tokens": [{ "keyword": "disable", "help": "Turn off privileged commands" }],
+      "handler": "disable"
+    },
+    {
+      "id": "configure-terminal",
+      "modes": ["PRIVILEGED_EXEC"],
+      "tokens": [
+        { "keyword": "configure", "help": "Enter configuration mode" },
+        { "keyword": "terminal", "help": "Configure from the terminal" }
+      ],
+      "handler": "configure_terminal"
+    },
+    {
+      "id": "exit",
+      "modes": ["USER_EXEC", "PRIVILEGED_EXEC", "GLOBAL_CONFIG", "INTERFACE_CONFIG", "VLAN_CONFIG"],
+      "tokens": [{ "keyword": "exit", "help": "Exit from the current mode" }],
+      "handler": "exit"
+    },
+    {
+      "id": "end",
+      "modes": ["GLOBAL_CONFIG", "INTERFACE_CONFIG", "VLAN_CONFIG"],
+      "tokens": [{ "keyword": "end", "help": "Exit to privileged EXEC mode" }],
+      "handler": "end"
+    },
+    {
+      "id": "hostname",
+      "modes": ["GLOBAL_CONFIG"],
+      "tokens": [
+        { "keyword": "hostname", "help": "Set system network name" },
+        { "parameter": "hostname", "type": "hostname", "help": "This system's network name" }
+      ],
+      "handler": "set_hostname",
+      "negatable": true
+    },
+    {
+      "id": "interface",
+      "modes": ["GLOBAL_CONFIG"],
+      "tokens": [
+        { "keyword": "interface", "help": "Select an interface to configure" },
+        { "parameter": "interface", "type": "interface", "help": "Interface name" }
+      ],
+      "handler": "select_interface"
+    },
+    {
+      "id": "ip-address",
+      "modes": ["INTERFACE_CONFIG"],
+      "tokens": [
+        { "keyword": "ip", "help": "Interface Internet Protocol config commands" },
+        { "keyword": "address", "help": "Set the IP address of an interface" },
+        { "parameter": "ipAddress", "type": "ipv4", "help": "IP address", "optionalOnNegate": true },
+        { "parameter": "subnetMask", "type": "subnetMask", "help": "IP subnet mask", "optionalOnNegate": true }
+      ],
+      "handler": "set_interface_ip",
+      "negatable": true
+    },
+    {
+      "id": "shutdown",
+      "modes": ["INTERFACE_CONFIG"],
+      "tokens": [{ "keyword": "shutdown", "help": "Shutdown the selected interface" }],
+      "handler": "set_shutdown",
+      "negatable": true
+    },
+    {
+      "id": "description",
+      "modes": ["INTERFACE_CONFIG"],
+      "tokens": [
+        { "keyword": "description", "help": "Interface specific description" },
+        { "parameter": "description", "type": "rest", "help": "Description text", "optionalOnNegate": true }
+      ],
+      "handler": "set_description",
+      "negatable": true
+    },
+    {
+      "id": "vlan",
+      "modes": ["GLOBAL_CONFIG"],
+      "deviceTypes": ["SWITCH"],
+      "tokens": [
+        { "keyword": "vlan", "help": "VLAN commands" },
+        { "parameter": "vlanId", "type": "vlanId", "help": "VLAN ID 1-4094" }
+      ],
+      "handler": "select_vlan"
+    },
+    {
+      "id": "vlan-name",
+      "modes": ["VLAN_CONFIG"],
+      "tokens": [
+        { "keyword": "name", "help": "Set VLAN name" },
+        { "parameter": "vlanName", "type": "vlanName", "help": "VLAN name", "optionalOnNegate": true }
+      ],
+      "handler": "set_vlan_name",
+      "negatable": true
+    },
+    {
+      "id": "switchport-mode-access",
+      "modes": ["INTERFACE_CONFIG"],
+      "deviceTypes": ["SWITCH"],
+      "tokens": [
+        { "keyword": "switchport", "help": "Set switching mode characteristics" },
+        { "keyword": "mode", "help": "Set trunking mode of the interface" },
+        { "keyword": "access", "help": "Set trunking mode to ACCESS" }
+      ],
+      "handler": "set_switchport_access"
+    },
+    {
+      "id": "switchport-access-vlan",
+      "modes": ["INTERFACE_CONFIG"],
+      "deviceTypes": ["SWITCH"],
+      "tokens": [
+        { "keyword": "switchport", "help": "Set switching mode characteristics" },
+        { "keyword": "access", "help": "Set access mode characteristics" },
+        { "keyword": "vlan", "help": "Set VLAN when interface is in access mode" },
+        { "parameter": "vlanId", "type": "vlanId", "help": "VLAN ID 1-4094" }
+      ],
+      "handler": "set_access_vlan"
+    },
+    {
+      "id": "show-running-config",
+      "modes": ["PRIVILEGED_EXEC"],
+      "tokens": [
+        { "keyword": "show", "help": "Show running system information" },
+        { "keyword": "running-config", "help": "Current operating configuration" }
+      ],
+      "handler": "show_running_config"
+    },
+    {
+      "id": "show-startup-config",
+      "modes": ["PRIVILEGED_EXEC"],
+      "tokens": [
+        { "keyword": "show", "help": "Show running system information" },
+        { "keyword": "startup-config", "help": "Contents of startup configuration" }
+      ],
+      "handler": "show_startup_config"
+    },
+    {
+      "id": "show-interfaces",
+      "modes": ["PRIVILEGED_EXEC"],
+      "tokens": [
+        { "keyword": "show", "help": "Show running system information" },
+        { "keyword": "interfaces", "help": "Interface status and configuration" }
+      ],
+      "handler": "show_interfaces"
+    },
+    {
+      "id": "show-ip-interface-brief",
+      "modes": ["PRIVILEGED_EXEC"],
+      "tokens": [
+        { "keyword": "show", "help": "Show running system information" },
+        { "keyword": "ip", "help": "IP information" },
+        { "keyword": "interface", "help": "IP interface status" },
+        { "keyword": "brief", "help": "Brief summary" }
+      ],
+      "handler": "show_ip_interface_brief"
+    },
+    {
+      "id": "show-vlan-brief",
+      "modes": ["PRIVILEGED_EXEC"],
+      "deviceTypes": ["SWITCH"],
+      "tokens": [
+        { "keyword": "show", "help": "Show running system information" },
+        { "keyword": "vlan", "help": "VLAN information" },
+        { "keyword": "brief", "help": "VLAN summary" }
+      ],
+      "handler": "show_vlan_brief"
+    },
+    {
+      "id": "copy-running-startup",
+      "modes": ["PRIVILEGED_EXEC"],
+      "tokens": [
+        { "keyword": "copy", "help": "Copy from one file to another" },
+        { "keyword": "running-config", "help": "Copy from current system configuration" },
+        { "keyword": "startup-config", "help": "Copy to startup configuration" }
+      ],
+      "handler": "save_config"
+    },
+    {
+      "id": "write-memory",
+      "modes": ["PRIVILEGED_EXEC"],
+      "tokens": [
+        { "keyword": "write", "help": "Write running configuration" },
+        { "keyword": "memory", "help": "Write to non-volatile memory" }
+      ],
+      "handler": "save_config"
+    }
+  ]
+}

@@ -21,8 +21,13 @@ services:
       context: .
       target: backend
     restart: unless-stopped
+    ports:
+      - "5500:5000"
     environment:
       NODE_ENV: production
+      LAB_AI_URL: ${LAB_AI_URL:-}
+      LAB_AI_KEY: ${LAB_AI_KEY:-}
+      LAB_AI_MODEL: ${LAB_AI_MODEL:-}
       PORT: 5000
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-netmastery_db}
       JWT_SECRET: ${JWT_SECRET:-change-this-jwt-secret-before-production}

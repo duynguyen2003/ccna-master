@@ -1,6 +1,8 @@
 const { getPrisma } = require('../config/database');
 const { uploadBufferToCloudinary } = require('../config/cloudinary');
 const { adminActionLogger } = require('../middleware/logging');
+const { parseCliLabConfig } = require('../validation/cliLabSchema');
+const { sanitizeHtml } = require('../../shared/sanitizeHtml');
 const prisma = getPrisma();
 
 module.exports.getCourses = async (req, res, next) => {
@@ -293,8 +295,17 @@ module.exports.getLabs = async (req, res, next) => {
       prisma.lab.count({ where: whereClause })
     ]);
 
+    const responseLabs = req.user?.role === 'ADMIN'
+      ? labs
+      : labs.map((lab) => {
+        const publicLab = { ...lab };
+        delete publicLab.gradingSpec;
+        delete publicLab.initialState;
+        return publicLab;
+      });
+
     res.json({
-      data: labs,
+      data: responseLabs,
       pagination: { total, page, limit, totalPages: Math.ceil(total / limit) }
     });
   } catch (error) {
@@ -304,7 +315,22 @@ module.exports.getLabs = async (req, res, next) => {
 
 module.exports.createLab = async (req, res, next) => {
   try {
-    const { title, category, difficulty, duration, status, guideContent, courseId, moduleId, objective, tools, steps } = req.body;
+    const {
+      title, category, difficulty, duration, status, guideContent, courseId,
+      moduleId, objective, tools, steps, labType, initialState, gradingSpec,
+      commandProfile,
+    } = req.body;
+
+    if (!title) {
+      return res.status(400).json({ message: 'Vui lòng nhập tên bài Lab' });
+    }
+
+    let cliConfig;
+    try {
+      cliConfig = parseCliLabConfig({ labType, initialState, gradingSpec, commandProfile, courseId });
+    } catch (configError) {
+      return res.status(400).json({ message: configError.issues?.[0]?.message || configError.message });
+    }
     
     let fileUrl = null;
     let imageUrl = null;
@@ -339,17 +365,13 @@ module.exports.createLab = async (req, res, next) => {
       }
     }
 
-    if (!title) {
-      return res.status(400).json({ message: 'Vui lòng nhập tên bài Lab' });
-    }
-
     const lab = await prisma.lab.create({
       data: {
         title,
         category: category || null,
         difficulty: difficulty || 'EASY',
         duration: duration || null,
-        guideContent: guideContent || null,
+        guideContent: guideContent ? sanitizeHtml(guideContent) : null,
         objective: objective || null,
         status: status || 'DRAFT',
         tools: tools ? (typeof tools === 'string' ? JSON.parse(tools) : tools) : null,
@@ -358,7 +380,8 @@ module.exports.createLab = async (req, res, next) => {
         imageUrl,
         topologyImgUrl,
         courseId: courseId || null,
-        moduleId: moduleId || null
+        moduleId: moduleId || null,
+        ...cliConfig,
       }
     });
 
@@ -371,7 +394,29 @@ module.exports.createLab = async (req, res, next) => {
 module.exports.updateLab = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { title, category, difficulty, duration, status, guideContent, courseId, moduleId, objective, tools, steps } = req.body;
+    const {
+      title, category, difficulty, duration, status, guideContent, courseId,
+      moduleId, objective, tools, steps, labType, initialState, gradingSpec,
+      commandProfile,
+    } = req.body;
+
+    const existingLab = await prisma.lab.findUnique({ where: { id: parseInt(id, 10) } });
+    if (!existingLab) return res.status(404).json({ message: 'Không tìm thấy bài Lab' });
+
+    const effectiveCourseId = courseId === undefined || courseId === '' ? existingLab.courseId : courseId;
+    const effectiveModuleId = moduleId === undefined || moduleId === '' ? existingLab.moduleId : moduleId;
+    let cliConfig;
+    try {
+      cliConfig = parseCliLabConfig({
+        labType: labType ?? existingLab.labType,
+        initialState: initialState ?? existingLab.initialState,
+        gradingSpec: gradingSpec ?? existingLab.gradingSpec,
+        commandProfile: commandProfile ?? existingLab.commandProfile,
+        courseId: effectiveCourseId,
+      });
+    } catch (configError) {
+      return res.status(400).json({ message: configError.issues?.[0]?.message || configError.message });
+    }
     
     const dataToUpdate = { 
       title, 
@@ -379,12 +424,13 @@ module.exports.updateLab = async (req, res, next) => {
       difficulty,
       duration,
       status,
-      guideContent,
+      guideContent: guideContent === undefined ? undefined : (guideContent ? sanitizeHtml(guideContent) : null),
       objective,
-      courseId: courseId || null,
-      moduleId: moduleId || null,
+      courseId: effectiveCourseId,
+      moduleId: effectiveModuleId,
       tools: tools ? (typeof tools === 'string' ? JSON.parse(tools) : tools) : undefined,
       steps: steps ? (typeof steps === 'string' ? JSON.parse(steps) : steps) : undefined,
+      ...cliConfig,
     };
 
     if (req.files) {
