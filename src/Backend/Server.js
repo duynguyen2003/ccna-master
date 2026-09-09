@@ -1,11 +1,13 @@
-
-
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 require('dotenv').config();
 
-const { initializeDatabase, disconnectDatabase, checkDatabaseHealth } = require('./config/database');
+const {
+  initializeDatabase,
+  disconnectDatabase,
+  checkDatabaseHealth,
+} = require('./config/database');
 const { requestLogger, adminActionLogger } = require('./middleware/logging');
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
 const routes = require('./routes');
@@ -13,28 +15,38 @@ const routes = require('./routes');
 // Initialize Express app
 const app = express();
 const PORT = process.env.PORT || 5000;
+const allowedOrigins = new Set(
+  [
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'http://localhost:3001',
+    'http://127.0.0.1:3001',
+    ...(process.env.CORS_ORIGIN || '').split(','),
+  ]
+    .map((origin) => origin.trim().replace(/\/$/, ''))
+    .filter(Boolean)
+);
 
 // Security Middleware
-app.use(helmet({
-  crossOriginResourcePolicy: false, // Để load được ảnh từ Cloudinary/localhost
-}));
+app.use(
+  helmet({
+    crossOriginResourcePolicy: false, // Để load được ảnh từ Cloudinary/localhost
+  })
+);
 
-app.use(cors({
-  origin: (origin, callback) => {
-    const allowedOrigins = [
-      'http://localhost:3000',
-      'http://127.0.0.1:3000',
-      process.env.CORS_ORIGIN
-    ].filter(Boolean);
-    
-    if (!origin || allowedOrigins.some(o => origin.startsWith(o))) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      const normalizedOrigin = origin?.replace(/\/$/, '');
+      if (!normalizedOrigin || allowedOrigins.has(normalizedOrigin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

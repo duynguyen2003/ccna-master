@@ -16,7 +16,14 @@ router.get('/history/me', verifyToken, examController.getMyExamHistory);
 router.get('/result/:resultId', verifyToken, examController.getExamResultById);
 
 // Cho phép cả STUDENT và ADMIN nộp bài thi
-router.post('/:id/submit', verifyToken, examSubmitLimiter, validate(submitExamSchema), checkRole(['STUDENT', 'ADMIN']), examController.submitExam);
+router.post(
+  '/:id/submit',
+  verifyToken,
+  examSubmitLimiter,
+  validate(submitExamSchema),
+  checkRole(['STUDENT', 'ADMIN']),
+  examController.submitExam
+);
 
 // Các route bên dưới CHỈ dành cho ADMIN
 router.use(verifyToken);

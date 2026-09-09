@@ -29,8 +29,8 @@ const sanitizeQuestionsInput = (questions) => {
   return questions.map((questionItem, index) => {
     const rawOptions = Array.isArray(questionItem.options) ? questionItem.options : [];
     const normalizedOptions = rawOptions
-      .map(opt => `${opt || ''}`.trim())
-      .filter(opt => opt !== '');
+      .map((opt) => `${opt || ''}`.trim())
+      .filter((opt) => opt !== '');
     const questionText = `${questionItem.question || ''}`.trim();
 
     // Hỗ trợ chọn nhiều đáp án (lưu dạng mảng index)
@@ -40,8 +40,8 @@ const sanitizeQuestionsInput = (questions) => {
       correctAnswers = Number.isNaN(single) ? [] : [single];
     } else {
       correctAnswers = correctAnswers
-        .map(ans => parseInt(ans, 10))
-        .filter(ans => !Number.isNaN(ans));
+        .map((ans) => parseInt(ans, 10))
+        .filter((ans) => !Number.isNaN(ans));
     }
 
     const imageUrl = `${questionItem.imageUrl || ''}`.trim() || null;
@@ -55,7 +55,7 @@ const sanitizeQuestionsInput = (questions) => {
     if (correctAnswers.length === 0) {
       throw new ValidationError(`Câu hỏi ${index + 1} chưa chọn đáp án đúng`);
     }
-    if (correctAnswers.some(ans => ans < 0 || ans >= normalizedOptions.length)) {
+    if (correctAnswers.some((ans) => ans < 0 || ans >= normalizedOptions.length)) {
       throw new ValidationError(`Câu hỏi ${index + 1} có đáp án đúng không hợp lệ`);
     }
 
@@ -110,8 +110,15 @@ module.exports.getExams = async (req, res, next) => {
 module.exports.createExam = async (req, res, next) => {
   try {
     const {
-      title, examCode, durationMinutes, passingScore,
-      difficulty, courseId, moduleId, status, questions,
+      title,
+      examCode,
+      durationMinutes,
+      passingScore,
+      difficulty,
+      courseId,
+      moduleId,
+      status,
+      questions,
     } = req.body;
 
     if (!title || !durationMinutes) {
@@ -137,7 +144,13 @@ module.exports.createExam = async (req, res, next) => {
     });
 
     // Log action
-    await adminActionLogger('CREATE_EXAM', req.user.id, `Tạo đề thi mới: ${exam.title}`, 'exams', exam.id);
+    await adminActionLogger(
+      'CREATE_EXAM',
+      req.user.id,
+      `Tạo đề thi mới: ${exam.title}`,
+      'exams',
+      exam.id
+    );
 
     res.status(201).json({ message: 'Tạo bài thi thành công', exam });
   } catch (error) {
@@ -152,8 +165,11 @@ module.exports.getExamById = async (req, res, next) => {
   try {
     // [OPT-05] Dùng parseId helper
     let examId;
-    try { examId = parseId(req.params.id, 'ID bài thi'); }
-    catch (e) { return res.status(400).json({ message: e.message }); }
+    try {
+      examId = parseId(req.params.id, 'ID bài thi');
+    } catch (e) {
+      return res.status(400).json({ message: e.message });
+    }
 
     const isAdmin = req.user?.role === 'ADMIN';
     const whereClause = { id: examId, deletedAt: null };
@@ -174,7 +190,7 @@ module.exports.getExamById = async (req, res, next) => {
     }
 
     // Thêm answerCount; ẩn correctAnswer và explanation với học viên
-    exam.questions = exam.questions.map(q => {
+    exam.questions = exam.questions.map((q) => {
       const answerCount = Array.isArray(q.correctAnswer) ? q.correctAnswer.length : 1;
       if (!isAdmin) {
         const { correctAnswer, explanation, ...rest } = q;
@@ -192,17 +208,25 @@ module.exports.getExamById = async (req, res, next) => {
 module.exports.updateExam = async (req, res, next) => {
   try {
     let examId;
-    try { examId = parseId(req.params.id, 'ID bài thi'); }
-    catch (e) { return res.status(400).json({ message: e.message }); }
+    try {
+      examId = parseId(req.params.id, 'ID bài thi');
+    } catch (e) {
+      return res.status(400).json({ message: e.message });
+    }
 
     const {
-      title, examCode, durationMinutes, passingScore,
-      difficulty, courseId, moduleId, status, questions,
+      title,
+      examCode,
+      durationMinutes,
+      passingScore,
+      difficulty,
+      courseId,
+      moduleId,
+      status,
+      questions,
     } = req.body;
 
-    const sanitizedQuestions = questions !== undefined
-      ? sanitizeQuestionsInput(questions)
-      : null;
+    const sanitizedQuestions = questions !== undefined ? sanitizeQuestionsInput(questions) : null;
 
     const exam = await prisma.exam.update({
       where: { id: examId },
@@ -224,7 +248,13 @@ module.exports.updateExam = async (req, res, next) => {
     });
 
     // Log action
-    await adminActionLogger('UPDATE_EXAM', req.user.id, `Cập nhật đề thi: ${exam.title}`, 'exams', exam.id);
+    await adminActionLogger(
+      'UPDATE_EXAM',
+      req.user.id,
+      `Cập nhật đề thi: ${exam.title}`,
+      'exams',
+      exam.id
+    );
 
     res.json({ message: 'Cập nhật bài thi thành công', exam });
   } catch (error) {
@@ -241,8 +271,11 @@ module.exports.updateExam = async (req, res, next) => {
 module.exports.deleteExam = async (req, res, next) => {
   try {
     let examId;
-    try { examId = parseId(req.params.id, 'ID bài thi'); }
-    catch (e) { return res.status(400).json({ message: e.message }); }
+    try {
+      examId = parseId(req.params.id, 'ID bài thi');
+    } catch (e) {
+      return res.status(400).json({ message: e.message });
+    }
 
     const existing = await prisma.exam.findFirst({
       where: { id: examId, deletedAt: null },
@@ -257,7 +290,13 @@ module.exports.deleteExam = async (req, res, next) => {
     });
 
     // Log action
-    await adminActionLogger('DELETE_EXAM', req.user.id, `Xóa đề thi (soft delete): ${existing.title}`, 'exams', examId);
+    await adminActionLogger(
+      'DELETE_EXAM',
+      req.user.id,
+      `Xóa đề thi (soft delete): ${existing.title}`,
+      'exams',
+      examId
+    );
 
     res.json({ message: 'Xóa bài thi thành công' });
   } catch (error) {
@@ -290,8 +329,11 @@ module.exports.uploadQuestionImage = async (req, res, next) => {
 module.exports.submitExam = async (req, res, next) => {
   try {
     let examId;
-    try { examId = parseId(req.params.id, 'ID bài thi'); }
-    catch (e) { return res.status(400).json({ message: e.message }); }
+    try {
+      examId = parseId(req.params.id, 'ID bài thi');
+    } catch (e) {
+      return res.status(400).json({ message: e.message });
+    }
 
     const userId = req.user.id;
     const { answers, timeSpent } = req.body;
@@ -342,18 +384,14 @@ module.exports.submitExam = async (req, res, next) => {
       const correctAns = q.correctAnswer || [];
 
       // [OPT-06] Bỏ kiểm tra 2 chiều thừa — length + every một chiều là đủ
-      if (
-        userAns.length === correctAns.length &&
-        userAns.every(v => correctAns.includes(v))
-      ) {
+      if (userAns.length === correctAns.length && userAns.every((v) => correctAns.includes(v))) {
         correctCount++;
       }
     });
 
     const score = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 1000) : 0;
-    const percentage = totalQuestions > 0
-      ? parseFloat(((correctCount / totalQuestions) * 100).toFixed(2))
-      : 0;
+    const percentage =
+      totalQuestions > 0 ? parseFloat(((correctCount / totalQuestions) * 100).toFixed(2)) : 0;
 
     // passingScore lưu dưới dạng % (ví dụ: 70 = 70%)
     const passingScorePercent = exam.passingScore || 70;
@@ -383,8 +421,11 @@ module.exports.submitExam = async (req, res, next) => {
 module.exports.getExamResultById = async (req, res, next) => {
   try {
     let resultId;
-    try { resultId = parseId(req.params.resultId, 'ID kết quả'); }
-    catch (e) { return res.status(400).json({ message: e.message }); }
+    try {
+      resultId = parseId(req.params.resultId, 'ID kết quả');
+    } catch (e) {
+      return res.status(400).json({ message: e.message });
+    }
 
     const userId = req.user.id;
 

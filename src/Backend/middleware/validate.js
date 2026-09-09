@@ -1,6 +1,6 @@
 /**
  * Middleware xác thực dữ liệu bằng Zod
- * @param {import('zod').ZodSchema} schema 
+ * @param {import('zod').ZodSchema} schema
  */
 const validate = (schema) => (req, res, next) => {
   try {
@@ -9,10 +9,10 @@ const validate = (schema) => (req, res, next) => {
     schema.parse(req.body);
     next();
   } catch (error) {
-    const message = error.errors?.map(err => err.message).join(', ') || 'Dữ liệu không hợp lệ';
+    const message = error.errors?.map((err) => err.message).join(', ') || 'Dữ liệu không hợp lệ';
     return res.status(400).json({
       message,
-      errors: error.errors
+      errors: error.errors,
     });
   }
 };

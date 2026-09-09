@@ -38,11 +38,11 @@ const adminActionLogger = async (action, adminId, details, targetTable = '', tar
       details: typeof details === 'string' ? details : JSON.stringify(details),
       targetTable,
       targetId: targetId ? String(targetId) : null,
-      ipAddress: ''
+      ipAddress: '',
     };
 
     const newLog = await prisma.adminLog.create({
-      data: logData
+      data: logData,
     });
 
     console.log('[ADMIN ACTION LOG SAVED]', newLog.id);

@@ -18,8 +18,8 @@ const initializeDatabase = () => {
 
   try {
     const pool = new Pool({
-      connectionString: process.env.DATABASE_URL || 
-        'postgresql://postgres:123456@localhost:5432/netmastery_db',
+      connectionString:
+        process.env.DATABASE_URL || 'postgresql://postgres:123456@localhost:5432/netmastery_db',
     });
     const adapter = new PrismaPg(pool);
     prismaInstance = new PrismaClient({ adapter, log: ['error'] });
@@ -78,5 +78,5 @@ module.exports = {
   initializeDatabase,
   getPrisma,
   disconnectDatabase,
-  checkDatabaseHealth
+  checkDatabaseHealth,
 };

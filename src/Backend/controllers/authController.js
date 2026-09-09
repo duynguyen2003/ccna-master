@@ -30,11 +30,12 @@ const createResetTokenPair = () => {
   const rawToken = crypto.randomBytes(32).toString('hex');
   return {
     rawToken,
-    tokenHash: hashResetToken(rawToken)
+    tokenHash: hashResetToken(rawToken),
   };
 };
 
-const genericForgotPasswordMessage = 'Nếu email tồn tại trong hệ thống, chúng tôi đã tạo yêu cầu đặt lại mật khẩu.';
+const genericForgotPasswordMessage =
+  'Nếu email tồn tại trong hệ thống, chúng tôi đã tạo yêu cầu đặt lại mật khẩu.';
 
 /**
  * @desc    Register a new user
@@ -56,9 +57,9 @@ module.exports.register = async (req, res, next) => {
       where: {
         email: {
           equals: email,
-          mode: 'insensitive'
-        }
-      }
+          mode: 'insensitive',
+        },
+      },
     });
 
     if (existingUser) {
@@ -75,8 +76,8 @@ module.exports.register = async (req, res, next) => {
         fullName,
         email,
         passwordHash,
-        role: 'STUDENT'
-      }
+        role: 'STUDENT',
+      },
     });
 
     // 5. Remove password hash from response
@@ -84,7 +85,7 @@ module.exports.register = async (req, res, next) => {
 
     res.status(201).json({
       message: 'Đăng ký tài khoản thành công',
-      user: userWithoutPassword
+      user: userWithoutPassword,
     });
   } catch (error) {
     console.error('Registration error:', error);
@@ -112,9 +113,9 @@ module.exports.login = async (req, res, next) => {
       where: {
         email: {
           equals: email,
-          mode: 'insensitive'
-        }
-      }
+          mode: 'insensitive',
+        },
+      },
     });
 
     if (!user) {
@@ -137,7 +138,7 @@ module.exports.login = async (req, res, next) => {
     // 5. Update last login (optional but good)
     await prisma.user.update({
       where: { id: user.id },
-      data: { lastLogin: new Date() }
+      data: { lastLogin: new Date() },
     });
 
     // 6. Return user and token
@@ -146,7 +147,7 @@ module.exports.login = async (req, res, next) => {
     res.json({
       message: 'Đăng nhập thành công',
       accessToken: token,
-      user: userWithoutPassword
+      user: userWithoutPassword,
     });
   } catch (error) {
     console.error('Login error:', error);
@@ -171,9 +172,9 @@ module.exports.forgotPassword = async (req, res, next) => {
       where: {
         email: {
           equals: email,
-          mode: 'insensitive'
-        }
-      }
+          mode: 'insensitive',
+        },
+      },
     });
 
     if (!user || !user.isActive) {
@@ -187,16 +188,16 @@ module.exports.forgotPassword = async (req, res, next) => {
       prisma.passwordResetToken.deleteMany({
         where: {
           userId: user.id,
-          usedAt: null
-        }
+          usedAt: null,
+        },
       }),
       prisma.passwordResetToken.create({
         data: {
           userId: user.id,
           tokenHash,
-          expiresAt
-        }
-      })
+          expiresAt,
+        },
+      }),
     ]);
 
     const resetUrl = buildResetPasswordUrl(rawToken);
@@ -212,7 +213,7 @@ module.exports.forgotPassword = async (req, res, next) => {
 
     return res.json({
       message: genericForgotPasswordMessage,
-      ...(process.env.NODE_ENV !== 'production' ? { resetUrl } : {})
+      ...(process.env.NODE_ENV !== 'production' ? { resetUrl } : {}),
     });
   } catch (error) {
     console.error('Forgot password error:', error);
@@ -234,16 +235,18 @@ module.exports.validateResetPasswordToken = async (req, res, next) => {
     }
 
     const resetToken = await prisma.passwordResetToken.findUnique({
-      where: { tokenHash: hashResetToken(token) }
+      where: { tokenHash: hashResetToken(token) },
     });
 
     if (!resetToken || resetToken.usedAt || resetToken.expiresAt < new Date()) {
-      return res.status(400).json({ message: 'Liên kết đặt lại mật khẩu đã hết hạn hoặc không hợp lệ.' });
+      return res
+        .status(400)
+        .json({ message: 'Liên kết đặt lại mật khẩu đã hết hạn hoặc không hợp lệ.' });
     }
 
     return res.json({
       valid: true,
-      expiresAt: resetToken.expiresAt
+      expiresAt: resetToken.expiresAt,
     });
   } catch (error) {
     console.error('Validate reset token error:', error);
@@ -271,11 +274,13 @@ module.exports.resetPassword = async (req, res, next) => {
 
     const resetToken = await prisma.passwordResetToken.findUnique({
       where: { tokenHash: hashResetToken(token) },
-      include: { user: true }
+      include: { user: true },
     });
 
     if (!resetToken || resetToken.usedAt || resetToken.expiresAt < new Date()) {
-      return res.status(400).json({ message: 'Liên kết đặt lại mật khẩu đã hết hạn hoặc không hợp lệ.' });
+      return res
+        .status(400)
+        .json({ message: 'Liên kết đặt lại mật khẩu đã hết hạn hoặc không hợp lệ.' });
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -284,25 +289,25 @@ module.exports.resetPassword = async (req, res, next) => {
     await prisma.$transaction([
       prisma.user.update({
         where: { id: resetToken.userId },
-        data: { passwordHash }
+        data: { passwordHash },
       }),
       prisma.passwordResetToken.update({
         where: { id: resetToken.id },
-        data: { usedAt: new Date() }
+        data: { usedAt: new Date() },
       }),
       prisma.passwordResetToken.deleteMany({
         where: {
           userId: resetToken.userId,
-          id: { not: resetToken.id }
-        }
+          id: { not: resetToken.id },
+        },
       }),
       prisma.refreshToken.deleteMany({
-        where: { userId: resetToken.userId }
-      })
+        where: { userId: resetToken.userId },
+      }),
     ]);
 
     return res.json({
-      message: 'Đặt lại mật khẩu thành công. Vui lòng đăng nhập lại.'
+      message: 'Đặt lại mật khẩu thành công. Vui lòng đăng nhập lại.',
     });
   } catch (error) {
     console.error('Reset password error:', error);
@@ -323,7 +328,7 @@ module.exports.getProfile = async (req, res, next) => {
     }
 
     const user = await prisma.user.findUnique({
-      where: { id: req.user.id }
+      where: { id: req.user.id },
     });
 
     if (!user) {
@@ -347,7 +352,7 @@ module.exports.logout = async (req, res, next) => {
     // If using refresh tokens in DB, delete them here:
     if (req.user && req.user.id) {
       await prisma.refreshToken.deleteMany({
-        where: { userId: req.user.id }
+        where: { userId: req.user.id },
       });
     }
 
@@ -366,7 +371,7 @@ module.exports.logout = async (req, res, next) => {
 module.exports.googleLogin = async (req, res, next) => {
   try {
     const { token } = req.body;
-    
+
     if (!token) {
       return res.status(400).json({ message: 'Không có token từ Google' });
     }
@@ -391,9 +396,9 @@ module.exports.googleLogin = async (req, res, next) => {
       where: {
         email: {
           equals: email,
-          mode: 'insensitive'
-        }
-      }
+          mode: 'insensitive',
+        },
+      },
     });
 
     // If user doesn't exist, create a new one
@@ -410,17 +415,17 @@ module.exports.googleLogin = async (req, res, next) => {
           passwordHash: passwordHash,
           avatarUrl: picture,
           role: 'STUDENT',
-          isActive: true
-        }
+          isActive: true,
+        },
       });
     } else {
       // Update last login and avatar if missing
       user = await prisma.user.update({
         where: { id: user.id },
-        data: { 
+        data: {
           lastLogin: new Date(),
-          ...( !user.avatarUrl && picture ? { avatarUrl: picture } : {} )
-        }
+          ...(!user.avatarUrl && picture ? { avatarUrl: picture } : {}),
+        },
       });
     }
 
@@ -441,9 +446,8 @@ module.exports.googleLogin = async (req, res, next) => {
     res.json({
       message: 'Đăng nhập Google thành công',
       accessToken,
-      user: userWithoutPassword
+      user: userWithoutPassword,
     });
-
   } catch (error) {
     console.error('Google login error:', error);
     res.status(500).json({ message: 'Xác thực Google thất bại' });

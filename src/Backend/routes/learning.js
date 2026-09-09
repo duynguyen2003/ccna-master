@@ -23,17 +23,25 @@ router.put('/courses/:id', upload.single('thumbnail'), learningController.update
 router.delete('/courses/:id', learningController.deleteCourse);
 
 // Lab management
-router.post('/labs', upload.fields([
-  { name: 'filePka', maxCount: 1 },
-  { name: 'topologyImg', maxCount: 1 },
-  { name: 'thumbnailImg', maxCount: 1 }
-]), learningController.createLab);
+router.post(
+  '/labs',
+  upload.fields([
+    { name: 'filePka', maxCount: 1 },
+    { name: 'topologyImg', maxCount: 1 },
+    { name: 'thumbnailImg', maxCount: 1 },
+  ]),
+  learningController.createLab
+);
 
-router.put('/labs/:id', upload.fields([
-  { name: 'filePka', maxCount: 1 },
-  { name: 'topologyImg', maxCount: 1 },
-  { name: 'thumbnailImg', maxCount: 1 }
-]), learningController.updateLab);
+router.put(
+  '/labs/:id',
+  upload.fields([
+    { name: 'filePka', maxCount: 1 },
+    { name: 'topologyImg', maxCount: 1 },
+    { name: 'thumbnailImg', maxCount: 1 },
+  ]),
+  learningController.updateLab
+);
 router.delete('/labs/:id', learningController.deleteLab);
 
 // Module (Chương) management

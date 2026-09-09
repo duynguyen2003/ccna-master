@@ -11,18 +11,23 @@ const controller = require('../controllers/authController');
 const { verifyToken } = require('../middleware/auth');
 const validate = require('../middleware/validate');
 const { authLimiter, forgotPasswordLimiter } = require('../middleware/rateLimiter');
-const { 
-  registerSchema, 
-  loginSchema, 
-  forgotPasswordSchema, 
-  resetPasswordSchema 
+const {
+  registerSchema,
+  loginSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
 } = require('../validation/authSchema');
 
 // Public routes
 router.post('/register', authLimiter, validate(registerSchema), controller.register);
 router.post('/login', authLimiter, validate(loginSchema), controller.login);
 router.post('/google', authLimiter, controller.googleLogin);
-router.post('/forgot-password', forgotPasswordLimiter, validate(forgotPasswordSchema), controller.forgotPassword);
+router.post(
+  '/forgot-password',
+  forgotPasswordLimiter,
+  validate(forgotPasswordSchema),
+  controller.forgotPassword
+);
 router.get('/reset-password/:token/validate', controller.validateResetPasswordToken);
 router.post('/reset-password', validate(resetPasswordSchema), controller.resetPassword);
 

@@ -16,16 +16,49 @@ const evaluateCheck = (wholeState, check) => {
   switch (check.type) {
     case 'reachable': {
       const { transmit } = require('./networkPackets');
-      actual = transmit(JSON.parse(JSON.stringify(wholeState)), check.deviceId, check.destination).success; expected = true; passed = actual; break;
+      actual = transmit(
+        JSON.parse(JSON.stringify(wholeState)),
+        check.deviceId,
+        check.destination
+      ).success;
+      expected = true;
+      passed = actual;
+      break;
     }
     case 'route_exists': {
       const { routeTable, inSubnet } = require('./networkProtocols');
-      actual = routeTable(wholeState, check.deviceId).some((r) => inSubnet(check.destination, r.network, r.mask)); expected = true; passed = actual; break;
+      actual = routeTable(wholeState, check.deviceId).some((r) =>
+        inSubnet(check.destination, r.network, r.mask)
+      );
+      expected = true;
+      passed = actual;
+      break;
     }
-    case 'ospf_neighbor_full': actual = Object.values(wholeState.ospfNeighbors || {}).some((n) => n.deviceId === check.deviceId && n.neighborId === check.neighborId && n.state === 'FULL'); expected = true; passed = actual; break;
-    case 'stp_root': actual = wholeState.stp?.[check.vlanId]?.roots[check.deviceId]; expected = check.deviceId; passed = actual === expected; break;
-    case 'acl_exists': actual = Boolean(state.acls?.[check.name]?.length); expected = true; passed = actual; break;
-    case 'nat_static_exists': actual = (state.natStatic || []).some((m) => m.local === check.expectedIp && m.global === check.destination); expected = true; passed = actual; break;
+    case 'ospf_neighbor_full':
+      actual = Object.values(wholeState.ospfNeighbors || {}).some(
+        (n) =>
+          n.deviceId === check.deviceId && n.neighborId === check.neighborId && n.state === 'FULL'
+      );
+      expected = true;
+      passed = actual;
+      break;
+    case 'stp_root':
+      actual = wholeState.stp?.[check.vlanId]?.roots[check.deviceId];
+      expected = check.deviceId;
+      passed = actual === expected;
+      break;
+    case 'acl_exists':
+      actual = Boolean(state.acls?.[check.name]?.length);
+      expected = true;
+      passed = actual;
+      break;
+    case 'nat_static_exists':
+      actual = (state.natStatic || []).some(
+        (m) => m.local === check.expectedIp && m.global === check.destination
+      );
+      expected = true;
+      passed = actual;
+      break;
     case 'hostname_equals':
       actual = state.hostname;
       expected = check.expected;
@@ -41,9 +74,10 @@ const evaluateCheck = (wholeState, check) => {
         ? { ipAddress: networkInterface.ipAddress, subnetMask: networkInterface.subnetMask }
         : null;
       expected = { ipAddress: check.expectedIp, subnetMask: check.expectedMask };
-      passed = Boolean(networkInterface)
-        && networkInterface.ipAddress === check.expectedIp
-        && networkInterface.subnetMask === check.expectedMask;
+      passed =
+        Boolean(networkInterface) &&
+        networkInterface.ipAddress === check.expectedIp &&
+        networkInterface.subnetMask === check.expectedMask;
       break;
     case 'interface_enabled':
       actual = networkInterface ? !networkInterface.shutdown : null;
@@ -94,9 +128,10 @@ const evaluateCheck = (wholeState, check) => {
     expected,
     actual,
     message: passed
-      ? (check.successMessage || `Đạt yêu cầu: ${check.id}`)
-      : (check.message || `Chưa đạt ${check.id}. Mong đợi ${describeValue(expected)}, hiện tại ${describeValue(actual)}.`),
-    hint: passed ? null : (check.hint || null),
+      ? check.successMessage || `Đạt yêu cầu: ${check.id}`
+      : check.message ||
+        `Chưa đạt ${check.id}. Mong đợi ${describeValue(expected)}, hiện tại ${describeValue(actual)}.`,
+    hint: passed ? null : check.hint || null,
   };
 };
 

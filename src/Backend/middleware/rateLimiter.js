@@ -8,7 +8,7 @@ const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 phút
   max: 10, // Tối đa 10 yêu cầu mỗi IP
   message: {
-    message: 'Quá nhiều lần thử. Vui lòng thử lại sau 15 phút.'
+    message: 'Quá nhiều lần thử. Vui lòng thử lại sau 15 phút.',
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -22,7 +22,7 @@ const forgotPasswordLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 giờ
   max: 3, // Tối đa 3 yêu cầu mỗi IP
   message: {
-    message: 'Bạn đã yêu cầu đặt lại mật khẩu quá nhiều lần. Vui lòng thử lại sau 1 giờ.'
+    message: 'Bạn đã yêu cầu đặt lại mật khẩu quá nhiều lần. Vui lòng thử lại sau 1 giờ.',
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -36,7 +36,7 @@ const examSubmitLimiter = rateLimit({
   windowMs: 5 * 60 * 1000, // 5 phút
   max: 5, // Tối đa 5 lần nộp mỗi IP (đề phòng lỗi mạng nộp lại)
   message: {
-    message: 'Thao tác quá nhanh. Vui lòng đợi một lát trước khi nộp bài tiếp theo.'
+    message: 'Thao tác quá nhanh. Vui lòng đợi một lát trước khi nộp bài tiếp theo.',
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -46,7 +46,7 @@ const cliCommandLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 120,
   message: {
-    message: 'Bạn đang gửi lệnh quá nhanh. Vui lòng đợi một lát.'
+    message: 'Bạn đang gửi lệnh quá nhanh. Vui lòng đợi một lát.',
   },
   standardHeaders: true,
   legacyHeaders: false,

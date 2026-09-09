@@ -11,9 +11,9 @@ const transporter = nodemailer.createTransport({
 
 /**
  * Send Reset Password Email
- * @param {string} toEmail 
- * @param {string} userName 
- * @param {string} resetUrl 
+ * @param {string} toEmail
+ * @param {string} userName
+ * @param {string} resetUrl
  */
 const sendResetPasswordEmail = async (toEmail, userName, resetUrl) => {
   const mailOptions = {
@@ -51,5 +51,5 @@ const sendResetPasswordEmail = async (toEmail, userName, resetUrl) => {
 };
 
 module.exports = {
-  sendResetPasswordEmail
+  sendResetPasswordEmail,
 };
