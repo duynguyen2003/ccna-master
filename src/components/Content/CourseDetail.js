@@ -7,16 +7,19 @@ import errorIllustration from '../../image/fix1.png';
 import '../../css/CourseDetail.css';
 
 const COURSE_GRADIENTS = {
-  ITN:  { gradient: 'linear-gradient(135deg, #1d4ed8, #0ea5e9)', color: '#1d4ed8' },
+  ITN: { gradient: 'linear-gradient(135deg, #1d4ed8, #0ea5e9)', color: '#1d4ed8' },
   SRWE: { gradient: 'linear-gradient(135deg, #6d28d9, #7c3aed)', color: '#6d28d9' },
   ENSA: { gradient: 'linear-gradient(135deg, #7c3aed, #a855f7)', color: '#7c3aed' },
 };
-const DEFAULT_GRADIENT = { gradient: 'linear-gradient(135deg, #2563eb, #60a5fa)', color: '#2563eb' };
+const DEFAULT_GRADIENT = {
+  gradient: 'linear-gradient(135deg, #2563eb, #60a5fa)',
+  color: '#2563eb',
+};
 
 const MODULE_STATUS = {
   completed: { label: 'Hoàn thành', bg: '#dcfce7', color: '#15803d' },
-  active:    { label: 'Đang học',   bg: '#dbeafe', color: '#1d4ed8' },
-  locked:    { label: 'Chưa mở',   bg: '#f1f5f9', color: '#94a3b8' },
+  active: { label: 'Đang học', bg: '#dbeafe', color: '#1d4ed8' },
+  locked: { label: 'Chưa mở', bg: '#f1f5f9', color: '#94a3b8' },
 };
 
 const CourseDetail = () => {
@@ -64,7 +67,7 @@ const CourseDetail = () => {
       <div className="lesson-error-container">
         <div className="lesson-error-card">
           <div className="lesson-error-illustration">
-             <img src={errorIllustration} alt="Khóa học không tồn tại" />
+            <img src={errorIllustration} alt="Khóa học không tồn tại" />
           </div>
           <h2 className="lesson-error-title">Ôi hỏng!</h2>
           <p className="lesson-error-desc">
@@ -72,12 +75,12 @@ const CourseDetail = () => {
           </p>
           <div className="lesson-error-actions">
             <button className="btn-xem-lo-trinh" onClick={() => navigate('/roadmap')}>
-               <Map size={20} />
-               <span>Xem lộ trình</span>
+              <Map size={20} />
+              <span>Xem lộ trình</span>
             </button>
             <button className="btn-quay-lai" onClick={() => navigate(-1)}>
-               <ArrowLeft size={20} />
-               <span>Quay lại</span>
+              <ArrowLeft size={20} />
+              <span>Quay lại</span>
             </button>
           </div>
         </div>
@@ -87,53 +90,52 @@ const CourseDetail = () => {
 
   const colors = COURSE_GRADIENTS[course.code] || DEFAULT_GRADIENT;
   const isStarted = course.isStarted || course.progress > 0;
-  const totalLessons = course.modules?.reduce((sum, m) => sum + (m.lessonCount || 0), 0) || 0;
+  const totalLessons =
+    course.modules?.reduce((sum, m) => sum + (m.lessons?.length || m.lessonCount || 0), 0) || 0;
   const instInitial = (course.instructor?.name || 'G').charAt(0).toUpperCase();
   const handleStartLearning = async () => {
     if (!isAuthenticated) {
       navigate('/login');
       return;
     }
-    
+
     try {
-       // Nếu chưa học (chưa có record trong UserProgress), tạo 1 record đánh dấu đã ghi danh
-       if (!isStarted) {
-          await api.updateUserProgress(token, {
-             courseId,
-             progressPercent: 0,
-             status: 'ACTIVE'
-          });
-       }
-       navigate(`/lesson?course=${courseId}`);
+      // Nếu chưa học (chưa có record trong UserProgress), tạo 1 record đánh dấu đã ghi danh
+      if (!isStarted) {
+        await api.updateUserProgress(token, {
+          courseId,
+          progressPercent: 0,
+          status: 'ACTIVE',
+        });
+      }
+      navigate(`/lesson?course=${courseId}`);
     } catch (e) {
-       console.error("Lỗi khi ghi danh khóa học:", e);
+      console.error('Lỗi khi ghi danh khóa học:', e);
     }
   };
 
   return (
     <div className="cdp-page">
-
       {/* ── Dark hero bar ── */}
       <div className="cdp-hero-bar">
         <div className="cdp-container">
           <div className="cdp-hero-left">
-
             {/* Breadcrumb back */}
             <button
               id="cdp-back-btn"
               className="cdp-breadcrumb-tag"
               onClick={() => navigate(`/${from}`)}
             >
-              <span className="material-icons-round" style={{ fontSize: 14 }}>arrow_back</span>
+              <span className="material-icons-round" style={{ fontSize: 14 }}>
+                arrow_back
+              </span>
               LỘ TRÌNH CHỨNG CHỈ
             </button>
 
             <h1 className="cdp-hero-title">
               {(course.fullTitle || course.title).replace(' (Updated)', '').replace(/,/g, ', ')}
             </h1>
-            <p className="cdp-hero-subtitle">
-              {course.longDescription || course.description}
-            </p>
+            <p className="cdp-hero-subtitle">{course.longDescription || course.description}</p>
 
             {/* Meta row */}
             <div className="cdp-meta-row">
@@ -161,10 +163,8 @@ const CourseDetail = () => {
       <div className="cdp-body">
         <div className="cdp-container">
           <div className="cdp-layout">
-
             {/* ── MAIN COLUMN ── */}
             <div className="cdp-main">
-
               {/* Competencies */}
               {course.competencies?.length > 0 && (
                 <div className="cdp-section">
@@ -201,13 +201,16 @@ const CourseDetail = () => {
                   const isNavigable = isAuthenticated && !isLocked;
                   const isCompleted = module.status === 'completed';
 
-                   const isExpanded = expandedModule === module.id;
+                  const isExpanded = expandedModule === module.id;
 
                   return (
                     <div key={module.id} className="cdp-module-row" id={`module-row-${module.id}`}>
                       <div
                         className="cdp-module-row-header"
-                        style={{ opacity: isLocked ? 0.6 : 1, cursor: isNavigable ? 'pointer' : 'default' }}
+                        style={{
+                          opacity: isLocked ? 0.6 : 1,
+                          cursor: isNavigable ? 'pointer' : 'default',
+                        }}
                         onClick={() => {
                           if (!isNavigable) return;
                           setExpandedModule(isExpanded ? null : module.id);
@@ -216,14 +219,18 @@ const CourseDetail = () => {
                         {/* Number / status icon */}
                         <div
                           className="cdp-module-row-num"
-                          style={{ background: isCompleted ? '#dcfce7' : isLocked ? '#f1f5f9' : '#dbeafe',
-                                   color: isCompleted ? '#15803d' : isLocked ? '#94a3b8' : '#1d4ed8' }}
+                          style={{
+                            background: isCompleted ? '#dcfce7' : isLocked ? '#f1f5f9' : '#dbeafe',
+                            color: isCompleted ? '#15803d' : isLocked ? '#94a3b8' : '#1d4ed8',
+                          }}
                         >
-                          {isCompleted
-                            ? <CheckCircle size={16} />
-                            : isLocked
-                              ? <Lock size={13} />
-                              : idx + 1}
+                          {isCompleted ? (
+                            <CheckCircle size={16} />
+                          ) : isLocked ? (
+                            <Lock size={13} />
+                          ) : (
+                            idx + 1
+                          )}
                         </div>
 
                         <div className="cdp-module-row-info">
@@ -234,8 +241,10 @@ const CourseDetail = () => {
                         </div>
 
                         <div className="cdp-module-row-meta">
-                          {module.lessonCount > 0 && (
-                            <span className="cdp-lesson-count">{module.lessonCount} bài học</span>
+                          {(module.lessons?.length || module.lessonCount) > 0 && (
+                            <span className="cdp-lesson-count">
+                              {module.lessons?.length || module.lessonCount} bài học
+                            </span>
                           )}
                           <span
                             className="cdp-module-row-badge"
@@ -255,21 +264,27 @@ const CourseDetail = () => {
                       {isExpanded && module.lessons && module.lessons.length > 0 && (
                         <div className="cdp-lesson-list">
                           {module.lessons.map((lesson, lIdx) => (
-                            <div 
-                              key={lesson.id} 
+                            <div
+                              key={lesson.id}
                               className="cdp-lesson-item"
-                              onClick={() => navigate(`/lesson?course=${courseId}&lesson=${lesson.id}`)}
+                              onClick={() =>
+                                navigate(`/lesson?course=${courseId}&lesson=${lesson.id}`)
+                              }
                             >
                               <div className="cdp-lesson-item-left">
                                 <span className="material-icons-round">play_circle</span>
                                 <span className="cdp-lesson-item-title">
-                                  {lesson.sectionNumber ? `${lesson.sectionNumber}. ` : `${lIdx + 1}. `}
+                                  {lesson.sectionNumber
+                                    ? `${lesson.sectionNumber}. `
+                                    : `${lIdx + 1}. `}
                                   {lesson.title}
                                 </span>
                               </div>
                               <div className="cdp-lesson-item-right">
                                 {lesson.videoDuration && (
-                                  <span className="cdp-lesson-duration">{lesson.videoDuration}</span>
+                                  <span className="cdp-lesson-duration">
+                                    {lesson.videoDuration}
+                                  </span>
                                 )}
                               </div>
                             </div>
@@ -280,18 +295,13 @@ const CourseDetail = () => {
                   );
                 })}
               </div>
-
             </div>
 
             {/* ── SIDEBAR (sticky enrollment card) ── */}
             <div className="cdp-sidebar">
               <div className="cdp-enroll-card">
-
                 {/* Thumbnail */}
-                <div
-                  className="cdp-thumb-wrap"
-                  onClick={handleStartLearning}
-                >
+                <div className="cdp-thumb-wrap" onClick={handleStartLearning}>
                   {course.thumbnailUrl ? (
                     <img className="cdp-thumb-img" src={course.thumbnailUrl} alt={course.title} />
                   ) : (
@@ -316,25 +326,64 @@ const CourseDetail = () => {
                     onClick={handleStartLearning}
                   >
                     {!isAuthenticated ? (
-                      <>Đăng nhập để học <span className="material-icons-round" style={{ fontSize: 18 }}>arrow_forward</span></>
+                      <>
+                        Đăng nhập để học{' '}
+                        <span className="material-icons-round" style={{ fontSize: 18 }}>
+                          arrow_forward
+                        </span>
+                      </>
                     ) : isStarted ? (
-                      <><Play size={16} fill="white" /> Tiếp tục học</>
+                      <>
+                        <Play size={16} fill="white" /> Tiếp tục học
+                      </>
                     ) : (
-                      <>Bắt đầu học <span className="material-icons-round" style={{ fontSize: 18 }}>arrow_forward</span></>
+                      <>
+                        Bắt đầu học{' '}
+                        <span className="material-icons-round" style={{ fontSize: 18 }}>
+                          arrow_forward
+                        </span>
+                      </>
                     )}
                   </button>
 
-                  <p className="cdp-access-note">Truy cập toàn bộ giáo trình trong thời gian có hạn</p>
+                  <p className="cdp-access-note">
+                    Truy cập toàn bộ giáo trình trong thời gian có hạn
+                  </p>
 
                   {/* Progress bar nếu đang học */}
                   {isStarted && (
                     <div style={{ marginBottom: '1rem' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: '#64748b', marginBottom: '0.35rem' }}>
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          fontSize: '0.78rem',
+                          color: '#64748b',
+                          marginBottom: '0.35rem',
+                        }}
+                      >
                         <span>Tiến độ của bạn</span>
-                        <span style={{ fontWeight: 700, color: colors.color }}>{course.progress}%</span>
+                        <span style={{ fontWeight: 700, color: colors.color }}>
+                          {course.progress}%
+                        </span>
                       </div>
-                      <div style={{ background: '#e2e8f0', borderRadius: '9999px', height: 6, overflow: 'hidden' }}>
-                        <div style={{ width: `${course.progress}%`, height: '100%', background: colors.gradient, borderRadius: '9999px', transition: 'width 0.6s ease' }} />
+                      <div
+                        style={{
+                          background: '#e2e8f0',
+                          borderRadius: '9999px',
+                          height: 6,
+                          overflow: 'hidden',
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: `${course.progress}%`,
+                            height: '100%',
+                            background: colors.gradient,
+                            borderRadius: '9999px',
+                            transition: 'width 0.6s ease',
+                          }}
+                        />
                       </div>
                     </div>
                   )}
@@ -353,11 +402,9 @@ const CourseDetail = () => {
                       </ul>
                     </>
                   )}
-
                 </div>
               </div>
             </div>
-
           </div>
         </div>
       </div>

@@ -12,12 +12,10 @@ const ipToInt = (ip) => {
 };
 
 /** 32-bit unsigned integer → dotted-decimal string */
-const intToIp = (n) =>
-  [(n >>> 24) & 0xff, (n >>> 16) & 0xff, (n >>> 8) & 0xff, n & 0xff].join('.');
+const intToIp = (n) => [(n >>> 24) & 0xff, (n >>> 16) & 0xff, (n >>> 8) & 0xff, n & 0xff].join('.');
 
 /** Build a 32-bit subnet mask from a CIDR prefix length */
-const prefixToMask = (prefix) =>
-  prefix === 0 ? 0 : (~0 << (32 - prefix)) >>> 0;
+const prefixToMask = (prefix) => (prefix === 0 ? 0 : (~0 << (32 - prefix)) >>> 0);
 
 /** Convert 32-bit integer to binary string with dots every 8 bits */
 const intToBinaryStr = (n) => {
@@ -40,7 +38,7 @@ const isValidIPv4 = (ip) => {
 const calculateSubnet = (ip, prefix) => {
   const ipInt = ipToInt(ip);
   const mask = prefixToMask(prefix);
-  const wildcard = (~mask) >>> 0;
+  const wildcard = ~mask >>> 0;
   const network = (ipInt & mask) >>> 0;
   const broadcast = (network | wildcard) >>> 0;
 
@@ -157,20 +155,19 @@ const SubnetCalculator = () => {
   };
 
   // Ensure subPrefix > prefix for valid subdivision
-  const subPrefixOptions = Array.from(
-    { length: 32 - prefix },
-    (_, i) => {
-      const p = prefix + 1 + i;
-      return { value: p, label: `/${p} – ${intToIp(prefixToMask(p))}` };
-    }
-  );
+  const subPrefixOptions = Array.from({ length: 32 - prefix }, (_, i) => {
+    const p = prefix + 1 + i;
+    return { value: p, label: `/${p} – ${intToIp(prefixToMask(p))}` };
+  });
 
   return (
     <div className="subnet-calc-wrapper">
       {/* ─── Breadcrumb ─── */}
       <nav className="subnet-breadcrumb">
         <Link to="/" className="subnet-breadcrumb-link">
-          <span className="material-icons-round" style={{ fontSize: 18 }}>home</span>
+          <span className="material-icons-round" style={{ fontSize: 18 }}>
+            home
+          </span>
           Trang chủ
         </Link>
         <span className="material-icons-round subnet-breadcrumb-sep">chevron_right</span>
@@ -183,9 +180,7 @@ const SubnetCalculator = () => {
           <span className="material-icons-round">calculate</span>
         </div>
         <h1 className="subnet-header-title">Trình tính toán Subnet CCNA</h1>
-        <p className="subnet-header-desc">
-          Công cụ hỗ trợ học tập CCNA miễn phí cho cộng đồng.
-        </p>
+        <p className="subnet-header-desc">Công cụ hỗ trợ học tập CCNA miễn phí cho cộng đồng.</p>
       </header>
 
       {/* ─── Input Card ─── */}
@@ -193,7 +188,9 @@ const SubnetCalculator = () => {
         <div className="subnet-input-row">
           {/* IP Input */}
           <div className="subnet-field">
-            <label className="subnet-label" htmlFor="subnet-ip">ĐỊA CHỈ IP</label>
+            <label className="subnet-label" htmlFor="subnet-ip">
+              ĐỊA CHỈ IP
+            </label>
             <div className="subnet-input-wrap">
               <span className="material-icons-round subnet-input-icon">language</span>
               <input
@@ -211,7 +208,9 @@ const SubnetCalculator = () => {
 
           {/* Prefix Select */}
           <div className="subnet-field">
-            <label className="subnet-label" htmlFor="subnet-prefix">SUBNET MASK / PREFIX</label>
+            <label className="subnet-label" htmlFor="subnet-prefix">
+              SUBNET MASK / PREFIX
+            </label>
             <select
               id="subnet-prefix"
               className="subnet-select"
@@ -223,14 +222,18 @@ const SubnetCalculator = () => {
               }}
             >
               {prefixOptions.map((opt) => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
               ))}
             </select>
           </div>
 
           {/* Sub-prefix Select (subdivision) */}
           <div className="subnet-field">
-            <label className="subnet-label" htmlFor="subnet-sub-prefix">CHIA NHỎ THÀNH</label>
+            <label className="subnet-label" htmlFor="subnet-sub-prefix">
+              CHIA NHỎ THÀNH
+            </label>
             <select
               id="subnet-sub-prefix"
               className="subnet-select"
@@ -238,7 +241,9 @@ const SubnetCalculator = () => {
               onChange={(e) => setSubPrefix(Number(e.target.value))}
             >
               {subPrefixOptions.map((opt) => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
               ))}
             </select>
           </div>

@@ -1,22 +1,22 @@
-import React, { useState, useEffect } from "react";
-import { useAuth } from "../../context/AuthContext";
-import api, { API_URL } from "../../services/Api";
-import { 
-  FileText, 
-  Download, 
-  Search, 
-  Pin, 
-  Video, 
-  Monitor, 
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../../context/AuthContext';
+import api, { API_URL } from '../../services/Api';
+import {
+  FileText,
+  Download,
+  Search,
+  Pin,
+  Video,
+  Monitor,
   Cpu,
   Sparkles,
-  Loader
-} from "lucide-react";
+  Loader,
+} from 'lucide-react';
 export const Resources = () => {
   const [resources, setResources] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [activeFilter, setActiveFilter] = useState("Tất cả");
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeFilter, setActiveFilter] = useState('Tất cả');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   const { token } = useAuth();
@@ -32,7 +32,7 @@ export const Resources = () => {
           setResources(res.data);
         }
       } catch (error) {
-        console.error("Error fetching resources:", error);
+        console.error('Error fetching resources:', error);
       } finally {
         setLoading(false);
       }
@@ -41,7 +41,7 @@ export const Resources = () => {
   }, [token]);
 
   const getFileUrl = (item) => {
-    if (!item || !item.id) return "#";
+    if (!item || !item.id) return '#';
     // File lưu local: dùng backend proxy download để đặt tên đúng
     return `${API_URL}/learning/resources/${item.id}/download?token=${token}`;
   };
@@ -49,10 +49,11 @@ export const Resources = () => {
   // Hàm lấy Icon tương ứng với loại tài liệu
   const getIcon = (type) => {
     const t = type.toLowerCase();
-    if (t.includes("pdf")) return <FileText color="#ef4444" size={20} />;
-    if (t.includes("packet") || t.includes("pkt") || t.includes("lab")) return <Cpu color="#3b82f6" size={20} />;
-    if (t.includes("slide") || t.includes("ppt")) return <Monitor color="#f59e0b" size={20} />;
-    if (t.includes("video") || t.includes("mp4")) return <Video color="#10b981" size={20} />;
+    if (t.includes('pdf')) return <FileText color="#ef4444" size={20} />;
+    if (t.includes('packet') || t.includes('pkt') || t.includes('lab'))
+      return <Cpu color="#3b82f6" size={20} />;
+    if (t.includes('slide') || t.includes('ppt')) return <Monitor color="#f59e0b" size={20} />;
+    if (t.includes('video') || t.includes('mp4')) return <Video color="#10b981" size={20} />;
     return <FileText color="#6b7280" size={20} />;
   };
 
@@ -63,8 +64,8 @@ export const Resources = () => {
     const diffTime = Math.abs(now - date);
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
-    if (diffDays === 0) return "Hôm nay";
-    if (diffDays === 1) return "Hôm qua";
+    if (diffDays === 0) return 'Hôm nay';
+    if (diffDays === 1) return 'Hôm qua';
     if (diffDays < 30) return `${diffDays} ngày trước`;
     const diffMonths = Math.floor(diffDays / 30);
     return `${diffMonths} tháng trước`;
@@ -73,13 +74,25 @@ export const Resources = () => {
   // Lọc dữ liệu
   const filteredResources = resources.filter((item) => {
     const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    if (activeFilter === "Tất cả") return matchesSearch;
-    if (activeFilter === "PDF") return matchesSearch && item.type.toLowerCase().includes("pdf");
-    if (activeFilter === "Packet Tracer") return matchesSearch && (item.type.toLowerCase().includes("packet") || item.type.toLowerCase().includes("pkt"));
-    if (activeFilter === "Slides") return matchesSearch && (item.type.toLowerCase().includes("slide") || item.type.toLowerCase().includes("ppt"));
-    if (activeFilter === "Video") return matchesSearch && (item.type.toLowerCase().includes("video") || item.type.toLowerCase().includes("mp4"));
-    
+
+    if (activeFilter === 'Tất cả') return matchesSearch;
+    if (activeFilter === 'PDF') return matchesSearch && item.type.toLowerCase().includes('pdf');
+    if (activeFilter === 'Packet Tracer')
+      return (
+        matchesSearch &&
+        (item.type.toLowerCase().includes('packet') || item.type.toLowerCase().includes('pkt'))
+      );
+    if (activeFilter === 'Slides')
+      return (
+        matchesSearch &&
+        (item.type.toLowerCase().includes('slide') || item.type.toLowerCase().includes('ppt'))
+      );
+    if (activeFilter === 'Video')
+      return (
+        matchesSearch &&
+        (item.type.toLowerCase().includes('video') || item.type.toLowerCase().includes('mp4'))
+      );
+
     return matchesSearch;
   });
 
@@ -113,19 +126,19 @@ export const Resources = () => {
       <div className="doc-controls">
         <div className="doc-search-wrapper">
           <Search className="search-icon" size={18} />
-          <input 
-            type="text" 
-            placeholder="Tìm kiếm tài liệu..." 
+          <input
+            type="text"
+            placeholder="Tìm kiếm tài liệu..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
 
         <div className="doc-filters">
-          {["Tất cả", "PDF", "Packet Tracer", "Slides", "Video"].map((filter) => (
-            <button 
+          {['Tất cả', 'PDF', 'Packet Tracer', 'Slides', 'Video'].map((filter) => (
+            <button
               key={filter}
-              className={`filter-btn ${activeFilter === filter ? "active" : ""}`}
+              className={`filter-btn ${activeFilter === filter ? 'active' : ''}`}
               onClick={() => setActiveFilter(filter)}
             >
               {filter}
@@ -135,7 +148,7 @@ export const Resources = () => {
       </div>
 
       {/* Pinned Section */}
-      {pinnedResources.length > 0 && activeFilter === "Tất cả" && (
+      {pinnedResources.length > 0 && activeFilter === 'Tất cả' && (
         <div className="doc-section">
           <h3 className="section-title">
             <Pin size={16} className="pin-icon" /> TÀI LIỆU GHIM
@@ -148,8 +161,13 @@ export const Resources = () => {
                   <span className="pinned-name">{item.title}</span>
                 </div>
                 <div className="pinned-actions">
-                  <span className="pinned-size">{item.size || "Unknown"}</span>
-                  <a href={getFileUrl(item)} target="_blank" rel="noreferrer" className="download-btn-icon">
+                  <span className="pinned-size">{item.size || 'Unknown'}</span>
+                  <a
+                    href={getFileUrl(item)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="download-btn-icon"
+                  >
                     <Download size={16} />
                   </a>
                 </div>
@@ -179,9 +197,7 @@ export const Resources = () => {
               {currentItems.map((item) => (
                 <div className="list-row" key={item.id}>
                   <div className="col-name cell-flex">
-                    <div className="type-icon-wrapper">
-                      {getIcon(item.type)}
-                    </div>
+                    <div className="type-icon-wrapper">{getIcon(item.type)}</div>
                     <div className="item-details">
                       <span className="item-title">{item.title}</span>
                       <span className="item-meta">
@@ -190,8 +206,13 @@ export const Resources = () => {
                     </div>
                   </div>
                   <div className="col-size cell-flex-end">
-                    <span className="item-size">{item.size || "N/A"}</span>
-                    <a href={getFileUrl(item)} target="_blank" rel="noreferrer" className="row-download-btn">
+                    <span className="item-size">{item.size || 'N/A'}</span>
+                    <a
+                      href={getFileUrl(item)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="row-download-btn"
+                    >
                       <Download size={18} />
                     </a>
                   </div>
@@ -203,25 +224,25 @@ export const Resources = () => {
 
         {totalPages > 1 && (
           <div className="doc-pagination">
-            <button 
-              disabled={currentPage === 1} 
-              onClick={() => setCurrentPage(prev => prev - 1)}
+            <button
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage((prev) => prev - 1)}
               className="pagination-btn"
             >
               Trước
             </button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
               <button
                 key={page}
                 onClick={() => setCurrentPage(page)}
-                className={`pagination-btn ${currentPage === page ? "active" : ""}`}
+                className={`pagination-btn ${currentPage === page ? 'active' : ''}`}
               >
                 {page}
               </button>
             ))}
-            <button 
-              disabled={currentPage === totalPages} 
-              onClick={() => setCurrentPage(prev => prev + 1)}
+            <button
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage((prev) => prev + 1)}
               className="pagination-btn"
             >
               Sau

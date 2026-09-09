@@ -89,7 +89,7 @@ export const AuthProvider = ({ children }) => {
 
   // Hàm cập nhật thông tin user
   const updateUser = useCallback((data) => {
-    setUser(prev => {
+    setUser((prev) => {
       const updated = { ...prev, ...data };
       localStorage.setItem('userData', JSON.stringify(updated));
       return updated;
@@ -119,11 +119,7 @@ export const AuthProvider = ({ children }) => {
     setPendingToast,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export default AuthContext;

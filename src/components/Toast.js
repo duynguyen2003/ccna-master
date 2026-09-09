@@ -29,7 +29,9 @@ const Toast = ({ message, type = 'success', duration = 3000, onClose }) => {
   };
 
   return (
-    <div className={`toast-container ${isVisible && !isLeaving ? 'toast-visible' : ''} ${isLeaving ? 'toast-leaving' : ''}`}>
+    <div
+      className={`toast-container ${isVisible && !isLeaving ? 'toast-visible' : ''} ${isLeaving ? 'toast-leaving' : ''}`}
+    >
       <div className={`toast toast-${type}`}>
         <span className="material-icons-round toast-icon">{icons[type]}</span>
         <span className="toast-message">{message}</span>

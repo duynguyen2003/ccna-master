@@ -103,9 +103,7 @@ const ResetPassword = () => {
     <AuthLayout toast={ToastComponent}>
       <div className="auth-header">
         <h1 className="auth-title">Đặt lại mật khẩu</h1>
-        <p className="auth-subtitle">
-          Tạo mật khẩu mới để bảo mật tài khoản của bạn.
-        </p>
+        <p className="auth-subtitle">Tạo mật khẩu mới để bảo mật tài khoản của bạn.</p>
       </div>
 
       {isCheckingToken && (
@@ -133,7 +131,9 @@ const ResetPassword = () => {
       ) : isTokenValid ? (
         <form className="auth-form" onSubmit={handleSubmit} noValidate>
           <div className="form-group">
-            <label className="form-label" htmlFor="reset-password-new">Mật khẩu mới</label>
+            <label className="form-label" htmlFor="reset-password-new">
+              Mật khẩu mới
+            </label>
             <div className="form-input-wrapper">
               <input
                 id="reset-password-new"
@@ -166,7 +166,9 @@ const ResetPassword = () => {
           </div>
 
           <div className="form-group">
-            <label className="form-label" htmlFor="reset-password-confirm">Xác nhận mật khẩu</label>
+            <label className="form-label" htmlFor="reset-password-confirm">
+              Xác nhận mật khẩu
+            </label>
             <div className="form-input-wrapper">
               <input
                 id="reset-password-confirm"
@@ -198,31 +200,41 @@ const ResetPassword = () => {
             )}
           </div>
 
-          <button
-            type="submit"
-            className="auth-submit"
-            disabled={isLoading}
-          >
+          <button type="submit" className="auth-submit" disabled={isLoading}>
             {isLoading ? (
               <div className="spinner"></div>
             ) : (
               <>
-                ĐẶT LẠI MẬT KHẨU <span className="material-icons-round" style={{ fontSize: 18 }}>check</span>
+                ĐẶT LẠI MẬT KHẨU{' '}
+                <span className="material-icons-round" style={{ fontSize: 18 }}>
+                  check
+                </span>
               </>
             )}
           </button>
         </form>
       ) : !isCheckingToken ? (
         <div className="auth-footer">
-          <Link to="/forgot-password" style={{ display: 'block', marginBottom: '10px' }} className="auth-link">Yêu cầu liên kết mới</Link>
-          <Link to="/login" className="auth-link">Quay lại đăng nhập</Link>
+          <Link
+            to="/forgot-password"
+            style={{ display: 'block', marginBottom: '10px' }}
+            className="auth-link"
+          >
+            Yêu cầu liên kết mới
+          </Link>
+          <Link to="/login" className="auth-link">
+            Quay lại đăng nhập
+          </Link>
         </div>
       ) : null}
 
       {!isSuccess && isTokenValid && (
         <div className="auth-footer">
           <p>
-            Bỗng nhiên nhớ ra? <Link to="/login" className="auth-link">Đăng nhập.</Link>
+            Bỗng nhiên nhớ ra?{' '}
+            <Link to="/login" className="auth-link">
+              Đăng nhập.
+            </Link>
           </p>
         </div>
       )}

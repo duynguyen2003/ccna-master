@@ -8,19 +8,20 @@ const CopyButton = ({ textToCopy }) => {
 
   const handleCopy = () => {
     if (!textToCopy) return;
-    navigator.clipboard.writeText(textToCopy)
+    navigator.clipboard
+      .writeText(textToCopy)
       .then(() => {
         setIsCopied(true);
         setTimeout(() => {
           setIsCopied(false);
         }, 2000); // Reset after 2s
       })
-      .catch(err => console.error("Failed to copy:", err));
+      .catch((err) => console.error('Failed to copy:', err));
   };
 
   return (
-    <button 
-      className={`cli-copy-btn ${isCopied ? 'copied' : ''}`} 
+    <button
+      className={`cli-copy-btn ${isCopied ? 'copied' : ''}`}
       onClick={handleCopy}
       title="Sao chép lệnh"
     >
@@ -38,7 +39,7 @@ const CommandCard = ({ commandData, allCommands, onSearchCommand }) => {
   const relatedCommands = useMemo(() => {
     // Find commands in the same category, excluding the current one
     const sameCat = allCommands.filter(
-      cmd => cmd.category === commandData.category && cmd.id !== commandData.id
+      (cmd) => cmd.category === commandData.category && cmd.id !== commandData.id
     );
     // Return up to 2 items
     return sameCat.slice(0, 2);
@@ -50,9 +51,9 @@ const CommandCard = ({ commandData, allCommands, onSearchCommand }) => {
         <h3 className="cli-command-title">{commandData.command}</h3>
         <span className="cli-card-badge">{commandData.category}</span>
       </div>
-      
+
       <p className="cli-command-desc">{commandData.description}</p>
-      
+
       <div className="cli-terminal">
         <CopyButton textToCopy={commandData.example} />
         <pre>{commandData.example}</pre>
@@ -63,8 +64,8 @@ const CommandCard = ({ commandData, allCommands, onSearchCommand }) => {
           Có thể bạn cần xem thêm:
           {relatedCommands.map((cmd, idx) => (
             <React.Fragment key={cmd.id}>
-              <span 
-                className="cli-related-link" 
+              <span
+                className="cli-related-link"
                 onClick={() => onSearchCommand(cmd.command.split(' ')[0])} // Search the base command
               >
                 {cmd.command.split(' ')[0]}
@@ -88,18 +89,18 @@ const CiscoCliLookup = () => {
 
   // Extract unique categories from JSON
   const categories = useMemo(() => {
-    const cats = new Set(ciscoCommands.map(cmd => cmd.category));
+    const cats = new Set(ciscoCommands.map((cmd) => cmd.category));
     return ['Tất cả', ...Array.from(cats)];
   }, []);
 
   // Filter commands
   const filteredCommands = useMemo(() => {
-    return ciscoCommands.filter(cmd => {
+    return ciscoCommands.filter((cmd) => {
       // Category Match
       if (activeCategory !== 'Tất cả' && cmd.category !== activeCategory) {
         return false;
       }
-      
+
       // Search Match
       if (searchTerm.trim() !== '') {
         const lowerSearch = searchTerm.toLowerCase().trim();
@@ -109,7 +110,7 @@ const CiscoCliLookup = () => {
           return false;
         }
       }
-      
+
       return true;
     });
   }, [searchTerm, activeCategory]);
@@ -138,7 +139,7 @@ const CiscoCliLookup = () => {
   }, []);
 
   const handleLoadMore = () => {
-    setVisibleCount(prev => prev + 10);
+    setVisibleCount((prev) => prev + 10);
   };
 
   return (
@@ -146,7 +147,9 @@ const CiscoCliLookup = () => {
       {/* ─── Breadcrumb ─── */}
       <nav className="cli-breadcrumb">
         <Link to="/" className="cli-breadcrumb-link">
-          <span className="material-icons-round" style={{ fontSize: 18 }}>home</span>
+          <span className="material-icons-round" style={{ fontSize: 18 }}>
+            home
+          </span>
           Trang chủ
         </Link>
         <span className="material-icons-round cli-breadcrumb-sep">chevron_right</span>
@@ -160,7 +163,8 @@ const CiscoCliLookup = () => {
         </div>
         <h1 className="cli-title">Tra cứu câu lệnh Cisco CLI</h1>
         <p className="cli-desc">
-          Công cụ tra cứu từ điển lệnh IOS cho Router và Switch dành cho cộng đồng học CCNA miễn phí.
+          Công cụ tra cứu từ điển lệnh IOS cho Router và Switch dành cho cộng đồng học CCNA miễn
+          phí.
         </p>
       </header>
 
@@ -168,7 +172,7 @@ const CiscoCliLookup = () => {
       <div className="cli-controls">
         {/* Category Pills */}
         <div className="cli-categories">
-          {categories.map(cat => (
+          {categories.map((cat) => (
             <button
               key={cat}
               className={`cli-category-pill ${activeCategory === cat ? 'active' : ''}`}
@@ -191,11 +195,7 @@ const CiscoCliLookup = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
           {searchTerm.length > 0 && (
-            <button 
-              className="cli-search-clear" 
-              onClick={handleClearSearch}
-              title="Xóa tìm kiếm"
-            >
+            <button className="cli-search-clear" onClick={handleClearSearch} title="Xóa tìm kiếm">
               <span className="material-icons-round">close</span>
             </button>
           )}
@@ -206,9 +206,9 @@ const CiscoCliLookup = () => {
       <div className="cli-list">
         {displayedCommands.length > 0 ? (
           displayedCommands.map((command) => (
-            <CommandCard 
-              key={command.id} 
-              commandData={command} 
+            <CommandCard
+              key={command.id}
+              commandData={command}
               allCommands={ciscoCommands}
               onSearchCommand={handleRelatedClick}
             />

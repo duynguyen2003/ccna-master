@@ -14,7 +14,10 @@ const Navbar = () => {
           <span className="material-icons-round">home</span>
           <span className="tag-name">Trang chủ</span>
         </Link>
-        <Link className={`sidebar-link ${isActive('/roadmap') || location.pathname.startsWith('/course') ? 'active' : ''}`} to="/roadmap">
+        <Link
+          className={`sidebar-link ${isActive('/roadmap') || location.pathname.startsWith('/course') ? 'active' : ''}`}
+          to="/roadmap"
+        >
           <span className="material-icons-round">auto_stories</span>
           <span className="tag-name">Khóa học</span>
         </Link>
@@ -22,8 +25,8 @@ const Navbar = () => {
           <span className="material-icons-round">terminal</span>
           <span className="tag-name">Thực hành</span>
         </Link>
-        <Link 
-          className={`sidebar-link ${location.pathname.startsWith('/exam') ? 'active' : ''}`} 
+        <Link
+          className={`sidebar-link ${location.pathname.startsWith('/exam') ? 'active' : ''}`}
           to="/exam/testing-center"
         >
           <span className="material-icons-round">quiz</span>

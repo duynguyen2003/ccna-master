@@ -5,8 +5,6 @@ import { useToast } from '../../Toast';
 import { api } from '../../../services/Api';
 import '../../../css/ExamFlow.css';
 
-
-
 // ─── Component ────────────────────────────────────────────────
 const TestingCenter = () => {
   const navigate = useNavigate();
@@ -31,7 +29,7 @@ const TestingCenter = () => {
         setLoading(true);
         // 1. Lấy toàn bộ Course
         const coursesData = await api.getCourses(token);
-        
+
         // 2. Lấy toàn bộ Exams
         const examsData = await api.getExams(token);
         setExams(examsData);
@@ -39,14 +37,17 @@ const TestingCenter = () => {
         // 3. Lấy Lịch sử thi của user
         let historyData = [];
         if (isAuthenticated) {
-           historyData = await api.getMyExamHistory(token);
-           setExamHistory(historyData);
+          historyData = await api.getMyExamHistory(token);
+          setExamHistory(historyData);
         }
 
         // Tạo map lưu điểm cao nhất theo examId
         const highestScoreMap = {};
-        historyData.forEach(attempt => {
-          if (!highestScoreMap[attempt.examId] || attempt.score > highestScoreMap[attempt.examId].score) {
+        historyData.forEach((attempt) => {
+          if (
+            !highestScoreMap[attempt.examId] ||
+            attempt.score > highestScoreMap[attempt.examId].score
+          ) {
             highestScoreMap[attempt.examId] = attempt;
           }
         });
@@ -55,7 +56,7 @@ const TestingCenter = () => {
         const allModules = [];
         const colors = ['#2563eb', '#059669', '#8b5cf6', '#f59e0b', '#ef4444'];
         const bgs = ['#eff6ff', '#ecfdf5', '#f5f3ff', '#fffbeb', '#fef2f2'];
-        
+
         coursesData.forEach((course, cIdx) => {
           (course.modules || []).forEach((mod, mIdx) => {
             if (mod.exams && mod.exams.length > 0) {
@@ -66,13 +67,13 @@ const TestingCenter = () => {
                 bg: bgs[cIdx % bgs.length],
                 title: `${course.code} - ${mod.title}`,
                 meta: `${mod.exams.length} Bài tập ôn luyện`,
-                quizzes: mod.exams.map(ex => {
+                quizzes: mod.exams.map((ex) => {
                   const bestAttempt = highestScoreMap[ex.id];
                   let scoreLabel = 'TRẠNG THÁI';
                   let scoreSub = 'Chưa làm';
                   let scoreVal = null;
                   let colorClass = '#94a3b8'; // grey
-                  
+
                   if (bestAttempt) {
                     scoreVal = bestAttempt.score;
                     if (bestAttempt.isPassed) {
@@ -92,19 +93,18 @@ const TestingCenter = () => {
                     score: scoreVal,
                     scoreLabel,
                     scoreSub,
-                    colorClass
+                    colorClass,
                   };
-                })
+                }),
               });
             }
           });
         });
-        
+
         setPracticeModules(allModules);
         if (allModules.length > 0) setExpandedModule(allModules[0].id);
-
       } catch (error) {
-        console.error("Failed to fetch testing center data", error);
+        console.error('Failed to fetch testing center data', error);
       } finally {
         setLoading(false);
       }
@@ -135,23 +135,31 @@ const TestingCenter = () => {
     navigate(`/exam/result/${attempt.id}`);
   };
 
-  const selectedExamData = exams.find(e => e.id === selectedExamId || e.id.toString() === selectedExamId?.toString());
-  
+  const selectedExamData = exams.find(
+    (e) => e.id === selectedExamId || e.id.toString() === selectedExamId?.toString()
+  );
+
   // Format currentHistoryList
   const currentHistoryList = examHistory
-    .filter(h => h.examId.toString() === selectedExamId?.toString())
+    .filter((h) => h.examId.toString() === selectedExamId?.toString())
     .map((attempt, index, arr) => {
       const elapsedMin = Math.floor(attempt.timeSpent / 60);
       const elapsedSec = attempt.timeSpent % 60;
-      const timeUsed = `${String(elapsedMin).padStart(2,'0')}:${String(elapsedSec).padStart(2,'0')}`;
-      
+      const timeUsed = `${String(elapsedMin).padStart(2, '0')}:${String(elapsedSec).padStart(2, '0')}`;
+
       return {
         id: attempt.id,
         attempt: arr.length - index, // Mới nhất lên đầu
-        date: new Date(attempt.takenAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+        date: new Date(attempt.takenAt).toLocaleDateString('vi-VN', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        }),
         timeUsed,
         score: attempt.score,
-        pass: attempt.isPassed
+        pass: attempt.isPassed,
       };
     });
 
@@ -159,7 +167,6 @@ const TestingCenter = () => {
     <div className="tc-page">
       {ToastComponent}
       <div className="tc-container">
-        
         {loading && (
           <div className="tc-loading-overlay">
             <div className="tc-spinner"></div>
@@ -171,7 +178,9 @@ const TestingCenter = () => {
         <div className="tc-hero">
           <div>
             <h1 className="tc-hero-title">Trung tâm Kiểm tra &amp; Đánh giá</h1>
-            <p className="tc-hero-desc">Phòng lab mô phỏng kỳ thi CCNA chuẩn quốc tế với hệ thống đánh giá chi tiết.</p>
+            <p className="tc-hero-desc">
+              Phòng lab mô phỏng kỳ thi CCNA chuẩn quốc tế với hệ thống đánh giá chi tiết.
+            </p>
           </div>
         </div>
 
@@ -197,9 +206,15 @@ const TestingCenter = () => {
             {practiceModules.length > 0 ? (
               practiceModules.map((mod) => (
                 <div key={mod.id} className="tc-module-card">
-                  <div className="tc-module-header" onClick={() => setExpandedModule(expandedModule === mod.id ? null : mod.id)}>
+                  <div
+                    className="tc-module-header"
+                    onClick={() => setExpandedModule(expandedModule === mod.id ? null : mod.id)}
+                  >
                     <div style={{ display: 'flex', alignItems: 'center' }}>
-                      <div className="tc-module-icon" style={{ background: mod.bg, color: mod.color }}>
+                      <div
+                        className="tc-module-icon"
+                        style={{ background: mod.bg, color: mod.color }}
+                      >
                         {mod.locked ? '🔒' : mod.icon}
                       </div>
                       <div className="tc-module-info">
@@ -214,43 +229,55 @@ const TestingCenter = () => {
                     </div>
                   </div>
 
-                {expandedModule === mod.id && !mod.locked && mod.quizzes.length > 0 && (
-                  <div className="tc-quiz-list">
-                    {mod.quizzes.map((quiz) => (
-                      <div key={quiz.id} className="tc-quiz-row">
-                        <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
-                          <div className="tc-quiz-icon">{quiz.code}</div>
-                          <div className="tc-quiz-info">
-                            <h4>{quiz.label}</h4>
-                            <span>{quiz.info}</span>
-                          </div>
-                        </div>
-                        {quiz.score !== null ? (
-                          <div className="tc-quiz-score">
-                            <span>{quiz.scoreLabel}</span>
-                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                              <strong style={{ color: quiz.colorClass, lineHeight: '1' }}>{quiz.scoreSub}</strong>
-                              <span style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '2px' }}>{quiz.score}/1000</span>
+                  {expandedModule === mod.id && !mod.locked && mod.quizzes.length > 0 && (
+                    <div className="tc-quiz-list">
+                      {mod.quizzes.map((quiz) => (
+                        <div key={quiz.id} className="tc-quiz-row">
+                          <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+                            <div className="tc-quiz-icon">{quiz.code}</div>
+                            <div className="tc-quiz-info">
+                              <h4>{quiz.label}</h4>
+                              <span>{quiz.info}</span>
                             </div>
                           </div>
-                        ) : (
-                          <div className="tc-quiz-score">
-                            <span>{quiz.scoreLabel}</span>
-                            <strong style={{ color: '#94a3b8' }}>{quiz.scoreSub}</strong>
-                          </div>
-                        )}
-                        <button
-                          className="tc-btn-start"
-                          style={{ width: 'auto', padding: '0.5rem 1.25rem' }}
-                          onClick={() => handleStartExam(quiz.id)}
-                          title={isGuest ? 'Đăng nhập để làm bài' : ''}
-                        >
-                          Làm bài
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                          {quiz.score !== null ? (
+                            <div className="tc-quiz-score">
+                              <span>{quiz.scoreLabel}</span>
+                              <div
+                                style={{
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  alignItems: 'flex-end',
+                                }}
+                              >
+                                <strong style={{ color: quiz.colorClass, lineHeight: '1' }}>
+                                  {quiz.scoreSub}
+                                </strong>
+                                <span
+                                  style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '2px' }}
+                                >
+                                  {quiz.score}/1000
+                                </span>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="tc-quiz-score">
+                              <span>{quiz.scoreLabel}</span>
+                              <strong style={{ color: '#94a3b8' }}>{quiz.scoreSub}</strong>
+                            </div>
+                          )}
+                          <button
+                            className="tc-btn-start"
+                            style={{ width: 'auto', padding: '0.5rem 1.25rem' }}
+                            onClick={() => handleStartExam(quiz.id)}
+                            title={isGuest ? 'Đăng nhập để làm bài' : ''}
+                          >
+                            Làm bài
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))
             ) : (
@@ -268,12 +295,20 @@ const TestingCenter = () => {
           <div className="tc-mock-grid">
             {exams.map((exam) => (
               <div key={exam.id} className="tc-mock-card">
-                <span className={`tc-mock-card__badge badge-${exam.difficulty?.toLowerCase()}`}>{exam.difficulty}</span>
+                <span className={`tc-mock-card__badge badge-${exam.difficulty?.toLowerCase()}`}>
+                  {exam.difficulty}
+                </span>
                 <div className="tc-mock-card__icon">📄</div>
                 <h3>{exam.title}</h3>
                 <ul className="tc-mock-card__meta">
-                    <li><span>⏱</span>{exam.durationMinutes || 0} phút</li>
-                    <li><span>❓</span>{exam.totalQuestions} câu hỏi</li>
+                  <li>
+                    <span>⏱</span>
+                    {exam.durationMinutes || 0} phút
+                  </li>
+                  <li>
+                    <span>❓</span>
+                    {exam.totalQuestions} câu hỏi
+                  </li>
                 </ul>
                 <div className="tc-mock-card__actions">
                   <button
@@ -296,7 +331,10 @@ const TestingCenter = () => {
             <div className="tc-soon-card">
               <span style={{ fontSize: '2rem', color: '#94a3b8' }}>⊕</span>
               <h4>Thêm nhiều kỳ thi sắp ra mắt</h4>
-              <p>Chúng tôi cập nhật ngân hàng câu hỏi 2 tuần một lần để phù hợp với các tiêu chuẩn CCNA hiện hành.</p>
+              <p>
+                Chúng tôi cập nhật ngân hàng câu hỏi 2 tuần một lần để phù hợp với các tiêu chuẩn
+                CCNA hiện hành.
+              </p>
             </div>
           </div>
         )}
@@ -304,10 +342,12 @@ const TestingCenter = () => {
         {/* ── Modal Lịch Sử Thi ── */}
         {historyModalOpen && (
           <div className="tc-modal-overlay" onClick={closeHistory}>
-            <div className="tc-modal" onClick={e => e.stopPropagation()}>
+            <div className="tc-modal" onClick={(e) => e.stopPropagation()}>
               <div className="tc-modal-header">
                 <h2>Lịch sử thi: {selectedExamData?.title}</h2>
-                <button className="tc-modal-close" onClick={closeHistory}>&times;</button>
+                <button className="tc-modal-close" onClick={closeHistory}>
+                  &times;
+                </button>
               </div>
               <div className="tc-modal-body">
                 {currentHistoryList.length > 0 ? (
@@ -315,7 +355,16 @@ const TestingCenter = () => {
                     {/* Sắp xếp mới nhất lên đầu */}
                     {[...currentHistoryList].reverse().map((attempt) => (
                       <div key={attempt.id} className="tc-history-item">
-                        <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+                        <div
+                          style={{
+                            display: 'flex',
+                            width: '100%',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            flexWrap: 'wrap',
+                            gap: '1rem',
+                          }}
+                        >
                           <div className="tc-history-main">
                             <span className="tc-history-title">Lần thi {attempt.attempt}</span>
                             <div className="tc-history-meta">
@@ -323,15 +372,20 @@ const TestingCenter = () => {
                               <span>⏱ {attempt.timeUsed}</span>
                             </div>
                           </div>
-                          
+
                           <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
                             <div className="tc-history-score-wrapper">
                               <div className="tc-history-score">{attempt.score}/1000</div>
-                              <span className={`tc-history-badge ${attempt.pass ? 'pass' : 'fail'}`}>
+                              <span
+                                className={`tc-history-badge ${attempt.pass ? 'pass' : 'fail'}`}
+                              >
                                 {attempt.pass ? 'PASS' : 'FAIL'}
                               </span>
                             </div>
-                            <button className="tc-history-btn" onClick={() => handleViewDetails(attempt)}>
+                            <button
+                              className="tc-history-btn"
+                              onClick={() => handleViewDetails(attempt)}
+                            >
                               Chi tiết &rarr;
                             </button>
                           </div>
@@ -347,7 +401,10 @@ const TestingCenter = () => {
                     <button
                       className="tc-btn-start"
                       style={{ marginTop: '1rem', width: 'auto', padding: '0.6rem 1.5rem' }}
-                      onClick={() => { closeHistory(); handleStartExam(selectedExamId); }}
+                      onClick={() => {
+                        closeHistory();
+                        handleStartExam(selectedExamId);
+                      }}
                       title={isGuest ? 'Đăng nhập để bắt đầu thi' : ''}
                     >
                       Bắt đầu thi
@@ -358,7 +415,6 @@ const TestingCenter = () => {
             </div>
           </div>
         )}
-
       </div>
     </div>
   );

@@ -9,23 +9,28 @@ const ProtectedRoute = ({ children }) => {
   // Đang kiểm tra localStorage, chờ 1 chút
   if (loading) {
     return (
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: '60vh',
-        gap: '12px',
-        color: 'var(--slate-500)',
-        fontSize: '15px',
-      }}>
-        <div className="spinner" style={{
-          width: 24,
-          height: 24,
-          border: '2.5px solid var(--slate-200)',
-          borderTopColor: 'var(--blue-primary)',
-          borderRadius: '50%',
-          animation: 'spin 0.7s linear infinite',
-        }}></div>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '60vh',
+          gap: '12px',
+          color: 'var(--slate-500)',
+          fontSize: '15px',
+        }}
+      >
+        <div
+          className="spinner"
+          style={{
+            width: 24,
+            height: 24,
+            border: '2.5px solid var(--slate-200)',
+            borderTopColor: 'var(--blue-primary)',
+            borderRadius: '50%',
+            animation: 'spin 0.7s linear infinite',
+          }}
+        ></div>
         Đang kiểm tra xác thực...
       </div>
     );

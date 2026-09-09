@@ -13,27 +13,27 @@ const PortLookup = () => {
   // Load data dynamically from src/json
   useEffect(() => {
     import('../../json/ports.json')
-      .then(module => {
+      .then((module) => {
         const data = module.default || module;
         const grouped = new Map();
-        data.forEach(item => {
-          const portNum = Number(item["Port Number"]);
+        data.forEach((item) => {
+          const portNum = Number(item['Port Number']);
           if (!portNum) return;
-          const serviceName = item["Service Name"];
+          const serviceName = item['Service Name'];
           // Optional: Exclude empty service names
           if (!serviceName) return;
 
-          const desc = item["Description"] || '';
-          const proto = (item["Transport Protocol"] || '').toUpperCase();
+          const desc = item['Description'] || '';
+          const proto = (item['Transport Protocol'] || '').toUpperCase();
 
-          const key = portNum + "_" + serviceName;
+          const key = portNum + '_' + serviceName;
           if (!grouped.has(key)) {
             grouped.set(key, {
               id: key,
               port: portNum,
               name: String(serviceName).toUpperCase(),
               description: String(desc),
-              transport: proto ? [String(proto)] : []
+              transport: proto ? [String(proto)] : [],
             });
           } else {
             const existing = grouped.get(key);
@@ -63,8 +63,8 @@ const PortLookup = () => {
         setPortsData(arr);
         setLoading(false);
       })
-      .catch(err => {
-        console.error("Failed to load ports.json via API", err);
+      .catch((err) => {
+        console.error('Failed to load ports.json via API', err);
         setLoading(false);
       });
   }, []);
@@ -101,7 +101,7 @@ const PortLookup = () => {
   // Filter ports based on search and transport toggle
   const filteredPorts = useMemo(() => {
     const results = portsData.filter((portItem) => {
-      // Filter by Transport 
+      // Filter by Transport
       if (transportFilter !== 'All' && !portItem.transport.includes(transportFilter)) {
         return false;
       }
@@ -154,7 +154,7 @@ const PortLookup = () => {
   const handleQuizInputChange = (portId, targetPortVal, event) => {
     const val = event.target.value.replace(/[^0-9]/g, ''); // only digits
 
-    // Check correctness immediately if value matches exactly? 
+    // Check correctness immediately if value matches exactly?
     // Or wait for blur/enter? The prompt says "Nhập đúng -> ô chuyển sang nền xanh lá cây + khóa. Gõ sai -> nền đỏ vẫn cho chỉnh sửa".
     // Better to check as they type
 
@@ -169,14 +169,14 @@ const PortLookup = () => {
 
     setQuizState((prev) => ({
       ...prev,
-      [portId]: { status: nextStatus, value: val }
+      [portId]: { status: nextStatus, value: val },
     }));
   };
 
   const handleReveal = (portId, targetPortVal) => {
     setQuizState((prev) => ({
       ...prev,
-      [portId]: { status: 'skipped', value: targetPortVal.toString() }
+      [portId]: { status: 'skipped', value: targetPortVal.toString() },
     }));
   };
 
@@ -185,7 +185,9 @@ const PortLookup = () => {
       {/* ─── Breadcrumb ─── */}
       <nav className="port-breadcrumb">
         <Link to="/" className="port-breadcrumb-link">
-          <span className="material-icons-round" style={{ fontSize: 18 }}>home</span>
+          <span className="material-icons-round" style={{ fontSize: 18 }}>
+            home
+          </span>
           Trang chủ
         </Link>
         <span className="material-icons-round port-breadcrumb-sep">chevron_right</span>
@@ -198,9 +200,7 @@ const PortLookup = () => {
           <span className="material-icons-round">format_list_bulleted</span>
         </div>
         <h1 className="port-title">Tra cứu Port & Giao thức mạng</h1>
-        <p className="port-desc">
-          Tra cứu nhanh danh sách các cổng dịch vụ và giao thức hệ thống.
-        </p>
+        <p className="port-desc">Tra cứu nhanh danh sách các cổng dịch vụ và giao thức hệ thống.</p>
       </header>
 
       {/* Scoreboard block - only visible in Quiz Mode */}
@@ -217,7 +217,8 @@ const PortLookup = () => {
               <span className="material-icons-round">cancel</span> Sai: {scoreStats.wrong}
             </div>
             <div className="score-pill skipped">
-              <span className="material-icons-round">visibility_off</span> Bỏ qua: {scoreStats.skipped}
+              <span className="material-icons-round">visibility_off</span> Bỏ qua:{' '}
+              {scoreStats.skipped}
             </div>
           </div>
           <button className="reset-btn" onClick={handleReset}>
@@ -253,11 +254,7 @@ const PortLookup = () => {
 
         <div className="port-toggle-wrapper">
           <label className="toggle-switch">
-            <input
-              type="checkbox"
-              checked={isQuizMode}
-              onChange={toggleQuizMode}
-            />
+            <input type="checkbox" checked={isQuizMode} onChange={toggleQuizMode} />
             <span className="slider round"></span>
           </label>
           <span className="toggle-label">Chế độ học tập</span>
@@ -308,10 +305,14 @@ const PortLookup = () => {
                             />
                             {/* Icons inside the input for gamification */}
                             {state.status === 'correct' && (
-                              <span className="material-icons-round status-icon correct-icon">check_circle</span>
+                              <span className="material-icons-round status-icon correct-icon">
+                                check_circle
+                              </span>
                             )}
                             {state.status === 'wrong' && (
-                              <span className="material-icons-round status-icon wrong-icon">cancel</span>
+                              <span className="material-icons-round status-icon wrong-icon">
+                                cancel
+                              </span>
                             )}
                           </div>
                           {/* Reveal button */}
@@ -362,12 +363,12 @@ const PortLookup = () => {
           <button
             className="page-btn round-btn"
             disabled={currentPage === 1}
-            onClick={() => setCurrentPage(p => p - 1)}
+            onClick={() => setCurrentPage((p) => p - 1)}
           >
             <span className="material-icons-round">chevron_left</span>
           </button>
 
-          {getPageNumbers().map(p => (
+          {getPageNumbers().map((p) => (
             <button
               key={p}
               className={`page-btn ${p === currentPage ? 'active' : ''}`}
@@ -379,13 +380,15 @@ const PortLookup = () => {
 
           {currentPage + 2 < totalPages && <span className="page-dots">...</span>}
           {currentPage + 2 < totalPages && (
-            <button className="page-btn" onClick={() => setCurrentPage(totalPages)}>{totalPages}</button>
+            <button className="page-btn" onClick={() => setCurrentPage(totalPages)}>
+              {totalPages}
+            </button>
           )}
 
           <button
             className="page-btn round-btn"
             disabled={currentPage === totalPages}
-            onClick={() => setCurrentPage(p => p + 1)}
+            onClick={() => setCurrentPage((p) => p + 1)}
           >
             <span className="material-icons-round">chevron_right</span>
           </button>
