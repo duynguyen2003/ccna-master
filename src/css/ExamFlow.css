@@ -15,7 +15,6 @@
   margin: 0 auto;
 }
 
-
 /* Hero Header */
 .tc-hero {
   margin-bottom: 2rem;
@@ -39,7 +38,7 @@
 .tc-tabs {
   display: flex;
   background: #f1f5f9;
-  border-radius: 0.75rem;
+  border-radius: 6px;
   padding: 0.25rem;
   width: fit-content;
   margin-bottom: 2rem;
@@ -49,7 +48,7 @@
   padding: 0.6rem 1.4rem;
   border: none;
   background: transparent;
-  border-radius: 0.5rem;
+  border-radius: 4px;
   cursor: pointer;
   font-weight: 500;
   font-size: 0.9rem;
@@ -74,7 +73,7 @@
 .tc-module-card {
   background: white;
   border: 1px solid var(--border, #e2e8f0);
-  border-radius: 1rem;
+  border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
@@ -94,7 +93,7 @@
 .tc-module-icon {
   width: 44px;
   height: 44px;
-  border-radius: 0.75rem;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -190,7 +189,7 @@
 .tc-mock-card {
   background: white;
   border: 1px solid var(--border, #e2e8f0);
-  border-radius: 1.25rem;
+  border-radius: 8px;
   padding: 1.5rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   position: relative;
@@ -231,7 +230,7 @@
   width: 48px;
   height: 48px;
   background: #f1f5f9;
-  border-radius: 0.75rem;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -283,7 +282,7 @@
   background: var(--navy-800, #1e293b);
   color: white;
   border: none;
-  border-radius: 0.75rem;
+  border-radius: 6px;
   font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
@@ -310,7 +309,7 @@
 .tc-soon-card {
   background: #ffffff;
   border: 2px dashed var(--border, #e2e8f0);
-  border-radius: 1.25rem;
+  border-radius: 8px;
   padding: 2rem;
   display: flex;
   flex-direction: column;
@@ -331,7 +330,6 @@
   font-size: 0.82rem;
   margin: 0;
 }
-
 
 /* ─── TAKE EXAM (FOCUS MODE) ─── */
 .take-exam-page {
@@ -431,7 +429,7 @@
 .take-exam__question-card {
   background: white;
   border: 1px solid var(--border, #e2e8f0);
-  border-radius: 1rem;
+  border-radius: 8px;
   padding: 2rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
@@ -518,7 +516,7 @@
   gap: 1rem;
   padding: 1rem 1.25rem;
   border: 2px solid var(--border, #e2e8f0);
-  border-radius: 0.875rem;
+  border-radius: 6px;
   cursor: pointer;
   transition: all 0.18s;
   background: white;
@@ -586,7 +584,7 @@
 .take-exam__sidebar-card {
   background: white;
   border: 1px solid var(--border, #e2e8f0);
-  border-radius: 1rem;
+  border-radius: 8px;
   padding: 1.25rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   margin-bottom: 1rem;
@@ -612,7 +610,7 @@
 
 .take-exam__q-dot {
   height: 34px;
-  border-radius: 0.5rem;
+  border-radius: 4px;
   border: none;
   font-size: 0.75rem;
   font-weight: 600;
@@ -680,7 +678,7 @@
   background: var(--navy-800, #1e293b);
   color: white;
   border: none;
-  border-radius: 0.875rem;
+  border-radius: 6px;
   font-size: 0.95rem;
   font-weight: 700;
   cursor: pointer;
@@ -691,7 +689,6 @@
   background: var(--navy-700, #152845);
   transform: translateY(-1px);
 }
-
 
 /* ─── EXAM RESULT ─── */
 .exam-result-page {
@@ -710,7 +707,7 @@
 .er-hero {
   background: white;
   border: 1px solid var(--border, #e2e8f0);
-  border-radius: 1.25rem;
+  border-radius: 8px;
   padding: 2.5rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   display: flex;
@@ -832,7 +829,7 @@
 .er-stat-card {
   background: white;
   border: 1px solid var(--border, #e2e8f0);
-  border-radius: 1rem;
+  border-radius: 8px;
   padding: 1.25rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
@@ -866,7 +863,7 @@
 .er-topic-section {
   background: white;
   border: 1px solid var(--border, #e2e8f0);
-  border-radius: 1.25rem;
+  border-radius: 8px;
   padding: 2rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   margin-bottom: 1.5rem;
@@ -949,7 +946,7 @@
   background: var(--primary, #2563eb);
   color: white;
   border: none;
-  border-radius: 0.875rem;
+  border-radius: 6px;
   font-size: 0.9rem;
   font-weight: 700;
   cursor: pointer;
@@ -969,7 +966,7 @@
   background: white;
   color: var(--text-main, #1e293b);
   border: 1px solid var(--border, #e2e8f0);
-  border-radius: 0.875rem;
+  border-radius: 6px;
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
@@ -979,7 +976,6 @@
 .er-btn-secondary:hover {
   background: #ffffff;
 }
-
 
 /* ─── REVIEW EXAM ─── */
 .review-exam-page {
@@ -992,7 +988,7 @@
 .review-exam__progress-card {
   background: white;
   border: 1px solid var(--border, #e2e8f0);
-  border-radius: 1rem;
+  border-radius: 8px;
   padding: 1.25rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   margin-bottom: 1rem;
@@ -1048,7 +1044,7 @@
   background: #f0f9ff;
   border: 1px solid #bae6fd;
   border-left: 4px solid #0ea5e9;
-  border-radius: 0.875rem;
+  border-radius: 6px;
 }
 
 .review-exam__explanation-title {
@@ -1073,7 +1069,6 @@
 }
 
 @keyframes pulse {
-
   0%,
   100% {
     opacity: 1;
@@ -1104,8 +1099,10 @@
   background: white;
   width: 100%;
   max-width: 600px;
-  border-radius: 1.25rem;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 8px 10px -6px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   animation: modalIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -1170,7 +1167,7 @@
   justify-content: space-between;
   padding: 1.25rem;
   border: 1px solid var(--border, #e2e8f0);
-  border-radius: 1rem;
+  border-radius: 8px;
   background: #ffffff;
   transition: border-color 0.2s;
 }
@@ -1216,7 +1213,7 @@
   font-size: 0.7rem;
   font-weight: 700;
   padding: 0.2rem 0.6rem;
-  border-radius: 999px;
+  border-radius: 4px;
   text-transform: uppercase;
 }
 
@@ -1242,7 +1239,7 @@
   background: white;
   border: 1px solid var(--border, #e2e8f0);
   padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
+  border-radius: 6px;
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--primary, #2563eb);

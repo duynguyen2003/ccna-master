@@ -53,7 +53,7 @@
   width: 56px;
   height: 56px;
   margin: 0 auto 14px;
-  border-radius: 16px;
+  border-radius: 8px;
   background-color: var(--hover-bg);
   display: flex;
   align-items: center;
@@ -91,7 +91,7 @@
   margin-bottom: 20px;
   background: #fff;
   border: 1px solid var(--border-color, #e2e8f0);
-  border-radius: 12px;
+  border-radius: 6px;
   cursor: pointer;
   font-size: 13px;
   font-family: var(--system-ui);
@@ -121,7 +121,7 @@
 
 .vlsm-info-card {
   background: linear-gradient(135deg, #0e1b2e 0%, #162236 100%);
-  border-radius: 16px;
+  border-radius: 8px;
   padding: 24px 26px;
   color: #fff;
   border: 1px solid rgba(255, 255, 255, 0.06);
@@ -189,7 +189,7 @@
   flex-shrink: 0;
   width: 32px;
   height: 32px;
-  border-radius: 10px;
+  border-radius: 6px;
   background: rgba(96, 165, 250, 0.15);
   color: #60a5fa;
   font-size: 13px;
@@ -239,7 +239,7 @@
 .vlsm-card {
   background: #fff;
   border: 1px solid var(--border-color, #e2e8f0);
-  border-radius: 16px;
+  border-radius: 8px;
   padding: 24px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
 }
@@ -279,12 +279,14 @@
   width: 100%;
   padding: 10px 14px;
   border: 1.5px solid var(--slate-200);
-  border-radius: 10px;
+  border-radius: 6px;
   font-size: 14px;
   font-family: var(--system-ui);
   color: var(--slate-900);
   background: var(--bg-color, #ffffff);
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
   outline: none;
   box-sizing: border-box;
 }
@@ -302,12 +304,14 @@
   width: 100%;
   padding: 10px 14px;
   border: 1.5px solid var(--slate-200);
-  border-radius: 10px;
+  border-radius: 6px;
   font-size: 14px;
   font-family: var(--system-ui);
   color: var(--slate-900);
   background: var(--bg-color, #ffffff);
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
   outline: none;
   cursor: pointer;
   appearance: auto;
@@ -325,7 +329,7 @@
   align-items: flex-start;
   gap: 8px;
   padding: 12px 14px;
-  border-radius: 10px;
+  border-radius: 6px;
   background: #eff6ff;
   border: 1px solid #bfdbfe;
   font-size: 12px;
@@ -353,7 +357,7 @@
   color: var(--blue-600);
   background: #eff6ff;
   border: 1.5px solid #bfdbfe;
-  border-radius: 8px;
+  border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -435,7 +439,7 @@
   height: 38px;
   flex-shrink: 0;
   border: 1.5px solid #fecaca;
-  border-radius: 10px;
+  border-radius: 6px;
   background: #fef2f2;
   color: #dc2626;
   cursor: pointer;
@@ -465,7 +469,7 @@
   gap: 10px;
   margin: 0 0 16px;
   padding: 12px 18px;
-  border-radius: 12px;
+  border-radius: 6px;
   font-size: 13px;
   font-weight: 500;
   color: #991b1b;
@@ -483,7 +487,6 @@
 }
 
 @keyframes vlsmShake {
-
   0%,
   100% {
     transform: translateX(0);
@@ -526,7 +529,7 @@
   color: var(--text-color);
   background-color: var(--navy-50);
   border: none;
-  border-radius: 14px;
+  border-radius: 6px;
   cursor: pointer;
   transition: all 0.3s;
 }
@@ -534,7 +537,6 @@
 .vlsm-calc-btn:hover {
   transform: translateY(-3px);
   background-color: var(--navy-100);
-
 }
 
 .vlsm-calc-btn:active {
@@ -548,7 +550,7 @@
 /* ─── Results Section ─── */
 .vlsm-results {
   animation: vlsmSlideUp 0.45s ease;
-  border-radius: 20px;
+  border-radius: 8px;
   overflow: hidden;
   border: 1px solid var(--border-color, #e2e8f0);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
@@ -653,7 +655,7 @@
 .vlsm-badge {
   display: inline-block;
   padding: 3px 12px;
-  border-radius: 20px;
+  border-radius: 4px;
   font-size: 11px;
   font-weight: 700;
   background: #dbeafe;

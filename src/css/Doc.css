@@ -95,7 +95,7 @@
 .doc-search-wrapper input {
   width: 100%;
   padding: 0.75rem 1rem 0.75rem 2.75rem;
-  border-radius: 9999px;
+  border-radius: 8px;
   border: none;
   background-color: #f1f5f9;
   font-size: 0.95rem;
@@ -117,7 +117,7 @@
 
 .filter-btn {
   padding: 0.5rem 1.25rem;
-  border-radius: 9999px;
+  border-radius: 6px;
   border: 1px solid var(--doc-border);
   background-color: var(--doc-card-bg);
   color: var(--doc-text-sub);
@@ -179,8 +179,6 @@
   justify-content: space-between;
   align-items: center;
 }
-
-
 
 .pinned-info {
   display: flex;
@@ -292,7 +290,7 @@
   justify-content: center;
   width: 40px;
   height: 40px;
-  border-radius: 0.75rem;
+  border-radius: 6px;
   background-color: #f1f5f9;
 }
 
@@ -350,7 +348,7 @@
 
 .pagination-btn {
   padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
+  border-radius: 6px;
   border: 1px solid var(--doc-border, #e2e8f0);
   background-color: #ffffff;
   color: var(--doc-text-main, #1e293b);

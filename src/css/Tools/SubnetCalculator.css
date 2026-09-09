@@ -53,7 +53,7 @@
   width: 56px;
   height: 56px;
   margin: 0 auto 16px;
-  border-radius: 16px;
+  border-radius: 8px;
   background: var(--hover-bg);
   display: flex;
   align-items: center;
@@ -81,7 +81,7 @@
 .subnet-input-card {
   background: var(--card-bg, #ffffff);
   border: 1px solid var(--border-color, #e2e8f0);
-  border-radius: 16px;
+  border-radius: 8px;
   padding: 28px 28px 20px;
   margin-bottom: 28px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
@@ -126,12 +126,14 @@
   width: 100%;
   padding: 10px 14px 10px 40px;
   border: 1.5px solid var(--slate-200);
-  border-radius: 10px;
+  border-radius: 6px;
   font-size: 14px;
   font-family: var(--system-ui);
   color: var(--slate-900);
   background: var(--bg-color, #ffffff);
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
   outline: none;
 }
 
@@ -153,12 +155,14 @@
   width: 100%;
   padding: 10px 14px;
   border: 1.5px solid var(--slate-200);
-  border-radius: 10px;
+  border-radius: 6px;
   font-size: 14px;
   font-family: var(--system-ui);
   color: var(--slate-900);
   background: var(--bg-color, #ffffff);
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
   outline: none;
   cursor: pointer;
   appearance: auto;
@@ -186,7 +190,7 @@
   color: #fff;
   background: linear-gradient(135deg, var(--navy-800) 0%, var(--slate-800) 100%);
   border: none;
-  border-radius: 10px;
+  border-radius: 6px;
   cursor: pointer;
   transition: all 0.25s;
   white-space: nowrap;
@@ -213,7 +217,7 @@
   gap: 8px;
   margin-top: 14px;
   padding: 10px 16px;
-  border-radius: 10px;
+  border-radius: 6px;
   font-size: 13px;
   font-weight: 500;
   color: #991b1b;
@@ -228,7 +232,6 @@
 }
 
 @keyframes shakeX {
-
   0%,
   100% {
     transform: translateX(0);
@@ -275,7 +278,7 @@
 .subnet-result-card {
   background: var(--card-bg, #ffffff);
   border: 1px solid var(--border-color, #e2e8f0);
-  border-radius: 16px;
+  border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
 }
