@@ -25,8 +25,7 @@ const longToIp = (n) =>
  * Tạo Subnet Mask 32-bit từ prefix
  * Ví dụ: prefix 24 → 0xFFFFFF00 → "255.255.255.0"
  */
-const prefixToMask = (prefix) =>
-  prefix === 0 ? 0 : (~0 << (32 - prefix)) >>> 0;
+const prefixToMask = (prefix) => (prefix === 0 ? 0 : (~0 << (32 - prefix)) >>> 0);
 
 /**
  * Validate địa chỉ IPv4
@@ -83,7 +82,9 @@ const calculateVLSM = (majorNetwork, majorPrefix, subnets) => {
     // Bước 2: Tính prefix mới cho số host yêu cầu
     const calc = findPrefixForHosts(subnet.hosts);
     if (!calc) {
-      return { error: `Không thể cấp phát cho "${subnet.name}" (${subnet.hosts} hosts) - số host quá lớn.` };
+      return {
+        error: `Không thể cấp phát cho "${subnet.name}" (${subnet.hosts} hosts) - số host quá lớn.`,
+      };
     }
 
     const { prefix: newPrefix, allocatedSize } = calc;
@@ -132,9 +133,10 @@ const calculateVLSM = (majorNetwork, majorPrefix, subnets) => {
       totalUsed: totalAllocated,
       usagePercent: ((totalAllocated / majorTotalAddresses) * 100).toFixed(1),
       remaining: majorTotalAddresses - totalAllocated,
-      remainingRange: totalAllocated < majorTotalAddresses
-        ? `${longToIp(currentAddress)} – ${longToIp(majorBroadcastInt)}`
-        : 'Không còn',
+      remainingRange:
+        totalAllocated < majorTotalAddresses
+          ? `${longToIp(currentAddress)} – ${longToIp(majorBroadcastInt)}`
+          : 'Không còn',
     },
   };
 };
@@ -179,9 +181,7 @@ const VLSMCalculator = () => {
   };
 
   const updateSubnet = (id, field, value) => {
-    setSubnets((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, [field]: value } : s))
-    );
+    setSubnets((prev) => prev.map((s) => (s.id === id ? { ...s, [field]: value } : s)));
   };
 
   // ── Handler: Calculate VLSM ──
@@ -192,7 +192,9 @@ const VLSMCalculator = () => {
     // Validate major IP
     const trimIp = majorIp.trim();
     if (!trimIp || !isValidIPv4(trimIp)) {
-      setError('Địa chỉ IP mạng gốc không hợp lệ. Vui lòng nhập đúng định dạng IPv4 (ví dụ: 192.168.1.0).');
+      setError(
+        'Địa chỉ IP mạng gốc không hợp lệ. Vui lòng nhập đúng định dạng IPv4 (ví dụ: 192.168.1.0).'
+      );
       return;
     }
 
@@ -245,7 +247,9 @@ const VLSMCalculator = () => {
       {/* ─── Breadcrumb ─── */}
       <nav className="vlsm-breadcrumb">
         <Link to="/" className="vlsm-breadcrumb-link">
-          <span className="material-icons-round" style={{ fontSize: 18 }}>home</span>
+          <span className="material-icons-round" style={{ fontSize: 18 }}>
+            home
+          </span>
           Trang chủ
         </Link>
         <span className="material-icons-round vlsm-breadcrumb-sep">chevron_right</span>
@@ -263,9 +267,14 @@ const VLSMCalculator = () => {
 
       {/* ─── Collapsible Guide Toggle ─── */}
       <button className="vlsm-guide-toggle" onClick={() => setShowGuide(!showGuide)}>
-        <span className="material-icons-round" style={{ fontSize: 18, color: '#f59e0b' }}>lightbulb</span>
+        <span className="material-icons-round" style={{ fontSize: 18, color: '#f59e0b' }}>
+          lightbulb
+        </span>
         <span>Click để xem hướng dẫn và quy tắc tính VLSM</span>
-        <span className="material-icons-round vlsm-guide-chevron" style={{ transform: showGuide ? 'rotate(180deg)' : 'rotate(0)' }}>
+        <span
+          className="material-icons-round vlsm-guide-chevron"
+          style={{ transform: showGuide ? 'rotate(180deg)' : 'rotate(0)' }}
+        >
           expand_more
         </span>
       </button>
@@ -280,8 +289,9 @@ const VLSMCalculator = () => {
               VLSM là gì?
             </div>
             <p className="vlsm-info-card-desc">
-              Variable Length Subnet Masking (VLSM) được sử dụng để tối ưu hóa việc phân bổ địa chỉ IP
-              bằng cách gán các subnet mask có độ dài khác nhau cho các mạng con dựa trên nhu cầu thực tế.
+              Variable Length Subnet Masking (VLSM) được sử dụng để tối ưu hóa việc phân bổ địa chỉ
+              IP bằng cách gán các subnet mask có độ dài khác nhau cho các mạng con dựa trên nhu cầu
+              thực tế.
             </p>
             <ul className="vlsm-info-list">
               <li>
@@ -362,14 +372,19 @@ const VLSMCalculator = () => {
               onChange={(e) => setMajorPrefix(Number(e.target.value))}
             >
               {prefixOptions.map((opt) => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
               ))}
             </select>
           </div>
 
           <div className="vlsm-major-info">
-            <span className="material-icons-round" style={{ fontSize: 16 }}>info_outline</span>
-            Dải mạng gốc sẽ được phân bổ cho các mạng con. VLSM cho phép sử dụng không gian địa chỉ hiệu quả.
+            <span className="material-icons-round" style={{ fontSize: 16 }}>
+              info_outline
+            </span>
+            Dải mạng gốc sẽ được phân bổ cho các mạng con. VLSM cho phép sử dụng không gian địa chỉ
+            hiệu quả.
           </div>
         </section>
 
@@ -379,7 +394,9 @@ const VLSMCalculator = () => {
             <span className="material-icons-round">device_hub</span>
             Cấu hình Mạng con
             <button className="vlsm-add-btn" onClick={addSubnet} title="Thêm mạng con">
-              <span className="material-icons-round" style={{ fontSize: 18 }}>add</span>
+              <span className="material-icons-round" style={{ fontSize: 18 }}>
+                add
+              </span>
               Thêm
             </button>
           </div>

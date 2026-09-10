@@ -2,7 +2,7 @@
 
 .admin-users-toolbar {
   --admin-users-control-height: 46px;
-  --admin-users-control-radius: 12px;
+  --admin-users-control-radius: 6px;
   --admin-users-control-border: #d7deea;
   display: flex;
   align-items: center;
@@ -127,7 +127,7 @@
   width: 100%;
   background: #ffffff;
   border: 1px solid #edf1fb;
-  border-radius: 18px;
+  border-radius: 8px;
   box-shadow: 0 14px 34px rgba(15, 23, 42, 0.12);
   overflow: hidden;
 }
@@ -157,7 +157,9 @@
   font-weight: 600;
   cursor: pointer;
   text-align: left;
-  transition: background-color 0.16s ease, color 0.16s ease;
+  transition:
+    background-color 0.16s ease,
+    color 0.16s ease;
 }
 
 .admin-users-filter-option:hover {
@@ -212,7 +214,7 @@
   padding: 10px 14px;
   border: 1px solid #dbeafe;
   background: #eff6ff;
-  border-radius: 10px;
+  border-radius: 6px;
 }
 
 .admin-users-bulkbar-count {
@@ -230,7 +232,7 @@
 .admin-users-bulk-btn {
   padding: 7px 12px;
   font-size: 13px;
-  border-radius: 7px;
+  border-radius: 6px;
 }
 
 .admin-users-bulk-btn.lock {
@@ -331,7 +333,7 @@
   min-width: 92px;
   text-align: center;
   padding: 0.5rem;
-  border-radius: 9999px
+  border-radius: 9999px;
 }
 
 .admin-badge.admin {
@@ -379,7 +381,10 @@
   visibility: hidden;
   pointer-events: none;
   transform: translateY(4px);
-  transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s ease;
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease,
+    visibility 0.15s ease;
 }
 
 .admin-users-action-menu::before {
@@ -409,7 +414,11 @@
   transform: translateY(0);
 }
 
-.admin-users-table tbody tr:nth-last-child(-n + 2) .admin-users-action-menu-wrap:hover .admin-users-action-menu {
+.admin-users-table
+  tbody
+  tr:nth-last-child(-n + 2)
+  .admin-users-action-menu-wrap:hover
+  .admin-users-action-menu {
   transform: translateY(0);
 }
 
@@ -504,7 +513,7 @@
   min-width: 32px;
   height: 32px;
   padding: 0 8px;
-  border-radius: 8px;
+  border-radius: 6px;
   display: inline-flex;
   align-items: center;
   justify-content: center;

@@ -49,7 +49,7 @@
   width: 64px;
   height: 64px;
   background-color: var(--navy-50);
-  border-radius: 16px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -78,7 +78,7 @@
 .port-scoreboard {
   background: #003666;
   /* Deep blue from screenshot */
-  border-radius: 12px;
+  border-radius: 8px;
   padding: 16px 24px;
   display: flex;
   align-items: center;
@@ -114,7 +114,7 @@
   align-items: center;
   gap: 6px;
   padding: 6px 16px;
-  border-radius: 20px;
+  border-radius: 6px;
   font-size: 13px;
   font-weight: 600;
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -149,7 +149,7 @@
   border: 1px solid rgba(255, 255, 255, 0.2);
   color: #fff;
   padding: 8px 16px;
-  border-radius: 8px;
+  border-radius: 6px;
   font-weight: 600;
   font-size: 13px;
   cursor: pointer;
@@ -171,7 +171,7 @@
   gap: 16px;
   background: #fff;
   padding: 16px;
-  border-radius: 12px;
+  border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   margin-bottom: 24px;
 }
@@ -193,7 +193,7 @@
 .port-search-input {
   width: 100%;
   padding: 12px 16px 12px 42px;
-  border-radius: 20px;
+  border-radius: 6px;
   border: 1px solid #e5e7eb;
   background: #f3f4f6;
   font-size: 14px;
@@ -210,7 +210,7 @@
 
 .port-filter-select {
   padding: 12px 16px;
-  border-radius: 8px;
+  border-radius: 6px;
   border: 1px solid #e5e7eb;
   background: #f3f4f6;
   font-size: 14px;
@@ -226,7 +226,7 @@
   gap: 12px;
   background: #f3f4f6;
   padding: 8px 16px;
-  border-radius: 20px;
+  border-radius: 6px;
 }
 
 .toggle-label {
@@ -257,25 +257,25 @@
   right: 0;
   bottom: 0;
   background-color: #d1d5db;
-  transition: .3s;
+  transition: 0.3s;
 }
 
 .slider:before {
   position: absolute;
-  content: "";
+  content: '';
   height: 18px;
   width: 18px;
   left: 3px;
   bottom: 3px;
   background-color: white;
-  transition: .3s;
+  transition: 0.3s;
 }
 
-input:checked+.slider {
+input:checked + .slider {
   background-color: #003666;
 }
 
-input:checked+.slider:before {
+input:checked + .slider:before {
   transform: translateX(20px);
 }
 
@@ -290,7 +290,7 @@ input:checked+.slider:before {
 /* Table */
 .port-table-container {
   background: #fff;
-  border-radius: 12px;
+  border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   overflow: hidden;
 }
@@ -366,7 +366,7 @@ input:checked+.slider:before {
 
 .tag {
   padding: 4px 10px;
-  border-radius: 12px;
+  border-radius: 4px;
   font-size: 12px;
   font-weight: 700;
 }
@@ -397,7 +397,7 @@ input:checked+.slider:before {
 .quiz-input {
   width: 70px;
   padding: 10px 12px;
-  border-radius: 8px;
+  border-radius: 6px;
   border: 1px solid #cbd5e1;
   font-size: 16px;
   font-weight: 700;
@@ -503,7 +503,7 @@ input:checked+.slider:before {
   min-width: 36px;
   height: 36px;
   padding: 0 8px;
-  border-radius: 8px;
+  border-radius: 6px;
   border: 1px solid #cbd5e1;
   background: #fff;
   color: #475569;

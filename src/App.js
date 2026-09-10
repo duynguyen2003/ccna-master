@@ -78,9 +78,15 @@ function GlobalToastRenderer() {
   }, [pendingToast, setPendingToast]);
 
   useEffect(() => {
-    const handleOffline = () => setSystemToast({ type: 'error', message: 'Mất kết nối mạng. Ứng dụng có thể không hoạt động chính xác.' });
-    const handleOnline = () => setSystemToast({ type: 'success', message: 'Đã khôi phục kết nối mạng.' });
-    const handleApiError = (e) => setSystemToast({ type: 'error', message: e.detail || 'Lỗi máy chủ.' });
+    const handleOffline = () =>
+      setSystemToast({
+        type: 'error',
+        message: 'Mất kết nối mạng. Ứng dụng có thể không hoạt động chính xác.',
+      });
+    const handleOnline = () =>
+      setSystemToast({ type: 'success', message: 'Đã khôi phục kết nối mạng.' });
+    const handleApiError = (e) =>
+      setSystemToast({ type: 'error', message: e.detail || 'Lỗi máy chủ.' });
 
     window.addEventListener('offline', handleOffline);
     window.addEventListener('online', handleOnline);
@@ -111,29 +117,33 @@ function GlobalToastRenderer() {
   );
 }
 
-
 function App() {
   const { loading } = useAuth();
 
   if (loading) {
     return (
-      <div style={{ 
-        height: '100vh', 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center', 
-        flexDirection: 'column',
-        gap: '1rem',
-        color: '#64748b',
-        fontFamily: 'sans-serif'
-      }}>
-        <div className="acm-spin" style={{ 
-          width: '40px', 
-          height: '40px', 
-          border: '3px solid #e2e8f0', 
-          borderTopColor: '#2563eb', 
-          borderRadius: '50%' 
-        }}></div>
+      <div
+        style={{
+          height: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexDirection: 'column',
+          gap: '1rem',
+          color: '#64748b',
+          fontFamily: 'sans-serif',
+        }}
+      >
+        <div
+          className="acm-spin"
+          style={{
+            width: '40px',
+            height: '40px',
+            border: '3px solid #e2e8f0',
+            borderTopColor: '#2563eb',
+            borderRadius: '50%',
+          }}
+        ></div>
         <p>Đang chuẩn bị dữ liệu...</p>
       </div>
     );
@@ -146,58 +156,136 @@ function App() {
         {/* =========================================
             ADMIN ROUTES (Isolated Layout)
             ========================================= */}
-        <Route path="/admin/*" element={
-          <AdminProtectedRoute>
-            <AdminLayout>
-              <Routes>
-                <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />
-                <Route path="dashboard" element={<Dashboard />} />
-                <Route path="users" element={<Users />} />
-                <Route path="courses" element={<Courses />} />
-                <Route path="courses/:courseId" element={<AdminCourseDetail />} />
-                <Route path="exams" element={<Exams />} />
-                <Route path="labs" element={<Labs />} />
-                <Route path="tools" element={<AdminTools />} />
-                <Route path="resources" element={<AdminResources />} />
-              </Routes>
-            </AdminLayout>
-          </AdminProtectedRoute>
-        } />
-
-
+        <Route
+          path="/admin/*"
+          element={
+            <AdminProtectedRoute>
+              <AdminLayout>
+                <Routes>
+                  <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />
+                  <Route path="dashboard" element={<Dashboard />} />
+                  <Route path="users" element={<Users />} />
+                  <Route path="courses" element={<Courses />} />
+                  <Route path="courses/:courseId" element={<AdminCourseDetail />} />
+                  <Route path="exams" element={<Exams />} />
+                  <Route path="labs" element={<Labs />} />
+                  <Route path="tools" element={<AdminTools />} />
+                  <Route path="resources" element={<AdminResources />} />
+                </Routes>
+              </AdminLayout>
+            </AdminProtectedRoute>
+          }
+        />
 
         {/* =========================================
             USER/STUDENT ROUTES (With Layout)
             ========================================= */}
-        <Route path="*" element={
-          <Layout>
-            <Routes>
-              <Route path="/" element={<Home />} />
+        <Route
+          path="*"
+          element={
+            <Layout>
+              <Routes>
+                <Route path="/" element={<Home />} />
 
-              {/* AUTH AS MODALS */}
-              <Route path="/login" element={<><Home /><Login /></>} />
-              <Route path="/register" element={<><Home /><Register /></>} />
-              <Route path="/forgot-password" element={<><Home /><ForgotPassword /></>} />
-              <Route path="/reset-password/:token" element={<><Home /><ResetPassword /></>} />
+                {/* AUTH AS MODALS */}
+                <Route
+                  path="/login"
+                  element={
+                    <>
+                      <Home />
+                      <Login />
+                    </>
+                  }
+                />
+                <Route
+                  path="/register"
+                  element={
+                    <>
+                      <Home />
+                      <Register />
+                    </>
+                  }
+                />
+                <Route
+                  path="/forgot-password"
+                  element={
+                    <>
+                      <Home />
+                      <ForgotPassword />
+                    </>
+                  }
+                />
+                <Route
+                  path="/reset-password/:token"
+                  element={
+                    <>
+                      <Home />
+                      <ResetPassword />
+                    </>
+                  }
+                />
 
-              {/* Trang bảo vệ */}
-              <Route path="/roadmap" element={<Roadmap />} />
-              <Route path="/course/:courseId" element={<CourseDetail />} />
-              <Route path="/lesson" element={<Lesson />} />
-              <Route path="/labs" element={<LabsView />} />
-              <Route path="/exam/*" element={<Exam />} />
-              <Route path="/resources" element={<ProtectedRoute><Resources /></ProtectedRoute>} />
-              <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-              <Route path="/tools/subnet" element={<ProtectedRoute><SubnetCalculator /></ProtectedRoute>} />
-              <Route path="/tools/vlsm" element={<ProtectedRoute><VLSMCalculator /></ProtectedRoute>} />
-              <Route path="/tools/ports" element={<ProtectedRoute><PortLookup /></ProtectedRoute>} />
-              <Route path="/tools/cli" element={<ProtectedRoute><CiscoCliLookup /></ProtectedRoute>} />
+                {/* Trang bảo vệ */}
+                <Route path="/roadmap" element={<Roadmap />} />
+                <Route path="/course/:courseId" element={<CourseDetail />} />
+                <Route path="/lesson" element={<Lesson />} />
+                <Route path="/labs" element={<LabsView />} />
+                <Route path="/exam/*" element={<Exam />} />
+                <Route
+                  path="/resources"
+                  element={
+                    <ProtectedRoute>
+                      <Resources />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/profile"
+                  element={
+                    <ProtectedRoute>
+                      <Profile />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/tools/subnet"
+                  element={
+                    <ProtectedRoute>
+                      <SubnetCalculator />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/tools/vlsm"
+                  element={
+                    <ProtectedRoute>
+                      <VLSMCalculator />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/tools/ports"
+                  element={
+                    <ProtectedRoute>
+                      <PortLookup />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/tools/cli"
+                  element={
+                    <ProtectedRoute>
+                      <CiscoCliLookup />
+                    </ProtectedRoute>
+                  }
+                />
 
-              {/* Fallback */}
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </Layout>
-        } />
+                {/* Fallback */}
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </Layout>
+          }
+        />
       </Routes>
     </Router>
   );

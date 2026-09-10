@@ -1,0 +1,46 @@
+/* One scoped palette for the authoring form and the student workspace. */
+:where(.cli-lab-theme, .cli-lab-editor) {
+  --surface-overlay: rgba(15, 23, 42, 0.42);
+  --surface-canvas: #f7fbff;
+  --surface-primary: #ffffff;
+  --surface-secondary: #f1f7fc;
+  --surface-muted: #e8f1f8;
+  --surface-terminal: #10202e;
+  --text-primary: #132336;
+  --text-secondary: #455b70;
+  --text-subtle: #647b90;
+  --text-accent: #0369a1;
+  --text-success: #15803d;
+  --text-danger: #be123c;
+  --text-warning: #a16207;
+  --border-subtle: #cbd9e5;
+  --border-strong: #9fb8cc;
+  --border-danger: var(--text-danger);
+  --bg-accent: #e2f7f3;
+  --bg-danger: #fff1f2;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --radius-panel: 8px;
+}
+
+:where(.cli-lab-theme:not([data-theme='light']), .cli-lab-editor.is-dark) {
+  --surface-overlay: rgba(2, 6, 23, 0.84);
+  --surface-canvas: #08111c;
+  --surface-primary: #0e1a28;
+  --surface-secondary: #122235;
+  --surface-muted: #152a3f;
+  --surface-terminal: #06101a;
+  --text-primary: #e7f0f8;
+  --text-secondary: #9db1c3;
+  --text-subtle: #71869a;
+  --text-accent: #22d3ee;
+  --text-success: #4ade80;
+  --text-danger: #fb7185;
+  --text-warning: #fbbf24;
+  --border-subtle: #2b4158;
+  --border-strong: #45627c;
+  --bg-accent: rgba(45, 212, 191, 0.12);
+  --bg-danger: #472536;
+}

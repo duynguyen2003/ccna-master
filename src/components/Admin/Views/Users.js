@@ -12,7 +12,7 @@ import {
   ChevronDown,
   ChevronUp,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
 } from 'lucide-react';
 import { adminApi } from '../../../services/api/adminApi';
 import { AuthContext } from '../../../context/AuthContext';
@@ -25,24 +25,24 @@ const PAGE_SIZE = 10;
 
 const roleLabel = {
   ADMIN: 'Admin',
-  STUDENT: 'Student'
+  STUDENT: 'Student',
 };
 
 const statusLabel = {
   active: 'Hoạt động',
-  inactive: 'Đã khóa'
+  inactive: 'Đã khóa',
 };
 
 const roleOptions = [
   { value: 'ALL', label: 'T\u1ea5t c\u1ea3 vai tr\u00f2', tone: 'all' },
   { value: 'ADMIN', label: 'Admin', tone: 'admin' },
-  { value: 'STUDENT', label: 'Student', tone: 'student' }
+  { value: 'STUDENT', label: 'Student', tone: 'student' },
 ];
 
 const statusOptions = [
   { value: 'ALL', label: 'T\u1ea5t c\u1ea3 tr\u1ea1ng th\u00e1i', tone: 'all' },
   { value: 'active', label: 'Ho\u1ea1t \u0111\u1ed9ng', tone: 'active' },
-  { value: 'inactive', label: '\u0110\u00e3 kh\u00f3a', tone: 'inactive' }
+  { value: 'inactive', label: '\u0110\u00e3 kh\u00f3a', tone: 'inactive' },
 ];
 
 const Users = () => {
@@ -53,10 +53,20 @@ const Users = () => {
   const [roleFilter, setRoleFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [currentPage, setCurrentPage] = useState(1);
-  const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0, limit: PAGE_SIZE });
+  const [pagination, setPagination] = useState({
+    page: 1,
+    totalPages: 1,
+    total: 0,
+    limit: PAGE_SIZE,
+  });
   const [selectedIds, setSelectedIds] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [formData, setFormData] = useState({ fullName: '', email: '', password: '', role: 'STUDENT' });
+  const [formData, setFormData] = useState({
+    fullName: '',
+    email: '',
+    password: '',
+    role: 'STUDENT',
+  });
   const [error, setError] = useState('');
   const [openFilter, setOpenFilter] = useState(null);
   const [selectedUserProfile, setSelectedUserProfile] = useState(null);
@@ -89,7 +99,7 @@ const Users = () => {
       const res = await adminApi.getUsers(token, currentPage, search, {
         role: roleFilter,
         status: statusFilter,
-        limit: PAGE_SIZE
+        limit: PAGE_SIZE,
       });
 
       const matchesRole = (user) => roleFilter === 'ALL' || user.role === roleFilter;
@@ -98,12 +108,14 @@ const Users = () => {
 
       const rawUsers = res.data || [];
       const nextUsers = rawUsers.filter((user) => matchesRole(user) && matchesStatus(user));
-      const serverAppliedFilters = rawUsers.every((user) => matchesRole(user) && matchesStatus(user));
+      const serverAppliedFilters = rawUsers.every(
+        (user) => matchesRole(user) && matchesStatus(user)
+      );
       const nextPagination = res.pagination || {
         page: currentPage,
         totalPages: 1,
         total: nextUsers.length,
-        limit: PAGE_SIZE
+        limit: PAGE_SIZE,
       };
 
       setUsers(nextUsers);
@@ -114,7 +126,7 @@ const Users = () => {
               ...nextPagination,
               page: 1,
               total: nextUsers.length,
-              totalPages: nextUsers.length > 0 ? 1 : 0
+              totalPages: nextUsers.length > 0 ? 1 : 0,
             }
       );
       setSelectedIds([]);
@@ -140,7 +152,8 @@ const Users = () => {
       setError(err.message);
     }
   };
-  const openUserProfile = async (userId) => {
+
+  const openUserProfile = async (userId) => {
     try {
       const userDetail = await adminApi.getUser(token, userId);
       setSelectedUserProfile(userDetail);
@@ -208,7 +221,11 @@ const Users = () => {
   const handleBulkDelete = async () => {
     if (!selectedIds.length) return;
 
-    if (!window.confirm(`Xóa ${selectedIds.length} tài khoản đã chọn? Hành động này không thể hoàn tác.`)) {
+    if (
+      !window.confirm(
+        `Xóa ${selectedIds.length} tài khoản đã chọn? Hành động này không thể hoàn tác.`
+      )
+    ) {
       return;
     }
 
@@ -221,7 +238,9 @@ const Users = () => {
   };
 
   const toggleUserSelection = (userId) => {
-    setSelectedIds((prev) => (prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId]));
+    setSelectedIds((prev) =>
+      prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId]
+    );
   };
 
   const allSelectedInPage = useMemo(
@@ -302,7 +321,9 @@ const Users = () => {
                     >
                       <span className={`admin-users-filter-dot ${option.tone}`} />
                       <span className="admin-users-filter-option-label">{option.label}</span>
-                      {isSelected && <Check size={18} className="admin-users-filter-option-check" />}
+                      {isSelected && (
+                        <Check size={18} className="admin-users-filter-option-check" />
+                      )}
                     </button>
                   );
                 })}
@@ -320,41 +341,41 @@ const Users = () => {
         <h3>Quản lý người dùng</h3>
         <div className="admin-users-toolbar">
           <div className="admin-users-toolbar-controls">
-          <div className="admin-users-search-wrap">
-            <Search size={16} className="admin-users-search-icon" />
-            <input
-              type="text"
-              placeholder="Tìm kiếm email, tên..."
-              className="admin-search-input"
-              style={{ paddingLeft: '35px', minWidth: '260px' }}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
+            <div className="admin-users-search-wrap">
+              <Search size={16} className="admin-users-search-icon" />
+              <input
+                type="text"
+                placeholder="Tìm kiếm email, tên..."
+                className="admin-search-input"
+                style={{ paddingLeft: '35px', minWidth: '260px' }}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
 
-          {renderFilterDropdown({
-            id: 'role',
-            label: 'L\u1eccC THEO',
-            value: roleFilter,
-            onChange: setRoleFilter,
-            options: roleOptions,
-            icon: Shield,
-            menuTitle: 'L\u1ef0A CH\u1eccN VAI TR\u00d2'
-          })}
+            {renderFilterDropdown({
+              id: 'role',
+              label: 'L\u1eccC THEO',
+              value: roleFilter,
+              onChange: setRoleFilter,
+              options: roleOptions,
+              icon: Shield,
+              menuTitle: 'L\u1ef0A CH\u1eccN VAI TR\u00d2',
+            })}
 
-          {renderFilterDropdown({
-            id: 'status',
-            label: 'L\u1eccC THEO',
-            value: statusFilter,
-            onChange: setStatusFilter,
-            options: statusOptions,
-            icon: SlidersHorizontal,
-            menuTitle: 'L\u1ef0A CH\u1eccN TR\u1ea0NG TH\u00c1I'
-          })}
+            {renderFilterDropdown({
+              id: 'status',
+              label: 'L\u1eccC THEO',
+              value: statusFilter,
+              onChange: setStatusFilter,
+              options: statusOptions,
+              icon: SlidersHorizontal,
+              menuTitle: 'L\u1ef0A CH\u1eccN TR\u1ea0NG TH\u00c1I',
+            })}
 
-          <button className="admin-btn-primary" onClick={() => setIsModalOpen(true)}>
-            <Plus size={18} /> Thêm mới
-          </button>
+            <button className="admin-btn-primary" onClick={() => setIsModalOpen(true)}>
+              <Plus size={18} /> Thêm mới
+            </button>
           </div>
         </div>
       </div>
@@ -363,11 +384,17 @@ const Users = () => {
         <div className="admin-users-bulkbar">
           <span className="admin-users-bulkbar-count">Đã chọn {selectedIds.length} tài khoản</span>
           <div className="admin-users-bulkbar-actions">
-            <button className="admin-btn-primary admin-users-bulk-btn lock" onClick={handleBulkLock}>
+            <button
+              className="admin-btn-primary admin-users-bulk-btn lock"
+              onClick={handleBulkLock}
+            >
               <UserX size={16} />
               Khóa nhiều tài khoản
             </button>
-            <button className="admin-btn-primary admin-users-bulk-btn delete" onClick={handleBulkDelete}>
+            <button
+              className="admin-btn-primary admin-users-bulk-btn delete"
+              onClick={handleBulkDelete}
+            >
               <Trash2 size={16} />
               Xóa nhiều tài khoản
             </button>
@@ -398,7 +425,9 @@ const Users = () => {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan="6" style={{ textAlign: 'center' }}>Đang tải...</td>
+                <td colSpan="6" style={{ textAlign: 'center' }}>
+                  Đang tải...
+                </td>
               </tr>
             ) : users.length > 0 ? (
               users.map((user) => (
@@ -415,10 +444,16 @@ const Users = () => {
                   <td className="admin-users-id-cell">{user.id}</td>
 
                   <td>
-                    <div className="admin-users-user" onClick={() => openUserProfile(user.id)} style={{ cursor: 'pointer' }}>
+                    <div
+                      className="admin-users-user"
+                      onClick={() => openUserProfile(user.id)}
+                      style={{ cursor: 'pointer' }}
+                    >
                       <div className="admin-users-avatar">{getInitials(user.fullName)}</div>
                       <div className="admin-users-user-meta">
-                        <div className="admin-users-user-name">{user.fullName || 'Chưa có tên'}</div>
+                        <div className="admin-users-user-name">
+                          {user.fullName || 'Chưa có tên'}
+                        </div>
                         <div className="admin-users-user-email">{user.email}</div>
                       </div>
                     </div>
@@ -446,7 +481,11 @@ const Users = () => {
                         <span className="admin-users-tooltip">Đổi quyền</span>
                         <Shield
                           size={16}
-                          color={user.role === 'ADMIN' ? 'var(--admin-primary)' : 'var(--admin-text-secondary)'}
+                          color={
+                            user.role === 'ADMIN'
+                              ? 'var(--admin-primary)'
+                              : 'var(--admin-text-secondary)'
+                          }
                         />
                       </button>
 
@@ -484,7 +523,9 @@ const Users = () => {
               ))
             ) : (
               <tr>
-                <td colSpan="6" style={{ textAlign: 'center' }}>Không tìm thấy tài khoản nào</td>
+                <td colSpan="6" style={{ textAlign: 'center' }}>
+                  Không tìm thấy tài khoản nào
+                </td>
               </tr>
             )}
           </tbody>
@@ -538,7 +579,15 @@ const Users = () => {
         {error && <p style={{ color: 'var(--admin-danger)', marginBottom: '10px' }}>{error}</p>}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
           <div>
-            <label style={{ display: 'block', marginBottom: '5px', color: 'var(--admin-text-secondary)' }}>Họ và tên</label>
+            <label
+              style={{
+                display: 'block',
+                marginBottom: '5px',
+                color: 'var(--admin-text-secondary)',
+              }}
+            >
+              Họ và tên
+            </label>
             <input
               className="admin-search-input"
               style={{ width: '100%', boxSizing: 'border-box' }}
@@ -548,7 +597,15 @@ const Users = () => {
           </div>
 
           <div>
-            <label style={{ display: 'block', marginBottom: '5px', color: 'var(--admin-text-secondary)' }}>Email</label>
+            <label
+              style={{
+                display: 'block',
+                marginBottom: '5px',
+                color: 'var(--admin-text-secondary)',
+              }}
+            >
+              Email
+            </label>
             <input
               type="email"
               className="admin-search-input"
@@ -559,7 +616,15 @@ const Users = () => {
           </div>
 
           <div>
-            <label style={{ display: 'block', marginBottom: '5px', color: 'var(--admin-text-secondary)' }}>Mật khẩu tạm</label>
+            <label
+              style={{
+                display: 'block',
+                marginBottom: '5px',
+                color: 'var(--admin-text-secondary)',
+              }}
+            >
+              Mật khẩu tạm
+            </label>
             <input
               type="password"
               className="admin-search-input"
@@ -570,7 +635,15 @@ const Users = () => {
           </div>
 
           <div>
-            <label style={{ display: 'block', marginBottom: '5px', color: 'var(--admin-text-secondary)' }}>Vai trò</label>
+            <label
+              style={{
+                display: 'block',
+                marginBottom: '5px',
+                color: 'var(--admin-text-secondary)',
+              }}
+            >
+              Vai trò
+            </label>
             <select
               className="admin-search-input"
               style={{ width: '100%', boxSizing: 'border-box' }}
@@ -583,9 +656,9 @@ const Users = () => {
           </div>
         </div>
       </AdminModal>
-      <UserProfileModal 
-        isOpen={isProfileModalOpen} 
-        onClose={() => setIsProfileModalOpen(false)} 
+      <UserProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
         user={selectedUserProfile}
         onArchive={handleToggleActive}
         onEdit={(u) => alert('Chức năng chỉnh sửa thông tin đang được cập nhật')}

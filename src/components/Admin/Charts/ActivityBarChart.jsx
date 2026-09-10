@@ -1,7 +1,16 @@
 // src/components/Admin/Charts/ActivityBarChart.jsx
 import React from 'react';
 import { BarChart2 } from 'lucide-react';
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell } from 'recharts';
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Cell,
+} from 'recharts';
 import AdminMotionSwap from '../Components/AdminMotionSwap';
 
 const ActivityBarChart = ({ data, loading = false }) => {
@@ -13,10 +22,20 @@ const ActivityBarChart = ({ data, loading = false }) => {
     );
   }
 
-  if (!data || data.length === 0 || data.every(d => d.value === 0)) {
+  if (!data || data.length === 0 || data.every((d) => d.value === 0)) {
     return (
       <AdminMotionSwap stateKey="empty">
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 300, color: '#94a3b8', gap: '8px' }}>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: 300,
+            color: '#94a3b8',
+            gap: '8px',
+          }}
+        >
           <BarChart2 size={32} strokeWidth={1.5} />
           <p style={{ fontSize: '13px', margin: 0 }}>Chưa có dữ liệu học tập trong 7 ngày qua</p>
         </div>
@@ -24,7 +43,7 @@ const ActivityBarChart = ({ data, loading = false }) => {
     );
   }
 
-  const maxValue = Math.max(...data.map(d => d.value));
+  const maxValue = Math.max(...data.map((d) => d.value));
 
   return (
     <AdminMotionSwap stateKey="ready" style={{ width: '100%', height: 300 }}>
@@ -50,16 +69,13 @@ const ActivityBarChart = ({ data, loading = false }) => {
               borderRadius: '8px',
               border: 'none',
               boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-              fontSize: '13px'
+              fontSize: '13px',
             }}
             formatter={(value) => [`${value} học viên`, 'Hoạt động']}
           />
           <Bar dataKey="value" radius={[4, 4, 0, 0]} barSize={50}>
             {data.map((entry, index) => (
-              <Cell
-                key={`cell-${index}`}
-                fill={entry.value === maxValue ? '#3b82f6' : '#bfdbfe'}
-              />
+              <Cell key={`cell-${index}`} fill={entry.value === maxValue ? '#3b82f6' : '#bfdbfe'} />
             ))}
           </Bar>
         </BarChart>

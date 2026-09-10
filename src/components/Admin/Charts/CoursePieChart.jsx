@@ -15,12 +15,21 @@ const CoursePieChart = ({ data, loading = false }) => {
     );
   }
 
-  const hasData = data && data.length > 0 && data.some(d => d.value > 0);
+  const hasData = data && data.length > 0 && data.some((d) => d.value > 0);
 
   if (!hasData) {
     return (
       <AdminMotionSwap stateKey="empty">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 100, color: '#94a3b8', gap: '12px' }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: 100,
+            color: '#94a3b8',
+            gap: '12px',
+          }}
+        >
           <PieIcon size={24} strokeWidth={1.5} />
           <p style={{ fontSize: '12px', margin: 0 }}>Chưa có dữ liệu</p>
         </div>
@@ -30,7 +39,7 @@ const CoursePieChart = ({ data, loading = false }) => {
 
   const chartData = data.map((item, i) => ({
     ...item,
-    color: item.color || COLORS[i % COLORS.length]
+    color: item.color || COLORS[i % COLORS.length],
   }));
 
   return (
@@ -52,7 +61,12 @@ const CoursePieChart = ({ data, loading = false }) => {
           ))}
         </Pie>
         <Tooltip
-          contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', fontSize: '11px' }}
+          contentStyle={{
+            borderRadius: '8px',
+            border: 'none',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+            fontSize: '11px',
+          }}
           formatter={(v, n) => [`${v} HV`, n]}
         />
       </PieChart>
@@ -61,7 +75,9 @@ const CoursePieChart = ({ data, loading = false }) => {
         {chartData.map((c) => (
           <div key={c.name} className="legend-row">
             <span className="legend-dot" style={{ background: c.color }} />
-            <span className="legend-name" title={c.name}>{c.name}</span>
+            <span className="legend-name" title={c.name}>
+              {c.name}
+            </span>
             <span className="legend-val">{c.value} HV</span>
           </div>
         ))}

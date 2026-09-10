@@ -1,21 +1,33 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
-import { useSearchParams } from "react-router-dom";
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
-  Download, Clock, Terminal, Search, Loader2,
-  X, ChevronLeft, ChevronRight, Copy, Check,
-  BookOpen, Network, Zap, AlertCircle, FileText,
-  Laptop
-} from "lucide-react";
-import { api, BACKEND_URL } from "../../services/Api.js";
-import { useAuth } from "../../context/AuthContext";
-import { useToast } from "../Toast";
-import CliLabWorkspace from "./CliLabWorkspace";
-import { gsap, useGSAP, prefersReducedMotion } from "../../utils/labMotion";
-import { sanitizeHtml } from "../../shared/sanitizeHtml";
+  Download,
+  Clock,
+  Terminal,
+  Search,
+  Loader2,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  Copy,
+  Check,
+  BookOpen,
+  Network,
+  Zap,
+  AlertCircle,
+  FileText,
+  Laptop,
+} from 'lucide-react';
+import { api, BACKEND_URL } from '../../services/Api.js';
+import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../Toast';
+import CliLabWorkspace from './CliLabWorkspace';
+import { gsap, useGSAP, prefersReducedMotion } from '../../utils/labMotion';
+import { sanitizeHtml } from '../../shared/sanitizeHtml';
 
 // Giải quyết URL file lab: local path hoặc Cloudinary URL
 const getLabFileUrl = (fileUrl) => {
-  if (!fileUrl || fileUrl === '#') return '#';
+  if (!fileUrl || fileUrl === '#') return null;
   if (fileUrl.startsWith('http')) return fileUrl;
   // File local: trỏ tới backend server
   return `${BACKEND_URL}${fileUrl}`;
@@ -52,22 +64,25 @@ const LabGuideModal = ({ lab, onClose, onComplete, isGuestView, onGuestBlocked }
     closeTimer.current = window.setTimeout(onClose, delay);
   }, [isClosing, onClose]);
 
-  const handleKey = useCallback((e) => {
-    if (e.key === "Escape") {
-      if (isZoomed) {
-        setIsZoomed(false);
-      } else {
-        requestClose();
+  const handleKey = useCallback(
+    (e) => {
+      if (e.key === 'Escape') {
+        if (isZoomed) {
+          setIsZoomed(false);
+        } else {
+          requestClose();
+        }
       }
-    }
-  }, [isZoomed, requestClose]);
+    },
+    [isZoomed, requestClose]
+  );
 
   useEffect(() => {
-    document.addEventListener("keydown", handleKey);
-    document.body.style.overflow = "hidden";
+    document.addEventListener('keydown', handleKey);
+    document.body.style.overflow = 'hidden';
     return () => {
-      document.removeEventListener("keydown", handleKey);
-      document.body.style.overflow = "";
+      document.removeEventListener('keydown', handleKey);
+      document.body.style.overflow = '';
       if (closeTimer.current) window.clearTimeout(closeTimer.current);
     };
   }, [handleKey]);
@@ -78,13 +93,23 @@ const LabGuideModal = ({ lab, onClose, onComplete, isGuestView, onGuestBlocked }
     <div className={`lab-modal-overlay ${isClosing ? 'is-closing' : ''}`} onClick={requestClose}>
       <div className="lab-guide-mobile-fallback" role="status">
         <div className="cli-mobile-fallback-card">
-          <div className="cli-mobile-fallback-icon"><Laptop size={36} /></div>
+          <div className="cli-mobile-fallback-icon">
+            <Laptop size={36} />
+          </div>
           <h3>Chức năng này cần dùng trên Laptop</h3>
-          <p>Hướng dẫn lab có sơ đồ, terminal và nhiều bước thao tác; hãy mở lại trên màn hình rộng hơn.</p>
-          <button type="button" className="cli-mobile-fallback-btn" onClick={requestClose}>Quay lại danh sách bài học</button>
+          <p>
+            Hướng dẫn lab có sơ đồ, terminal và nhiều bước thao tác; hãy mở lại trên màn hình rộng
+            hơn.
+          </p>
+          <button type="button" className="cli-mobile-fallback-btn" onClick={requestClose}>
+            Quay lại danh sách bài học
+          </button>
         </div>
       </div>
-      <div className={`lab-modal ${isClosing ? 'is-closing' : ''}`} onClick={(e) => e.stopPropagation()}>
+      <div
+        className={`lab-modal ${isClosing ? 'is-closing' : ''}`}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="lab-modal-topbar">
           <div className="lab-modal-dots">
             <span className="dot-red" onClick={requestClose} title="Đóng" />
@@ -107,19 +132,23 @@ const LabGuideModal = ({ lab, onClose, onComplete, isGuestView, onGuestBlocked }
                 <Network size={13} /> Sơ đồ mạng (Topology)
               </div>
               {lab.topologyImgUrl ? (
-                <div 
-                  className="lab-topology-img-wrap" 
-                  style={{ 
-                    marginTop: '8px', 
-                    borderRadius: '8px', 
-                    overflow: 'hidden', 
+                <div
+                  className="lab-topology-img-wrap"
+                  style={{
+                    marginTop: '8px',
+                    borderRadius: '8px',
+                    overflow: 'hidden',
                     border: '1px solid #30363d',
-                    cursor: 'zoom-in'
+                    cursor: 'zoom-in',
                   }}
                   onClick={() => setIsZoomed(true)}
                   title="Click để phóng to sơ đồ mạng"
                 >
-                  <img src={lab.topologyImgUrl} alt="Topology" style={{ width: '100%', display: 'block' }} />
+                  <img
+                    src={lab.topologyImgUrl}
+                    alt="Topology"
+                    style={{ width: '100%', display: 'block' }}
+                  />
                 </div>
               ) : (
                 <pre className="lab-topology-pre">{lab.topology || 'Không có sơ đồ'}</pre>
@@ -138,9 +167,15 @@ const LabGuideModal = ({ lab, onClose, onComplete, isGuestView, onGuestBlocked }
                 <div className="lab-sidebar-label">
                   <FileText size={13} /> Nội dung hướng dẫn
                 </div>
-                <div 
+                <div
                   className="lab-guide-rich-text"
-                  style={{ fontSize: '0.85rem', color: '#c9d1d9', marginTop: '8px', lineHeight: '1.5', wordBreak: 'break-word' }}
+                  style={{
+                    fontSize: '0.85rem',
+                    color: '#c9d1d9',
+                    marginTop: '8px',
+                    lineHeight: '1.5',
+                    wordBreak: 'break-word',
+                  }}
                   dangerouslySetInnerHTML={{ __html: sanitizeHtml(lab.guideContent) }}
                 />
               </div>
@@ -152,7 +187,9 @@ const LabGuideModal = ({ lab, onClose, onComplete, isGuestView, onGuestBlocked }
               </div>
               <div className="lab-tool-tags">
                 {lab.tools?.map((t) => (
-                  <span key={t} className="lab-tool-tag">{t}</span>
+                  <span key={t} className="lab-tool-tag">
+                    {t}
+                  </span>
                 ))}
               </div>
             </div>
@@ -161,7 +198,7 @@ const LabGuideModal = ({ lab, onClose, onComplete, isGuestView, onGuestBlocked }
               {lab.steps?.map((_, i) => (
                 <button
                   key={i}
-                  className={`lab-step-dot ${i === step ? "active" : i < step ? "done" : ""}`}
+                  className={`lab-step-dot ${i === step ? 'active' : i < step ? 'done' : ''}`}
                   onClick={() => setStep(i)}
                   title={`Bước ${i + 1}`}
                 />
@@ -171,18 +208,34 @@ const LabGuideModal = ({ lab, onClose, onComplete, isGuestView, onGuestBlocked }
             <div
               className="lab-sidebar-section"
               style={{
-                background: "rgba(37,99,235,0.1)",
-                padding: "10px",
-                borderRadius: "8px",
-                border: "1px solid rgba(37,99,235,0.3)",
-                marginTop: "auto",
-                marginBottom: "10px"
+                background: 'rgba(37,99,235,0.1)',
+                padding: '10px',
+                borderRadius: '8px',
+                border: '1px solid rgba(37,99,235,0.3)',
+                marginTop: 'auto',
+                marginBottom: '10px',
               }}
             >
-              <div style={{ fontSize: "0.75rem", color: "#58a6ff", fontWeight: "bold", display: "flex", alignItems: "center", gap: "4px" }}>
+              <div
+                style={{
+                  fontSize: '0.75rem',
+                  color: '#58a6ff',
+                  fontWeight: 'bold',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                }}
+              >
                 <Check size={12} /> CHẤM ĐIỂM TỰ ĐỘNG
               </div>
-              <p style={{ fontSize: "0.7rem", color: "#8b949e", margin: "4px 0 0 0", lineHeight: 1.5 }}>
+              <p
+                style={{
+                  fontSize: '0.7rem',
+                  color: '#8b949e',
+                  margin: '4px 0 0 0',
+                  lineHeight: 1.5,
+                }}
+              >
                 Guest chỉ được xem thông tin hướng dẫn. Đăng nhập để tải file và thực hành lab.
               </p>
             </div>
@@ -191,16 +244,28 @@ const LabGuideModal = ({ lab, onClose, onComplete, isGuestView, onGuestBlocked }
               <button type="button" className="lab-download-btn" onClick={onGuestBlocked}>
                 <Download size={14} /> Tải file bài tập (.pka)
               </button>
-            ) : (
+            ) : getLabFileUrl(lab.fileUrl) ? (
               <a href={getLabFileUrl(lab.fileUrl)} className="lab-download-btn" download>
                 <Download size={14} /> Tải file bài tập (.pka)
               </a>
+            ) : (
+              <button
+                type="button"
+                className="lab-download-btn"
+                title="Bài lab này chưa có file đính kèm"
+                style={{ opacity: 0.5, cursor: 'not-allowed' }}
+                disabled
+              >
+                <Download size={14} /> Chưa có file (.pka)
+              </button>
             )}
           </div>
 
           <div className="lab-modal-terminal">
             <div className="lab-step-header">
-              <span className="lab-step-badge">Bước {step + 1}/{totalSteps}</span>
+              <span className="lab-step-badge">
+                Bước {step + 1}/{totalSteps}
+              </span>
               <h3 className="lab-step-title">{currentStep?.title}</h3>
             </div>
 
@@ -235,8 +300,8 @@ const LabGuideModal = ({ lab, onClose, onComplete, isGuestView, onGuestBlocked }
                   Bước tiếp theo <ChevronRight size={16} />
                 </button>
               ) : (
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
-                  <div style={{ fontSize: "0.7rem", color: "#d29922", paddingBottom: "6px" }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                  <div style={{ fontSize: '0.7rem', color: '#d29922', paddingBottom: '6px' }}>
                     * Đảm bảo bạn đã đạt 100% completion trước khi xác nhận.
                   </div>
                   <button
@@ -256,14 +321,18 @@ const LabGuideModal = ({ lab, onClose, onComplete, isGuestView, onGuestBlocked }
       {isZoomed && (
         <div className="lab-topology-zoom-overlay" onClick={() => setIsZoomed(false)}>
           <div className="lab-topology-zoom-container" onClick={(e) => e.stopPropagation()}>
-            <button className="lab-topology-zoom-close" onClick={() => setIsZoomed(false)} title="Đóng">
+            <button
+              className="lab-topology-zoom-close"
+              onClick={() => setIsZoomed(false)}
+              title="Đóng"
+            >
               <X size={20} />
             </button>
-            <img 
-              src={lab.topologyImgUrl} 
-              alt="Topology Zoomed" 
-              className="lab-topology-zoom-img" 
-              onClick={() => setIsZoomed(false)} 
+            <img
+              src={lab.topologyImgUrl}
+              alt="Topology Zoomed"
+              className="lab-topology-zoom-img"
+              onClick={() => setIsZoomed(false)}
             />
           </div>
         </div>
@@ -273,34 +342,50 @@ const LabGuideModal = ({ lab, onClose, onComplete, isGuestView, onGuestBlocked }
 };
 
 const difficultyConfig = {
-  EASY: { label: "Dễ", cls: "badge-easy" },
-  MEDIUM: { label: "Trung bình", cls: "badge-medium" },
-  HARD: { label: "Khó", cls: "badge-hard" },
-  Easy: { label: "Dễ", cls: "badge-easy" },
-  Medium: { label: "Trung bình", cls: "badge-medium" },
-  Hard: { label: "Khó", cls: "badge-hard" }
+  EASY: { label: 'Dễ', cls: 'badge-easy' },
+  MEDIUM: { label: 'Trung bình', cls: 'badge-medium' },
+  HARD: { label: 'Khó', cls: 'badge-hard' },
+  Easy: { label: 'Dễ', cls: 'badge-easy' },
+  Medium: { label: 'Trung bình', cls: 'badge-medium' },
+  Hard: { label: 'Khó', cls: 'badge-hard' },
 };
 
 const LabCard = ({ lab, isCompleted, onSelect, onStartCli, isGuestView, onGuestBlocked }) => {
-  const diff = difficultyConfig[lab.difficulty] || { label: lab.difficulty, cls: "badge-gray" };
+  const diff = difficultyConfig[lab.difficulty] || { label: lab.difficulty, cls: 'badge-gray' };
   const isCliLab = lab.labType === 'CLI_SIMULATION';
 
   return (
     <div className="lab-card">
       <div className="lab-card-img-wrap">
         <img src={lab.imageUrl} alt={lab.title} className="lab-card-img" />
-        <div style={{ position: "absolute", top: 12, right: 12, display: "flex", gap: "8px" }}>
+        <div style={{ position: 'absolute', top: 12, right: 12, display: 'flex', gap: '8px' }}>
           {isCompleted && (
-            <span className="lab-badge badge-easy" style={{ position: "relative", top: 0, right: 0, display: "flex", alignItems: "center", gap: "4px" }}>
+            <span
+              className="lab-badge badge-easy"
+              style={{
+                position: 'relative',
+                top: 0,
+                right: 0,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+              }}
+            >
               <Check size={10} /> ĐÃ XONG
             </span>
           )}
           {isCliLab ? (
-            <span className="lab-badge lab-badge-cli" style={{ position: "relative", top: 0, right: 0 }}>
+            <span
+              className="lab-badge lab-badge-cli"
+              style={{ position: 'relative', top: 0, right: 0 }}
+            >
               WEB CLI
             </span>
           ) : null}
-          <span className={`lab-badge ${diff.cls}`} style={{ position: "relative", top: 0, right: 0 }}>
+          <span
+            className={`lab-badge ${diff.cls}`}
+            style={{ position: 'relative', top: 0, right: 0 }}
+          >
             {diff.label}
           </span>
         </div>
@@ -312,8 +397,12 @@ const LabCard = ({ lab, isCompleted, onSelect, onStartCli, isGuestView, onGuestB
         <h3 className="lab-card-title">{lab.title}</h3>
 
         <div className="lab-card-meta">
-          <span><Clock size={13} /> {lab.duration}</span>
-          <span><Terminal size={13} /> {lab.tools?.join(", ")}</span>
+          <span>
+            <Clock size={13} /> {lab.duration}
+          </span>
+          <span>
+            <Terminal size={13} /> {lab.tools?.join(', ')}
+          </span>
         </div>
 
         <div className="lab-card-actions">
@@ -330,10 +419,20 @@ const LabCard = ({ lab, isCompleted, onSelect, onStartCli, isGuestView, onGuestB
                 <button type="button" className="lab-btn-outline" onClick={onGuestBlocked}>
                   <Download size={14} /> Tải file
                 </button>
-              ) : (
+              ) : getLabFileUrl(lab.fileUrl) ? (
                 <a href={getLabFileUrl(lab.fileUrl)} className="lab-btn-outline" download>
                   <Download size={14} /> Tải file
                 </a>
+              ) : (
+                <button
+                  type="button"
+                  className="lab-btn-outline"
+                  title="Bài lab này chưa có file đính kèm"
+                  style={{ opacity: 0.5, cursor: 'not-allowed' }}
+                  disabled
+                >
+                  <Download size={14} /> Chưa có file
+                </button>
               )}
 
               <button className="lab-btn-primary" onClick={() => onSelect(lab)}>
@@ -357,8 +456,8 @@ export const Labs = () => {
 
   const [labs, setLabs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState("All");
-  const [searchTerm, setSearchTerm] = useState("");
+  const [filter, setFilter] = useState('All');
+  const [searchTerm, setSearchTerm] = useState('');
   const [selectedLab, setSelectedLab] = useState(null);
   const [selectedCliLab, setSelectedCliLab] = useState(null);
   const [completedLabs, setCompletedLabs] = useState([]);
@@ -368,7 +467,7 @@ export const Labs = () => {
   // Tự động mở bài Lab nếu có labIdParam trong URL
   useEffect(() => {
     if (labs.length > 0 && labIdParam) {
-      const foundLab = labs.find(l => l.id.toString() === labIdParam);
+      const foundLab = labs.find((l) => l.id.toString() === labIdParam);
       if (foundLab) {
         if (foundLab.labType === 'CLI_SIMULATION' && isAuthenticated) {
           setSelectedLab(null);
@@ -403,11 +502,11 @@ export const Labs = () => {
     const loadData = async () => {
       try {
         setLoading(true);
-        
+
         // Luôn tải danh sách lab (hỗ trợ cả tài khoản guest)
         const labsData = await api.getLabs(token);
         setLabs(labsData);
-        
+
         let done = [];
         // Chỉ tải tiến độ học tập nếu tài khoản đã đăng nhập
         if (token) {
@@ -416,10 +515,10 @@ export const Labs = () => {
             .filter(([key, val]) => key.startsWith('lab_') && val.status === 'COMPLETED')
             .map(([key]) => key.replace('lab_', ''));
         }
-        
+
         setCompletedLabs(done);
       } catch (err) {
-        console.error("Failed to load labs data", err);
+        console.error('Failed to load labs data', err);
       } finally {
         setLoading(false);
       }
@@ -429,7 +528,7 @@ export const Labs = () => {
   }, [token]);
 
   const allCategories = React.useMemo(() => {
-    const list = ["All", "Switching", "Routing", "Security", "Services", "Automation"];
+    const list = ['All', 'Switching', 'Routing', 'Security', 'Services', 'Automation'];
     const set = new Set(list);
     labs.forEach((l) => {
       if (l.category) {
@@ -441,34 +540,41 @@ export const Labs = () => {
   }, [labs]);
 
   const filteredLabs = labs.filter((lab) => {
-    const matchCat = filter === "All" || (lab.category && lab.category.toLowerCase() === filter.toLowerCase());
+    const matchCat =
+      filter === 'All' || (lab.category && lab.category.toLowerCase() === filter.toLowerCase());
     const matchSearch = lab.title.toLowerCase().includes(searchTerm.toLowerCase());
     return matchCat && matchSearch;
   });
 
   const containerRef = useRef(null);
 
-  useGSAP(() => {
-    if (loading || prefersReducedMotion()) return;
-    const tl = gsap.timeline({ defaults: { ease: "power2.out" } });
-    tl.fromTo(".labs-header",
-      { opacity: 0, y: -12 },
-      { opacity: 1, y: 0, duration: 0.35, clearProps: "all" }
-    )
-    .fromTo(".filter-btn",
-      { opacity: 0, y: 8 },
-      { opacity: 1, y: 0, stagger: 0.03, duration: 0.25, clearProps: "all" },
-      "-=0.15"
-    )
-    .fromTo(".lab-card",
-      { opacity: 0, y: 15 },
-      { opacity: 1, y: 0, stagger: 0.04, duration: 0.35, clearProps: "all" },
-      "-=0.15"
-    );
-  }, { dependencies: [loading], scope: containerRef });
+  useGSAP(
+    () => {
+      if (loading || prefersReducedMotion()) return;
+      const tl = gsap.timeline({ defaults: { ease: 'power2.out' } });
+      tl.fromTo(
+        '.labs-header',
+        { opacity: 0, y: -12 },
+        { opacity: 1, y: 0, duration: 0.35, clearProps: 'all' }
+      )
+        .fromTo(
+          '.filter-btn',
+          { opacity: 0, y: 8 },
+          { opacity: 1, y: 0, stagger: 0.03, duration: 0.25, clearProps: 'all' },
+          '-=0.15'
+        )
+        .fromTo(
+          '.lab-card',
+          { opacity: 0, y: 15 },
+          { opacity: 1, y: 0, stagger: 0.04, duration: 0.35, clearProps: 'all' },
+          '-=0.15'
+        );
+    },
+    { dependencies: [loading], scope: containerRef }
+  );
 
   const notifyGuestBlocked = useCallback(() => {
-    showToast("Guest chỉ được xem thông tin lab. Vui lòng đăng nhập để thực hành.", "info");
+    showToast('Guest chỉ được xem thông tin lab. Vui lòng đăng nhập để thực hành.', 'info');
   }, [showToast]);
 
   return (
@@ -481,7 +587,8 @@ export const Labs = () => {
         <div className="lab-mobile-notice-content">
           <div className="lab-mobile-notice-title">Chức năng này cần dùng trên Laptop</div>
           <p className="lab-mobile-notice-desc">
-            Để gõ lệnh Cisco CLI và thao tác sơ đồ mạng topology mô phỏng chính xác nhất, bạn nên sử dụng máy tính hoặc Laptop.
+            Để gõ lệnh Cisco CLI và thao tác sơ đồ mạng topology mô phỏng chính xác nhất, bạn nên sử
+            dụng máy tính hoặc Laptop.
           </p>
         </div>
       </div>
@@ -489,7 +596,9 @@ export const Labs = () => {
       <div className="labs-header">
         <div className="labs-header-text">
           <h1 className="labs-main-title">Phòng Lab Thực Hành</h1>
-          <p className="labs-main-desc">Kho bài lab chuẩn Cisco - topology, CLI step-by-step, file Packet Tracer.</p>
+          <p className="labs-main-desc">
+            Kho bài lab chuẩn Cisco - topology, CLI step-by-step, file Packet Tracer.
+          </p>
         </div>
 
         <div className="labs-search-wrap">
@@ -509,7 +618,7 @@ export const Labs = () => {
           <button
             key={cat}
             onClick={() => setFilter(cat)}
-            className={`filter-btn ${filter.toLowerCase() === cat.toLowerCase() ? "active" : ""}`}
+            className={`filter-btn ${filter.toLowerCase() === cat.toLowerCase() ? 'active' : ''}`}
           >
             {cat}
           </button>
@@ -554,16 +663,16 @@ export const Labs = () => {
                 status: 'COMPLETED',
                 progressPercent: 100,
                 // Lấy courseId từ lab (nếu có) để cập nhật tiến độ tổng quát của khóa học
-                courseId: selectedLab.courseId 
+                courseId: selectedLab.courseId,
               });
 
               if (!completedLabs.includes(id)) {
                 setCompletedLabs((prev) => [...prev, id]);
               }
-              showToast("Chúc mừng! Bạn đã hoàn thành bài thực hành.", "success");
+              showToast('Chúc mừng! Bạn đã hoàn thành bài thực hành.', 'success');
             } catch (err) {
-              console.error("Failed to save lab progress", err);
-              showToast("Không thể lưu tiến độ. Vui lòng thử lại sau.", "error");
+              console.error('Failed to save lab progress', err);
+              showToast('Không thể lưu tiến độ. Vui lòng thử lại sau.', 'error');
             }
             setSelectedLab(null);
           }}

@@ -1,6 +1,6 @@
 /* Icons (Required) */
-@import url("https://fonts.googleapis.com/icon?family=Material+Icons+Round");
-@import url("https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap");
+@import url('https://fonts.googleapis.com/icon?family=Material+Icons+Round');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
 
 /* Text Fonts removed for system default */
 
@@ -40,8 +40,7 @@
 
   --white: #ffffff;
   --system-ui:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
-    Arial, sans-serif;
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   /* Exam Specific Variables */
   --primary: #2563eb;
   --primary-light: #eff6ff;
@@ -80,7 +79,7 @@ select {
 
 .btn {
   padding: 0.75rem 1.5rem;
-  border-radius: 0.75rem;
+  border-radius: 6px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -143,7 +142,7 @@ select {
 .card {
   background: white;
   border: 1px solid var(--slate-200);
-  border-radius: 1rem;
+  border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
   transition: all 0.2s;

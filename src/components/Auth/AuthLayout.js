@@ -14,7 +14,9 @@ const AuthLayout = ({ children, toast }) => {
           aria-label="Đóng"
           title="Đóng"
         >
-          <span className="material-icons-round" style={{ fontSize: '20px' }}>close</span>
+          <span className="material-icons-round" style={{ fontSize: '20px' }}>
+            close
+          </span>
         </button>
 
         {/* Left Panel - Visuals */}
@@ -39,9 +41,7 @@ const AuthLayout = ({ children, toast }) => {
 
         {/* Right Panel - Form Content */}
         <div className="auth-right-panel">
-          <div className="auth-content-wrapper">
-            {children}
-          </div>
+          <div className="auth-content-wrapper">{children}</div>
         </div>
       </div>
     </div>

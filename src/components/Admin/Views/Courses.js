@@ -1,6 +1,17 @@
 import React, { useState, useEffect, useContext, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Trash2, Image, BookOpen, Search, Loader2, GraduationCap, ListChecks, Pencil, ImagePlus } from 'lucide-react';
+import {
+  Plus,
+  Trash2,
+  Image,
+  BookOpen,
+  Search,
+  Loader2,
+  GraduationCap,
+  ListChecks,
+  Pencil,
+  ImagePlus,
+} from 'lucide-react';
 import { adminApi } from '../../../services/api/adminApi';
 import { AuthContext } from '../../../context/AuthContext';
 import { BACKEND_URL } from '../../../services/Api.js';
@@ -16,7 +27,7 @@ const initialCourseForm = {
   level: 'BEGINNER',
   status: 'DRAFT',
   orderIndex: 0,
-  thumbnail: null
+  thumbnail: null,
 };
 
 const resolveMediaUrl = (url) => {
@@ -30,7 +41,7 @@ const resolveMediaUrl = (url) => {
 const levelOptions = [
   { value: 'BEGINNER', label: 'Cơ bản' },
   { value: 'INTERMEDIATE', label: 'Trung bình' },
-  { value: 'ADVANCED', label: 'Nâng cao' }
+  { value: 'ADVANCED', label: 'Nâng cao' },
 ];
 
 const Courses = () => {
@@ -54,22 +65,25 @@ const Courses = () => {
   const [previewUrl, setPreviewUrl] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const fetchCourses = useCallback(async (page = currentPage) => {
-    try {
-      setLoading(true);
-      const res = await adminApi.getCourses(token, page);
-      setCourses(res.data || []);
-      if (res.pagination) {
-        setTotalPages(res.pagination.totalPages || 1);
-        setTotalItems(res.pagination.total || 0);
-        setCurrentPage(res.pagination.page || 1);
+  const fetchCourses = useCallback(
+    async (page = currentPage) => {
+      try {
+        setLoading(true);
+        const res = await adminApi.getCourses(token, page);
+        setCourses(res.data || []);
+        if (res.pagination) {
+          setTotalPages(res.pagination.totalPages || 1);
+          setTotalItems(res.pagination.total || 0);
+          setCurrentPage(res.pagination.page || 1);
+        }
+      } catch (err) {
+        setError(err.message || 'Không thể tải danh sách khóa học.');
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      setError(err.message || 'Không thể tải danh sách khóa học.');
-    } finally {
-      setLoading(false);
-    }
-  }, [token, currentPage]);
+    },
+    [token, currentPage]
+  );
 
   useEffect(() => {
     fetchCourses(currentPage);
@@ -108,7 +122,7 @@ const Courses = () => {
       level: course.level,
       status: course.status,
       orderIndex: course.orderIndex || 0,
-      thumbnail: null
+      thumbnail: null,
     });
     setPreviewUrl(resolveMediaUrl(course.thumbnailUrl));
     setIsModalOpen(true);
@@ -170,7 +184,9 @@ const Courses = () => {
       <section className="acm-hero">
         <div className="acm-hero-main">
           <h2 className="acm-hero-title">Quản lý khóa học</h2>
-          <p className="acm-hero-subtitle">Theo dõi danh sách khóa học và điều hướng đến khu vực quản lý chương, bài học.</p>
+          <p className="acm-hero-subtitle">
+            Theo dõi danh sách khóa học và điều hướng đến khu vực quản lý chương, bài học.
+          </p>
         </div>
         <button className="acm-primary-btn" onClick={openCreateModal}>
           <Plus size={16} />
@@ -263,7 +279,9 @@ const Courses = () => {
                         <span className="acm-level-pill">{course.level || '—'}</span>
                       </td>
                       <td className="text-center">
-                        <span className={`acm-status-badge ${course.status === 'PUBLISHED' ? 'published' : 'draft'}`}>
+                        <span
+                          className={`acm-status-badge ${course.status === 'PUBLISHED' ? 'published' : 'draft'}`}
+                        >
                           {course.status || 'DRAFT'}
                         </span>
                       </td>
@@ -290,7 +308,11 @@ const Courses = () => {
                             disabled={deletingId === course.id}
                             onClick={() => handleDelete(course.id)}
                           >
-                            {deletingId === course.id ? <Loader2 size={15} className="acm-spin" /> : <Trash2 size={15} />}
+                            {deletingId === course.id ? (
+                              <Loader2 size={15} className="acm-spin" />
+                            ) : (
+                              <Trash2 size={15} />
+                            )}
                           </button>
                         </div>
                       </td>
@@ -313,7 +335,11 @@ const Courses = () => {
 
       <AdminModal
         title={editingCourse ? 'Cập nhật khóa học' : 'Thêm khóa học mới'}
-        description={editingCourse ? 'Chỉnh sửa thông tin khóa học hiện tại.' : 'Nhập thông tin chi tiết để tạo học liệu cho sinh viên.'}
+        description={
+          editingCourse
+            ? 'Chỉnh sửa thông tin khóa học hiện tại.'
+            : 'Nhập thông tin chi tiết để tạo học liệu cho sinh viên.'
+        }
         isOpen={isModalOpen}
         onClose={() => {
           setIsModalOpen(false);
@@ -355,7 +381,9 @@ const Courses = () => {
                     type="number"
                     className="acm-input"
                     value={formData.orderIndex}
-                    onChange={(e) => setFormData({ ...formData, orderIndex: parseInt(e.target.value, 10) || 0 })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, orderIndex: parseInt(e.target.value, 10) || 0 })
+                    }
                   />
                 </label>
 
@@ -396,7 +424,7 @@ const Courses = () => {
 
             <div className="acm-thumbnail-upload">
               <span className="acm-upload-label">THUMBNAIL</span>
-              <div 
+              <div
                 className="acm-upload-dropzone"
                 onClick={() => document.getElementById('acm-file-input').click()}
               >

@@ -11,10 +11,8 @@ const {
 const { gradeAttempt } = require('./gradingEngine');
 const { parseCliLabConfig } = require('../validation/cliLabSchema');
 
-const run = (initialState, ...commands) => commands.reduce(
-  (state, command) => executeCommand(state, command).state,
-  initialState
-);
+const run = (initialState, ...commands) =>
+  commands.reduce((state, command) => executeCommand(state, command).state, initialState);
 
 test('prefix matching moves through modes and updates hostname', () => {
   const state = run(createInitialState(), 'en', 'conf t', 'host R1');
@@ -32,7 +30,12 @@ test('parser detects incomplete and ambiguous commands', () => {
 });
 
 test('invalid parameter includes the offending token position', () => {
-  const interfaceState = run(createInitialState(), 'enable', 'configure terminal', 'interface g0/0');
+  const interfaceState = run(
+    createInitialState(),
+    'enable',
+    'configure terminal',
+    'interface g0/0'
+  );
   const result = executeCommand(interfaceState, 'ip address 999.1.1.1 255.255.255.0');
   assert.equal(result.isError, true);
   assert.equal(result.errorCode, 'INVALID_PARAMETER');
@@ -84,7 +87,10 @@ test('completion is mode aware and provides a unique replacement', () => {
   const privileged = run(createInitialState(), 'enable');
   const completion = getCompletionResult(privileged, 'conf t');
   assert.equal(completion.completion, 'conf terminal ');
-  assert.deepEqual(completion.candidates.map((candidate) => candidate.value), ['terminal']);
+  assert.deepEqual(
+    completion.candidates.map((candidate) => candidate.value),
+    ['terminal']
+  );
 });
 
 test('show commands reflect running state and saved startup config', () => {
@@ -118,15 +124,21 @@ test('semantic grader awards deterministic partial and passing scores', () => {
 });
 
 test('CLI lab definition validation rejects incomplete grading checks', () => {
-  assert.throws(() => parseCliLabConfig({
-    labType: 'CLI_SIMULATION',
-    courseId: 'c1',
-    initialState: { deviceType: 'ROUTER', interfaces: ['GigabitEthernet0/0'] },
-    gradingSpec: {
-      passingScore: 70,
-      checks: [{ id: 'ip', type: 'interface_ip_equals', interface: 'GigabitEthernet0/0', points: 100 }],
-    },
-  }), /expectedIp/);
+  assert.throws(
+    () =>
+      parseCliLabConfig({
+        labType: 'CLI_SIMULATION',
+        courseId: 'c1',
+        initialState: { deviceType: 'ROUTER', interfaces: ['GigabitEthernet0/0'] },
+        gradingSpec: {
+          passingScore: 70,
+          checks: [
+            { id: 'ip', type: 'interface_ip_equals', interface: 'GigabitEthernet0/0', points: 100 },
+          ],
+        },
+      }),
+    /expectedIp/
+  );
 });
 
 test('CLI lab definition accepts the Phase 1 declarative contract', () => {

@@ -9,7 +9,7 @@ const MiniSparkline = ({ data, color = '#3b82f6' }) => {
       return Array(7).fill({ value: 0 });
     }
     // Chuyển đổi mảng số đơn giản sang định dạng Recharts yêu cầu
-    return data.map(v => typeof v === 'object' ? v : { value: v });
+    return data.map((v) => (typeof v === 'object' ? v : { value: v }));
   }, [data]);
 
   return (

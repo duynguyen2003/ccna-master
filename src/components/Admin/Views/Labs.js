@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext, useRef, useCallback, useMemo } from 'react';
-import TopologyEditor from './TopologyEditor';
+import CliLabConfigEditor from './CliLabConfigEditor';
 import {
   ArrowLeft,
   Plus,
@@ -14,7 +14,7 @@ import {
   ListOrdered,
   Link2,
   ImageIcon,
-  FileUp
+  FileUp,
 } from 'lucide-react';
 import { adminApi } from '../../../services/api/adminApi';
 import { AuthContext } from '../../../context/AuthContext';
@@ -22,23 +22,25 @@ import AdminModal from '../Components/AdminModal';
 import AdminPagination from '../Components/AdminPagination';
 import CustomSelect from '../Components/CustomSelect';
 import '../../../css/Admin/AdminViews.css';
+import CliLabWorkspace from '../../Content/CliLabWorkspace';
+import { validateCliLabConfig } from './adminLabConfig';
 
 const LAB_TABS = [
   { id: 'basic', label: 'Thông tin cơ bản' },
   { id: 'content', label: 'Nội dung & Các bước' },
   { id: 'simulation', label: 'CLI Simulation' },
-  { id: 'media', label: 'Tài nguyên & Công cụ' }
+  { id: 'media', label: 'Tài nguyên & Công cụ' },
 ];
 
 const LAB_TYPE_OPTIONS = [
   { value: 'PACKET_TRACER', label: 'Hướng dẫn / Packet Tracer' },
-  { value: 'CLI_SIMULATION', label: 'CLI Simulation trên web' }
+  { value: 'CLI_SIMULATION', label: 'CLI Simulation trên web' },
 ];
 
 const DEFAULT_INITIAL_STATE = {
   deviceType: 'ROUTER',
   hostname: 'Router',
-  interfaces: ['GigabitEthernet0/0', 'GigabitEthernet0/1']
+  interfaces: ['GigabitEthernet0/0', 'GigabitEthernet0/1'],
 };
 
 const DEFAULT_GRADING_SPEC = {
@@ -50,7 +52,7 @@ const DEFAULT_GRADING_SPEC = {
       type: 'hostname_equals',
       expected: 'R1',
       points: 20,
-      hint: 'Dùng lệnh hostname trong global configuration mode.'
+      hint: 'Dùng lệnh hostname trong global configuration mode.',
     },
     {
       id: 'g0_0_ip',
@@ -59,16 +61,16 @@ const DEFAULT_GRADING_SPEC = {
       interface: 'GigabitEthernet0/0',
       expectedIp: '192.168.1.1',
       expectedMask: '255.255.255.0',
-      points: 50
+      points: 50,
     },
     {
       id: 'g0_0_up',
       title: 'Bật GigabitEthernet0/0',
       type: 'interface_enabled',
       interface: 'GigabitEthernet0/0',
-      points: 30
-    }
-  ]
+      points: 30,
+    },
+  ],
 };
 
 const CATEGORY_OPTIONS = [
@@ -78,31 +80,31 @@ const CATEGORY_OPTIONS = [
   { value: 'Security', label: 'Security' },
   { value: 'Services', label: 'Services' },
   { value: 'Automation', label: 'Automation' },
-  { value: 'Troubleshooting', label: 'Troubleshooting' }
+  { value: 'Troubleshooting', label: 'Troubleshooting' },
 ];
 
 const DIFFICULTY_OPTIONS = [
   { value: 'EASY', label: 'Dễ (EASY)' },
   { value: 'MEDIUM', label: 'Trung bình (MEDIUM)' },
-  { value: 'HARD', label: 'Khó (HARD)' }
+  { value: 'HARD', label: 'Khó (HARD)' },
 ];
 
 const DIFFICULTY_LABEL_MAP = {
   EASY: 'Dễ',
   MEDIUM: 'Trung bình',
-  HARD: 'Khó'
+  HARD: 'Khó',
 };
 
 const STATUS_OPTIONS = [
   { value: 'DRAFT', label: 'Nháp' },
   { value: 'PUBLISHED', label: 'Đã xuất bản' },
-  { value: 'ARCHIVED', label: 'Lưu trữ' }
+  { value: 'ARCHIVED', label: 'Lưu trữ' },
 ];
 
 const STATUS_BADGE_MAP = {
   DRAFT: { label: 'Nháp', className: 'inactive' },
   PUBLISHED: { label: 'Đã xuất bản', className: 'active' },
-  ARCHIVED: { label: 'Lưu trữ', className: 'student' }
+  ARCHIVED: { label: 'Lưu trữ', className: 'student' },
 };
 
 const createInitialFormData = () => ({
@@ -123,7 +125,7 @@ const createInitialFormData = () => ({
   commandProfile: 'ccna-basic-v1',
   initialStateText: JSON.stringify(DEFAULT_INITIAL_STATE, null, 2),
   gradingSpecText: JSON.stringify(DEFAULT_GRADING_SPEC, null, 2),
-  steps: [{ title: '', commands: '', note: '' }]
+  steps: [{ title: '', commands: '', note: '' }],
 });
 
 const parseToolsInput = (toolsText) =>
@@ -148,17 +150,17 @@ const hasRichTextContent = (html) =>
   String(html || '')
     .replace(/<[^>]*>/g, ' ')
     .replace(/&nbsp;/g, ' ')
-    .trim()
-    .length > 0;
+    .trim().length > 0;
 
 const mapLabToFormData = (lab) => {
-  const normalizedSteps = Array.isArray(lab?.steps) && lab.steps.length > 0
-    ? lab.steps.map((step) => ({
-      title: String(step?.title || ''),
-      commands: normalizeStepCommandsToText(step?.commands),
-      note: String(step?.note || '')
-    }))
-    : [{ title: '', commands: '', note: '' }];
+  const normalizedSteps =
+    Array.isArray(lab?.steps) && lab.steps.length > 0
+      ? lab.steps.map((step) => ({
+          title: String(step?.title || ''),
+          commands: normalizeStepCommandsToText(step?.commands),
+          note: String(step?.note || ''),
+        }))
+      : [{ title: '', commands: '', note: '' }];
 
   return {
     title: String(lab?.title || ''),
@@ -178,7 +180,7 @@ const mapLabToFormData = (lab) => {
     commandProfile: String(lab?.commandProfile || 'ccna-basic-v1'),
     initialStateText: JSON.stringify(lab?.initialState || DEFAULT_INITIAL_STATE, null, 2),
     gradingSpecText: JSON.stringify(lab?.gradingSpec || DEFAULT_GRADING_SPEC, null, 2),
-    steps: normalizedSteps
+    steps: normalizedSteps,
   };
 };
 
@@ -297,28 +299,33 @@ const Labs = () => {
   const [formData, setFormData] = useState(createInitialFormData());
   const [previews, setPreviews] = useState({ thumbnail: null, topology: null });
   const [error, setError] = useState('');
+  const [cliConfigValidation, setCliConfigValidation] = useState({ valid: true, errors: [] });
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   const [selectedLabForView, setSelectedLabForView] = useState(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
 
   const toolsPreview = useMemo(() => parseToolsInput(formData.toolsText), [formData.toolsText]);
 
-  const fetchLabs = useCallback(async (page = 1) => {
-    try {
-      setLoading(true);
-      const res = await adminApi.getLabs(token, page);
-      setLabs(res.data || []);
-      if (res.pagination) {
-        setTotalPages(res.pagination.totalPages || 1);
-        setTotalItems(res.pagination.total || 0);
-        setCurrentPage(res.pagination.page || 1);
+  const fetchLabs = useCallback(
+    async (page = 1) => {
+      try {
+        setLoading(true);
+        const res = await adminApi.getLabs(token, page);
+        setLabs(res.data || []);
+        if (res.pagination) {
+          setTotalPages(res.pagination.totalPages || 1);
+          setTotalItems(res.pagination.total || 0);
+          setCurrentPage(res.pagination.page || 1);
+        }
+      } catch (fetchError) {
+        console.error(fetchError);
+      } finally {
+        setLoading(false);
       }
-    } catch (fetchError) {
-      console.error(fetchError);
-    } finally {
-      setLoading(false);
-    }
-  }, [token]);
+    },
+    [token]
+  );
 
   const fetchCourses = useCallback(async () => {
     try {
@@ -364,6 +371,8 @@ const Labs = () => {
     setCourseModules([]);
     setActiveTab('basic');
     setError('');
+    setCliConfigValidation({ valid: true, errors: [] });
+    setIsPreviewOpen(false);
     setEditingLabId(null);
     setEditorMode('create');
   }, []);
@@ -380,14 +389,17 @@ const Labs = () => {
     setFormData(mapLabToFormData(lab));
     setPreviews({
       thumbnail: lab.imageUrl || null,
-      topology: lab.topologyImgUrl || null
+      topology: lab.topologyImgUrl || null,
     });
     setActiveTab('basic');
     setError('');
+    setCliConfigValidation({ valid: true, errors: [] });
+    setIsPreviewOpen(false);
     setIsEditorOpen(true);
   };
 
   const closeEditor = () => {
+    setIsPreviewOpen(false);
     setIsEditorOpen(false);
     setError('');
   };
@@ -400,14 +412,14 @@ const Labs = () => {
   const handleAddStep = () => {
     setFormData((prev) => ({
       ...prev,
-      steps: [...prev.steps, { title: '', commands: '', note: '' }]
+      steps: [...prev.steps, { title: '', commands: '', note: '' }],
     }));
   };
 
   const handleRemoveStep = (index) => {
     setFormData((prev) => ({
       ...prev,
-      steps: prev.steps.filter((_, stepIndex) => stepIndex !== index)
+      steps: prev.steps.filter((_, stepIndex) => stepIndex !== index),
     }));
   };
 
@@ -416,7 +428,7 @@ const Labs = () => {
       ...prev,
       steps: prev.steps.map((step, stepIndex) =>
         stepIndex === index ? { ...step, [field]: value } : step
-      )
+      ),
     }));
   };
 
@@ -438,11 +450,37 @@ const Labs = () => {
       reader.onloadend = () => {
         setPreviews((prev) => ({
           ...prev,
-          [field === 'thumbnailImg' ? 'thumbnail' : 'topology']: reader.result
+          [field === 'thumbnailImg' ? 'thumbnail' : 'topology']: reader.result,
         }));
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handlePreviewDraft = () => {
+    if (formData.labType !== 'CLI_SIMULATION') {
+      setActiveTab('simulation');
+      setError('Chọn loại CLI Simulation trên web để xem trước cấu hình.');
+      return;
+    }
+
+    const configValidation = validateCliLabConfig({
+      initialStateText: formData.initialStateText,
+      gradingSpecText: formData.gradingSpecText,
+      commandProfile: formData.commandProfile,
+    });
+    setCliConfigValidation(configValidation);
+    if (!configValidation.valid) {
+      setActiveTab('simulation');
+      setError(configValidation.errors.map((item) => item.display || item.message).join(' '));
+      return;
+    }
+
+    setError('');
+    setIsPreviewOpen({
+      initialState: configValidation.initialState.value,
+      gradingSpec: configValidation.gradingSpec.value,
+    });
   };
 
   const handleSubmit = async () => {
@@ -467,8 +505,18 @@ const Labs = () => {
           setActiveTab('basic');
           throw new Error('CLI Lab phải thuộc một khóa học');
         }
-        JSON.parse(formData.initialStateText);
-        JSON.parse(formData.gradingSpecText);
+        const configValidation = validateCliLabConfig({
+          initialStateText: formData.initialStateText,
+          gradingSpecText: formData.gradingSpecText,
+          commandProfile: formData.commandProfile,
+        });
+        setCliConfigValidation(configValidation);
+        if (!configValidation.valid) {
+          setActiveTab('simulation');
+          throw new Error(
+            configValidation.errors.map((item) => item.display || item.message).join(' ')
+          );
+        }
       }
 
       const payload = new FormData();
@@ -477,7 +525,10 @@ const Labs = () => {
       payload.append('difficulty', formData.difficulty);
       payload.append('status', formData.status);
       payload.append('duration', formData.duration.trim());
-      payload.append('guideContent', hasRichTextContent(formData.guideContent) ? formData.guideContent : '');
+      payload.append(
+        'guideContent',
+        hasRichTextContent(formData.guideContent) ? formData.guideContent : ''
+      );
       payload.append('objective', formData.objective.trim());
       payload.append('tools', JSON.stringify(toolsPreview));
       payload.append('labType', formData.labType);
@@ -501,7 +552,7 @@ const Labs = () => {
             .split('\n')
             .map((command) => command.trim())
             .filter(Boolean),
-          note: step.note.trim()
+          note: step.note.trim(),
         }))
         .filter((step) => step.title || step.commands.length > 0 || step.note);
       payload.append('steps', JSON.stringify(formattedSteps));
@@ -535,6 +586,17 @@ const Labs = () => {
   if (isEditorOpen) {
     return (
       <div className="labm-editor-page">
+        {isPreviewOpen ? (
+          <div
+            className="cli-admin-preview-layer"
+          >
+            <CliLabWorkspace
+              lab={{ title: formData.title || 'Lab xem trước', objective: formData.objective }}
+              preview={isPreviewOpen}
+              onClose={() => setIsPreviewOpen(false)}
+            />
+          </div>
+        ) : null}
         <div className="labm-editor-shell">
           <div className="labm-editor-header">
             <button type="button" className="labm-back-btn" onClick={closeEditor}>
@@ -569,7 +631,9 @@ const Labs = () => {
                     className="acm-input"
                     placeholder="Nhập tên bài Lab..."
                     value={formData.title}
-                    onChange={(event) => setFormData((prev) => ({ ...prev, title: event.target.value }))}
+                    onChange={(event) =>
+                      setFormData((prev) => ({ ...prev, title: event.target.value }))
+                    }
                   />
                 </div>
 
@@ -607,7 +671,9 @@ const Labs = () => {
                       className="acm-input"
                       placeholder="VD: 30 phút"
                       value={formData.duration}
-                      onChange={(event) => setFormData((prev) => ({ ...prev, duration: event.target.value }))}
+                      onChange={(event) =>
+                        setFormData((prev) => ({ ...prev, duration: event.target.value }))
+                      }
                     />
                   </div>
                 </div>
@@ -628,10 +694,15 @@ const Labs = () => {
                     <span>Khóa học</span>
                     <CustomSelect
                       value={formData.courseId}
-                      onChange={(value) => setFormData((prev) => ({ ...prev, courseId: value, moduleId: '' }))}
+                      onChange={(value) =>
+                        setFormData((prev) => ({ ...prev, courseId: value, moduleId: '' }))
+                      }
                       options={[
                         { value: '', label: '-- Không chọn --' },
-                        ...courses.map((course) => ({ value: course.id, label: `${course.code} - ${course.title}` }))
+                        ...courses.map((course) => ({
+                          value: course.id,
+                          label: `${course.code} - ${course.title}`,
+                        })),
                       ]}
                     />
                   </div>
@@ -644,7 +715,10 @@ const Labs = () => {
                         onChange={(value) => setFormData((prev) => ({ ...prev, moduleId: value }))}
                         options={[
                           { value: '', label: '-- Không chọn --' },
-                          ...courseModules.map((moduleItem) => ({ value: moduleItem.id, label: moduleItem.title }))
+                          ...courseModules.map((moduleItem) => ({
+                            value: moduleItem.id,
+                            label: moduleItem.title,
+                          })),
                         ]}
                         placeholder={formData.courseId ? 'Chọn module...' : 'Chọn khóa học trước'}
                       />
@@ -666,7 +740,9 @@ const Labs = () => {
                     rows="2"
                     placeholder="Nêu mục tiêu chính của bài thực hành..."
                     value={formData.objective}
-                    onChange={(event) => setFormData((prev) => ({ ...prev, objective: event.target.value }))}
+                    onChange={(event) =>
+                      setFormData((prev) => ({ ...prev, objective: event.target.value }))
+                    }
                   />
                 </div>
 
@@ -709,20 +785,26 @@ const Labs = () => {
                             className="acm-input"
                             placeholder="Tiêu đề bước..."
                             value={step.title}
-                            onChange={(event) => handleStepChange(index, 'title', event.target.value)}
+                            onChange={(event) =>
+                              handleStepChange(index, 'title', event.target.value)
+                            }
                           />
                           <textarea
                             className="acm-textarea labm-code-input"
                             rows="3"
                             placeholder="Mỗi lệnh một dòng"
                             value={step.commands}
-                            onChange={(event) => handleStepChange(index, 'commands', event.target.value)}
+                            onChange={(event) =>
+                              handleStepChange(index, 'commands', event.target.value)
+                            }
                           />
                           <input
                             className="acm-input"
                             placeholder="Ghi chú thêm (nếu có)..."
                             value={step.note}
-                            onChange={(event) => handleStepChange(index, 'note', event.target.value)}
+                            onChange={(event) =>
+                              handleStepChange(index, 'note', event.target.value)
+                            }
                           />
                         </div>
                       </div>
@@ -734,50 +816,21 @@ const Labs = () => {
 
             {activeTab === 'simulation' ? (
               <div className="labm-tab-panel">
-                {formData.labType === 'CLI_SIMULATION' && <TopologyEditor value={formData.initialStateText}
-                  onChange={(initialStateText) => setFormData((prev) => ({ ...prev, initialStateText, commandProfile: 'ccna-network-v2' }))}
-                  onTemplate={(initialStateText, gradingSpecText) => setFormData((prev) => ({ ...prev, initialStateText, gradingSpecText, commandProfile: 'ccna-network-v2' }))} />}
-                {formData.labType !== 'CLI_SIMULATION' ? (
+                {formData.labType === 'CLI_SIMULATION' ? (
+                  <CliLabConfigEditor
+                    initialStateText={formData.initialStateText}
+                    gradingSpecText={formData.gradingSpecText}
+                    commandProfile={formData.commandProfile}
+                    onChange={(patch) => setFormData((prev) => ({ ...prev, ...patch }))}
+                    onValidityChange={setCliConfigValidation}
+                    onPreview={handlePreviewDraft}
+                    disabled={submitting}
+                  />
+                ) : (
                   <div className="labm-form-error-banner">
                     Chọn loại “CLI Simulation trên web” ở tab Thông tin cơ bản để dùng cấu hình này.
                   </div>
-                ) : null}
-
-                <div className="acm-field">
-                  <span>Command profile</span>
-                  <input
-                    className="acm-input"
-                    value={formData.commandProfile}
-                    onChange={(event) => setFormData((prev) => ({ ...prev, commandProfile: event.target.value }))}
-                    disabled={formData.labType !== 'CLI_SIMULATION'}
-                  />
-                  <p className="acm-field-hint">Một thiết bị: ccna-basic-v1. Topology: ccna-network-v2 (máy chủ tự chọn theo cấu hình).</p>
-                </div>
-
-                <div className="labm-grid-2">
-                  <div className="acm-field">
-                    <span>Initial state (JSON)</span>
-                    <textarea
-                      className="acm-textarea labm-code-input"
-                      rows="18"
-                      value={formData.initialStateText}
-                      onChange={(event) => setFormData((prev) => ({ ...prev, initialStateText: event.target.value }))}
-                      disabled={formData.labType !== 'CLI_SIMULATION'}
-                      spellCheck="false"
-                    />
-                  </div>
-                  <div className="acm-field">
-                    <span>Grading spec (JSON)</span>
-                    <textarea
-                      className="acm-textarea labm-code-input"
-                      rows="18"
-                      value={formData.gradingSpecText}
-                      onChange={(event) => setFormData((prev) => ({ ...prev, gradingSpecText: event.target.value }))}
-                      disabled={formData.labType !== 'CLI_SIMULATION'}
-                      spellCheck="false"
-                    />
-                  </div>
-                </div>
+                )}
               </div>
             ) : null}
 
@@ -792,7 +845,11 @@ const Labs = () => {
                       <ImageIcon size={15} /> imageUrl (Thumbnail)
                     </div>
                     {previews.thumbnail ? (
-                      <img src={previews.thumbnail} alt="Thumbnail preview" className="labm-upload-preview" />
+                      <img
+                        src={previews.thumbnail}
+                        alt="Thumbnail preview"
+                        className="labm-upload-preview"
+                      />
                     ) : (
                       <p>Bấm để tải ảnh lên</p>
                     )}
@@ -813,7 +870,11 @@ const Labs = () => {
                       <ImageIcon size={15} /> topologyImgUrl
                     </div>
                     {previews.topology ? (
-                      <img src={previews.topology} alt="Topology preview" className="labm-upload-preview" />
+                      <img
+                        src={previews.topology}
+                        alt="Topology preview"
+                        className="labm-upload-preview"
+                      />
                     ) : (
                       <p>Bấm để tải ảnh topology</p>
                     )}
@@ -831,7 +892,9 @@ const Labs = () => {
                   <span>fileUrl (.pkt / .pka)</span>
                   <label className="labm-file-input">
                     <FileUp size={16} />
-                    <span>{formData.filePka ? formData.filePka.name : 'Chon file Packet Tracer'}</span>
+                    <span>
+                      {formData.filePka ? formData.filePka.name : 'Chon file Packet Tracer'}
+                    </span>
                     <input
                       type="file"
                       accept=".pkt,.pka"
@@ -847,12 +910,16 @@ const Labs = () => {
                     rows="3"
                     placeholder="Packet Tracer, Wireshark, PuTTY..."
                     value={formData.toolsText}
-                    onChange={(event) => setFormData((prev) => ({ ...prev, toolsText: event.target.value }))}
+                    onChange={(event) =>
+                      setFormData((prev) => ({ ...prev, toolsText: event.target.value }))
+                    }
                   />
                   <div className="labm-tools-preview">
                     {toolsPreview.length > 0 ? (
                       toolsPreview.map((tool) => (
-                        <span key={tool} className="labm-tool-chip">{tool}</span>
+                        <span key={tool} className="labm-tool-chip">
+                          {tool}
+                        </span>
                       ))
                     ) : (
                       <span className="labm-tools-empty">Danh sach cong cu se hien thi o day.</span>
@@ -867,6 +934,14 @@ const Labs = () => {
             <button
               type="button"
               className="admin-modal-btn-secondary"
+              onClick={handlePreviewDraft}
+              disabled={submitting || formData.labType !== 'CLI_SIMULATION'}
+            >
+              <Eye size={15} /> Xem trước như học viên
+            </button>
+            <button
+              type="button"
+              className="admin-modal-btn-secondary"
               onClick={closeEditor}
               disabled={submitting}
             >
@@ -876,9 +951,15 @@ const Labs = () => {
               type="button"
               className="admin-btn-primary"
               onClick={handleSubmit}
-              disabled={submitting}
+              disabled={
+                submitting || (formData.labType === 'CLI_SIMULATION' && !cliConfigValidation.valid)
+              }
             >
-              {submitting ? 'Đang lưu...' : editorMode === 'edit' ? 'Cập nhật bài Lab' : 'Lưu bài Lab'}
+              {submitting
+                ? 'Đang lưu...'
+                : editorMode === 'edit'
+                  ? 'Cập nhật bài Lab'
+                  : 'Lưu bài Lab'}
             </button>
           </div>
         </div>
@@ -914,7 +995,9 @@ const Labs = () => {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan="8" style={{ textAlign: 'center' }}>Đang tải...</td>
+                <td colSpan="8" style={{ textAlign: 'center' }}>
+                  Đang tải...
+                </td>
               </tr>
             ) : labs.length > 0 ? (
               labs.map((lab) => {
@@ -934,13 +1017,15 @@ const Labs = () => {
                             alignItems: 'center',
                             justifyContent: 'center',
                             borderRadius: '4px',
-                            flexShrink: 0
+                            flexShrink: 0,
                           }}
                         >
                           <FileCode2 size={20} />
                         </div>
                         <div style={{ minWidth: 0 }}>
-                          <div className="labm-lab-title" title={lab.title}>{lab.title}</div>
+                          <div className="labm-lab-title" title={lab.title}>
+                            {lab.title}
+                          </div>
                           {lab.fileUrl ? (
                             <div className="labm-lab-file" title={lab.fileUrl.split('/').pop()}>
                               {lab.fileUrl.split('/').pop()}
@@ -964,12 +1049,19 @@ const Labs = () => {
                       </span>
                     </td>
                     <td className="text-center">
-                      <span className={`admin-badge ${statusMeta.className}`}>{statusMeta.label}</span>
+                      <span className={`admin-badge ${statusMeta.className}`}>
+                        {statusMeta.label}
+                      </span>
                     </td>
                     <td className="text-center">{lab.duration || '-'}</td>
-                    <td className="labm-course-title" title={lab.course?.title || '-'}>{lab.course?.title || '-'}</td>
+                    <td className="labm-course-title" title={lab.course?.title || '-'}>
+                      {lab.course?.title || '-'}
+                    </td>
                     <td className="text-center">
-                      <div className="admin-row-actions" style={{ justifyContent: 'center', display: 'flex', gap: '4px' }}>
+                      <div
+                        className="admin-row-actions"
+                        style={{ justifyContent: 'center', display: 'flex', gap: '4px' }}
+                      >
                         <button
                           className="admin-action-btn"
                           title="Xem"
@@ -998,7 +1090,9 @@ const Labs = () => {
               })
             ) : (
               <tr>
-                <td colSpan="8" style={{ textAlign: 'center' }}>Chưa có bài Lab nào</td>
+                <td colSpan="8" style={{ textAlign: 'center' }}>
+                  Chưa có bài Lab nào
+                </td>
               </tr>
             )}
           </tbody>
@@ -1022,18 +1116,69 @@ const Labs = () => {
       >
         {selectedLabForView ? (
           <div className="exam-view-details">
-            <div><b>Tiêu đề:</b> {selectedLabForView.title}</div>
-            <div><b>Danh mục:</b> {selectedLabForView.category || '-'}</div>
-            <div><b>Độ khó:</b> {DIFFICULTY_LABEL_MAP[selectedLabForView.difficulty] || selectedLabForView.difficulty || '-'}</div>
-            <div><b>Thời lượng:</b> {selectedLabForView.duration || '-'}</div>
-            <div><b>Khóa học:</b> {selectedLabForView.course?.title || '-'}</div>
-            <div><b>Module:</b> {selectedLabForView.module?.title || selectedLabForView.moduleId || '-'}</div>
-            <div><b>Mục tiêu:</b> {selectedLabForView.objective || '-'}</div>
-            <div><b>Số bước:</b> {Array.isArray(selectedLabForView.steps) ? selectedLabForView.steps.length : 0}</div>
-            <div><b>Công cụ:</b> {Array.isArray(selectedLabForView.tools) ? selectedLabForView.tools.join(', ') : '-'}</div>
-            <div><b>Ảnh đại diện:</b> {selectedLabForView.imageUrl ? <a href={selectedLabForView.imageUrl} target="_blank" rel="noreferrer">Mở ảnh</a> : '-'}</div>
-            <div><b>Ảnh topology:</b> {selectedLabForView.topologyImgUrl ? <a href={selectedLabForView.topologyImgUrl} target="_blank" rel="noreferrer">Mở ảnh</a> : '-'}</div>
-            <div><b>File bài tập:</b> {selectedLabForView.fileUrl ? <a href={selectedLabForView.fileUrl} target="_blank" rel="noreferrer">Mở file</a> : '-'}</div>
+            <div>
+              <b>Tiêu đề:</b> {selectedLabForView.title}
+            </div>
+            <div>
+              <b>Danh mục:</b> {selectedLabForView.category || '-'}
+            </div>
+            <div>
+              <b>Độ khó:</b>{' '}
+              {DIFFICULTY_LABEL_MAP[selectedLabForView.difficulty] ||
+                selectedLabForView.difficulty ||
+                '-'}
+            </div>
+            <div>
+              <b>Thời lượng:</b> {selectedLabForView.duration || '-'}
+            </div>
+            <div>
+              <b>Khóa học:</b> {selectedLabForView.course?.title || '-'}
+            </div>
+            <div>
+              <b>Module:</b>{' '}
+              {selectedLabForView.module?.title || selectedLabForView.moduleId || '-'}
+            </div>
+            <div>
+              <b>Mục tiêu:</b> {selectedLabForView.objective || '-'}
+            </div>
+            <div>
+              <b>Số bước:</b>{' '}
+              {Array.isArray(selectedLabForView.steps) ? selectedLabForView.steps.length : 0}
+            </div>
+            <div>
+              <b>Công cụ:</b>{' '}
+              {Array.isArray(selectedLabForView.tools) ? selectedLabForView.tools.join(', ') : '-'}
+            </div>
+            <div>
+              <b>Ảnh đại diện:</b>{' '}
+              {selectedLabForView.imageUrl ? (
+                <a href={selectedLabForView.imageUrl} target="_blank" rel="noreferrer">
+                  Mở ảnh
+                </a>
+              ) : (
+                '-'
+              )}
+            </div>
+            <div>
+              <b>Ảnh topology:</b>{' '}
+              {selectedLabForView.topologyImgUrl ? (
+                <a href={selectedLabForView.topologyImgUrl} target="_blank" rel="noreferrer">
+                  Mở ảnh
+                </a>
+              ) : (
+                '-'
+              )}
+            </div>
+            <div>
+              <b>File bài tập:</b>{' '}
+              {selectedLabForView.fileUrl ? (
+                <a href={selectedLabForView.fileUrl} target="_blank" rel="noreferrer">
+                  Mở file
+                </a>
+              ) : (
+                '-'
+              )}
+            </div>
           </div>
         ) : null}
       </AdminModal>

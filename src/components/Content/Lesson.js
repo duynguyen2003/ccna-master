@@ -1,8 +1,15 @@
 import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
-   ChevronLeft, ChevronRight, Menu, FileText,
-   AlertCircle, CheckCircle, Play, ArrowLeft as ArrowLeftIcon, Map
+  ChevronLeft,
+  ChevronRight,
+  Menu,
+  FileText,
+  AlertCircle,
+  CheckCircle,
+  Play,
+  ArrowLeft as ArrowLeftIcon,
+  Map,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/Api';
@@ -13,762 +20,860 @@ import YouTube from 'react-youtube';
 const MOBILE_BREAKPOINT = 1024;
 const RESOURCE_BREAKPOINT = 1280;
 
-const getViewportWidth = () => (
-   typeof window === 'undefined' ? RESOURCE_BREAKPOINT : window.innerWidth
-);
+const getViewportWidth = () =>
+  typeof window === 'undefined' ? RESOURCE_BREAKPOINT : window.innerWidth;
 
 const getYoutubeVideoId = (url) => {
-   if (!url) return null;
-   const patterns = [
-      /youtu\.be\/([^?&]+)/,
-      /youtube\.com\/watch\?v=([^&]+)/,
-      /youtube\.com\/embed\/([^?&]+)/,
-   ];
-   for (const pattern of patterns) {
-      const match = url.match(pattern);
-      if (match) return match[1];
-   }
-   try {
-      const u = new URL(url.trim());
-      if (u.hostname === 'youtu.be') return u.pathname.slice(1).split('?')[0];
-      if (u.hostname.includes('youtube.com')) return u.searchParams.get('v');
-   } catch { /* ignore */ }
-   return null;
+  if (!url) return null;
+  const patterns = [
+    /youtu\.be\/([^?&]+)/,
+    /youtube\.com\/watch\?v=([^&]+)/,
+    /youtube\.com\/embed\/([^?&]+)/,
+  ];
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) return match[1];
+  }
+  try {
+    const u = new URL(url.trim());
+    if (u.hostname === 'youtu.be') return u.pathname.slice(1).split('?')[0];
+    if (u.hostname.includes('youtube.com')) return u.searchParams.get('v');
+  } catch {
+    /* ignore */
+  }
+  return null;
 };
 
 const VideoPlayer = ({ url, lessonId, courseId, moduleId, token, user, onProgressChange }) => {
-   const playerRef = useRef(null);
-   const intervalRef = useRef(null);
-   const lastReportedTimeRef = useRef(0);
-   const maxViewedTimeRef = useRef(0); // [ANTI-CHEAT] Lưu mốc thời gian lớn nhất học viên đã xem
-   const youtubeId = getYoutubeVideoId(url);
-   const [videoData, setVideoData] = useState({ lastPosition: 0, watchedSeconds: 0, isCompleted: false });
+  const playerRef = useRef(null);
+  const intervalRef = useRef(null);
+  const lastReportedTimeRef = useRef(0);
+  const maxViewedTimeRef = useRef(0); // [ANTI-CHEAT] Lưu mốc thời gian lớn nhất học viên đã xem
+  const youtubeId = getYoutubeVideoId(url);
+  const [videoData, setVideoData] = useState({
+    lastPosition: 0,
+    watchedSeconds: 0,
+    isCompleted: false,
+  });
 
-   const isAdmin = user?.role === 'ADMIN';
+  const isAdmin = user?.role === 'ADMIN';
 
-   // 1. Lấy tiến độ cũ để Resume
-   useEffect(() => {
-      if (lessonId && token) {
-         api.getVideoProgress(token, lessonId)
-            .then(res => {
-               if (res.data) {
-                  setVideoData(res.data);
-                  maxViewedTimeRef.current = res.data.lastPosition || 0;
-               }
-            })
-            .catch(err => console.error("Error fetching video progress:", err));
+  // 1. Lấy tiến độ cũ để Resume
+  useEffect(() => {
+    if (lessonId && token) {
+      api
+        .getVideoProgress(token, lessonId)
+        .then((res) => {
+          if (res.data) {
+            setVideoData(res.data);
+            maxViewedTimeRef.current = res.data.lastPosition || 0;
+          }
+        })
+        .catch((err) => console.error('Error fetching video progress:', err));
+    }
+  }, [lessonId, token]);
+
+  const startTracking = (player) => {
+    stopTracking();
+    lastReportedTimeRef.current = Math.floor(player.getCurrentTime());
+
+    intervalRef.current = setInterval(() => {
+      const currentTime = player.getCurrentTime();
+      const duration = player.getDuration();
+      const floorTime = Math.floor(currentTime);
+
+      // [ANTI-CHEAT] Chặn tua nhanh đối với Học viên
+      if (!isAdmin && floorTime > maxViewedTimeRef.current + 3) {
+        player.seekTo(maxViewedTimeRef.current);
+        return;
       }
-   }, [lessonId, token]);
 
-   const startTracking = (player) => {
+      // Cập nhật mốc thời gian lớn nhất đã xem
+      if (floorTime > maxViewedTimeRef.current) {
+        maxViewedTimeRef.current = floorTime;
+      }
+
+      const delta = floorTime - lastReportedTimeRef.current;
+
+      // Nếu user xem được ít nhất 5s thực tế (không phải nhảy cóc)
+      if (delta >= 5 && delta < 15) {
+        const isFinished = floorTime / duration >= 0.9 || videoData.isCompleted;
+
+        api
+          .updateVideoProgress(token, {
+            lessonId,
+            watchedSeconds: delta,
+            lastPosition: floorTime,
+            isCompleted: isFinished,
+          })
+          .catch((e) => console.error('Failed to sync video time:', e));
+
+        if (isFinished && !videoData.isCompleted) {
+          setVideoData((prev) => ({ ...prev, isCompleted: true }));
+          // Mark hoàn thành bài học ở bảng UserProgress
+          api.updateUserProgress(token, {
+            courseId,
+            moduleId,
+            lessonId,
+            progressPercent: 100,
+            status: 'COMPLETED',
+          });
+        }
+
+        lastReportedTimeRef.current = floorTime;
+      } else if (delta < 0 || delta >= 15) {
+        lastReportedTimeRef.current = floorTime;
+      }
+
+      // Cập nhật UI Progress bar
+      if (duration > 0) {
+        const percent = (currentTime / duration) * 100;
+        onProgressChange &&
+          onProgressChange({
+            played: percent / 100,
+            playedSeconds: floorTime,
+            loaded: 1,
+            loadedSeconds: duration,
+            isCompleted: videoData.isCompleted || percent >= 90,
+          });
+      }
+    }, 1000);
+  };
+
+  const stopTracking = () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  };
+
+  const onReady = (event) => {
+    playerRef.current = event.target;
+    // Seek tới vị trí cũ nếu có
+    if (videoData.lastPosition > 0) {
+      event.target.seekTo(videoData.lastPosition);
+    }
+  };
+
+  const onStateChange = (event) => {
+    // 1: PLAYING, 2: PAUSED, 0: ENDED
+    if (event.data === 1) {
+      startTracking(event.target);
+    } else {
       stopTracking();
-      lastReportedTimeRef.current = Math.floor(player.getCurrentTime());
+    }
+  };
 
-      intervalRef.current = setInterval(() => {
-         const currentTime = player.getCurrentTime();
-         const duration = player.getDuration();
-         const floorTime = Math.floor(currentTime);
+  useEffect(() => {
+    return () => stopTracking();
+  }, []);
 
-         // [ANTI-CHEAT] Chặn tua nhanh đối với Học viên
-         if (!isAdmin && floorTime > maxViewedTimeRef.current + 3) {
-            player.seekTo(maxViewedTimeRef.current);
-            return;
-         }
+  const onError = (event) => {
+    console.warn('YouTube Player Error:', event.data);
+  };
 
-         // Cập nhật mốc thời gian lớn nhất đã xem
-         if (floorTime > maxViewedTimeRef.current) {
-            maxViewedTimeRef.current = floorTime;
-         }
+  if (youtubeId) {
+    return (
+      <YouTube
+        videoId={youtubeId}
+        opts={{
+          width: '100%',
+          height: '100%',
+          playerVars: {
+            rel: 0,
+            modestbranding: 1,
+          },
+        }}
+        onReady={onReady}
+        onStateChange={onStateChange}
+        onError={onError}
+        containerClassName="video-player-container"
+        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
+      />
+    );
+  }
 
-         const delta = floorTime - lastReportedTimeRef.current;
-
-         // Nếu user xem được ít nhất 5s thực tế (không phải nhảy cóc)
-         if (delta >= 5 && delta < 15) { 
-            const isFinished = (floorTime / duration) >= 0.9 || videoData.isCompleted;
-            
-            api.updateVideoProgress(token, {
-               lessonId,
-               watchedSeconds: delta,
-               lastPosition: floorTime,
-               isCompleted: isFinished
-            }).catch(e => console.error("Failed to sync video time:", e));
-            
-            if (isFinished && !videoData.isCompleted) {
-               setVideoData(prev => ({ ...prev, isCompleted: true }));
-               // Mark hoàn thành bài học ở bảng UserProgress
-               api.updateUserProgress(token, {
-                  courseId, moduleId, lessonId,
-                  progressPercent: 100,
-                  status: 'COMPLETED'
-               });
-            }
-
-            lastReportedTimeRef.current = floorTime;
-         } else if (delta < 0 || delta >= 15) {
-            lastReportedTimeRef.current = floorTime;
-         }
-
-         // Cập nhật UI Progress bar
-         if (duration > 0) {
-            const percent = (currentTime / duration) * 100;
-            onProgressChange && onProgressChange({
-               played: percent / 100,
-               playedSeconds: floorTime,
-               loaded: 1,
-               loadedSeconds: duration,
-               isCompleted: videoData.isCompleted || percent >= 90
-            });
-         }
-      }, 1000);
-   };
-
-   const stopTracking = () => {
-      if (intervalRef.current) {
-         clearInterval(intervalRef.current);
-         intervalRef.current = null;
-      }
-   };
-
-   const onReady = (event) => {
-      playerRef.current = event.target;
-      // Seek tới vị trí cũ nếu có
-      if (videoData.lastPosition > 0) {
-         event.target.seekTo(videoData.lastPosition);
-      }
-   };
-
-   const onStateChange = (event) => {
-      // 1: PLAYING, 2: PAUSED, 0: ENDED
-      if (event.data === 1) {
-         startTracking(event.target);
-      } else {
-         stopTracking();
-      }
-   };
-
-   useEffect(() => {
-      return () => stopTracking();
-   }, []);
-
-   const onError = (event) => {
-      console.warn("YouTube Player Error:", event.data);
-   };
-
-   if (youtubeId) {
-      return (
-         <YouTube
-            videoId={youtubeId}
-            opts={{
-               width: '100%',
-               height: '100%',
-               playerVars: {
-                  rel: 0,
-                  modestbranding: 1,
-               },
-            }}
-            onReady={onReady}
-            onStateChange={onStateChange}
-            onError={onError}
-            containerClassName="video-player-container"
-            style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
-         />
-      );
-   }
-
-   return (
-      <div className="video-error">
-         {url ? <video src={url} controls style={{ width: '100%', height: '100%' }} /> : "Chưa có video"}
-      </div>
-   );
+  return (
+    <div className="video-error">
+      {url ? (
+        <video src={url} controls style={{ width: '100%', height: '100%' }} />
+      ) : (
+        'Chưa có video'
+      )}
+    </div>
+  );
 };
 
 const Lesson = () => {
-   const navigate = useNavigate();
-   const [searchParams] = useSearchParams();
-   const courseId = searchParams.get('course');
-   const { token, user } = useAuth();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const courseId = searchParams.get('course');
+  const { token, user } = useAuth();
 
-   const [viewportWidth, setViewportWidth] = useState(getViewportWidth);
-   const [leftOpen, setLeftOpen] = useState(() => getViewportWidth() >= MOBILE_BREAKPOINT);
-   const [rightOpen, setRightOpen] = useState(() => getViewportWidth() >= RESOURCE_BREAKPOINT);
+  const [viewportWidth, setViewportWidth] = useState(getViewportWidth);
+  const [leftOpen, setLeftOpen] = useState(() => getViewportWidth() >= MOBILE_BREAKPOINT);
+  const [rightOpen, setRightOpen] = useState(() => getViewportWidth() >= RESOURCE_BREAKPOINT);
 
-   const [course, setCourse] = useState(null);
-   const [modules, setModules] = useState([]);
-   const [activeModule, setActiveModule] = useState(null);
-   const [lessons, setLessons] = useState([]);
-   const [selectedLessonId, setSelectedLessonId] = useState(null);
-   const [loading, setLoading] = useState(true);
-   const [noteContent, setNoteContent] = useState('');
-   const [saveStatus, setSaveStatus] = useState('idle'); // 'idle' | 'saving' | 'saved' | 'error'
-   const debounceTimer = useRef(null);
-   const currentLessonRef = useRef(selectedLessonId);
+  const [course, setCourse] = useState(null);
+  const [modules, setModules] = useState([]);
+  const [activeModule, setActiveModule] = useState(null);
+  const [lessons, setLessons] = useState([]);
+  const [selectedLessonId, setSelectedLessonId] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [noteContent, setNoteContent] = useState('');
+  const [saveStatus, setSaveStatus] = useState('idle'); // 'idle' | 'saving' | 'saved' | 'error'
+  const debounceTimer = useRef(null);
+  const currentLessonRef = useRef(selectedLessonId);
 
-   const [lessonProgress, setLessonProgress] = useState({});
+  const [lessonProgress, setLessonProgress] = useState({});
 
-   const isMobile = viewportWidth < MOBILE_BREAKPOINT;
-   const isCompact = viewportWidth < RESOURCE_BREAKPOINT;
+  const isMobile = viewportWidth < MOBILE_BREAKPOINT;
+  const isCompact = viewportWidth < RESOURCE_BREAKPOINT;
 
-   useEffect(() => {
-      // Hàm cập nhật kích thước
-      const handleResize = () => setViewportWidth(window.innerWidth);
-      window.addEventListener('resize', handleResize);
+  useEffect(() => {
+    // Hàm cập nhật kích thước
+    const handleResize = () => setViewportWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
 
-      // Đồng bộ ngay khi load trang
-      handleResize();
+    // Đồng bộ ngay khi load trang
+    handleResize();
 
-      return () => window.removeEventListener('resize', handleResize);
-   }, []);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
-   // Tự động đóng/mở sidebar khi thay đổi kích thước màn hình (chuyển breakpoint)
-   useEffect(() => {
-      if (isMobile) {
-         setLeftOpen(false);
-         setRightOpen(false);
-      } else if (isCompact) {
-         setLeftOpen(true);
-         setRightOpen(false);
-      } else {
-         setLeftOpen(true);
-         setRightOpen(true);
-      }
-   }, [isMobile, isCompact]);
+  // Tự động đóng/mở sidebar khi thay đổi kích thước màn hình (chuyển breakpoint)
+  useEffect(() => {
+    if (isMobile) {
+      setLeftOpen(false);
+      setRightOpen(false);
+    } else if (isCompact) {
+      setLeftOpen(true);
+      setRightOpen(false);
+    } else {
+      setLeftOpen(true);
+      setRightOpen(true);
+    }
+  }, [isMobile, isCompact]);
 
-   useEffect(() => {
-      const initLesson = async () => {
-         if (!courseId || !token) {
-            setLoading(false);
-            return;
-         }
-         try {
-            setLoading(true);
-            // 1. Fetch Course & Modules
-            const courses = await api.getCourses(token);
-            const currentCourse = courses.find(c => c.id === courseId);
-            setCourse(currentCourse);
+  useEffect(() => {
+    const initLesson = async () => {
+      try {
+        setLoading(true);
+        // 1. Fetch Course & Modules
+        const courses = await api.getCourses(token);
+        const effectiveCourseId =
+          courseId || (Array.isArray(courses) && courses.length > 0 ? courses[0].id : null);
 
-            const courseModules = await api.getModulesByCourse(token, courseId);
-            setModules(courseModules);
+        if (!effectiveCourseId) {
+          setLoading(false);
+          return;
+        }
 
-            // 2. Fetch User Progress for this course
+        const currentCourse = courses?.find((c) => c.id === effectiveCourseId);
+        setCourse(currentCourse);
+
+        const courseModules = await api.getModulesByCourse(token, effectiveCourseId);
+        setModules(courseModules || []);
+
+        // 2. Fetch User Progress for this course (nếu đã đăng nhập)
+        const initialProgress = {};
+        if (token) {
+          try {
             const progress = await api.getUserProgress(token);
-            const initialProgress = {};
-            (progress._raw || []).forEach(p => {
-               if (p.lessonId) {
-                  initialProgress[p.lessonId] = {
-                     played: (p.progressPercent || 0) / 100,
-                     playedSeconds: 0,
-                     completed: p.status === 'COMPLETED'
-                  };
-               }
+            (progress?._raw || []).forEach((p) => {
+              if (p.lessonId) {
+                initialProgress[p.lessonId] = {
+                  played: (p.progressPercent || 0) / 100,
+                  playedSeconds: 0,
+                  completed: p.status === 'COMPLETED',
+                };
+              }
             });
-            setLessonProgress(initialProgress);
+          } catch (err) {
+            console.warn('Could not fetch user progress:', err);
+          }
+        }
+        setLessonProgress(initialProgress);
 
-            if (courseModules.length > 0) {
-               // Check if a specific lesson is requested in URL
-               const targetLessonParam = searchParams.get('lesson');
-               let targetModule = courseModules[0];
-               let targetLessonId = null;
+        if (Array.isArray(courseModules) && courseModules.length > 0) {
+          // Check if a specific lesson is requested in URL
+          const targetLessonParam = searchParams.get('lesson');
+          let targetModule = courseModules[0];
+          let targetLessonId = null;
 
-               if (targetLessonParam) {
-                  const parsedLessonId = parseInt(targetLessonParam, 10);
-                  // Find module containing the lesson
-                  const foundModule = courseModules.find(m => 
-                     m.lessons && m.lessons.some(l => l.id === parsedLessonId)
-                  );
-                  if (foundModule) {
-                     targetModule = foundModule;
-                     targetLessonId = parsedLessonId;
-                  }
-               }
-
-               setActiveModule(targetModule);
-
-               // 3. Fetch Lessons for the target module
-               const moduleLessons = await api.getLessonsByModule(token, targetModule.id);
-               setLessons(moduleLessons);
-
-               if (targetLessonId) {
-                  setSelectedLessonId(targetLessonId);
-               } else if (moduleLessons.length > 0) {
-                  setSelectedLessonId(moduleLessons[0].id);
-               }
+          if (targetLessonParam) {
+            const parsedLessonId = parseInt(targetLessonParam, 10);
+            // Find module containing the lesson
+            const foundModule = courseModules.find(
+              (m) => m.lessons && m.lessons.some((l) => l.id === parsedLessonId)
+            );
+            if (foundModule) {
+              targetModule = foundModule;
+              targetLessonId = parsedLessonId;
             }
-         } catch (error) {
-            console.error("Error initializing lesson view:", error);
-         } finally {
-            setLoading(false);
-         }
+          }
+
+          setActiveModule(targetModule);
+
+          // 3. Fetch Lessons for the target module
+          const moduleLessons = await api.getLessonsByModule(token, targetModule.id);
+          setLessons(moduleLessons || []);
+
+          if (targetLessonId) {
+            setSelectedLessonId(targetLessonId);
+          } else if (Array.isArray(moduleLessons) && moduleLessons.length > 0) {
+            setSelectedLessonId(moduleLessons[0].id);
+          }
+        }
+      } catch (error) {
+        console.error('Error initializing lesson view:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    initLesson();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [courseId, token]);
+
+  // Đồng bộ lessonId ngược lại URL khi selectedLessonId thay đổi
+  useEffect(() => {
+    if (selectedLessonId && courseId) {
+      navigate(`/lesson?course=${courseId}&lesson=${selectedLessonId}`, { replace: true });
+    }
+  }, [selectedLessonId, courseId, navigate]);
+
+  // Lắng nghe sự thay đổi của tham số URL ?lesson để chuyển bài học (khi click từ ô tìm kiếm)
+  useEffect(() => {
+    const lessonParam = searchParams.get('lesson');
+    if (!lessonParam || modules.length === 0) return;
+
+    const parsedLessonId = parseInt(lessonParam, 10);
+    if (selectedLessonId === parsedLessonId) return;
+
+    // Tìm module chứa bài học này
+    const foundModule = modules.find(
+      (m) => m.lessons && m.lessons.some((l) => l.id === parsedLessonId)
+    );
+
+    if (foundModule) {
+      const selectTargetLesson = async () => {
+        try {
+          setLoading(true);
+          setActiveModule(foundModule);
+          const moduleLessons = await api.getLessonsByModule(token, foundModule.id);
+          setLessons(moduleLessons);
+          setSelectedLessonId(parsedLessonId);
+        } catch (err) {
+          console.error('Error shifting to target lesson:', err);
+        } finally {
+          setLoading(false);
+        }
       };
-      initLesson();
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-   }, [courseId, token]);
+      selectTargetLesson();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, modules, token]);
 
-   // Đồng bộ lessonId ngược lại URL khi selectedLessonId thay đổi
-   useEffect(() => {
-      if (selectedLessonId && courseId) {
-         navigate(`/lesson?course=${courseId}&lesson=${selectedLessonId}`, { replace: true });
+  // 1. Fetch note mỗi khi đổi lesson
+  useEffect(() => {
+    if (!selectedLessonId) return;
+
+    currentLessonRef.current = selectedLessonId;
+    setNoteContent('');
+    setSaveStatus('idle');
+
+    // Hủy debounce đang pending của lesson cũ
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
+    }
+
+    const fetchNote = async () => {
+      try {
+        const content = await api.getUserNote(token, selectedLessonId);
+        // Chỉ set nếu user chưa chuyển sang lesson khác
+        if (currentLessonRef.current === selectedLessonId) {
+          setNoteContent(content);
+        }
+      } catch (error) {
+        console.error('[Lesson] Lỗi tải ghi chú:', error);
       }
-   }, [selectedLessonId, courseId, navigate]);
+    };
 
-   // Lắng nghe sự thay đổi của tham số URL ?lesson để chuyển bài học (khi click từ ô tìm kiếm)
-   useEffect(() => {
-      const lessonParam = searchParams.get('lesson');
-      if (!lessonParam || modules.length === 0) return;
+    fetchNote();
+  }, [selectedLessonId, token]);
 
-      const parsedLessonId = parseInt(lessonParam, 10);
-      if (selectedLessonId === parsedLessonId) return;
-
-      // Tìm module chứa bài học này
-      const foundModule = modules.find(m => 
-         m.lessons && m.lessons.some(l => l.id === parsedLessonId)
-      );
-
-      if (foundModule) {
-         const selectTargetLesson = async () => {
-            try {
-               setLoading(true);
-               setActiveModule(foundModule);
-               const moduleLessons = await api.getLessonsByModule(token, foundModule.id);
-               setLessons(moduleLessons);
-               setSelectedLessonId(parsedLessonId);
-            } catch (err) {
-               console.error("Error shifting to target lesson:", err);
-            } finally {
-               setLoading(false);
-            }
-         };
-         selectTargetLesson();
-      }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-   }, [searchParams, modules, token]);
-
-   // 1. Fetch note mỗi khi đổi lesson
-   useEffect(() => {
-      if (!selectedLessonId) return;
-
-      currentLessonRef.current = selectedLessonId;
-      setNoteContent('');
-      setSaveStatus('idle');
-
-      // Hủy debounce đang pending của lesson cũ
-      if (debounceTimer.current) {
-         clearTimeout(debounceTimer.current);
-      }
-
-      const fetchNote = async () => {
-         try {
-            const content = await api.getUserNote(token, selectedLessonId);
-            // Chỉ set nếu user chưa chuyển sang lesson khác
-            if (currentLessonRef.current === selectedLessonId) {
-               setNoteContent(content);
-            }
-         } catch (error) {
-            console.error("[Lesson] Lỗi tải ghi chú:", error);
-         }
-      };
-
-      fetchNote();
-   }, [selectedLessonId, token]);
-
-   // 2. Auto-save với debounce 700ms
-   const handleNoteChange = useCallback((e) => {
+  // 2. Auto-save với debounce 700ms
+  const handleNoteChange = useCallback(
+    (e) => {
       const value = e.target.value;
       setNoteContent(value);
+      if (!token) return;
       setSaveStatus('saving');
 
       if (debounceTimer.current) clearTimeout(debounceTimer.current);
 
       debounceTimer.current = setTimeout(async () => {
-         // Chỉ save nếu vẫn đang ở đúng lesson
-         if (currentLessonRef.current !== selectedLessonId) return;
+        // Chỉ save nếu vẫn đang ở đúng lesson
+        if (currentLessonRef.current !== selectedLessonId) return;
 
-         try {
-            await api.updateUserNote(token, {
-               lessonId: selectedLessonId,
-               content: value
-            });
-            setSaveStatus('saved');
-            // Sau 2s thì reset status về idle để sạch giao diện
-            setTimeout(() => setSaveStatus('idle'), 2000);
-         } catch (error) {
-            setSaveStatus('error');
-            console.error("[Lesson] Lỗi lưu ghi chú:", error);
-         }
+        try {
+          await api.updateUserNote(token, {
+            lessonId: selectedLessonId,
+            content: value,
+          });
+          setSaveStatus('saved');
+          // Sau 2s thì reset status về idle để sạch giao diện
+          setTimeout(() => setSaveStatus('idle'), 2000);
+        } catch (error) {
+          setSaveStatus('error');
+          console.error('[Lesson] Lỗi lưu ghi chú:', error);
+        }
       }, 700);
-   }, [selectedLessonId, token]);
+    },
+    [selectedLessonId, token]
+  );
 
-   // 3. Cleanup khi unmount
-   useEffect(() => {
-      return () => {
-         if (debounceTimer.current) clearTimeout(debounceTimer.current);
-      };
-   }, []);
+  // 3. Cleanup khi unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    };
+  }, []);
 
-   const lastSyncRef = React.useRef({});
+  const lastSyncRef = React.useRef({});
 
-   const selectedLesson = useMemo(
-      () => lessons.find((lesson) => lesson.id === selectedLessonId) ?? lessons[0],
-      [lessons, selectedLessonId]
-   );
+  const selectedLesson = useMemo(
+    () => lessons.find((lesson) => lesson.id === selectedLessonId) ?? lessons[0],
+    [lessons, selectedLessonId]
+  );
 
-   const completedCount = lessons.filter((lesson) => lessonProgress[lesson.id]?.completed).length;
-   const progressPercent = lessons.length ? (completedCount / lessons.length) * 100 : 0;
-   const showOverlay = (isMobile && leftOpen) || (isCompact && rightOpen);
+  const completedCount = lessons.filter((lesson) => lessonProgress[lesson.id]?.completed).length;
+  const progressPercent = lessons.length ? (completedCount / lessons.length) * 100 : 0;
+  const showOverlay = (isMobile && leftOpen) || (isCompact && rightOpen);
 
-   const updateLessonCompletion = (lessonId, completed) => {
-      setLessons((currentLessons) =>
-         currentLessons.map((lesson) =>
-            lesson.id === lessonId ? { ...lesson, completed } : lesson
-         )
-      );
-   };
+  const updateLessonCompletion = (lessonId, completed) => {
+    setLessons((currentLessons) =>
+      currentLessons.map((lesson) => (lesson.id === lessonId ? { ...lesson, completed } : lesson))
+    );
+  };
 
-   const closePanels = () => {
-      if (isMobile) {
-         setLeftOpen(false);
+  const closePanels = () => {
+    if (isMobile) {
+      setLeftOpen(false);
+    }
+    if (isCompact) {
+      setRightOpen(false);
+    }
+  };
+
+  const handleSelectLesson = (lessonId) => {
+    setSelectedLessonId(lessonId);
+    if (isMobile) {
+      setLeftOpen(false);
+    }
+  };
+
+  const toggleLeftSidebar = () => {
+    setLeftOpen((current) => {
+      const next = !current;
+      if (next && isCompact) {
+        setRightOpen(false);
       }
-      if (isCompact) {
-         setRightOpen(false);
+      return next;
+    });
+  };
+
+  const toggleRightSidebar = () => {
+    setRightOpen((current) => {
+      const next = !current;
+      if (next && isMobile) {
+        setLeftOpen(false);
       }
-   };
+      return next;
+    });
+  };
 
-   const handleSelectLesson = (lessonId) => {
-      setSelectedLessonId(lessonId);
-      if (isMobile) {
-         setLeftOpen(false);
-      }
-   };
+  const handleProgress = (lessonId, state) => {
+    const playedRatio = state.played || 0;
+    const loadedRatio = state.loaded || 0;
 
-   const toggleLeftSidebar = () => {
-      setLeftOpen((current) => {
-         const next = !current;
-         if (next && isCompact) {
-            setRightOpen(false);
-         }
-         return next;
-      });
-   };
+    if (loadedRatio === 0 && playedRatio >= 0.95) return;
 
-   const toggleRightSidebar = () => {
-      setRightOpen((current) => {
-         const next = !current;
-         if (next && isMobile) {
-            setLeftOpen(false);
-         }
-         return next;
-      });
-   };
+    // Sử dụng trạng thái hoàn thành từ VideoPlayer truyền lên
+    const completed = state.isCompleted;
 
+    setLessonProgress((currentProgress) => ({
+      ...currentProgress,
+      [lessonId]: {
+        ...currentProgress[lessonId],
+        ...state,
+        completed,
+      },
+    }));
 
-   const handleProgress = (lessonId, state) => {
-      const playedRatio = state.played || 0;
-      const loadedRatio = state.loaded || 0;
+    if (completed) {
+      updateLessonCompletion(lessonId, true);
+    }
 
-      if (loadedRatio === 0 && playedRatio >= 0.95) return;
-      
-      // Sử dụng trạng thái hoàn thành từ VideoPlayer truyền lên
-      const completed = state.isCompleted;
+    // Sync to backend every 10% or when completed, with at least 5s between syncs
+    const lastSync = lastSyncRef.current[lessonId] || { percent: 0, time: 0 };
+    const currentPercent = Math.round(playedRatio * 100);
+    const now = Date.now();
 
-      setLessonProgress((currentProgress) => ({
-         ...currentProgress,
-         [lessonId]: {
-            ...currentProgress[lessonId],
-            ...state,
-            completed
-         }
-      }));
+    if (
+      (currentPercent >= lastSync.percent + 10 || (completed && !lastSync.completed)) &&
+      now - lastSync.time > 5000
+    ) {
+      lastSyncRef.current[lessonId] = { percent: currentPercent, time: now, completed };
+      api
+        .updateUserProgress(token, {
+          courseId,
+          moduleId: activeModule?.id,
+          lessonId,
+          progressPercent: currentPercent,
+          status: completed ? 'COMPLETED' : 'ACTIVE',
+        })
+        .catch((err) => console.error('Failed to sync progress:', err));
+    }
+  };
 
-      if (completed) {
-         updateLessonCompletion(lessonId, true);
-      }
+  // Logic điều hướng bài học
+  const currentIndex = lessons.findIndex((l) => l.id === selectedLessonId);
+  const hasPrev = currentIndex > 0;
+  const hasNext = currentIndex < lessons.length - 1;
 
-      // Sync to backend every 10% or when completed, with at least 5s between syncs
-      const lastSync = lastSyncRef.current[lessonId] || { percent: 0, time: 0 };
-      const currentPercent = Math.round(playedRatio * 100);
-      const now = Date.now();
+  const currentProgress = lessonProgress[selectedLessonId]?.played || 0;
+  const isNextDisabled = !hasNext || currentProgress < 0.7;
 
-      if (
-         (currentPercent >= lastSync.percent + 10 || (completed && !lastSync.completed)) &&
-         (now - lastSync.time > 5000)
-      ) {
-         lastSyncRef.current[lessonId] = { percent: currentPercent, time: now, completed };
-         api.updateUserProgress(token, {
-            courseId,
-            moduleId: activeModule?.id,
-            lessonId,
-            progressPercent: currentPercent,
-            status: completed ? 'COMPLETED' : 'ACTIVE'
-         }).catch(err => console.error("Failed to sync progress:", err));
-      }
-   };
+  const handleNext = () => {
+    if (hasNext && !isNextDisabled) {
+      const nextLesson = lessons[currentIndex + 1];
+      handleSelectLesson(nextLesson.id);
+    }
+  };
 
-   // Logic điều hướng bài học
-   const currentIndex = lessons.findIndex(l => l.id === selectedLessonId);
-   const hasPrev = currentIndex > 0;
-   const hasNext = currentIndex < lessons.length - 1;
+  const handlePrev = () => {
+    if (hasPrev) {
+      const prevLesson = lessons[currentIndex - 1];
+      handleSelectLesson(prevLesson.id);
+    }
+  };
 
-   const currentProgress = lessonProgress[selectedLessonId]?.played || 0;
-   const isNextDisabled = !hasNext || currentProgress < 0.7;
+  if (loading) {
+    return <div className="lesson-loading">Đang tải nội dung bài học...</div>;
+  }
 
-   const handleNext = () => {
-      if (hasNext && !isNextDisabled) {
-         const nextLesson = lessons[currentIndex + 1];
-         handleSelectLesson(nextLesson.id);
-      }
-   };
-
-   const handlePrev = () => {
-      if (hasPrev) {
-         const prevLesson = lessons[currentIndex - 1];
-         handleSelectLesson(prevLesson.id);
-      }
-   };
-
-   if (loading) {
-      return <div className="lesson-loading">Đang tải nội dung bài học...</div>;
-   }
-
-   if (!selectedLesson) {
-      return (
-         <div className="lesson-error-container">
-            <div className="lesson-error-card">
-               <div className="lesson-error-illustration">
-                  <img src={errorIllustration} alt="Không tìm thấy bài học" />
-               </div>
-               <h2 className="lesson-error-title">Không tìm thấy bài học</h2>
-               <p className="lesson-error-desc">
-                  Xin lỗi, chúng tôi không thể tìm thấy nội dung bài học này hoặc bài học chưa được cập nhật.
-               </p>
-               <div className="lesson-error-actions">
-                  <button className="btn-map-2" onClick={() => navigate('/roadmap')}>
-                     <Map size={20} />
-                     <span>Xem lộ trình</span>
-                  </button>
-                  <button className="btn-back-2" onClick={() => navigate(-1)}>
-                     <ArrowLeftIcon size={20} />
-                     <span>Quay lại</span>
-                  </button>
-               </div>
-            </div>
-         </div>
-      );
-   }
-
-   return (
-      <div className="lesson-layout">
-         {showOverlay && (
-            <button
-               type="button"
-               className="lesson-overlay"
-               onClick={closePanels}
-               aria-label="Close lesson panels"
-            ></button>
-         )}
-
-         <div className="lesson-sidebar" style={{ display: leftOpen ? 'block' : 'none' }}>
-            <div className="ls-header">
-               <small className="ls-course-label">{course?.code} Course</small>
-               <h3 className="ls-module-title">{activeModule?.title}</h3>
-               <div className="ls-progress-bg">
-                  <div
-                     className="ls-progress-bar"
-                     style={{ width: `${progressPercent}%` }}
-                  ></div>
-               </div>
-            </div>
-
-            <div className="ls-section-list">
-               {lessons.map((lesson) => {
-                  const isActive = lesson.id === selectedLessonId;
-                  const isCompleted = lessonProgress[lesson.id]?.completed;
-
-                  return (
-                     <div key={lesson.id} className="ls-section-item">
-                        <div className="ls-section-label">Section {lesson.sectionNumber || lesson.orderIndex}</div>
-                        <button
-                           type="button"
-                           className={`ls-section-btn ${isActive ? 'active' : ''}`}
-                           onClick={() => handleSelectLesson(lesson.id)}
-                        >
-                           <div className="ls-section-btn-icon">
-                              {isCompleted ? <CheckCircle size={16} color="#22c55e" /> :
-                                 isActive ? <Play size={16} fill="currentColor" /> :
-                                    <div className="ls-section-btn-icon-empty"></div>}
-                           </div>
-                           <div className="ls-section-btn-content">
-                              <span className={`ls-section-btn-text ${isActive ? 'active' : ''}`}>
-                                 {lesson.title}
-                              </span>
-                              {lesson.videoDuration && (
-                                 <span className="ls-section-btn-duration">{lesson.videoDuration}</span>
-                              )}
-                           </div>
-                        </button>
-                     </div>
-                  );
-               })}
-            </div>
-         </div>
-
-         <div className="lesson-content">
-            <div className="lc-topbar">
-               <div className="lc-topbar-left">
-                  <button
-                     type="button"
-                     onClick={toggleLeftSidebar}
-                     className="lc-topbar-menu-btn"
-                     aria-label="Toggle lesson navigation"
-                     aria-expanded={leftOpen}
-                  >
-                     <Menu size={20} />
-                  </button>
-                  {/* Breadcrumb */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.85rem', color: '#64748b', minWidth: 0, flex: 1 }}>
-                     {courseId && (
-                        <>
-                           <button
-                              type="button"
-                              id="lesson-back-to-course"
-                              onClick={() => navigate(`/course/${courseId}?from=lesson`)}
-                              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', background: 'none', border: 'none', color: '#2563eb', fontWeight: 600, cursor: 'pointer', fontSize: '0.85rem', padding: 0, flexShrink: 0 }}
-                           >
-                              <ArrowLeftIcon size={14} /> Khóa học
-                           </button>
-                           <span style={{ color: '#cbd5e1', flexShrink: 0 }}>/</span>
-                        </>
-                     )}
-                     <span style={{ fontWeight: 500, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {selectedLesson?.sectionNumber ? `Section ${selectedLesson.sectionNumber}` : `Lesson ${selectedLesson?.orderIndex || ''}`} — {selectedLesson?.title || ''}
-                     </span>
-                  </div>
-               </div>
-               <div className="lc-topbar-right">
-                  <button
-                     type="button"
-                     onClick={toggleRightSidebar}
-                     className="lc-topbar-doc-btn"
-                     aria-label="Toggle lesson resources"
-                     aria-expanded={rightOpen}
-                  >
-                     <FileText size={20} />
-                  </button>
-                  <button
-                     type="button"
-                     className="btn lc-btn-prev"
-                     onClick={handlePrev}
-                     disabled={!hasPrev}
-                     style={{ opacity: hasPrev ? 1 : 0.5, cursor: hasPrev ? 'pointer' : 'not-allowed' }}
-                  >
-                     <ChevronLeft size={16} className="icon-mr-4" /> Trước
-                  </button>
-                  <button
-                     type="button"
-                     className={`btn btn-primary lc-btn-next ${isNextDisabled ? 'disabled' : ''}`}
-                     onClick={handleNext}
-                     disabled={isNextDisabled}
-                     title={!hasNext ? "Hết bài học" : (currentProgress < 0.7 ? "Bạn cần học ít nhất 70% để tiếp tục" : "")}
-                  >
-                     Tiếp theo <ChevronRight size={16} className="icon-ml-4" />
-                  </button>
-               </div>
-            </div>
-
-            <div className="lesson-main">
-               <div className="lc-main-container">
-                  <div
-                     className="video-placeholder"
-                     style={{
-                        position: 'relative',
-                        width: '100%',
-                        paddingTop: '56.25%',
-                        borderRadius: '0.75rem',
-                        overflow: 'hidden',
-                        marginBottom: '2rem',
-                        background: '#000'
-                     }}
-                  >
-                     {selectedLesson ? (
-                        <VideoPlayer
-                           url={selectedLesson.videoUrl}
-                           lessonId={selectedLesson.id}
-                           courseId={courseId}
-                           moduleId={activeModule?.id}
-                           token={token}
-                           user={user}
-                           onProgressChange={(state) => handleProgress(selectedLesson.id, state)}
-                        />
-                     ) : (
-                        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b' }}>
-                           Đang chuẩn bị video...
-                        </div>
-                     )}
-                  </div>
-
-                  <h1 className="lc-title">{selectedLesson?.title || ''}</h1>
-
-                  <div className="lc-alert-box" style={{ marginTop: 0 }}>
-                     <h4 className="lc-alert-title">
-                        <AlertCircle size={20} className="icon-mr-8" />
-                        Tiến độ video
-                     </h4>
-                     <p className="lc-alert-text">
-                        Đã xem: {Math.round((lessonProgress[selectedLesson?.id]?.played ?? 0) * 100)}% | Thời gian xem: {Math.round(lessonProgress[selectedLesson?.id]?.playedSeconds ?? 0)}s | Trạng thái: {lessonProgress[selectedLesson?.id]?.completed ? 'Hoàn thành' : 'Đang học'}
-                     </p>
-                  </div>
-
-                  <div className="lc-text-content">
-                     {selectedLesson?.contentHtml ? (
-                        <MarkdownRenderer content={selectedLesson.contentHtml} />
-                     ) : (
-                        <p className="lc-paragraph">Chưa có nội dung văn bản cho bài học này.</p>
-                     )}
-                  </div>
-               </div>
-            </div>
-         </div>
-
-         <div className="lesson-sidebar-right" style={{ display: rightOpen ? 'flex' : 'none' }}>
-            <div className="rs-header">Tài nguyên & Ghi chú</div>
-
-            <div className="rs-content">
-               <div>
-                  <h4 className="rs-section-title">Tài liệu đính kèm</h4>
-                  <div className="rs-resource-list">
-                     <p style={{ fontSize: '0.85rem', color: '#64748b', padding: '0.5rem' }}>
-                        Chưa có tài liệu cho bài học này.
-                     </p>
-                  </div>
-               </div>
-
-               <div>
-                  <h4 className="rs-section-title">Ghi chú cá nhân</h4>
-                  <textarea
-                     className="rs-textarea"
-                     placeholder="Viết ghi chú tại đây... (được lưu tự động)"
-                     value={noteContent}
-                     onChange={handleNoteChange}
-                     maxLength={10000}
-                  ></textarea>
-                  <div className="rs-note-status" style={{ fontSize: '0.75rem', marginTop: '4px', textAlign: 'right', minHeight: '1.2em' }}>
-                     {saveStatus === 'saving' && <span style={{ color: '#64748b' }}> đang lưu...</span>}
-                     {saveStatus === 'saved' && <span style={{ color: '#16a34a' }}>Đã lưu ✓</span>}
-                     {saveStatus === 'error' && <span style={{ color: '#dc2626' }}>Lỗi lưu, thử lại sau.</span>}
-                  </div>
-               </div>
-
-               <div className="rs-discussion-box">
-                  <h4 className="rs-discussion-title">
-                     <span style={{ marginRight: '0.5rem' }}>💬</span> Thảo luận bài học
-                  </h4>
-                  <p className="rs-discussion-text">Bắt đầu thảo luận về bài học này.</p>
-                  <button type="button" className="rs-discussion-btn">
-                     Gửi câu hỏi
-                  </button>
-               </div>
-            </div>
-         </div>
+  if (!selectedLesson) {
+    return (
+      <div className="lesson-error-container">
+        <div className="lesson-error-card">
+          <div className="lesson-error-illustration">
+            <img src={errorIllustration} alt="Không tìm thấy bài học" />
+          </div>
+          <h2 className="lesson-error-title">Không tìm thấy bài học</h2>
+          <p className="lesson-error-desc">
+            Xin lỗi, chúng tôi không thể tìm thấy nội dung bài học này hoặc bài học chưa được cập
+            nhật.
+          </p>
+          <div className="lesson-error-actions">
+            <button className="btn-map-2" onClick={() => navigate('/roadmap')}>
+              <Map size={20} />
+              <span>Xem lộ trình</span>
+            </button>
+            <button className="btn-back-2" onClick={() => navigate(-1)}>
+              <ArrowLeftIcon size={20} />
+              <span>Quay lại</span>
+            </button>
+          </div>
+        </div>
       </div>
-   );
+    );
+  }
+
+  return (
+    <div className="lesson-layout">
+      {showOverlay && (
+        <button
+          type="button"
+          className="lesson-overlay"
+          onClick={closePanels}
+          aria-label="Close lesson panels"
+        ></button>
+      )}
+
+      <div className="lesson-sidebar" style={{ display: leftOpen ? 'block' : 'none' }}>
+        <div className="ls-header">
+          <small className="ls-course-label">{course?.code} Course</small>
+          <h3 className="ls-module-title">{activeModule?.title}</h3>
+          <div className="ls-progress-bg">
+            <div className="ls-progress-bar" style={{ width: `${progressPercent}%` }}></div>
+          </div>
+        </div>
+
+        <div className="ls-section-list">
+          {lessons.map((lesson) => {
+            const isActive = lesson.id === selectedLessonId;
+            const isCompleted = lessonProgress[lesson.id]?.completed;
+
+            return (
+              <div key={lesson.id} className="ls-section-item">
+                <div className="ls-section-label">
+                  Section {lesson.sectionNumber || lesson.orderIndex}
+                </div>
+                <button
+                  type="button"
+                  className={`ls-section-btn ${isActive ? 'active' : ''}`}
+                  onClick={() => handleSelectLesson(lesson.id)}
+                >
+                  <div className="ls-section-btn-icon">
+                    {isCompleted ? (
+                      <CheckCircle size={16} color="#22c55e" />
+                    ) : isActive ? (
+                      <Play size={16} fill="currentColor" />
+                    ) : (
+                      <div className="ls-section-btn-icon-empty"></div>
+                    )}
+                  </div>
+                  <div className="ls-section-btn-content">
+                    <span className={`ls-section-btn-text ${isActive ? 'active' : ''}`}>
+                      {lesson.title}
+                    </span>
+                    {lesson.videoDuration && (
+                      <span className="ls-section-btn-duration">{lesson.videoDuration}</span>
+                    )}
+                  </div>
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="lesson-content">
+        <div className="lc-topbar">
+          <div className="lc-topbar-left">
+            <button
+              type="button"
+              onClick={toggleLeftSidebar}
+              className="lc-topbar-menu-btn"
+              aria-label="Toggle lesson navigation"
+              aria-expanded={leftOpen}
+            >
+              <Menu size={20} />
+            </button>
+            {/* Breadcrumb */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                fontSize: '0.85rem',
+                color: '#64748b',
+                minWidth: 0,
+                flex: 1,
+              }}
+            >
+              {courseId && (
+                <>
+                  <button
+                    type="button"
+                    id="lesson-back-to-course"
+                    onClick={() => navigate(`/course/${courseId}?from=lesson`)}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.25rem',
+                      background: 'none',
+                      border: 'none',
+                      color: '#2563eb',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      fontSize: '0.85rem',
+                      padding: 0,
+                      flexShrink: 0,
+                    }}
+                  >
+                    <ArrowLeftIcon size={14} /> Khóa học
+                  </button>
+                  <span style={{ color: '#cbd5e1', flexShrink: 0 }}>/</span>
+                </>
+              )}
+              <span
+                style={{
+                  fontWeight: 500,
+                  color: '#0f172a',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
+                {selectedLesson?.sectionNumber
+                  ? `Section ${selectedLesson.sectionNumber}`
+                  : `Lesson ${selectedLesson?.orderIndex || ''}`}{' '}
+                — {selectedLesson?.title || ''}
+              </span>
+            </div>
+          </div>
+          <div className="lc-topbar-right">
+            <button
+              type="button"
+              onClick={toggleRightSidebar}
+              className="lc-topbar-doc-btn"
+              aria-label="Toggle lesson resources"
+              aria-expanded={rightOpen}
+            >
+              <FileText size={20} />
+            </button>
+            <button
+              type="button"
+              className="btn lc-btn-prev"
+              onClick={handlePrev}
+              disabled={!hasPrev}
+              style={{ opacity: hasPrev ? 1 : 0.5, cursor: hasPrev ? 'pointer' : 'not-allowed' }}
+            >
+              <ChevronLeft size={16} className="icon-mr-4" /> Trước
+            </button>
+            <button
+              type="button"
+              className={`btn btn-primary lc-btn-next ${isNextDisabled ? 'disabled' : ''}`}
+              onClick={handleNext}
+              disabled={isNextDisabled}
+              title={
+                !hasNext
+                  ? 'Hết bài học'
+                  : currentProgress < 0.7
+                    ? 'Bạn cần học ít nhất 70% để tiếp tục'
+                    : ''
+              }
+            >
+              Tiếp theo <ChevronRight size={16} className="icon-ml-4" />
+            </button>
+          </div>
+        </div>
+
+        <div className="lesson-main">
+          <div className="lc-main-container">
+            <div
+              className="video-placeholder"
+              style={{
+                position: 'relative',
+                width: '100%',
+                paddingTop: '56.25%',
+                borderRadius: '0.75rem',
+                overflow: 'hidden',
+                marginBottom: '2rem',
+                background: '#000',
+              }}
+            >
+              {selectedLesson ? (
+                <VideoPlayer
+                  url={selectedLesson.videoUrl}
+                  lessonId={selectedLesson.id}
+                  courseId={courseId}
+                  moduleId={activeModule?.id}
+                  token={token}
+                  user={user}
+                  onProgressChange={(state) => handleProgress(selectedLesson.id, state)}
+                />
+              ) : (
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#64748b',
+                  }}
+                >
+                  Đang chuẩn bị video...
+                </div>
+              )}
+            </div>
+
+            <h1 className="lc-title">{selectedLesson?.title || ''}</h1>
+
+            <div className="lc-alert-box" style={{ marginTop: 0 }}>
+              <h4 className="lc-alert-title">
+                <AlertCircle size={20} className="icon-mr-8" />
+                Tiến độ video
+              </h4>
+              <p className="lc-alert-text">
+                Đã xem: {Math.round((lessonProgress[selectedLesson?.id]?.played ?? 0) * 100)}% |
+                Thời gian xem: {Math.round(lessonProgress[selectedLesson?.id]?.playedSeconds ?? 0)}s
+                | Trạng thái:{' '}
+                {lessonProgress[selectedLesson?.id]?.completed ? 'Hoàn thành' : 'Đang học'}
+              </p>
+            </div>
+
+            <div className="lc-text-content">
+              {selectedLesson?.contentHtml ? (
+                <MarkdownRenderer content={selectedLesson.contentHtml} />
+              ) : (
+                <p className="lc-paragraph">Chưa có nội dung văn bản cho bài học này.</p>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="lesson-sidebar-right" style={{ display: rightOpen ? 'flex' : 'none' }}>
+        <div className="rs-header">Tài nguyên & Ghi chú</div>
+
+        <div className="rs-content">
+          <div>
+            <h4 className="rs-section-title">Tài liệu đính kèm</h4>
+            <div className="rs-resource-list">
+              <p style={{ fontSize: '0.85rem', color: '#64748b', padding: '0.5rem' }}>
+                Chưa có tài liệu cho bài học này.
+              </p>
+            </div>
+          </div>
+
+          <div>
+            <h4 className="rs-section-title">Ghi chú cá nhân</h4>
+            <textarea
+              className="rs-textarea"
+              placeholder={
+                token
+                  ? 'Viết ghi chú tại đây... (được lưu tự động)'
+                  : 'Vui lòng đăng nhập để viết và lưu ghi chú cá nhân...'
+              }
+              value={noteContent}
+              onChange={handleNoteChange}
+              disabled={!token}
+              maxLength={10000}
+            ></textarea>
+            <div
+              className="rs-note-status"
+              style={{
+                fontSize: '0.75rem',
+                marginTop: '4px',
+                textAlign: 'right',
+                minHeight: '1.2em',
+              }}
+            >
+              {saveStatus === 'saving' && <span style={{ color: '#64748b' }}> đang lưu...</span>}
+              {saveStatus === 'saved' && <span style={{ color: '#16a34a' }}>Đã lưu ✓</span>}
+              {saveStatus === 'error' && (
+                <span style={{ color: '#dc2626' }}>Lỗi lưu, thử lại sau.</span>
+              )}
+            </div>
+          </div>
+
+          <div className="rs-discussion-box">
+            <h4 className="rs-discussion-title">
+              <span style={{ marginRight: '0.5rem' }}>💬</span> Thảo luận bài học
+            </h4>
+            <p className="rs-discussion-text">Bắt đầu thảo luận về bài học này.</p>
+            <button type="button" className="rs-discussion-btn">
+              Gửi câu hỏi
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default Lesson;

@@ -19,9 +19,7 @@ function getISOWeekLabel(date) {
     const d = new Date(date);
     if (isNaN(d.getTime())) return null;
     const startOfYear = new Date(d.getFullYear(), 0, 1);
-    const week = Math.ceil(
-      ((d - startOfYear) / 86400000 + startOfYear.getDay() + 1) / 7
-    );
+    const week = Math.ceil(((d - startOfYear) / 86400000 + startOfYear.getDay() + 1) / 7);
     return `Tuần ${week}`;
   } catch {
     return null;
@@ -56,19 +54,20 @@ module.exports.getAll = async (req, res, next) => {
 
     const roleFilter = Object.values(ROLES).includes(role) ? role : undefined;
     const statusFilter =
-      status === STATUS.ACTIVE ? true :
-        status === STATUS.INACTIVE ? false : undefined;
+      status === STATUS.ACTIVE ? true : status === STATUS.INACTIVE ? false : undefined;
 
     const whereParams = {
       deletedAt: null,
       ...(roleFilter !== undefined ? { role: roleFilter } : {}),
       ...(statusFilter !== undefined ? { isActive: statusFilter } : {}),
-      ...(search ? {
-        OR: [
-          { fullName: { contains: search, mode: 'insensitive' } },
-          { email: { contains: search, mode: 'insensitive' } },
-        ]
-      } : {})
+      ...(search
+        ? {
+            OR: [
+              { fullName: { contains: search, mode: 'insensitive' } },
+              { email: { contains: search, mode: 'insensitive' } },
+            ],
+          }
+        : {}),
     };
 
     const [users, total] = await Promise.all([
@@ -78,16 +77,21 @@ module.exports.getAll = async (req, res, next) => {
         take: limit,
         orderBy: { createdAt: 'desc' },
         select: {
-          id: true, fullName: true, email: true, role: true,
-          isActive: true, createdAt: true, lastLogin: true,
-        }
+          id: true,
+          fullName: true,
+          email: true,
+          role: true,
+          isActive: true,
+          createdAt: true,
+          lastLogin: true,
+        },
       }),
-      prisma.user.count({ where: whereParams })
+      prisma.user.count({ where: whereParams }),
     ]);
 
     res.json({
       data: users,
-      pagination: { total, page, limit, totalPages: Math.ceil(total / limit) }
+      pagination: { total, page, limit, totalPages: Math.ceil(total / limit) },
     });
   } catch (error) {
     next(error);
@@ -103,18 +107,25 @@ module.exports.getById = async (req, res, next) => {
     const user = await prisma.user.findUnique({
       where: { id: parseInt(id) },
       select: {
-        id: true, fullName: true, email: true, role: true,
-        isActive: true, createdAt: true, lastLogin: true,
-        level: true, streak: true, totalStudyTime: true,
+        id: true,
+        fullName: true,
+        email: true,
+        role: true,
+        isActive: true,
+        createdAt: true,
+        lastLogin: true,
+        level: true,
+        streak: true,
+        totalStudyTime: true,
         progress: {
           select: {
             id: true,
             progressPercent: true,
-            course: { select: { id: true, title: true, level: true } }
-          }
+            course: { select: { id: true, title: true, level: true } },
+          },
         },
         examResults: true,
-      }
+      },
     });
 
     if (!user || user.deletedAt) {
@@ -139,45 +150,55 @@ module.exports.getProfileMe = async (req, res, next) => {
       prisma.user.findUnique({
         where: { id: userId },
         select: {
-          id: true, fullName: true, email: true, role: true,
-          isActive: true, avatarUrl: true, createdAt: true,
-          level: true, streak: true, totalStudyTime: true,
+          id: true,
+          fullName: true,
+          email: true,
+          role: true,
+          isActive: true,
+          avatarUrl: true,
+          createdAt: true,
+          level: true,
+          streak: true,
+          totalStudyTime: true,
           // ... (rest of the fields)
           progress: {
             where: { moduleId: null, lessonId: null, labId: null, progressPercent: { gt: 0 } },
             select: {
               progressPercent: true,
               courseId: true,
-              course: { select: { id: true, title: true } }
-            }
+              course: { select: { id: true, title: true } },
+            },
           },
           activities: {
             where: { createdAt: { gte: thirtyDaysAgo } },
             orderBy: { createdAt: 'desc' },
             take: 10,
             select: {
-              id: true, title: true, type: true,
-              createdAt: true, referenceId: true,
-            }
+              id: true,
+              title: true,
+              type: true,
+              createdAt: true,
+              referenceId: true,
+            },
           },
           badges: {
             orderBy: { earnedAt: 'desc' },
-            select: { id: true, badgeName: true, badgeIcon: true, earnedAt: true }
+            select: { id: true, badgeName: true, badgeIcon: true, earnedAt: true },
           },
           examResults: {
-            select: { percentage: true, isPassed: true, takenAt: true }
+            select: { percentage: true, isPassed: true, takenAt: true },
           },
           studyLogs: {
             where: { date: { gte: sevenDaysAgo } },
             orderBy: { date: 'asc' },
-            select: { date: true, duration: true }
-          }
-        }
+            select: { date: true, duration: true },
+          },
+        },
       }),
       prisma.userProgress.count({
-        where: { userId, labId: { not: null }, status: 'COMPLETED' }
+        where: { userId, labId: { not: null }, status: 'COMPLETED' },
       }),
-      prisma.lab.count({ where: { deletedAt: null } })
+      prisma.lab.count({ where: { deletedAt: null } }),
     ]);
 
     if (!user) {
@@ -186,7 +207,7 @@ module.exports.getProfileMe = async (req, res, next) => {
 
     // ── weeklyScores ──────────────────────────────────────────────────────
     const weeklyMap = {};
-    user.examResults.forEach(r => {
+    user.examResults.forEach((r) => {
       if (!r.takenAt) return;
       const week = getISOWeekLabel(r.takenAt);
       if (!week) return;
@@ -203,35 +224,37 @@ module.exports.getProfileMe = async (req, res, next) => {
 
     // ── dailyStudyTime từ StudyLog (chính xác 100%) ───────────────────────
     // [FIX] Dùng reduce để cộng dồn nếu có nhiều log cùng ngày
-    const dailyMap = Object.fromEntries(DAY_LABELS.map(d => [d, 0]));
-    user.studyLogs.forEach(log => {
+    const dailyMap = Object.fromEntries(DAY_LABELS.map((d) => [d, 0]));
+    user.studyLogs.forEach((log) => {
       const label = DAY_LABELS[new Date(log.date).getDay()];
       dailyMap[label] += Math.round((log.duration || 0) / 60); // giây → phút
     });
 
-    const dailyStudyTime = DAY_LABELS.map(day => ({
+    const dailyStudyTime = DAY_LABELS.map((day) => ({
       day,
       minutes: dailyMap[day],
     }));
 
     // ── Summary metrics ───────────────────────────────────────────────────
-    const courseProgress = user.progress.map(p => ({
+    const courseProgress = user.progress.map((p) => ({
       courseId: p.courseId,
       courseName: p.course?.title || String(p.courseId),
       progressPercent: p.progressPercent,
     }));
 
-    const totalProgress = courseProgress.length > 0
-      ? Math.round(
-        courseProgress.reduce((s, p) => s + p.progressPercent, 0) / courseProgress.length
-      )
-      : 0;
+    const totalProgress =
+      courseProgress.length > 0
+        ? Math.round(
+            courseProgress.reduce((s, p) => s + p.progressPercent, 0) / courseProgress.length
+          )
+        : 0;
 
-    const averageScore = user.examResults.length > 0
-      ? Math.round(
-        user.examResults.reduce((s, r) => s + Number(r.percentage), 0) / user.examResults.length
-      )
-      : 0;
+    const averageScore =
+      user.examResults.length > 0
+        ? Math.round(
+            user.examResults.reduce((s, r) => s + Number(r.percentage), 0) / user.examResults.length
+          )
+        : 0;
 
     // [FIX] Destructure studyLogs ra khỏi baseUser để không bị lộ raw data
     const { examResults, progress, activities, studyLogs, ...baseUser } = user;
@@ -251,8 +274,8 @@ module.exports.getProfileMe = async (req, res, next) => {
           examCount: examResults.length,
           labsDone: completedLabs,
           totalLabs: totalLabsCount,
-        }
-      }
+        },
+      },
     });
   } catch (error) {
     next(error);
@@ -280,43 +303,41 @@ module.exports.getStudyTimeStats = async (req, res, next) => {
     const logs = await prisma.studyLog.findMany({
       where: { userId, date: { gte: since } },
       orderBy: { date: 'asc' },
-      select: { date: true, duration: true }
+      select: { date: true, duration: true },
     });
 
     let chartData = [];
 
     if (period === 'week') {
       // Group by day-of-week label: CN, T2 ... T7
-      const map = Object.fromEntries(DAY_LABELS.map(d => [d, 0]));
-      logs.forEach(log => {
+      const map = Object.fromEntries(DAY_LABELS.map((d) => [d, 0]));
+      logs.forEach((log) => {
         const label = DAY_LABELS[new Date(log.date).getDay()];
         map[label] += Math.round((log.duration || 0) / 60);
       });
-      chartData = DAY_LABELS.map(day => ({ label: day, minutes: map[day] }));
-
+      chartData = DAY_LABELS.map((day) => ({ label: day, minutes: map[day] }));
     } else if (period === 'month') {
       // Group by week-of-month: Tuần 1 → Tuần 4
       const map = { 'Tuần 1': 0, 'Tuần 2': 0, 'Tuần 3': 0, 'Tuần 4': 0 };
-      logs.forEach(log => {
+      logs.forEach((log) => {
         const date = new Date(log.date);
         const weekNum = Math.ceil(date.getDate() / 7);
         const key = `Tuần ${Math.min(weekNum, 4)}`;
         map[key] += Math.round((log.duration || 0) / 60);
       });
       chartData = Object.entries(map).map(([label, minutes]) => ({ label, minutes }));
-
     } else if (period === 'quarter') {
       // Group by month: Tháng X
       const map = {};
-      logs.forEach(log => {
+      logs.forEach((log) => {
         const date = new Date(log.date);
         const key = `T${date.getMonth() + 1}`;
         if (!map[key]) map[key] = 0;
         map[key] += Math.round((log.duration || 0) / 60);
       });
       // Preserve chronological order
-      const orderedKeys = [...new Set(logs.map(l => `T${new Date(l.date).getMonth() + 1}`))];
-      chartData = orderedKeys.map(label => ({ label, minutes: map[label] || 0 }));
+      const orderedKeys = [...new Set(logs.map((l) => `T${new Date(l.date).getMonth() + 1}`))];
+      chartData = orderedKeys.map((label) => ({ label, minutes: map[label] || 0 }));
     }
 
     return res.json({ data: chartData });
@@ -326,7 +347,6 @@ module.exports.getStudyTimeStats = async (req, res, next) => {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-
 
 module.exports.getUserProgress = async (req, res, next) => {
   try {
@@ -344,14 +364,20 @@ module.exports.updateProgress = async (req, res, next) => {
   try {
     const userId = req.user.id;
     // Đảm bảo các ID là số nguyên nếu có giá trị
-    const courseId = req.body.courseId; 
+    const courseId = req.body.courseId;
     const moduleId = req.body.moduleId ? parseInt(req.body.moduleId) : null;
     const lessonId = req.body.lessonId ? parseInt(req.body.lessonId) : null;
-      const labId = req.body.labId ? parseInt(req.body.labId) : null;
-      if (labId) {
-        const targetLab = await prisma.lab.findUnique({ where: { id: labId }, select: { labType: true } });
-        if (targetLab?.labType === 'CLI_SIMULATION') return res.status(403).json({ message: 'CLI Lab chỉ được cập nhật tiến độ qua chấm cấu hình ở máy chủ.' });
-      }
+    const labId = req.body.labId ? parseInt(req.body.labId) : null;
+    if (labId) {
+      const targetLab = await prisma.lab.findUnique({
+        where: { id: labId },
+        select: { labType: true },
+      });
+      if (targetLab?.labType === 'CLI_SIMULATION')
+        return res
+          .status(403)
+          .json({ message: 'CLI Lab chỉ được cập nhật tiến độ qua chấm cấu hình ở máy chủ.' });
+    }
     const status = req.body.status;
 
     if (!courseId) {
@@ -368,7 +394,7 @@ module.exports.updateProgress = async (req, res, next) => {
         moduleId: moduleId || null,
         lessonId: lessonId || null,
         labId: labId || null,
-      }
+      },
     });
 
     let result;
@@ -378,9 +404,9 @@ module.exports.updateProgress = async (req, res, next) => {
         where: { id: existing.id },
         data: {
           progressPercent: Math.max(existing.progressPercent, progressPercent),
-          status: isCompleted ? 'COMPLETED' : (status || existing.status),
+          status: isCompleted ? 'COMPLETED' : status || existing.status,
           completedAt: isCompleted && !existing.completedAt ? new Date() : existing.completedAt,
-        }
+        },
       });
     } else {
       result = await prisma.userProgress.create({
@@ -391,9 +417,9 @@ module.exports.updateProgress = async (req, res, next) => {
           lessonId: lessonId || null,
           labId: labId || null,
           progressPercent,
-          status: isCompleted ? 'COMPLETED' : (status || 'ACTIVE'),
+          status: isCompleted ? 'COMPLETED' : status || 'ACTIVE',
           completedAt: isCompleted ? new Date() : null,
-        }
+        },
       });
     }
 
@@ -404,7 +430,10 @@ module.exports.updateProgress = async (req, res, next) => {
       let activityType = 'COURSE_COMPLETED';
 
       if (lessonId) {
-        const lesson = await prisma.lesson.findUnique({ where: { id: lessonId }, select: { title: true } });
+        const lesson = await prisma.lesson.findUnique({
+          where: { id: lessonId },
+          select: { title: true },
+        });
         activityTitle = `Đã hoàn thành bài học: ${lesson?.title || lessonId}`;
         activityType = 'LESSON_COMPLETED';
       } else if (labId) {
@@ -419,7 +448,7 @@ module.exports.updateProgress = async (req, res, next) => {
           title: activityTitle,
           type: activityType,
           referenceId: lessonId || labId || null,
-        }
+        },
       });
     }
 
@@ -428,21 +457,19 @@ module.exports.updateProgress = async (req, res, next) => {
       prisma.lesson.count({ where: { module: { courseId } } }),
       prisma.lab.count({ where: { courseId } }),
       prisma.userProgress.count({
-        where: { userId, courseId, lessonId: { not: null }, status: 'COMPLETED' }
+        where: { userId, courseId, lessonId: { not: null }, status: 'COMPLETED' },
       }),
       prisma.userProgress.count({
-        where: { userId, courseId, labId: { not: null }, status: 'COMPLETED' }
-      })
+        where: { userId, courseId, labId: { not: null }, status: 'COMPLETED' },
+      }),
     ]);
 
     const totalItems = totalLessons + totalLabs;
     const completedItems = completedLessons + completedLabsInCourse;
-    const overallPercent = totalItems > 0
-      ? Math.round((completedItems / totalItems) * 100)
-      : 0;
+    const overallPercent = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
 
     const summaryRecord = await prisma.userProgress.findFirst({
-      where: { userId, courseId, moduleId: null, lessonId: null, labId: null }
+      where: { userId, courseId, moduleId: null, lessonId: null, labId: null },
     });
 
     if (summaryRecord) {
@@ -450,17 +477,20 @@ module.exports.updateProgress = async (req, res, next) => {
         where: { id: summaryRecord.id },
         data: {
           progressPercent: overallPercent,
-          status: overallPercent >= 100 ? 'COMPLETED' : 'ACTIVE'
-        }
+          status: overallPercent >= 100 ? 'COMPLETED' : 'ACTIVE',
+        },
       });
     } else {
       await prisma.userProgress.create({
         data: {
-          userId, courseId,
-          moduleId: null, lessonId: null, labId: null,
+          userId,
+          courseId,
+          moduleId: null,
+          lessonId: null,
+          labId: null,
           progressPercent: overallPercent,
-          status: 'ACTIVE'
-        }
+          status: 'ACTIVE',
+        },
       });
     }
 
@@ -489,7 +519,7 @@ module.exports.createUser = async (req, res, next) => {
       const restoredUser = await prisma.user.update({
         where: { email },
         data: { fullName, passwordHash, role: assignedRole, deletedAt: null, isActive: true },
-        select: { id: true, fullName: true, email: true, role: true, isActive: true }
+        select: { id: true, fullName: true, email: true, role: true, isActive: true },
       });
       return res.status(201).json({ message: 'Tạo tài khoản thành công', user: restoredUser });
     }
@@ -500,7 +530,7 @@ module.exports.createUser = async (req, res, next) => {
 
     const newUser = await prisma.user.create({
       data: { fullName, email, passwordHash, role: assignedRole },
-      select: { id: true, fullName: true, email: true, role: true, isActive: true }
+      select: { id: true, fullName: true, email: true, role: true, isActive: true },
     });
 
     // Log action
@@ -526,11 +556,16 @@ module.exports.updateRole = async (req, res, next) => {
     const updatedUser = await prisma.user.update({
       where: { id: parseInt(id) },
       data: { role },
-      select: { id: true, fullName: true, email: true, role: true }
+      select: { id: true, fullName: true, email: true, role: true },
     });
 
     // Log action
-    await adminActionLogger('UPDATE_ROLE', req.user.id, `Cập nhật quyền cho ${updatedUser.email} thành ${role}`, 'users');
+    await adminActionLogger(
+      'UPDATE_ROLE',
+      req.user.id,
+      `Cập nhật quyền cho ${updatedUser.email} thành ${role}`,
+      'users'
+    );
 
     res.json({ message: 'Cập nhật quyền thành công', user: updatedUser });
   } catch (error) {
@@ -549,14 +584,14 @@ module.exports.toggleActive = async (req, res, next) => {
     const updatedUser = await prisma.user.update({
       where: { id: parseInt(id) },
       data: { isActive: !user.isActive },
-      select: { id: true, fullName: true, email: true, isActive: true }
+      select: { id: true, fullName: true, email: true, isActive: true },
     });
 
     // Log action
     await adminActionLogger(
-      updatedUser.isActive ? 'ACTIVATE' : 'DEACTIVATE', 
-      req.user.id, 
-      `${updatedUser.isActive ? 'Kích hoạt' : 'Vô hiệu hóa'} người dùng: ${updatedUser.email}`, 
+      updatedUser.isActive ? 'ACTIVATE' : 'DEACTIVATE',
+      req.user.id,
+      `${updatedUser.isActive ? 'Kích hoạt' : 'Vô hiệu hóa'} người dùng: ${updatedUser.email}`,
       'users'
     );
 
@@ -576,11 +611,16 @@ module.exports.deleteUser = async (req, res, next) => {
     const { id } = req.params;
     const deletedUser = await prisma.user.update({
       where: { id: parseInt(id) },
-      data: { deletedAt: new Date(), isActive: false }
+      data: { deletedAt: new Date(), isActive: false },
     });
 
     // Log action
-    await adminActionLogger('DELETE', req.user.id, `Xóa người dùng (soft delete): ${deletedUser.email}`, 'users');
+    await adminActionLogger(
+      'DELETE',
+      req.user.id,
+      `Xóa người dùng (soft delete): ${deletedUser.email}`,
+      'users'
+    );
 
     res.json({ message: 'Xóa tài khoản thành công' });
   } catch (error) {
@@ -600,7 +640,7 @@ module.exports.getUserNote = async (req, res, next) => {
     }
 
     const note = await prisma.userNote.findUnique({
-      where: { userId_lessonId: { userId, lessonId } }
+      where: { userId_lessonId: { userId, lessonId } },
     });
 
     res.json({ content: note?.content ?? '' });
@@ -625,14 +665,14 @@ module.exports.upsertUserNote = async (req, res, next) => {
     }
     if (content.length > MAX_NOTE_LENGTH) {
       return res.status(400).json({
-        message: `Ghi chú không được vượt quá ${MAX_NOTE_LENGTH} ký tự.`
+        message: `Ghi chú không được vượt quá ${MAX_NOTE_LENGTH} ký tự.`,
       });
     }
 
     await prisma.userNote.upsert({
       where: { userId_lessonId: { userId, lessonId: parsedLessonId } },
       update: { content, updatedAt: new Date() },
-      create: { userId, lessonId: parsedLessonId, content }
+      create: { userId, lessonId: parsedLessonId, content },
     });
 
     res.json({ success: true });
@@ -654,7 +694,7 @@ module.exports.getVideoProgress = async (req, res, next) => {
     }
 
     const progress = await prisma.videoProgress.findUnique({
-      where: { userId_lessonId: { userId, lessonId } }
+      where: { userId_lessonId: { userId, lessonId } },
     });
 
     res.json({ data: progress || { lastPosition: 0, watchedSeconds: 0 } });
@@ -674,7 +714,7 @@ module.exports.updateVideoProgress = async (req, res, next) => {
     if (!req.body.lessonId || isNaN(lessonId)) {
       return res.status(400).json({
         message: 'lessonId không hợp lệ hoặc bị thiếu.',
-        received: req.body.lessonId
+        received: req.body.lessonId,
       });
     }
 
@@ -701,29 +741,29 @@ module.exports.updateVideoProgress = async (req, res, next) => {
           watchedSeconds,
           lastPosition,
           isCompleted: req.body.isCompleted === true,
-        }
+        },
       }),
 
       // 2. Upsert StudyLog — cộng dồn giây học theo ngày
       prisma.studyLog.upsert({
         where: { userId_date: { userId, date: today } },
         update: { duration: { increment: watchedSeconds } },
-        create: { userId, date: today, duration: watchedSeconds }
-      })
+        create: { userId, date: today, duration: watchedSeconds },
+      }),
     ]);
 
     // 3. Cập nhật totalStudyTime trên User (đơn vị: phút)
     // [FIX] Tính lại từ StudyLog để đảm bảo chính xác, không bị lệch khi increment nhiều lần
     const totalSeconds = await prisma.studyLog.aggregate({
       where: { userId },
-      _sum: { duration: true }
+      _sum: { duration: true },
     });
 
     await prisma.user.update({
       where: { id: userId },
       data: {
-        totalStudyTime: Math.floor((totalSeconds._sum.duration || 0) / 60)
-      }
+        totalStudyTime: Math.floor((totalSeconds._sum.duration || 0) / 60),
+      },
     });
 
     res.json({ success: true });

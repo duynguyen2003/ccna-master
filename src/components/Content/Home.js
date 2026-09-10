@@ -1,6 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, ChevronLeft, ChevronRight, Code2, Router, Shield, TerminalSquare } from 'lucide-react';
+import {
+  ArrowRight,
+  ChevronLeft,
+  ChevronRight,
+  Code2,
+  Router,
+  Shield,
+  TerminalSquare,
+} from 'lucide-react';
 import { A1, A5, A4 } from '../../image';
 import course1 from '../../image/course1.jpg';
 import course2 from '../../image/course2.jpg';
@@ -16,22 +24,22 @@ import { gsap, useGSAP, ScrollTrigger, prefersReducedMotion } from '../../utils/
 const bannerData = [
   {
     image: A1,
-    title: "Chinh phục CCNA 200-301 cùng chúng tôi",
-    subtitle: "Bắt đầu hành trình trở thành Network Engineer chuyên nghiệp.",
-    link: "/roadmap"
+    title: 'Chinh phục CCNA 200-301 cùng chúng tôi',
+    subtitle: 'Bắt đầu hành trình trở thành Network Engineer chuyên nghiệp.',
+    link: '/roadmap',
   },
   {
     image: A5,
-    title: "Hệ thống luyện thi trắc nghiệm thông minh",
-    subtitle: "Ngân hàng câu hỏi cập nhật liên tục, sát với đề thi thực tế.",
-    link: "/exam"
+    title: 'Hệ thống luyện thi trắc nghiệm thông minh',
+    subtitle: 'Ngân hàng câu hỏi cập nhật liên tục, sát với đề thi thực tế.',
+    link: '/exam',
   },
   {
     image: A4,
-    title: "Thực hành Lab không giới hạn",
-    subtitle: "Rèn luyện kỹ năng cấu hình thực tế với hàng trăm bài Lab chất lượng.",
-    link: "/labs"
-  }
+    title: 'Thực hành Lab không giới hạn',
+    subtitle: 'Rèn luyện kỹ năng cấu hình thực tế với hàng trăm bài Lab chất lượng.',
+    link: '/labs',
+  },
 ];
 const courseBackgrounds = [course1, course2, course3];
 
@@ -60,28 +68,28 @@ const getStatusText = (progress) => {
 
 const features = [
   {
-    materialIcon: "calculate",
-    title: "Trình tính toán Subnet",
-    desc: "Phân chia dải mạng, tính toán host và broadcast nhanh chóng.",
-    to: "/tools/subnet",
+    materialIcon: 'calculate',
+    title: 'Trình tính toán Subnet',
+    desc: 'Phân chia dải mạng, tính toán host và broadcast nhanh chóng.',
+    to: '/tools/subnet',
   },
   {
-    materialIcon: "account_tree",
-    title: "VLSM Calculator",
-    desc: "Phân bổ mạng con theo VLSM, tối ưu không gian địa chỉ IP.",
-    to: "/tools/vlsm",
+    materialIcon: 'account_tree',
+    title: 'VLSM Calculator',
+    desc: 'Phân bổ mạng con theo VLSM, tối ưu không gian địa chỉ IP.',
+    to: '/tools/vlsm',
   },
   {
-    materialIcon: "terminal",
-    title: "Tra cứu Cisco CLI",
-    desc: "Từ điển lệnh IOS đầy đủ cho Router và Switch.",
-    to: "/tools/cli",
+    materialIcon: 'terminal',
+    title: 'Tra cứu Cisco CLI',
+    desc: 'Từ điển lệnh IOS đầy đủ cho Router và Switch.',
+    to: '/tools/cli',
   },
   {
-    materialIcon: "format_list_bulleted",
-    title: "Tra cứu Port & Giao thức",
-    desc: "Danh sách các cổng dịch vụ phổ biến (HTTP, SSH, Telnet...).",
-    to: "/tools/ports",
+    materialIcon: 'format_list_bulleted',
+    title: 'Tra cứu Port & Giao thức',
+    desc: 'Danh sách các cổng dịch vụ phổ biến (HTTP, SSH, Telnet...).',
+    to: '/tools/ports',
   },
 ];
 
@@ -114,19 +122,10 @@ const useCountUp = (target, duration = 1500, interval = 3000) => {
 
     frameId = requestAnimationFrame(animate);
 
-    // reset & repeat every `interval` ms
-    const repeater = setInterval(() => {
-      startTime = null;
-      cancelAnimationFrame(frameId);
-      setCount(0);
-      frameId = requestAnimationFrame(animate);
-    }, interval);
-
     return () => {
       cancelAnimationFrame(frameId);
-      clearInterval(repeater);
     };
-  }, [target, duration, interval]);
+  }, [target, duration]);
 
   return count;
 };
@@ -144,7 +143,9 @@ const FeatureCard = ({ materialIcon, title, desc, to }) => (
     <p className="feat-desc">{desc}</p>
     <span className="feat-explore-btn">
       Khám phá
-      <span className="material-icons-round" style={{ fontSize: 16 }}>arrow_forward</span>
+      <span className="material-icons-round" style={{ fontSize: 16 }}>
+        arrow_forward
+      </span>
     </span>
   </Link>
 );
@@ -214,10 +215,7 @@ export const Home = () => {
 
   // Tự động chuyển banner
   useEffect(() => {
-    const timer = setInterval(
-      () => setCurrent((prev) => (prev + 1) % bannerData.length),
-      5000
-    );
+    const timer = setInterval(() => setCurrent((prev) => (prev + 1) % bannerData.length), 5000);
     return () => clearInterval(timer);
   }, []);
 
@@ -228,7 +226,7 @@ export const Home = () => {
       try {
         const [data, progressMap] = await Promise.all([
           api.getCourses(token),
-          isAuthenticated && token ? api.getUserProgress(token) : Promise.resolve({})
+          isAuthenticated && token ? api.getUserProgress(token) : Promise.resolve({}),
         ]);
         if (!isMounted) return;
         const mapped = data.map((c, idx) => {
@@ -244,7 +242,10 @@ export const Home = () => {
               if (mod.lessons) {
                 for (const lesson of mod.lessons) {
                   const lessonProg = progressMap[`lesson_${lesson.id}`];
-                  if (!lessonProg || (lessonProg.percent < 100 && lessonProg.status !== 'COMPLETED')) {
+                  if (
+                    !lessonProg ||
+                    (lessonProg.percent < 100 && lessonProg.status !== 'COMPLETED')
+                  ) {
                     nextLessonTitle = `Bài học tiếp theo: ${lesson.title}`;
                     foundNext = true;
                     break;
@@ -265,8 +266,9 @@ export const Home = () => {
             desc: c.description,
             progress: progress,
             statusText: getStatusText(progress),
-            backgroundImage: courseBackgrounds[idx] || courseBackgrounds[courseBackgrounds.length - 1],
-            nextLessonTitle
+            backgroundImage:
+              courseBackgrounds[idx] || courseBackgrounds[courseBackgrounds.length - 1],
+            nextLessonTitle,
           };
         });
         setCourses(mapped);
@@ -285,75 +287,121 @@ export const Home = () => {
   }, [token, isAuthenticated]);
 
   // Tự động chạy GSAP timeline & ScrollTrigger (fade in khi cuộn xuống, fade out khi cuộn ngược lên)
-  useGSAP(() => {
-    if (loading || prefersReducedMotion()) return;
+  useGSAP(
+    () => {
+      if (loading || prefersReducedMotion()) return;
 
-    // 1. Entrance timeline cho phần đầu trang (Banner & Thống kê)
-    const tl = gsap.timeline({ defaults: { ease: 'power2.out' } });
+      // 1. Entrance timeline cho phần đầu trang (Banner & Thống kê)
+      const tl = gsap.timeline({ defaults: { ease: 'power2.out' } });
 
-    tl.fromTo(
-      '.banner-container',
-      { opacity: 0, y: -16 },
-      { opacity: 1, y: 0, duration: 0.45, clearProps: 'opacity,transform' }
-    )
-    .fromTo(
-      '.stat-card',
-      { opacity: 0, y: 16, scale: 0.98 },
-      { opacity: 1, y: 0, scale: 1, stagger: 0.06, duration: 0.35, clearProps: 'opacity,transform' },
-      '-=0.2'
-    );
-
-    // 2. Continue learning section (nếu có bài học đang dở)
-    if (containerRef.current?.querySelector('.continue-learning')) {
-      gsap.fromTo(
-        '.continue-learning',
-        { opacity: 0, y: 20 },
+      tl.fromTo(
+        '.banner-container',
+        { opacity: 0, y: -16 },
+        { opacity: 1, y: 0, duration: 0.45, clearProps: 'opacity,transform' }
+      ).fromTo(
+        '.stat-card',
+        { opacity: 0, y: 16, scale: 0.98 },
         {
           opacity: 1,
           y: 0,
-          duration: 0.45,
-          ease: 'power2.out',
-          scrollTrigger: {
-            trigger: '.continue-learning',
-            start: 'top 90%',
-            end: 'bottom 10%',
-            toggleActions: 'play reverse play reverse',
-          },
-        }
-      );
-    }
-
-    // 3. Lộ trình khóa học: Fade in khi cuộn vào tầm nhìn, Fade out khi cuộn ngược lên
-    if (containerRef.current?.querySelector('.curriculum')) {
-      gsap.fromTo(
-        '.curriculum .section-header',
-        { opacity: 0, y: 24 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.4,
-          ease: 'power2.out',
-          scrollTrigger: {
-            trigger: '.curriculum',
-            start: 'top 85%',
-            end: 'bottom 15%',
-            toggleActions: 'play reverse play reverse',
-          },
-        }
+          scale: 1,
+          stagger: 0.06,
+          duration: 0.35,
+          clearProps: 'opacity,transform',
+        },
+        '-=0.2'
       );
 
-      if (containerRef.current?.querySelector('.course-card')) {
+      // 2. Continue learning section (nếu có bài học đang dở)
+      if (containerRef.current?.querySelector('.continue-learning')) {
         gsap.fromTo(
-          '.curriculum .course-card',
-          { opacity: 0, y: 28 },
+          '.continue-learning',
+          { opacity: 0, y: 20 },
           {
             opacity: 1,
             y: 0,
-            stagger: 0.08,
             duration: 0.45,
             ease: 'power2.out',
             scrollTrigger: {
-              trigger: '.course-grid-container',
+              trigger: '.continue-learning',
+              start: 'top 90%',
+              end: 'bottom 10%',
+              toggleActions: 'play reverse play reverse',
+            },
+          }
+        );
+      }
+
+      // 3. Lộ trình khóa học: Fade in khi cuộn vào tầm nhìn, Fade out khi cuộn ngược lên
+      if (containerRef.current?.querySelector('.curriculum')) {
+        gsap.fromTo(
+          '.curriculum .section-header',
+          { opacity: 0, y: 24 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.4,
+            ease: 'power2.out',
+            scrollTrigger: {
+              trigger: '.curriculum',
+              start: 'top 85%',
+              end: 'bottom 15%',
+              toggleActions: 'play reverse play reverse',
+            },
+          }
+        );
+
+        if (containerRef.current?.querySelector('.course-card')) {
+          gsap.fromTo(
+            '.curriculum .course-card',
+            { opacity: 0, y: 28 },
+            {
+              opacity: 1,
+              y: 0,
+              stagger: 0.08,
+              duration: 0.45,
+              ease: 'power2.out',
+              scrollTrigger: {
+                trigger: '.course-grid-container',
+                start: 'top 85%',
+                end: 'bottom 15%',
+                toggleActions: 'play reverse play reverse',
+              },
+            }
+          );
+        }
+      }
+
+      // 4. Công cụ hỗ trợ: Fade in khi cuộn vào tầm nhìn, Fade out khi cuộn ngược lên
+      if (containerRef.current?.querySelector('.features')) {
+        gsap.fromTo(
+          '.features .section-header',
+          { opacity: 0, y: 24 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.4,
+            ease: 'power2.out',
+            scrollTrigger: {
+              trigger: '.features',
+              start: 'top 85%',
+              end: 'bottom 15%',
+              toggleActions: 'play reverse play reverse',
+            },
+          }
+        );
+
+        gsap.fromTo(
+          '.feat-card',
+          { opacity: 0, y: 24 },
+          {
+            opacity: 1,
+            y: 0,
+            stagger: 0.06,
+            duration: 0.4,
+            ease: 'power2.out',
+            scrollTrigger: {
+              trigger: '.features-grid',
               start: 'top 85%',
               end: 'bottom 15%',
               toggleActions: 'play reverse play reverse',
@@ -361,56 +409,15 @@ export const Home = () => {
           }
         );
       }
-    }
 
-    // 4. Công cụ hỗ trợ: Fade in khi cuộn vào tầm nhìn, Fade out khi cuộn ngược lên
-    if (containerRef.current?.querySelector('.features')) {
-      gsap.fromTo(
-        '.features .section-header',
-        { opacity: 0, y: 24 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.4,
-          ease: 'power2.out',
-          scrollTrigger: {
-            trigger: '.features',
-            start: 'top 85%',
-            end: 'bottom 15%',
-            toggleActions: 'play reverse play reverse',
-          },
-        }
-      );
+      ScrollTrigger.refresh();
+    },
+    { dependencies: [loading], scope: containerRef }
+  );
 
-      gsap.fromTo(
-        '.feat-card',
-        { opacity: 0, y: 24 },
-        {
-          opacity: 1,
-          y: 0,
-          stagger: 0.06,
-          duration: 0.4,
-          ease: 'power2.out',
-          scrollTrigger: {
-            trigger: '.features-grid',
-            start: 'top 85%',
-            end: 'bottom 15%',
-            toggleActions: 'play reverse play reverse',
-          },
-        }
-      );
-    }
+  const next = () => setCurrent((prev) => (prev + 1) % bannerData.length);
 
-    ScrollTrigger.refresh();
-  }, { dependencies: [loading], scope: containerRef });
-
-  const next = () =>
-    setCurrent((prev) => (prev + 1) % bannerData.length);
-
-  const prev = () =>
-    setCurrent((prev) =>
-      (prev - 1 + bannerData.length) % bannerData.length
-    );
+  const prev = () => setCurrent((prev) => (prev - 1 + bannerData.length) % bannerData.length);
 
   const handleResumeLearning = () => {
     if (!isAuthenticated) {
@@ -422,9 +429,7 @@ export const Home = () => {
     }
   };
 
-  const resumeNextLessonText = resumeCourse
-    ? resumeCourse.nextLessonTitle
-    : '';
+  const resumeNextLessonText = resumeCourse ? resumeCourse.nextLessonTitle : '';
   const ResumeIcon = resumeCourse?.icon || FALLBACK_ICON;
 
   return (
@@ -441,14 +446,9 @@ export const Home = () => {
           </button>
 
           {bannerData.map((slide, i) => (
-            <div
-              key={i}
-              className={`banner-slide ${i === current ? "active" : ""}`}
-            >
+            <div key={i} className={`banner-slide ${i === current ? 'active' : ''}`}>
               <div className="banner-text-content">
-                <h1 className="banner-title">
-                  {slide.title}
-                </h1>
+                <h1 className="banner-title">{slide.title}</h1>
                 <p className="banner-subtitle">{slide.subtitle}</p>
                 <Link to={slide.link} className="btn-primary-compact">
                   Bắt đầu ngay <ArrowRight size={18} style={{ marginLeft: '8px' }} />
@@ -465,7 +465,7 @@ export const Home = () => {
             {bannerData.map((_, i) => (
               <button
                 key={i}
-                className={`indicator-dot ${i === current ? "active" : ""}`}
+                className={`indicator-dot ${i === current ? 'active' : ''}`}
                 onClick={() => setCurrent(i)}
               />
             ))}
@@ -487,7 +487,9 @@ export const Home = () => {
             </div>
 
             <div className="continue-learning-content">
-              <h2 className="continue-learning-title">{resumeCourse.title.replace(/\s*\(Updated\)/gi, '')}</h2>
+              <h2 className="continue-learning-title">
+                {resumeCourse.title.replace(/\s*\(Updated\)/gi, '')}
+              </h2>
               <p className="continue-learning-next-lesson">{resumeNextLessonText}</p>
               <div className="continue-learning-progress-wrap">
                 <div className="continue-learning-progress-track">
@@ -496,7 +498,9 @@ export const Home = () => {
                     style={{ width: `${resumeCourse.progress}%` }}
                   />
                 </div>
-                <p className="continue-learning-progress-label">Đang học {resumeCourse.progress}%</p>
+                <p className="continue-learning-progress-label">
+                  Đang học {resumeCourse.progress}%
+                </p>
               </div>
             </div>
 
@@ -545,9 +549,10 @@ export const Home = () => {
                     backgroundRepeat: 'no-repeat',
                     '--course-bg-image': `url(${course.backgroundImage})`,
                   }}
-                  onClick={() => isAuthenticated
-                    ? navigate(`/course/${course.courseId}?from=home`)
-                    : navigate(`/course/${course.courseId}?from=home`)
+                  onClick={() =>
+                    isAuthenticated
+                      ? navigate(`/course/${course.courseId}?from=home`)
+                      : navigate(`/course/${course.courseId}?from=home`)
                   }
                   id={`home-course-card-${course.courseId}`}
                 >
@@ -555,23 +560,36 @@ export const Home = () => {
                   <div className="icon-box">
                     <Icon size={32} strokeWidth={1.5} />
                   </div>
-                  <h3 className="course-title">{course.title.replace(' (Updated)', '').replace(/,/g, ', ')}</h3>
+                  <h3 className="course-title">
+                    {course.title.replace(' (Updated)', '').replace(/,/g, ', ')}
+                  </h3>
                   <p className="course-desc">{course.desc}</p>
 
                   {isAuthenticated && (
                     <div className="course-progress-section">
-                      <div className="progress-bar-bg" style={{ height: '6px', background: '#e2e8f0', borderRadius: '3px', overflow: 'hidden' }}>
+                      <div
+                        className="progress-bar-bg"
+                        style={{
+                          height: '6px',
+                          background: '#e2e8f0',
+                          borderRadius: '3px',
+                          overflow: 'hidden',
+                        }}
+                      >
                         <div
                           className="progress-bar-fill"
-                          style={{ 
-                            width: `${course.progress}%`, 
+                          style={{
+                            width: `${course.progress}%`,
                             height: '100%',
                             background: 'linear-gradient(90deg, #2563eb, #3b82f6)',
-                            transition: 'width 0.5s ease-out'
+                            transition: 'width 0.5s ease-out',
                           }}
                         />
                       </div>
-                      <p className={`progress-text ${course.progress === 0 ? 'inactive' : ''}`} style={{ marginTop: '6px', fontSize: '0.75rem', fontWeight: 600 }}>
+                      <p
+                        className={`progress-text ${course.progress === 0 ? 'inactive' : ''}`}
+                        style={{ marginTop: '6px', fontSize: '0.75rem', fontWeight: 600 }}
+                      >
                         {course.progress > 0 ? `Tiến độ: ${course.progress}%` : 'Chưa bắt đầu'}
                       </p>
                     </div>
@@ -612,7 +630,6 @@ export const Home = () => {
           ))}
         </div>
       </section>
-
     </div>
   );
 };

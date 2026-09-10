@@ -49,9 +49,7 @@ const ForgotPassword = () => {
     <AuthLayout toast={ToastComponent}>
       <div className="auth-header">
         <h1 className="auth-title">Quên mật khẩu</h1>
-        <p className="auth-subtitle">
-          Nhập email đã đăng ký để nhận liên kết đặt lại mật khẩu.
-        </p>
+        <p className="auth-subtitle">Nhập email đã đăng ký để nhận liên kết đặt lại mật khẩu.</p>
       </div>
 
       {globalError && (
@@ -88,7 +86,9 @@ const ForgotPassword = () => {
       {!result && (
         <form className="auth-form" onSubmit={handleSubmit} noValidate>
           <div className="form-group">
-            <label className="form-label" htmlFor="forgot-password-email">Địa chỉ Email</label>
+            <label className="form-label" htmlFor="forgot-password-email">
+              Địa chỉ Email
+            </label>
             <div className="form-input-wrapper">
               <input
                 id="forgot-password-email"
@@ -116,21 +116,18 @@ const ForgotPassword = () => {
 
           <div className="auth-info-box">
             <span className="material-icons-round">info</span>
-            <div>
-              Liên kết đặt lại mật khẩu sẽ có hiệu lực trong 30 phút.
-            </div>
+            <div>Liên kết đặt lại mật khẩu sẽ có hiệu lực trong 30 phút.</div>
           </div>
 
-          <button
-            type="submit"
-            className="auth-submit"
-            disabled={isLoading}
-          >
+          <button type="submit" className="auth-submit" disabled={isLoading}>
             {isLoading ? (
               <div className="spinner"></div>
             ) : (
               <>
-                GỬI YÊU CẦU <span className="material-icons-round" style={{ fontSize: 18 }}>send</span>
+                GỬI YÊU CẦU{' '}
+                <span className="material-icons-round" style={{ fontSize: 18 }}>
+                  send
+                </span>
               </>
             )}
           </button>
@@ -139,7 +136,10 @@ const ForgotPassword = () => {
 
       <div className="auth-footer">
         <p>
-          Đã nhớ mật khẩu? <Link to="/login" className="auth-link">Đăng nhập.</Link>
+          Đã nhớ mật khẩu?{' '}
+          <Link to="/login" className="auth-link">
+            Đăng nhập.
+          </Link>
         </p>
       </div>
     </AuthLayout>

@@ -10,14 +10,14 @@ const JWT_CONFIG = {
   // Access token: short-lived (15 minutes or from .env)
   ACCESS_TOKEN: {
     secret: process.env.JWT_SECRET,
-    expiresIn: process.env.JWT_EXPIRES_IN || '15m'
+    expiresIn: process.env.JWT_EXPIRES_IN || '15m',
   },
 
   // Refresh token: long-lived (7 days)
   REFRESH_TOKEN: {
     secret: process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET, // Fallback to main secret if refresh secret is missing
-    expiresIn: '7d'
-  }
+    expiresIn: '7d',
+  },
 };
 
 if (!JWT_CONFIG.ACCESS_TOKEN.secret) {
@@ -54,5 +54,5 @@ module.exports = {
   getJWTSecret,
   getRefreshSecret,
   getJWTExpiration,
-  getRefreshExpiration
+  getRefreshExpiration,
 };

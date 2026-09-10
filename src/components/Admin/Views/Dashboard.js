@@ -32,7 +32,7 @@ const Dashboard = () => {
     distribution: true,
     trends: true,
     students: true,
-    logs: true
+    logs: true,
   });
 
   // Error states
@@ -42,40 +42,51 @@ const Dashboard = () => {
     distribution: null,
     trends: null,
     students: null,
-    logs: null
+    logs: null,
   });
 
-  useGSAP(() => {
-    const media = gsap.matchMedia();
+  useGSAP(
+    () => {
+      const media = gsap.matchMedia();
 
-    media.add('(prefers-reduced-motion: no-preference)', () => {
-      const timeline = gsap.timeline({ defaults: { ease: 'power3.out' } });
+      media.add('(prefers-reduced-motion: no-preference)', () => {
+        const timeline = gsap.timeline({ defaults: { ease: 'power3.out' } });
 
-      timeline
-        .from('.admin-welcome', {
-          autoAlpha: 0,
-          y: 12,
-          duration: 0.35,
-          clearProps: 'opacity,visibility,transform'
-        })
-        .from('.admin-stats-card', {
-          autoAlpha: 0,
-          y: 18,
-          duration: 0.45,
-          stagger: 0.08,
-          clearProps: 'opacity,visibility,transform'
-        }, '-=0.16')
-        .from('.dashboard-card', {
-          autoAlpha: 0,
-          y: 16,
-          duration: 0.4,
-          stagger: 0.06,
-          clearProps: 'opacity,visibility,transform'
-        }, '-=0.2');
-    });
+        timeline
+          .from('.admin-welcome', {
+            autoAlpha: 0,
+            y: 12,
+            duration: 0.35,
+            clearProps: 'opacity,visibility,transform',
+          })
+          .from(
+            '.admin-stats-card',
+            {
+              autoAlpha: 0,
+              y: 18,
+              duration: 0.45,
+              stagger: 0.08,
+              clearProps: 'opacity,visibility,transform',
+            },
+            '-=0.16'
+          )
+          .from(
+            '.dashboard-card',
+            {
+              autoAlpha: 0,
+              y: 16,
+              duration: 0.4,
+              stagger: 0.06,
+              clearProps: 'opacity,visibility,transform',
+            },
+            '-=0.2'
+          );
+      });
 
-    return () => media.revert();
-  }, { scope: dashboardRef });
+      return () => media.revert();
+    },
+    { scope: dashboardRef }
+  );
 
   const fetchData = useCallback(async () => {
     if (!token) return;
@@ -86,62 +97,68 @@ const Dashboard = () => {
       distribution: true,
       trends: true,
       students: true,
-      logs: true
+      logs: true,
     });
 
     // 1. Fetch Summary
-    adminApi.getDashboardSummary(token)
-      .then(data => {
+    adminApi
+      .getDashboardSummary(token)
+      .then((data) => {
         setSummary(data);
-        setErrors(prev => ({ ...prev, summary: null }));
+        setErrors((prev) => ({ ...prev, summary: null }));
       })
-      .catch(err => setErrors(prev => ({ ...prev, summary: err.message })))
-      .finally(() => setLoadings(prev => ({ ...prev, summary: false })));
+      .catch((err) => setErrors((prev) => ({ ...prev, summary: err.message })))
+      .finally(() => setLoadings((prev) => ({ ...prev, summary: false })));
 
     // 2. Fetch Activity
-    adminApi.getDashboardActivity(token)
-      .then(data => {
+    adminApi
+      .getDashboardActivity(token)
+      .then((data) => {
         setActivity(data);
-        setErrors(prev => ({ ...prev, activity: null }));
+        setErrors((prev) => ({ ...prev, activity: null }));
       })
-      .catch(err => setErrors(prev => ({ ...prev, activity: err.message })))
-      .finally(() => setLoadings(prev => ({ ...prev, activity: false })));
+      .catch((err) => setErrors((prev) => ({ ...prev, activity: err.message })))
+      .finally(() => setLoadings((prev) => ({ ...prev, activity: false })));
 
     // 3. Fetch Distribution
-    adminApi.getDashboardDistribution(token)
-      .then(data => {
+    adminApi
+      .getDashboardDistribution(token)
+      .then((data) => {
         setDistribution(data);
-        setErrors(prev => ({ ...prev, distribution: null }));
+        setErrors((prev) => ({ ...prev, distribution: null }));
       })
-      .catch(err => setErrors(prev => ({ ...prev, distribution: err.message })))
-      .finally(() => setLoadings(prev => ({ ...prev, distribution: false })));
+      .catch((err) => setErrors((prev) => ({ ...prev, distribution: err.message })))
+      .finally(() => setLoadings((prev) => ({ ...prev, distribution: false })));
 
     // 4. Fetch Trends
-    adminApi.getDashboardTrends(token)
-      .then(data => {
+    adminApi
+      .getDashboardTrends(token)
+      .then((data) => {
         setTrends(data);
-        setErrors(prev => ({ ...prev, trends: null }));
+        setErrors((prev) => ({ ...prev, trends: null }));
       })
-      .catch(err => setErrors(prev => ({ ...prev, trends: err.message })))
-      .finally(() => setLoadings(prev => ({ ...prev, trends: false })));
+      .catch((err) => setErrors((prev) => ({ ...prev, trends: err.message })))
+      .finally(() => setLoadings((prev) => ({ ...prev, trends: false })));
 
     // 5. Fetch Students
-    adminApi.getRecentStudents(token)
-      .then(data => {
+    adminApi
+      .getRecentStudents(token)
+      .then((data) => {
         setStudents(data);
-        setErrors(prev => ({ ...prev, students: null }));
+        setErrors((prev) => ({ ...prev, students: null }));
       })
-      .catch(err => setErrors(prev => ({ ...prev, students: err.message })))
-      .finally(() => setLoadings(prev => ({ ...prev, students: false })));
+      .catch((err) => setErrors((prev) => ({ ...prev, students: err.message })))
+      .finally(() => setLoadings((prev) => ({ ...prev, students: false })));
 
     // 6. Fetch Logs
-    adminApi.getLogs(token, 1, 20)
-      .then(data => {
+    adminApi
+      .getLogs(token, 1, 20)
+      .then((data) => {
         setLogs(data.data || []);
-        setErrors(prev => ({ ...prev, logs: null }));
+        setErrors((prev) => ({ ...prev, logs: null }));
       })
-      .catch(err => setErrors(prev => ({ ...prev, logs: err.message })))
-      .finally(() => setLoadings(prev => ({ ...prev, logs: false })));
+      .catch((err) => setErrors((prev) => ({ ...prev, logs: err.message })))
+      .finally(() => setLoadings((prev) => ({ ...prev, logs: false })));
   }, [token]);
 
   useEffect(() => {
@@ -153,7 +170,16 @@ const Dashboard = () => {
   }, [fetchData]);
 
   const renderError = (msg) => (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#ef4444', fontSize: '13px', padding: '20px' }}>
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        color: '#ef4444',
+        fontSize: '13px',
+        padding: '20px',
+      }}
+    >
       <AlertCircle size={16} /> {msg || 'Lỗi tải dữ liệu'}
     </div>
   );
@@ -166,7 +192,10 @@ const Dashboard = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
               <h2>Tổng quan hệ thống</h2>
-              <p>Welcome back, {user?.fullName || 'Admin'} — đây là tổng quan nền tảng CCNA của bạn hôm nay.</p>
+              <p>
+                Welcome back, {user?.fullName || 'Admin'} — đây là tổng quan nền tảng CCNA của bạn
+                hôm nay.
+              </p>
             </div>
           </div>
         </div>
@@ -179,7 +208,9 @@ const Dashboard = () => {
           value={errors.summary ? 'Lỗi' : (summary?.totalUsers ?? 0)}
           icon={Users}
           trend={summary?.recentUsersCount > 0 ? 'up' : 'neutral'}
-          trendValue={summary?.recentUsersCount > 0 ? `+${summary.recentUsersCount} tuần này` : 'Chưa có mới'}
+          trendValue={
+            summary?.recentUsersCount > 0 ? `+${summary.recentUsersCount} tuần này` : 'Chưa có mới'
+          }
           sparkData={summary?.history?.users}
           colorName="blue"
           loading={loadings.summary}
@@ -208,7 +239,9 @@ const Dashboard = () => {
           title="Tỷ lệ pass thi"
           value={`${summary?.examPassRate ?? 0}%`}
           icon={Award}
-          trend={summary?.examPassRate >= 70 ? 'up' : summary?.examPassRate > 0 ? 'down' : 'neutral'}
+          trend={
+            summary?.examPassRate >= 70 ? 'up' : summary?.examPassRate > 0 ? 'down' : 'neutral'
+          }
           trendValue={summary?.examPassRate > 0 ? 'Dựa trên tất cả lượt thi' : 'Chưa có lượt thi'}
           sparkData={summary?.history?.exams}
           colorName="orange"
@@ -228,21 +261,35 @@ const Dashboard = () => {
             <div style={{ display: 'flex', gap: '8px' }}>
               <button
                 className={`admin-badge ${activeTab === 'week' ? 'active' : 'inactive'}`}
-                style={{ border: 'none', cursor: 'pointer', background: activeTab === 'week' ? '#3b82f6' : 'transparent', color: activeTab === 'week' ? '#fff' : '#64748b' }}
+                style={{
+                  border: 'none',
+                  cursor: 'pointer',
+                  background: activeTab === 'week' ? '#3b82f6' : 'transparent',
+                  color: activeTab === 'week' ? '#fff' : '#64748b',
+                }}
                 onClick={() => setActiveTab('week')}
               >
                 Tuần này
               </button>
               <button
                 className={`admin-badge ${activeTab === 'month' ? 'active' : 'inactive'}`}
-                style={{ border: 'none', cursor: 'pointer', background: activeTab === 'month' ? '#3b82f6' : 'transparent', color: activeTab === 'month' ? '#fff' : '#64748b' }}
+                style={{
+                  border: 'none',
+                  cursor: 'pointer',
+                  background: activeTab === 'month' ? '#3b82f6' : 'transparent',
+                  color: activeTab === 'month' ? '#fff' : '#64748b',
+                }}
                 onClick={() => setActiveTab('month')}
               >
                 Tháng này
               </button>
             </div>
           </div>
-          {errors.activity ? renderError(errors.activity) : <ActivityBarChart data={activity} loading={loadings.activity} />}
+          {errors.activity ? (
+            renderError(errors.activity)
+          ) : (
+            <ActivityBarChart data={activity} loading={loadings.activity} />
+          )}
         </div>
 
         {/* Phải: Donut + Plan Limits xếp dọc */}
@@ -252,7 +299,11 @@ const Dashboard = () => {
             <div className="dashboard-card-header">
               <h3>Phân bổ khóa học</h3>
             </div>
-            {errors.distribution ? renderError(errors.distribution) : <CoursePieChart data={distribution} loading={loadings.distribution} />}
+            {errors.distribution ? (
+              renderError(errors.distribution)
+            ) : (
+              <CoursePieChart data={distribution} loading={loadings.distribution} />
+            )}
           </div>
 
           {/* Card 2: Lối tắt nhanh (Option 1) */}
@@ -275,16 +326,26 @@ const Dashboard = () => {
               <p className="dashboard-card-subtitle">6 tháng gần nhất</p>
             </div>
           </div>
-          {errors.trends ? renderError(errors.trends) : <RegistrationLineChart data={trends} loading={loadings.trends} />}
+          {errors.trends ? (
+            renderError(errors.trends)
+          ) : (
+            <RegistrationLineChart data={trends} loading={loadings.trends} />
+          )}
         </div>
 
         {/* Phải: Bảng học viên gần đây — 1fr */}
         <div className="dashboard-card">
           <div className="dashboard-card-header">
             <h3>Học viên gần đây</h3>
-            <a href="/admin/students" className="view-all-link">Xem tất cả →</a>
+            <a href="/admin/students" className="view-all-link">
+              Xem tất cả →
+            </a>
           </div>
-          {errors.students ? renderError(errors.students) : <RecentStudentsTable students={students} loading={loadings.students} />}
+          {errors.students ? (
+            renderError(errors.students)
+          ) : (
+            <RecentStudentsTable students={students} loading={loadings.students} />
+          )}
         </div>
       </div>
 
@@ -292,38 +353,83 @@ const Dashboard = () => {
       <div className="dashboard-card" style={{ marginBottom: '32px' }}>
         <div className="dashboard-card-header">
           <h3>Nhật ký bảo mật</h3>
-          <a href="/admin/logs" className="view-all-link">Tất cả →</a>
+          <a href="/admin/logs" className="view-all-link">
+            Tất cả →
+          </a>
         </div>
 
         {loadings.logs ? (
           <div className="progress-list">
-            {[1, 2, 3].map(i => <div key={i} className="skeleton" style={{ height: '40px', marginBottom: '8px' }}></div>)}
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="skeleton"
+                style={{ height: '40px', marginBottom: '8px' }}
+              ></div>
+            ))}
           </div>
-        ) : errors.logs ? renderError(errors.logs) : (
-          <div className="custom-scrollbar" style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '350px', overflowY: 'auto', paddingRight: '4px' }}>
-            {logs && logs.length > 0 ? logs.map(log => (
-              <div key={log.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid #f1f5f9' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                  <span style={{ fontSize: '13px', fontWeight: 600, color: '#1e293b' }}>{log.action}</span>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0px' }}>
-                    {log.details ? (
-                      <span style={{ fontSize: '12px', color: '#475569', fontWeight: 500 }}>{log.details}</span>
-                    ) : (
-                      <span style={{ fontSize: '12px', color: '#94a3b8', fontStyle: 'italic' }}>Không có mô tả</span>
-                    )}
-                    <span style={{ fontSize: '11px', color: '#94a3b8' }}>{log.targetTable} • Thực hiện bởi: {log.admin?.fullName || 'Admin'}</span>
+        ) : errors.logs ? (
+          renderError(errors.logs)
+        ) : (
+          <div
+            className="custom-scrollbar"
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '4px',
+              maxHeight: '350px',
+              overflowY: 'auto',
+              paddingRight: '4px',
+            }}
+          >
+            {logs && logs.length > 0 ? (
+              logs.map((log) => (
+                <div
+                  key={log.id}
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '12px 0',
+                    borderBottom: '1px solid #f1f5f9',
+                  }}
+                >
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                    <span style={{ fontSize: '13px', fontWeight: 600, color: '#1e293b' }}>
+                      {log.action}
+                    </span>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0px' }}>
+                      {log.details ? (
+                        <span style={{ fontSize: '12px', color: '#475569', fontWeight: 500 }}>
+                          {log.details}
+                        </span>
+                      ) : (
+                        <span style={{ fontSize: '12px', color: '#94a3b8', fontStyle: 'italic' }}>
+                          Không có mô tả
+                        </span>
+                      )}
+                      <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+                        {log.targetTable} • Thực hiện bởi: {log.admin?.fullName || 'Admin'}
+                      </span>
+                    </div>
                   </div>
+                  <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 500 }}>
+                    {new Date(log.createdAt).toLocaleString('vi-VN', {
+                      day: '2-digit',
+                      month: '2-digit',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </span>
                 </div>
-                <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 500 }}>
-                  {new Date(log.createdAt).toLocaleString('vi-VN', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
-                </span>
-              </div>
-            )) : <p style={{ textAlign: 'center', color: '#94a3b8', fontSize: '13px', padding: '20px' }}>Chưa có nhật ký</p>}
+              ))
+            ) : (
+              <p
+                style={{ textAlign: 'center', color: '#94a3b8', fontSize: '13px', padding: '20px' }}
+              >
+                Chưa có nhật ký
+              </p>
+            )}
           </div>
         )}
       </div>

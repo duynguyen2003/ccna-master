@@ -6,7 +6,20 @@ const AdminProtectedRoute = ({ children }) => {
   const { user, isAuthenticated, loading } = useContext(AuthContext);
 
   if (loading) {
-    return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#0B0B0C', color: '#FFF' }}>Đang tải hệ thống Admin...</div>;
+    return (
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100vh',
+          background: '#0B0B0C',
+          color: '#FFF',
+        }}
+      >
+        Đang tải hệ thống Admin...
+      </div>
+    );
   }
 
   // Chuyển về login nếu chưa đăng nhập

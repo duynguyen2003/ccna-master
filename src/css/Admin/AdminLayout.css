@@ -1,6 +1,5 @@
 /* css/Admin/AdminLayout.css â€” NetMastery Corporate Layout */
 
-
 /* Main Layout */
 .admin-layout {
   display: flex;
@@ -77,7 +76,6 @@
   text-transform: uppercase;
   white-space: nowrap;
 }
-
 
 /* Sidebar Navigation */
 .admin-sidebar-nav {

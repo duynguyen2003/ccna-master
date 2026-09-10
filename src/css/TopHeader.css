@@ -81,7 +81,7 @@
   padding: 8px 36px 8px 40px;
   background-color: var(--hover-bg);
   border: 1px solid var(--border-color);
-  border-radius: 999px;
+  border-radius: 6px;
   font-size: 14px;
   color: var(--text-color);
   outline: none;
@@ -126,7 +126,7 @@
   width: 440px;
   background: white;
   border: 1px solid var(--border-color);
-  border-radius: 12px;
+  border-radius: 8px;
   box-shadow:
     0 10px 25px -5px rgba(0, 0, 0, 0.1),
     0 8px 10px -6px rgba(0, 0, 0, 0.1);
@@ -353,7 +353,7 @@
   color: var(--blue-primary);
   background: transparent;
   border: 1.5px solid var(--blue-primary);
-  border-radius: 10px;
+  border-radius: 6px;
   text-decoration: none;
   transition: all 0.25s ease;
   white-space: nowrap;
@@ -374,7 +374,7 @@
   font-weight: 600;
   color: white;
   background: linear-gradient(135deg, #2563eb, #1d4ed8);
-  border-radius: 10px;
+  border-radius: 6px;
   text-decoration: none;
   transition: all 0.25s ease;
   white-space: nowrap;
@@ -424,7 +424,7 @@
   width: 240px;
   background: white;
   border: 1px solid var(--border-color);
-  border-radius: 14px;
+  border-radius: 8px;
   box-shadow:
     0 20px 40px rgba(0, 0, 0, 0.12),
     0 0 0 1px rgba(0, 0, 0, 0.04);

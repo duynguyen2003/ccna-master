@@ -8,8 +8,12 @@ const RecentStudentsTable = ({ students, loading = false }) => {
   if (loading) {
     return (
       <div className="admin-datatable-container">
-        {[1, 2, 3, 4, 5].map(i => (
-          <div key={i} className="skeleton" style={{ width: '100%', height: '50px', marginBottom: '10px' }}></div>
+        {[1, 2, 3, 4, 5].map((i) => (
+          <div
+            key={i}
+            className="skeleton"
+            style={{ width: '100%', height: '50px', marginBottom: '10px' }}
+          ></div>
         ))}
       </div>
     );
@@ -17,7 +21,17 @@ const RecentStudentsTable = ({ students, loading = false }) => {
 
   if (!students || students.length === 0) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px', color: '#94a3b8', gap: '8px' }}>
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '40px',
+          color: '#94a3b8',
+          gap: '8px',
+        }}
+      >
         <Users size={28} strokeWidth={1.5} />
         <p style={{ fontSize: '13px', margin: 0 }}>Chưa có học viên nào trong hệ thống</p>
       </div>
@@ -25,7 +39,10 @@ const RecentStudentsTable = ({ students, loading = false }) => {
   }
 
   return (
-    <div className="admin-datatable-container" style={{ marginTop: 0, border: 'none', boxShadow: 'none', padding: 0 }}>
+    <div
+      className="admin-datatable-container"
+      style={{ marginTop: 0, border: 'none', boxShadow: 'none', padding: 0 }}
+    >
       <table className="admin-table">
         <thead>
           <tr>
@@ -42,30 +59,35 @@ const RecentStudentsTable = ({ students, loading = false }) => {
               <tr key={student.id}>
                 <td>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{
-                      width: '32px',
-                      height: '32px',
-                      borderRadius: '50%',
-                      backgroundColor: `${color}15`,
-                      color: color,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '11px',
-                      fontWeight: 700,
-                      flexShrink: 0
-                    }}>
+                    <div
+                      style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '50%',
+                        backgroundColor: `${color}15`,
+                        color: color,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        flexShrink: 0,
+                      }}
+                    >
                       {student.initials}
                     </div>
                     <span style={{ fontWeight: 500, fontSize: '13px' }}>{student.name}</span>
                   </div>
                 </td>
                 <td>
-                  <span className="admin-badge" style={{
-                    backgroundColor: `${color}10`,
-                    color: color,
-                    fontSize: '11px'
-                  }}>
+                  <span
+                    className="admin-badge"
+                    style={{
+                      backgroundColor: `${color}10`,
+                      color: color,
+                      fontSize: '11px',
+                    }}
+                  >
                     {student.course}
                   </span>
                 </td>
@@ -77,7 +99,9 @@ const RecentStudentsTable = ({ students, loading = false }) => {
                         style={{ width: `${student.progress}%`, backgroundColor: color }}
                       ></div>
                     </div>
-                    <span style={{ fontSize: '11px', color: '#64748b', minWidth: '30px' }}>{student.progress}%</span>
+                    <span style={{ fontSize: '11px', color: '#64748b', minWidth: '30px' }}>
+                      {student.progress}%
+                    </span>
                   </div>
                 </td>
                 <td style={{ fontSize: '12px', color: '#94a3b8' }}>{student.time}</td>

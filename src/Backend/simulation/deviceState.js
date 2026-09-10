@@ -20,7 +20,9 @@ const interfaceDefaults = (deviceType) => ({
 });
 
 const normalizeInterfaceName = (input) => {
-  const compact = String(input || '').replace(/\s+/g, '').toLowerCase();
+  const compact = String(input || '')
+    .replace(/\s+/g, '')
+    .toLowerCase();
   const aliases = [
     [/^(g|gi|gig|gigabitethernet)(\d+\/\d+)$/, 'GigabitEthernet'],
     [/^(f|fa|fastethernet)(\d+\/\d+)$/, 'FastEthernet'],
@@ -35,12 +37,14 @@ const normalizeInterfaceName = (input) => {
 
 const createInitialState = (initialState = {}) => {
   const deviceType = initialState.deviceType === 'SWITCH' ? 'SWITCH' : 'ROUTER';
-  const defaultNames = deviceType === 'SWITCH'
-    ? ['GigabitEthernet0/1', 'GigabitEthernet0/2']
-    : ['GigabitEthernet0/0', 'GigabitEthernet0/1'];
-  const names = Array.isArray(initialState.interfaces) && initialState.interfaces.length
-    ? initialState.interfaces
-    : defaultNames;
+  const defaultNames =
+    deviceType === 'SWITCH'
+      ? ['GigabitEthernet0/1', 'GigabitEthernet0/2']
+      : ['GigabitEthernet0/0', 'GigabitEthernet0/1'];
+  const names =
+    Array.isArray(initialState.interfaces) && initialState.interfaces.length
+      ? initialState.interfaces
+      : defaultNames;
   const interfaces = {};
   names.forEach((name) => {
     const normalized = normalizeInterfaceName(typeof name === 'string' ? name : name.name);
@@ -68,11 +72,16 @@ const createInitialState = (initialState = {}) => {
 
 const getPrompt = (state) => {
   switch (state.mode) {
-    case MODES.PRIVILEGED: return `${state.hostname}#`;
-    case MODES.GLOBAL: return `${state.hostname}(config)#`;
-    case MODES.INTERFACE: return `${state.hostname}(config-if)#`;
-    case MODES.VLAN: return `${state.hostname}(config-vlan)#`;
-    default: return `${state.hostname}>`;
+    case MODES.PRIVILEGED:
+      return `${state.hostname}#`;
+    case MODES.GLOBAL:
+      return `${state.hostname}(config)#`;
+    case MODES.INTERFACE:
+      return `${state.hostname}(config-if)#`;
+    case MODES.VLAN:
+      return `${state.hostname}(config-vlan)#`;
+    default:
+      return `${state.hostname}>`;
   }
 };
 
@@ -120,15 +129,22 @@ const showIpInterfaceBrief = (state) => {
   ].join('\n');
 };
 
-const showInterfaces = (state) => Object.entries(state.interfaces).map(([name, config]) => {
-  const operational = config.shutdown ? 'administratively down, line protocol is down' : 'up, line protocol is up';
-  return `${name} is ${operational}\n  Description: ${config.description || 'not set'}\n  Internet address is ${config.ipAddress ? `${config.ipAddress} ${config.subnetMask}` : 'not set'}`;
-}).join('\n\n');
+const showInterfaces = (state) =>
+  Object.entries(state.interfaces)
+    .map(([name, config]) => {
+      const operational = config.shutdown
+        ? 'administratively down, line protocol is down'
+        : 'up, line protocol is up';
+      return `${name} is ${operational}\n  Description: ${config.description || 'not set'}\n  Internet address is ${config.ipAddress ? `${config.ipAddress} ${config.subnetMask}` : 'not set'}`;
+    })
+    .join('\n\n');
 
 const showVlans = (state) => {
   const rows = Object.entries(state.vlans).map(([vlanId, vlan]) => {
     const ports = Object.entries(state.interfaces)
-      .filter(([, config]) => config.switchportMode === 'access' && String(config.accessVlan) === vlanId)
+      .filter(
+        ([, config]) => config.switchportMode === 'access' && String(config.accessVlan) === vlanId
+      )
       .map(([name]) => name.replace('GigabitEthernet', 'Gi'))
       .join(', ');
     return `${vlanId.padEnd(5)}${vlan.name.padEnd(32)}${vlan.status.padEnd(10)}${ports}`;
@@ -164,7 +180,9 @@ const executeCommand = (currentState, rawCommand, profileId = 'ccna-basic-v1') =
   if (parsed.kind === 'error') return errorResult(state, rawCommand, parsed);
   if (parsed.kind === 'help') {
     const output = parsed.candidates.length
-      ? parsed.candidates.map((candidate) => `  ${candidate.value.padEnd(24)} ${candidate.help}`).join('\n')
+      ? parsed.candidates
+          .map((candidate) => `  ${candidate.value.padEnd(24)} ${candidate.help}`)
+          .join('\n')
       : '  <cr>';
     return { state, prompt, mode, output, isError: false, command: rawCommand, help: true };
   }
@@ -174,8 +192,14 @@ const executeCommand = (currentState, rawCommand, profileId = 'ccna-basic-v1') =
   const currentInterface = () => state.interfaces[state.context.interface];
 
   switch (parsed.handler) {
-    case 'enable': state.mode = MODES.PRIVILEGED; changed = true; break;
-    case 'disable': state.mode = MODES.USER; changed = true; break;
+    case 'enable':
+      state.mode = MODES.PRIVILEGED;
+      changed = true;
+      break;
+    case 'disable':
+      state.mode = MODES.USER;
+      changed = true;
+      break;
     case 'configure_terminal':
       state.mode = MODES.GLOBAL;
       output = 'Enter configuration commands, one per line. End with CNTL/Z.';
@@ -195,7 +219,9 @@ const executeCommand = (currentState, rawCommand, profileId = 'ccna-basic-v1') =
       break;
     case 'set_hostname':
       state.hostname = parsed.negated
-        ? (state.deviceType === 'SWITCH' ? 'Switch' : 'Router')
+        ? state.deviceType === 'SWITCH'
+          ? 'Switch'
+          : 'Router'
         : parsed.params.hostname;
       changed = true;
       break;
@@ -234,7 +260,8 @@ const executeCommand = (currentState, rawCommand, profileId = 'ccna-basic-v1') =
       break;
     case 'select_vlan': {
       const vlanId = Number(parsed.params.vlanId);
-      if (!state.vlans[vlanId]) state.vlans[vlanId] = { name: `VLAN${String(vlanId).padStart(4, '0')}`, status: 'active' };
+      if (!state.vlans[vlanId])
+        state.vlans[vlanId] = { name: `VLAN${String(vlanId).padStart(4, '0')}`, status: 'active' };
       state.mode = MODES.VLAN;
       state.context = { interface: null, vlanId };
       changed = true;
@@ -252,16 +279,27 @@ const executeCommand = (currentState, rawCommand, profileId = 'ccna-basic-v1') =
       break;
     case 'set_access_vlan': {
       const vlanId = Number(parsed.params.vlanId);
-      if (!state.vlans[vlanId]) state.vlans[vlanId] = { name: `VLAN${String(vlanId).padStart(4, '0')}`, status: 'active' };
+      if (!state.vlans[vlanId])
+        state.vlans[vlanId] = { name: `VLAN${String(vlanId).padStart(4, '0')}`, status: 'active' };
       currentInterface().accessVlan = vlanId;
       changed = true;
       break;
     }
-    case 'show_running_config': output = buildRunningConfig(state); break;
-    case 'show_startup_config': output = state.startupConfig || 'startup-config is not present'; break;
-    case 'show_interfaces': output = showInterfaces(state); break;
-    case 'show_ip_interface_brief': output = showIpInterfaceBrief(state); break;
-    case 'show_vlan_brief': output = showVlans(state); break;
+    case 'show_running_config':
+      output = buildRunningConfig(state);
+      break;
+    case 'show_startup_config':
+      output = state.startupConfig || 'startup-config is not present';
+      break;
+    case 'show_interfaces':
+      output = showInterfaces(state);
+      break;
+    case 'show_ip_interface_brief':
+      output = showIpInterfaceBrief(state);
+      break;
+    case 'show_vlan_brief':
+      output = showVlans(state);
+      break;
     case 'save_config':
       state.startupConfig = buildRunningConfig(state);
       output = 'Building configuration...\n[OK]';
@@ -279,9 +317,8 @@ const executeCommand = (currentState, rawCommand, profileId = 'ccna-basic-v1') =
   return { state, prompt, mode, output, isError: false, command: rawCommand };
 };
 
-const getCompletionResult = (state, input, profileId = 'ccna-basic-v1') => (
-  getCompletions(profileId, state, input)
-);
+const getCompletionResult = (state, input, profileId = 'ccna-basic-v1') =>
+  getCompletions(profileId, state, input);
 
 module.exports = {
   MODES,

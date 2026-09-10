@@ -52,13 +52,29 @@ const SimpleRTE = ({ value, onChange, placeholder }) => {
   return (
     <div className="efb-rte-container">
       <div className="efb-rte-toolbar">
-        <button type="button" onClick={() => handleCommand('bold')} title="In đậm"><Bold size={15} /></button>
-        <button type="button" onClick={() => handleCommand('italic')} title="In nghiêng"><Italic size={15} /></button>
-        <button type="button" onClick={() => handleCommand('underline')} title="Gạch chân"><Underline size={15} /></button>
+        <button type="button" onClick={() => handleCommand('bold')} title="In đậm">
+          <Bold size={15} />
+        </button>
+        <button type="button" onClick={() => handleCommand('italic')} title="In nghiêng">
+          <Italic size={15} />
+        </button>
+        <button type="button" onClick={() => handleCommand('underline')} title="Gạch chân">
+          <Underline size={15} />
+        </button>
         <div className="efb-rte-divider" />
-        <button type="button" onClick={handleCodeBlock} title="Đoạn mã (Code block)"><Code size={15} /></button>
-        <button type="button" onClick={() => handleCommand('insertUnorderedList')} title="Danh sách"><List size={15} /></button>
-        <button type="button" onClick={() => handleCommand('insertText', 'Σ')} title="Chèn ký tự"><Sigma size={15} /></button>
+        <button type="button" onClick={handleCodeBlock} title="Đoạn mã (Code block)">
+          <Code size={15} />
+        </button>
+        <button
+          type="button"
+          onClick={() => handleCommand('insertUnorderedList')}
+          title="Danh sách"
+        >
+          <List size={15} />
+        </button>
+        <button type="button" onClick={() => handleCommand('insertText', 'Σ')} title="Chèn ký tự">
+          <Sigma size={15} />
+        </button>
       </div>
       <div
         ref={editorRef}

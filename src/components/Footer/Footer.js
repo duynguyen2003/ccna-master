@@ -29,7 +29,9 @@ const NavColumn = ({ title, links }) => (
     <ul className="footer__nav">
       {links.map(({ label, to }) => (
         <li key={label}>
-          <Link to={to} className="footer__nav-link">{label}</Link>
+          <Link to={to} className="footer__nav-link">
+            {label}
+          </Link>
         </li>
       ))}
     </ul>
@@ -43,7 +45,6 @@ const Footer = () => {
     <footer className="footer" role="contentinfo">
       <div className="footer__inner">
         <div className="footer__grid">
-
           <div className="footer__col">
             <Link to="/" className="footer__brand-logo" aria-label="NetMastery - Trang chủ">
               <div className="footer__brand-icon">
@@ -69,7 +70,6 @@ const Footer = () => {
           <NavColumn title="Khóa học" links={COL_COURSES} />
           <NavColumn title="Tài nguyên" links={COL_RESOURCES} />
           <NavColumn title="Về NetMastery" links={COL_ABOUT} />
-
         </div>
       </div>
 
@@ -77,8 +77,8 @@ const Footer = () => {
 
       <div className="footer__bottom">
         <p className="footer__copyright">
-          &copy; {currentYear} <strong>NetMastery</strong>. All rights reserved.
-          Đồ án tốt nghiệp — Nền tảng học CCNA trực tuyến.
+          &copy; {currentYear} <strong>NetMastery</strong>. All rights reserved. Đồ án tốt nghiệp —
+          Nền tảng học CCNA trực tuyến.
         </p>
         <p className="footer__made-with">
           Made with <span aria-label="tình yêu">♥</span> for future Network Engineers

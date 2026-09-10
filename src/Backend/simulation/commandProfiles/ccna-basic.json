@@ -60,8 +60,18 @@
       "tokens": [
         { "keyword": "ip", "help": "Interface Internet Protocol config commands" },
         { "keyword": "address", "help": "Set the IP address of an interface" },
-        { "parameter": "ipAddress", "type": "ipv4", "help": "IP address", "optionalOnNegate": true },
-        { "parameter": "subnetMask", "type": "subnetMask", "help": "IP subnet mask", "optionalOnNegate": true }
+        {
+          "parameter": "ipAddress",
+          "type": "ipv4",
+          "help": "IP address",
+          "optionalOnNegate": true
+        },
+        {
+          "parameter": "subnetMask",
+          "type": "subnetMask",
+          "help": "IP subnet mask",
+          "optionalOnNegate": true
+        }
       ],
       "handler": "set_interface_ip",
       "negatable": true
@@ -78,7 +88,12 @@
       "modes": ["INTERFACE_CONFIG"],
       "tokens": [
         { "keyword": "description", "help": "Interface specific description" },
-        { "parameter": "description", "type": "rest", "help": "Description text", "optionalOnNegate": true }
+        {
+          "parameter": "description",
+          "type": "rest",
+          "help": "Description text",
+          "optionalOnNegate": true
+        }
       ],
       "handler": "set_description",
       "negatable": true
@@ -98,7 +113,12 @@
       "modes": ["VLAN_CONFIG"],
       "tokens": [
         { "keyword": "name", "help": "Set VLAN name" },
-        { "parameter": "vlanName", "type": "vlanName", "help": "VLAN name", "optionalOnNegate": true }
+        {
+          "parameter": "vlanName",
+          "type": "vlanName",
+          "help": "VLAN name",
+          "optionalOnNegate": true
+        }
       ],
       "handler": "set_vlan_name",
       "negatable": true

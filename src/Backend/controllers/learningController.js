@@ -4,6 +4,12 @@ const { adminActionLogger } = require('../middleware/logging');
 const { parseCliLabConfig } = require('../validation/cliLabSchema');
 const { sanitizeHtml } = require('../../shared/sanitizeHtml');
 const prisma = getPrisma();
+const formatCliConfigError = (error) => {
+  const issue = error?.issues?.[0];
+  if (!issue) return error?.message || 'CLI Lab configuration is invalid';
+  const path = Array.isArray(issue.path) && issue.path.length ? issue.path.join('.') : '';
+  return path ? `${path}: ${issue.message}` : issue.message;
+};
 
 module.exports.getCourses = async (req, res, next) => {
   try {
@@ -30,35 +36,41 @@ module.exports.getCourses = async (req, res, next) => {
               lessons: {
                 where: { deletedAt: null },
                 orderBy: { orderIndex: 'asc' },
-                select: { id: true, title: true, videoDuration: true, sectionNumber: true, orderIndex: true }
+                select: {
+                  id: true,
+                  title: true,
+                  videoDuration: true,
+                  sectionNumber: true,
+                  orderIndex: true,
+                },
               },
               exams: {
                 where: { status: 'OPEN', deletedAt: null },
                 include: {
-                  _count: { select: { questions: true } }
-                }
-              }
-            }
+                  _count: { select: { questions: true } },
+                },
+              },
+            },
           },
           labs: {
             where: { deletedAt: null },
-            select: { id: true }
-          }
-        }
+            select: { id: true },
+          },
+        },
       }),
-      prisma.course.count({ where: whereClause })
+      prisma.course.count({ where: whereClause }),
     ]);
 
     // Lấy tiến độ của user nếu đã đăng nhập
     let userProgress = [];
     if (req.user && req.user.id) {
       userProgress = await prisma.userProgress.findMany({
-        where: { userId: req.user.id }
+        where: { userId: req.user.id },
       });
     }
 
     // Tính toán tổng thời lượng và tiến độ cho từng khóa học
-    const coursesWithStats = courses.map(course => {
+    const coursesWithStats = courses.map((course) => {
       let totalSeconds = 0;
       let totalLessons = 0;
       let sumProgress = 0;
@@ -70,7 +82,7 @@ module.exports.getCourses = async (req, res, next) => {
         let modTotalLessons = 0;
         let modSumProgress = 0;
 
-        module.lessons.forEach(lesson => {
+        module.lessons.forEach((lesson) => {
           totalLessons++;
           modTotalLessons++;
 
@@ -85,15 +97,15 @@ module.exports.getCourses = async (req, res, next) => {
           }
 
           // Cộng dồn % tiến độ bài học
-          const lessonProgress = userProgress.find(p => p.lessonId === lesson.id);
+          const lessonProgress = userProgress.find((p) => p.lessonId === lesson.id);
           if (lessonProgress) {
-            sumProgress += (lessonProgress.progressPercent || 0);
-            modSumProgress += (lessonProgress.progressPercent || 0);
+            sumProgress += lessonProgress.progressPercent || 0;
+            modSumProgress += lessonProgress.progressPercent || 0;
           }
         });
 
         // Tính xem module này đã hoàn thành chưa (100%)
-        const modPercent = modTotalLessons > 0 ? (modSumProgress / (modTotalLessons * 100)) : 1;
+        const modPercent = modTotalLessons > 0 ? modSumProgress / (modTotalLessons * 100) : 1;
         const isCompleted = modPercent >= 1;
 
         // Trạng thái của module hiện tại
@@ -107,18 +119,18 @@ module.exports.getCourses = async (req, res, next) => {
 
         return {
           ...module,
-          status: moduleStatus
+          status: moduleStatus,
         };
       });
-      
+
       // Ghi đè lại modules đã được xử lý
       course.modules = processedModules;
 
       // 2. Tính số Lab đã hoàn thành của khóa học này
       const totalLabs = course.labs?.length || 0;
       let completedLabs = 0;
-      course.labs?.forEach(lab => {
-        const labProgress = userProgress.find(p => p.labId === lab.id);
+      course.labs?.forEach((lab) => {
+        const labProgress = userProgress.find((p) => p.labId === lab.id);
         if (labProgress && labProgress.status === 'COMPLETED') {
           completedLabs++;
         }
@@ -127,10 +139,10 @@ module.exports.getCourses = async (req, res, next) => {
       // 3. Tổng hợp tiến độ: (bài học xong + lab xong) / (tổng bài học + tổng lab)
       const totalItems = totalLessons + totalLabs;
       // sumProgress là tổng % (mỗi bài 0-100), chia 100 để ra số bài học xong
-      const itemsDone = (sumProgress / 100) + completedLabs;
+      const itemsDone = sumProgress / 100 + completedLabs;
 
       // Kiểm tra xem người dùng đã ghi danh chưa (có bất kỳ record nào liên quan đến course này)
-      const hasEnrolled = userProgress.some(p => p.courseId === course.id);
+      const hasEnrolled = userProgress.some((p) => p.courseId === course.id);
 
       let progressPercent = 0;
       if (totalItems > 0) {
@@ -142,13 +154,13 @@ module.exports.getCourses = async (req, res, next) => {
         ...course,
         totalHours: totalSeconds > 0 ? Math.round((totalSeconds / 3600) * 10) / 10 : 0,
         progress: progressPercent,
-        isStarted: hasEnrolled || sumProgress > 0
+        isStarted: hasEnrolled || sumProgress > 0,
       };
     });
 
     res.json({
       data: coursesWithStats,
-      pagination: { total, page, limit, totalPages: Math.ceil(total / limit) }
+      pagination: { total, page, limit, totalPages: Math.ceil(total / limit) },
     });
   } catch (error) {
     next(error);
@@ -159,11 +171,11 @@ module.exports.createCourse = async (req, res, next) => {
   try {
     const { id, code, title, description, level, status, orderIndex } = req.body;
     let thumbnailUrl = '';
-    
+
     if (req.file) {
       const uploadResult = await uploadBufferToCloudinary(req.file, {
         folder: 'ccna/courses/thumbnails',
-        resourceType: 'image'
+        resourceType: 'image',
       });
       thumbnailUrl = uploadResult.secure_url;
     }
@@ -176,12 +188,12 @@ module.exports.createCourse = async (req, res, next) => {
 
     // Kiểm tra xem ID đã tồn tại chưa để tránh lỗi Unique constraint
     const existingCourse = await prisma.course.findUnique({
-      where: { id: courseId }
+      where: { id: courseId },
     });
 
     if (existingCourse) {
-      return res.status(400).json({ 
-        message: `Mã khóa học "${code}" (ID: ${courseId}) đã tồn tại trong hệ thống. Vui lòng sử dụng mã khác hoặc chỉnh sửa khóa học hiện có.` 
+      return res.status(400).json({
+        message: `Mã khóa học "${code}" (ID: ${courseId}) đã tồn tại trong hệ thống. Vui lòng sử dụng mã khác hoặc chỉnh sửa khóa học hiện có.`,
       });
     }
 
@@ -194,12 +206,17 @@ module.exports.createCourse = async (req, res, next) => {
         level: level || 'BEGINNER',
         thumbnailUrl: thumbnailUrl || null,
         status: status || 'DRAFT',
-        orderIndex: parseInt(orderIndex) || 0
-      }
+        orderIndex: parseInt(orderIndex) || 0,
+      },
     });
 
     // Log action
-    await adminActionLogger('CREATE_COURSE', req.user.id, `Tạo khóa học mới: ${title} (${code})`, 'courses');
+    await adminActionLogger(
+      'CREATE_COURSE',
+      req.user.id,
+      `Tạo khóa học mới: ${title} (${code})`,
+      'courses'
+    );
 
     res.status(201).json({ message: 'Tạo khóa học thành công', course });
   } catch (error) {
@@ -222,7 +239,8 @@ module.exports.updateCourse = async (req, res, next) => {
     const dataToUpdate = {};
     if (code !== undefined) dataToUpdate.code = String(code).trim();
     if (title !== undefined) dataToUpdate.title = String(title).trim();
-    if (description !== undefined) dataToUpdate.description = description ? String(description) : null;
+    if (description !== undefined)
+      dataToUpdate.description = description ? String(description) : null;
     if (level !== undefined) dataToUpdate.level = level;
     if (status !== undefined) dataToUpdate.status = status;
     if (orderIndex !== undefined) {
@@ -233,7 +251,7 @@ module.exports.updateCourse = async (req, res, next) => {
     if (req.file) {
       const uploadResult = await uploadBufferToCloudinary(req.file, {
         folder: 'ccna/courses/thumbnails',
-        resourceType: 'image'
+        resourceType: 'image',
       });
       dataToUpdate.thumbnailUrl = uploadResult.secure_url;
     }
@@ -244,11 +262,16 @@ module.exports.updateCourse = async (req, res, next) => {
 
     const course = await prisma.course.update({
       where: { id },
-      data: dataToUpdate
+      data: dataToUpdate,
     });
 
     // Log action
-    await adminActionLogger('UPDATE_COURSE', req.user.id, `Cập nhật khóa học: ${course.title}`, 'courses');
+    await adminActionLogger(
+      'UPDATE_COURSE',
+      req.user.id,
+      `Cập nhật khóa học: ${course.title}`,
+      'courses'
+    );
 
     res.json({ message: 'Cập nhật khóa học thành công', course });
   } catch (error) {
@@ -261,11 +284,16 @@ module.exports.deleteCourse = async (req, res, next) => {
     const { id } = req.params;
     const deletedCourse = await prisma.course.update({
       where: { id },
-      data: { deletedAt: new Date(), status: 'DRAFT' }
+      data: { deletedAt: new Date(), status: 'DRAFT' },
     });
 
     // Log action
-    await adminActionLogger('DELETE_COURSE', req.user.id, `Xóa khóa học (soft delete): ${deletedCourse.title}`, 'courses');
+    await adminActionLogger(
+      'DELETE_COURSE',
+      req.user.id,
+      `Xóa khóa học (soft delete): ${deletedCourse.title}`,
+      'courses'
+    );
 
     res.json({ message: 'Xóa khóa học thành công' });
   } catch (error) {
@@ -290,23 +318,24 @@ module.exports.getLabs = async (req, res, next) => {
         skip,
         take: limit,
         orderBy: { createdAt: 'desc' },
-        include: { course: true }
+        include: { course: true },
       }),
-      prisma.lab.count({ where: whereClause })
+      prisma.lab.count({ where: whereClause }),
     ]);
 
-    const responseLabs = req.user?.role === 'ADMIN'
-      ? labs
-      : labs.map((lab) => {
-        const publicLab = { ...lab };
-        delete publicLab.gradingSpec;
-        delete publicLab.initialState;
-        return publicLab;
-      });
+    const responseLabs =
+      req.user?.role === 'ADMIN'
+        ? labs
+        : labs.map((lab) => {
+            const publicLab = { ...lab };
+            delete publicLab.gradingSpec;
+            delete publicLab.initialState;
+            return publicLab;
+          });
 
     res.json({
       data: responseLabs,
-      pagination: { total, page, limit, totalPages: Math.ceil(total / limit) }
+      pagination: { total, page, limit, totalPages: Math.ceil(total / limit) },
     });
   } catch (error) {
     next(error);
@@ -316,8 +345,20 @@ module.exports.getLabs = async (req, res, next) => {
 module.exports.createLab = async (req, res, next) => {
   try {
     const {
-      title, category, difficulty, duration, status, guideContent, courseId,
-      moduleId, objective, tools, steps, labType, initialState, gradingSpec,
+      title,
+      category,
+      difficulty,
+      duration,
+      status,
+      guideContent,
+      courseId,
+      moduleId,
+      objective,
+      tools,
+      steps,
+      labType,
+      initialState,
+      gradingSpec,
       commandProfile,
     } = req.body;
 
@@ -327,11 +368,17 @@ module.exports.createLab = async (req, res, next) => {
 
     let cliConfig;
     try {
-      cliConfig = parseCliLabConfig({ labType, initialState, gradingSpec, commandProfile, courseId });
+      cliConfig = parseCliLabConfig({
+        labType,
+        initialState,
+        gradingSpec,
+        commandProfile,
+        courseId,
+      });
     } catch (configError) {
-      return res.status(400).json({ message: configError.issues?.[0]?.message || configError.message });
+      return res.status(400).json({ message: formatCliConfigError(configError) });
     }
-    
+
     let fileUrl = null;
     let imageUrl = null;
     let topologyImgUrl = null;
@@ -352,14 +399,14 @@ module.exports.createLab = async (req, res, next) => {
       if (req.files.thumbnailImg) {
         const uploadResult = await uploadBufferToCloudinary(req.files.thumbnailImg[0], {
           folder: 'ccna/labs/thumbnails',
-          resourceType: 'image'
+          resourceType: 'image',
         });
         imageUrl = uploadResult.secure_url;
       }
       if (req.files.topologyImg) {
         const uploadResult = await uploadBufferToCloudinary(req.files.topologyImg[0], {
           folder: 'ccna/labs/topologies',
-          resourceType: 'image'
+          resourceType: 'image',
         });
         topologyImgUrl = uploadResult.secure_url;
       }
@@ -382,7 +429,7 @@ module.exports.createLab = async (req, res, next) => {
         courseId: courseId || null,
         moduleId: moduleId || null,
         ...cliConfig,
-      }
+      },
     });
 
     res.status(201).json({ message: 'Tạo bài Lab thành công', lab });
@@ -395,16 +442,30 @@ module.exports.updateLab = async (req, res, next) => {
   try {
     const { id } = req.params;
     const {
-      title, category, difficulty, duration, status, guideContent, courseId,
-      moduleId, objective, tools, steps, labType, initialState, gradingSpec,
+      title,
+      category,
+      difficulty,
+      duration,
+      status,
+      guideContent,
+      courseId,
+      moduleId,
+      objective,
+      tools,
+      steps,
+      labType,
+      initialState,
+      gradingSpec,
       commandProfile,
     } = req.body;
 
     const existingLab = await prisma.lab.findUnique({ where: { id: parseInt(id, 10) } });
     if (!existingLab) return res.status(404).json({ message: 'Không tìm thấy bài Lab' });
 
-    const effectiveCourseId = courseId === undefined || courseId === '' ? existingLab.courseId : courseId;
-    const effectiveModuleId = moduleId === undefined || moduleId === '' ? existingLab.moduleId : moduleId;
+    const effectiveCourseId =
+      courseId === undefined || courseId === '' ? existingLab.courseId : courseId;
+    const effectiveModuleId =
+      moduleId === undefined || moduleId === '' ? existingLab.moduleId : moduleId;
     let cliConfig;
     try {
       cliConfig = parseCliLabConfig({
@@ -415,16 +476,17 @@ module.exports.updateLab = async (req, res, next) => {
         courseId: effectiveCourseId,
       });
     } catch (configError) {
-      return res.status(400).json({ message: configError.issues?.[0]?.message || configError.message });
+      return res.status(400).json({ message: formatCliConfigError(configError) });
     }
-    
-    const dataToUpdate = { 
-      title, 
+
+    const dataToUpdate = {
+      title,
       category,
       difficulty,
       duration,
       status,
-      guideContent: guideContent === undefined ? undefined : (guideContent ? sanitizeHtml(guideContent) : null),
+      guideContent:
+        guideContent === undefined ? undefined : guideContent ? sanitizeHtml(guideContent) : null,
       objective,
       courseId: effectiveCourseId,
       moduleId: effectiveModuleId,
@@ -449,14 +511,14 @@ module.exports.updateLab = async (req, res, next) => {
       if (req.files.thumbnailImg) {
         const uploadResult = await uploadBufferToCloudinary(req.files.thumbnailImg[0], {
           folder: 'ccna/labs/thumbnails',
-          resourceType: 'image'
+          resourceType: 'image',
         });
         dataToUpdate.imageUrl = uploadResult.secure_url;
       }
       if (req.files.topologyImg) {
         const uploadResult = await uploadBufferToCloudinary(req.files.topologyImg[0], {
           folder: 'ccna/labs/topologies',
-          resourceType: 'image'
+          resourceType: 'image',
         });
         dataToUpdate.topologyImgUrl = uploadResult.secure_url;
       }
@@ -464,7 +526,7 @@ module.exports.updateLab = async (req, res, next) => {
 
     const lab = await prisma.lab.update({
       where: { id: parseInt(id) },
-      data: dataToUpdate
+      data: dataToUpdate,
     });
 
     res.json({ message: 'Cập nhật bài Lab thành công', lab });
@@ -478,7 +540,7 @@ module.exports.deleteLab = async (req, res, next) => {
     const { id } = req.params;
     await prisma.lab.update({
       where: { id: parseInt(id) },
-      data: { deletedAt: new Date() }
+      data: { deletedAt: new Date() },
     });
     res.json({ message: 'Xóa bài Lab thành công' });
   } catch (error) {
@@ -499,9 +561,9 @@ module.exports.getModulesByCourse = async (req, res, next) => {
       include: {
         lessons: {
           where: { deletedAt: null },
-          orderBy: { orderIndex: 'asc' }
-        }
-      }
+          orderBy: { orderIndex: 'asc' },
+        },
+      },
     });
     res.json({ data: modules });
   } catch (error) {
@@ -528,8 +590,8 @@ module.exports.createModule = async (req, res, next) => {
         courseId,
         title,
         description: description || null,
-        orderIndex: existingCount + 1
-      }
+        orderIndex: existingCount + 1,
+      },
     });
 
     res.status(201).json({ message: 'Tạo chương thành công', module: mod });
@@ -543,7 +605,7 @@ module.exports.deleteModule = async (req, res, next) => {
     const { id } = req.params;
     await prisma.module.update({
       where: { id },
-      data: { deletedAt: new Date() }
+      data: { deletedAt: new Date() },
     });
     res.json({ message: 'Xóa chương thành công' });
   } catch (error) {
@@ -562,7 +624,8 @@ module.exports.updateModule = async (req, res, next) => {
 
     const dataToUpdate = {};
     if (title !== undefined) dataToUpdate.title = String(title).trim();
-    if (description !== undefined) dataToUpdate.description = description ? String(description) : null;
+    if (description !== undefined)
+      dataToUpdate.description = description ? String(description) : null;
     if (orderIndex !== undefined) {
       const parsedOrder = parseInt(orderIndex, 10);
       if (!Number.isNaN(parsedOrder)) dataToUpdate.orderIndex = parsedOrder;
@@ -574,7 +637,7 @@ module.exports.updateModule = async (req, res, next) => {
 
     const mod = await prisma.module.update({
       where: { id },
-      data: dataToUpdate
+      data: dataToUpdate,
     });
 
     res.json({ message: 'Cập nhật chương thành công', module: mod });
@@ -592,7 +655,7 @@ module.exports.getLessonsByModule = async (req, res, next) => {
     const { moduleId } = req.params;
     const lessons = await prisma.lesson.findMany({
       where: { moduleId, deletedAt: null },
-      orderBy: { orderIndex: 'asc' }
+      orderBy: { orderIndex: 'asc' },
     });
     res.json({ data: lessons });
   } catch (error) {
@@ -619,8 +682,8 @@ module.exports.createLesson = async (req, res, next) => {
         contentHtml: contentHtml || null,
         videoUrl: videoUrl || null,
         videoDuration: videoDuration || null,
-        orderIndex: existingCount + 1
-      }
+        orderIndex: existingCount + 1,
+      },
     });
 
     res.status(201).json({ message: 'Tạo bài học thành công', lesson });
@@ -634,7 +697,7 @@ module.exports.deleteLesson = async (req, res, next) => {
     const { id } = req.params;
     await prisma.lesson.update({
       where: { id: parseInt(id) },
-      data: { deletedAt: new Date() }
+      data: { deletedAt: new Date() },
     });
     res.json({ message: 'Xóa bài học thành công' });
   } catch (error) {
@@ -653,10 +716,13 @@ module.exports.updateLesson = async (req, res, next) => {
 
     const dataToUpdate = {};
     if (title !== undefined) dataToUpdate.title = String(title).trim();
-    if (sectionNumber !== undefined) dataToUpdate.sectionNumber = sectionNumber ? String(sectionNumber) : null;
-    if (contentHtml !== undefined) dataToUpdate.contentHtml = contentHtml ? String(contentHtml) : null;
+    if (sectionNumber !== undefined)
+      dataToUpdate.sectionNumber = sectionNumber ? String(sectionNumber) : null;
+    if (contentHtml !== undefined)
+      dataToUpdate.contentHtml = contentHtml ? String(contentHtml) : null;
     if (videoUrl !== undefined) dataToUpdate.videoUrl = videoUrl ? String(videoUrl) : null;
-    if (videoDuration !== undefined) dataToUpdate.videoDuration = videoDuration ? String(videoDuration) : null;
+    if (videoDuration !== undefined)
+      dataToUpdate.videoDuration = videoDuration ? String(videoDuration) : null;
 
     if (Object.keys(dataToUpdate).length === 0) {
       return res.status(400).json({ message: 'Không có dữ liệu cần cập nhật' });
@@ -664,7 +730,7 @@ module.exports.updateLesson = async (req, res, next) => {
 
     const lesson = await prisma.lesson.update({
       where: { id: parseInt(id, 10) },
-      data: dataToUpdate
+      data: dataToUpdate,
     });
 
     res.json({ message: 'Cập nhật bài học thành công', lesson });
@@ -682,10 +748,12 @@ module.exports.getTopicsByCourse = async (req, res, next) => {
     const { courseId } = req.params;
     const topics = await prisma.courseTopic.findMany({
       where: { courseId },
-      orderBy: { orderIndex: 'asc' }
+      orderBy: { orderIndex: 'asc' },
     });
     res.json({ data: topics });
-  } catch (error) { next(error); }
+  } catch (error) {
+    next(error);
+  }
 };
 
 module.exports.createTopic = async (req, res, next) => {
@@ -696,10 +764,12 @@ module.exports.createTopic = async (req, res, next) => {
 
     const count = await prisma.courseTopic.count({ where: { courseId } });
     const topic = await prisma.courseTopic.create({
-      data: { courseId, title, orderIndex: count + 1 }
+      data: { courseId, title, orderIndex: count + 1 },
     });
     res.status(201).json({ message: 'Tạo chủ đề thành công', topic });
-  } catch (error) { next(error); }
+  } catch (error) {
+    next(error);
+  }
 };
 
 module.exports.deleteTopic = async (req, res, next) => {
@@ -707,7 +777,9 @@ module.exports.deleteTopic = async (req, res, next) => {
     const { id } = req.params;
     await prisma.courseTopic.delete({ where: { id: parseInt(id) } });
     res.json({ message: 'Xóa chủ đề thành công' });
-  } catch (error) { next(error); }
+  } catch (error) {
+    next(error);
+  }
 };
 
 // =============================================
@@ -723,17 +795,29 @@ module.exports.getResources = async (req, res, next) => {
 
     const where = courseId ? { courseId } : {};
     const [resources, total] = await Promise.all([
-      prisma.resource.findMany({ where, skip, take: limit, orderBy: { createdAt: 'desc' }, include: { course: { select: { title: true, code: true } } } }),
-      prisma.resource.count({ where })
+      prisma.resource.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: { course: { select: { title: true, code: true } } },
+      }),
+      prisma.resource.count({ where }),
     ]);
-    res.json({ data: resources, pagination: { total, page, limit, totalPages: Math.ceil(total / limit) } });
-  } catch (error) { next(error); }
+    res.json({
+      data: resources,
+      pagination: { total, page, limit, totalPages: Math.ceil(total / limit) },
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
 module.exports.createResource = async (req, res, next) => {
   try {
     const { title, type, size, courseId } = req.body;
-    if (!title || !req.file) return res.status(400).json({ message: 'Vui lòng nhập tên và chọn file' });
+    if (!title || !req.file)
+      return res.status(400).json({ message: 'Vui lòng nhập tên và chọn file' });
 
     // Lưu file lên disk server — tránh phụ thuộc Cloudinary cho tài liệu
     const fs = require('fs');
@@ -751,12 +835,14 @@ module.exports.createResource = async (req, res, next) => {
         title,
         type: type || ext.replace('.', '').toUpperCase() || 'FILE',
         size: size || `${(req.file.size / 1024).toFixed(0)} KB`,
-        fileUrl: `/uploads/resources/${fileName}`,  // Lưu đường dẫn nội bộ
-        courseId: courseId || null
-      }
+        fileUrl: `/uploads/resources/${fileName}`, // Lưu đường dẫn nội bộ
+        courseId: courseId || null,
+      },
     });
     res.status(201).json({ message: 'Tải tài liệu thành công', resource });
-  } catch (error) { next(error); }
+  } catch (error) {
+    next(error);
+  }
 };
 
 module.exports.deleteResource = async (req, res, next) => {
@@ -764,7 +850,9 @@ module.exports.deleteResource = async (req, res, next) => {
     const { id } = req.params;
     await prisma.resource.delete({ where: { id: parseInt(id) } });
     res.json({ message: 'Xóa tài liệu thành công' });
-  } catch (error) { next(error); }
+  } catch (error) {
+    next(error);
+  }
 };
 
 module.exports.downloadResource = async (req, res, next) => {
@@ -786,5 +874,7 @@ module.exports.downloadResource = async (req, res, next) => {
 
     // Fallback cho file cũ trên Cloudinary: mở trong tab mới
     return res.redirect(resource.fileUrl);
-  } catch (error) { next(error); }
+  } catch (error) {
+    next(error);
+  }
 };

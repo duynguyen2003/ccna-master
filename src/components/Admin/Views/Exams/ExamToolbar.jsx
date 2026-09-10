@@ -12,8 +12,8 @@ const ExamToolbar = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
-  const currentOption = STATUS_FILTER_OPTIONS.find((o) => o.value === statusFilter)
-    ?? STATUS_FILTER_OPTIONS[0];
+  const currentOption =
+    STATUS_FILTER_OPTIONS.find((o) => o.value === statusFilter) ?? STATUS_FILTER_OPTIONS[0];
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -27,7 +27,6 @@ const ExamToolbar = ({
   return (
     <div className="exam-hub-toolbar-shell">
       <div className="exam-hub-toolbar">
-
         {/* Search */}
         <div className="exam-hub-search-wrap">
           <Search size={18} />
@@ -40,12 +39,8 @@ const ExamToolbar = ({
         </div>
 
         <div className="exam-hub-toolbar-right">
-
           {/* Status filter dropdown */}
-          <div
-            className={`exam-hub-select-wrap ${isOpen ? 'is-open' : ''}`}
-            ref={dropdownRef}
-          >
+          <div className={`exam-hub-select-wrap ${isOpen ? 'is-open' : ''}`} ref={dropdownRef}>
             <span className="exam-hub-select-label">Trạng thái:</span>
             <button
               type="button"
@@ -67,7 +62,10 @@ const ExamToolbar = ({
                       key={opt.value}
                       type="button"
                       className={`exam-hub-select-option ${selected ? 'is-selected' : ''}`}
-                      onClick={() => { onStatusChange(opt.value); setIsOpen(false); }}
+                      onClick={() => {
+                        onStatusChange(opt.value);
+                        setIsOpen(false);
+                      }}
                     >
                       <span>{opt.label}</span>
                       {selected && <CheckCircle2 size={14} />}
@@ -95,12 +93,10 @@ const ExamToolbar = ({
               </button>
             ))}
           </div>
-
         </div>
       </div>
     </div>
   );
 };
-
 
 export default ExamToolbar;

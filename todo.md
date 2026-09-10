@@ -1,3 +1,182 @@
+# Thiết kế lại UI lab Cisco — kế hoạch và nghiệm thu 2026-09-08
+
+## Sửa CORS cho frontend local cổng 3001 — 2026-09-09
+
+### Kế hoạch trước khi chỉnh sửa
+
+- [x] Xác nhận preflight từ `http://localhost:3001` bị backend từ chối và đối chiếu cấu hình hiện tại.
+- [x] Chuẩn hóa allowlist CORS: hỗ trợ nhiều origin từ `CORS_ORIGIN`, thêm cổng local 3001 và so khớp origin chính xác.
+- [x] Cập nhật biến mẫu để mô tả cú pháp nhiều origin, không đưa credential vào repo.
+- [x] Kiểm tra preflight cho origin hợp lệ và origin giả mạo; chạy lint/test liên quan.
+- [x] Ghi kết quả vào `todo.md` và bài học vào `lessons.md`.
+
+### File dự kiến thay đổi
+
+- `src/Backend/Server.js`
+- `.env.example`
+- `src/Backend/config/.env.example`
+- `todo.md`
+- `lessons.md`
+
+### Kết quả và bằng chứng
+
+- Trước khi sửa, preflight thật từ `http://localhost:3001` tới backend Docker ở cổng `5500` trả `500` và không có `Access-Control-Allow-Origin`.
+- Allowlist mặc định hỗ trợ `localhost`/`127.0.0.1` ở cổng `3000` và `3001`; `CORS_ORIGIN` nhận danh sách phân tách bằng dấu phẩy, được trim và bỏ dấu `/` cuối.
+- Origin được so khớp chính xác. Preflight cho `http://localhost:3001` và `http://127.0.0.1:3001` trả `204` với header đúng; `http://localhost:3000.evil.example` bị từ chối với `500` và không có header CORS.
+- Đã rebuild/recreate `ccna-master-backend-1` từ source mới, không xóa volume và không dùng `--accept-data-loss`. Request thật `GET /api/learning/courses` từ origin `http://localhost:3001` trả `200` cùng `Access-Control-Allow-Origin: http://localhost:3001`.
+- `npm.cmd run test:cli`: **39 pass, 0 fail, 1 integration skip**. ESLint `src/Backend/Server.js` đạt, còn một warning `adminActionLogger` không dùng đã tồn tại ngoài phạm vi sửa CORS.
+
+## Sửa lỗi runtime Zod trong Admin CLI Lab — 2026-09-09
+
+### Kế hoạch trước khi chỉnh sửa
+
+- [x] Xác nhận nguyên nhân từ bundle CRA và kiểm tra đường import CJS của backend.
+- [x] Thêm module bridge dùng Zod ESM chỉ trong browser; giữ `require('zod')` cho Node/backend.
+- [x] Cập nhật schema dùng chung để chọn bridge theo môi trường, không nhân bản contract/schema.
+- [x] Bổ sung kiểm thử import/validation và chạy lại test admin, lint, build; kiểm tra dev server compile và browser bundle dùng đúng bridge thay cho `z.string`.
+- [x] Dọn các tham chiếu favicon/PWA tới ảnh không tồn tại để không phát sinh request ảnh lỗi trong browser.
+- [x] Ghi kết quả và bài học vào `todo.md` và `lessons.md`.
+
+### File dự kiến thay đổi
+
+- `src/shared/zodBrowser.js`
+- `src/shared/cliLabSchema.js`
+- `src/components/Admin/Views/adminLabConfig.test.js` (chỉ nếu cần ca hồi quy)
+- `public/index.html`
+- `public/manifest.json`
+- `todo.md`
+- `lessons.md`
+
+### Kết quả và bằng chứng
+
+- CRA đã đóng gói `zod/index.cjs` thành asset URL khi schema dùng `require('zod')`; vì vậy `z` bị `undefined` trong browser. Backend Node vẫn import CJS bình thường.
+- Thêm `src/shared/zodBrowser.js` dùng named ESM import; `cliLabSchema.js` chọn bridge khi có `window`, còn Node tiếp tục dùng `require('zod')`. Contract schema chỉ còn một bản.
+- `adminLabConfig.test.js`: **11/11 pass**; `npm.cmd run test:cli`: **39 pass, 0 fail, 1 skip**; import schema bằng Node đạt; lint ba file đổi đạt.
+- Dev server chạy lại ở `http://localhost:3000`, compile thành công; bundle đã chọn module browser Zod và HTTP trả `200`, title `NetMastery - Học Mạng Để Đi Làm`. Production build với `BUILD_PATH=.tmp-build-zod-fix-final` đạt; build mặc định vẫn bị `EPERM` khi xóa `build/manifest.json` cũ đang bị khóa. Chrome connector của Codex chưa có phiên nên chưa có bằng chứng E2E trực tiếp sau hard refresh.
+- `public/index.html` và `public/manifest.json` không còn tham chiếu `favicon.ico`, `logo192.png`, `logo512.png` không tồn tại; manifest hiện trả JSON hợp lệ không có request ảnh lỗi.
+
+## Tích hợp Chrome DevTools MCP + Playwright vào VS Code — 2026-09-09
+
+### Kế hoạch trước khi chỉnh sửa
+
+- [x] Tạo cấu hình workspace `.vscode/mcp.json` gồm hai MCP server chính thức: `chrome-devtools-mcp` và `@playwright/mcp`.
+- [x] Thêm gợi ý extension Playwright cho VS Code và tài liệu Windows về khởi động, trust, kiểm tra server, profile cô lập và chế độ gắn vào Chrome debug riêng.
+- [x] Kiểm tra JSON/config không chứa credential; xác minh Node/npm và hai package có thể hiển thị help; ghi giới hạn rằng MCP server chạy code cục bộ và không tự chứng minh OAuth/production.
+
+### Kết quả tích hợp MCP
+
+- `.vscode/mcp.json` parse thành công với hai server `stdio`; không sửa `package.json`, lockfile hoặc thêm secret.
+- Node `v24.12.0`, npm `11.6.2`, VS Code `1.136.1`; `npx.cmd --yes chrome-devtools-mcp@latest --help` và `npx.cmd --yes @playwright/mcp@latest --help` đều thoát mã 0 ngoài sandbox. Args Playwright cuối cùng dùng `--browser=chrome --isolated --caps=devtools` theo help của package hiện tại.
+- Extension chính thức `ms-playwright.playwright` đã được cài vào VS Code, phiên bản `1.1.19`; `.vscode/extensions.json` vẫn giữ recommendation để máy khác nhận biết phần bổ sung cần có.
+- Đã thử kết nối Chrome thật trong MCP session ngày 2026-09-09 nhưng browser connector không tìm thấy phiên Chrome; chẩn đoán chỉ đọc xác nhận Chrome Stable có cài, ChatGPT browser extension chưa có trong profile `Default` và native-host registry chưa đăng ký. Vì vậy chưa đánh dấu direct browser test đạt; hướng dẫn khởi động MCP/trust và Chrome debug riêng nằm trong `docs/vscode-mcp-playwright.md`.
+
+
+## Phạm vi và tiêu chí đo được
+
+- Triển khai prompt `prompt-thiet-ke-lai-ui-lab-cisco.md`: A1–A8 cho học viên, B1–B6 cho admin, B7 bằng template hợp lệ có sẵn. Giữ lab một thiết bị và topology nhiều thiết bị, quyền thành viên, replay, chấm điểm trên server.
+- Giao triển khai cho GPT-5.6 Luna ở reasoning `max`; agent chính lập kế hoạch, review độc lập, chạy kiểm tra và chấm điểm. Ưu tiên giao diện học viên; công việc schema và thiết kế form có thể chạy song song.
+- Không sửa dependency, database thật, workflow Vercel hoặc tính năng ngoài lab. Giữ nhánh `developer`; phạm vi đợt này là triển khai và review cục bộ.
+- Code UI theo React JavaScript hiện hữu để tránh đổi toolchain; bổ sung tài liệu hợp đồng props/state và ví dụ React + TypeScript, schema JSON hai chiều theo yêu cầu đầu ra.
+
+## Các phase và file dự kiến
+
+### UI-01 — Hợp đồng dữ liệu và kiểm tra backend
+
+- [x] Dùng chung schema Zod giữa UI và backend; danh mục profile chỉ gồm `ccna-basic-v1`, `ccna-network-v2`, danh mục đủ 16 loại check backend thực sự hỗ trợ.
+- [x] Validate theo loại check, tham chiếu device/interface/neighbor, profile phù hợp cấu trúc và không mất field hợp lệ khi chuyển form/JSON; lỗi có vị trí cụ thể, backend từ chối input không hợp lệ trước khi lưu.
+- [x] Cung cấp `progress` tính từ grader trên state hiện tại cho start/read/action/replay; chỉ trả id/trạng thái và metadata gợi ý cần thiết, không đưa đáp án `expected*` vào progress/tasks. Tiến độ này không tự nộp bài hoặc ghi thành tích.
+- File: `src/shared/cliLabSchema.js`, `src/shared/cliLabCatalog.js`, `src/Backend/validation/cliLabSchema.js`, `src/Backend/simulation/labProgress.js`, `src/Backend/controllers/labAttemptController.js`; test schema/progress và integration liên quan.
+
+### UI-02 — Học viên, ưu tiên triển khai trước (A1–A6)
+
+- [x] Bấm hoặc dùng bàn phím chọn node; highlight, hostname/prompt, history và hint đồng bộ từ cùng deviceId. Tăng chiều cao topology; bỏ dropdown thiết bị và dãy nút cáp ngoài sơ đồ.
+- [x] Click/Enter/Space lên cáp ngắt/nối với vùng bấm đủ rộng, tooltip, nét đứt đỏ khi ngắt. Replay, phiên kết thúc và lúc request đang chạy phải chặn thay đổi.
+- [x] Accordion “Công cụ nâng cao” mặc định đóng, chứa tick/probe; hint bar luôn trên terminal, nêu thiết bị, bước tiếp theo và “Xem gợi ý”.
+- [x] Checklist ba trạng thái: chưa bắt đầu, đang thực hiện, hoàn thành; progress x/y và thanh tiến độ đầu trang dùng kết quả server, cập nhật cả khi cấu hình bị thay đổi lại và khi replay.
+- [x] Cùng thực hành/thành tích mở panel phụ bằng nút, giữ đủ join/invite/remove và owner-only submit. OSPF/STP thu gọn và cuối sidebar.
+- File: `src/components/Content/CliLabWorkspace.js`, `NetworkTopology.js`, `CliTerminal.js`, component/helper lab mới nếu cần, `src/css/LabWorkspace.css` (file mới, không chồng quyền chỉnh CSS admin).
+
+### UI-03 — Phản hồi và hướng dẫn (A7–A8)
+
+- [x] GSAP MotionPathPlugin chạy marker tuần tự theo hop thực tế của ping/traceroute trên topology; không replay animation khi polling nhận cùng packet; cleanup và reduced-motion.
+- [x] GSAP shake terminal khi event lỗi, pulse nhiệm vụ mới hoàn thành; không tạo hiệu ứng hoàn thành giả khi mount hoặc đọc snapshot.
+- [x] Onboarding bốn bước topology/terminal/nhiệm vụ/công cụ, chỉ lần đầu, có bỏ qua/mở lại và xử lý storage không khả dụng; tooltip giải thích thuật ngữ.
+- [x] Focus/keyboard cho overlay và panel, light/dark bằng token, không tràn ở desktop/tablet; giữ thông báo màn hình nhỏ hiện hữu.
+- File bổ sung khi review: `src/css/CliLabTokens.css`; thống nhất palette và spacing giữa `LabWorkspace.css` và `Admin/CliLabEditor.css`, giữ phạm vi selector của lab.
+
+### UI-04 — Form admin và xem trước (B1–B7)
+
+- [x] Dropdown profile kèm mô tả đúng engine; form card cho mọi loại check với title/points/hint và field riêng phù hợp, select tham chiếu topology, thêm/xóa check và tổng điểm.
+- [x] Form per-device cho hostname và interface (IP/mask, bật/tắt, trường cấu hình đã được hỗ trợ); giữ thao tác “Nối cổng”, “Xóa dây”. Hỗ trợ initial state một thiết bị lẫn topology.
+- [x] JSON nâng cao mặc định tắt; validation cú pháp ngay khi nhập (dòng/cột khi xác định được) và schema path. JSON lỗi phải giữ nguyên văn bản, không reset âm thầm, chặn save/preview/chuyển form cho đến khi hợp lệ.
+- [x] Đồng bộ hai chiều giữ id, points, passingScore, message/successMessage và các field JSON đã hỗ trợ. Xóa device gây tham chiếu lỗi phải báo cụ thể, không âm thầm đổi đích check.
+- [x] “Xem trước như học viên” dùng chung `CliLabWorkspace` với prop `preview={{initialState, gradingSpec}}` và lab title/objective; mô phỏng cục bộ, không gọi API tạo phiên/nộp điểm, không sửa draft nguồn.
+- [x] Template tối thiểu hai router và switch + PC (thêm hình sao nếu phù hợp); initial state + grading spec + profile đồng bộ, không ghi đè draft mà không có thao tác chủ động rõ ràng.
+- File: `src/components/Admin/Views/Labs.js`, `TopologyEditor.js`, `CliLabConfigEditor.js`, `GradingSpecBuilder.js`, `InitialStateBuilder.js`, helper/test liên quan, `src/data/networkLabTemplates.js`, `src/css/Admin/CliLabEditor.css`.
+
+### UI-05 — Review, kiểm thử và chấm task
+
+- [x] Test chức năng liên quan: node/link selection và read-only; tiến độ/hint qua action và replay; không gọi API khi preview; form↔JSON round trip, JSON lỗi, schema tham chiếu, template, quyền thành viên.
+- [x] Chạy `npm run test:cli`, các component test liên quan, lint các file đổi và `npm run build`; integration thật chỉ trên DB test cô lập nếu khả dụng.
+- [x] Kiểm tra browser light/dark, topology/terminal/task, admin builder/preview, keyboard và viewport; phân biệt bằng chứng browser fixture với integration DB thật, không đánh dấu kiểm tra chưa chạy là đạt.
+- [x] Agent chính review diff và sửa các lỗi quan trọng qua Luna, xác minh lại phần bị ảnh hưởng; ghi bảng A1–A8/B1–B7, hạn chế và điểm /10 có căn cứ.
+- [x] Ghi tài liệu component/props/state, ánh xạ schema, ví dụ TypeScript tại `docs/cisco-lab-ui.md`; cập nhật kết quả ở đây và bài học vào `lessons.md`.
+
+## Cách chấm dự kiến
+
+- Học viên A1–A8: 4 điểm; admin B1–B6: 3 điểm; validation/đồng bộ/tương thích: 1 điểm; kiểm thử/browser/accessibility: 1,5 điểm; tài liệu và B7: 0,5 điểm. Chỉ chấm phần có bằng chứng; lỗi mất dữ liệu, sai quyền hoặc ghi phiên thật từ preview phải sửa trước nghiệm thu.
+
+## Kiểm tra kế hoạch trước code
+
+- Đã đọc `Agent.md`, toàn bộ prompt, workspace/topology/terminal hiện hữu, form admin, Zod schema, grader và controller phiên.
+- Backend hiện chỉ trả tasks id/title/points và feedback sau submit; cần bổ sung progress riêng để A4/A5 hoạt động đúng mà không lộ cấu hình đáp án hoặc tự hoàn thành bài.
+- Repo dùng JavaScript và đã có GSAP/Zod/xterm; tái sử dụng, không thêm framework/toolchain. Các phần code được chia quyền sở hữu để Luna chạy song song không ghi đè nhau.
+
+## Kết quả nghiệm thu cục bộ — 2026-09-09
+
+- Các sub-agent thực hiện bằng GPT-5.6 Luna, reasoning `max`. Có lần chạm usage limit; đã giao lại phần dang dở và tiếp tục trên file hiện có.
+- Backend: Luna chạy `npm.cmd run test:cli` đạt 39 pass, 1 integration skip, 0 fail. Agent chính chạy riêng `networkApi.integration.test.js` với PostgreSQL 16 test cô lập đạt 14/14, không skip. Có kiểm tra safe progress, snapshot replay, không tự ghi score, quyền thành viên và chống nộp trùng.
+- HTTP test 40 request đọc đồng thời: p50 306,6 ms, p95 338,1 ms, max 338,5 ms, 0 lỗi. Chỉ áp dụng cho fixture test và máy hiện tại.
+- Datasource test `127.0.0.1:55436/ccna_ui_review`, container `ccna-ui-review-pg-20260908`, dữ liệu tạm trong tmpfs. Đã xóa đúng container kiểm thử sau nghiệm thu; không áp schema lên Supabase.
+- React tests cuối: `NetworkLab.test.js` 10/10, `adminLabConfig.test.js` 11/11. Đã cập nhật ca Escape: lần đầu đóng onboarding, lần sau mới đóng workspace; xác minh browser Escape vẫn hoạt động khi focus trong xterm.
+- Lint các file thuộc task đạt, không còn warning ở nhóm UI. `git diff --check` theo phạm vi task đạt sau khi dọn whitespace của JSX cũ.
+- Build CRA production với `CI=true` đạt. Artifact cuối ở `../lab-ui-review/production`: `main.e15b0ad2.js`, `main.86c5c5b0.css`; không ghi artifact vào repo. Có thông báo deprecation `fs.F_OK` từ toolchain, không làm build thất bại.
+- Browser tích hợp không có kết nối; dùng Chromium/Playwright trong `../lab-ui-review` ngoài repo. Harness render component thật, xterm và simulator thật với API fixture cô lập. Kết quả: 10 nhóm học viên, 8 nhóm admin, 6 nhóm animation, 5 kiểm tra theme/Escape cuối; tất cả đạt và không có page error. Các báo cáo JSON và screenshot nằm cùng thư mục kiểm thử.
+- Đã đối chiếu `docs/cisco-lab-ui.md` với code cuối; tài liệu gồm props/state, 16 check types, JSON hai chiều, token dùng chung và ví dụ React + TypeScript/GSAP. Bài học đã ghi trong `lessons.md`.
+
+### Đối chiếu từng yêu cầu
+
+| Mục | Kết quả và bằng chứng |
+| --- | --- |
+| A1 | Đạt: chọn node bằng chuột/Enter đồng bộ prompt R1/R2; bỏ dropdown; kiểm browser và component. |
+| A2 | Đạt: Space ngắt dây làm progress 2/3 → 1/3; Enter nối lại 2/3; replay cho chọn node nhưng khóa mutation. |
+| A3 | Đạt: công cụ tick/probe trong accordion mặc định đóng; browser kiểm trạng thái ban đầu. |
+| A4 | Đạt: hint theo thiết bị/nhiệm vụ hiện tại, hint do admin viết; đã sửa lỗi báo “Chọn R1” khi R1 đang được chọn. |
+| A5 | Đạt: ba trạng thái, cập nhật tiến/lùi theo grader và snapshot; browser CLI thật đạt 3/3, chấm thử 100/100. |
+| A6 | Đạt: panel phụ cho phiên/thành tích, add/remove thành viên qua browser fixture; quyền owner/member qua HTTP/DB thật; OSPF/STP đóng cuối sidebar. |
+| A7 | Đạt: browser đo marker trên đường R1–R2 đúng tọa độ, ping mới có animation, chọn node không phát lại, shake/pulse và reduced-motion. Chuỗi traceroute/polling được review theo event key/hop dùng chung và engine tests; chưa có ca browser riêng cho mọi loại trace. |
+| A8 | Đạt: bốn bước onboarding, lưu trạng thái, vùng highlight không che nút, focus trap, Escape và mobile fallback; storage có guard try/catch. |
+| B1 | Đạt: dropdown hai profile thực sự hỗ trợ, mô tả và chặn mismatch với topology. |
+| B2 | Đạt: đủ 16 check types dùng catalog chung; card/fields/points/hint, thêm/xóa và tổng trọng số; schema kiểm kiểu riêng. |
+| B3 | Đạt: form hostname/interface, topology, nối/xóa dây; single-device có interface options; không persist ID giả; switchport chỉ cho SWITCH. |
+| B4 | Đạt: JSON opt-in, giữ metadata/position/interface qua round-trip; lỗi syntax/null/shapes không crash, chặn save/preview cả sau đổi tab. Nhập IP/mask dở vẫn ở form để sửa. |
+| B5 | Đạt: preview từ footer dùng cùng workspace và draft hiện tại; nhập CLI không gọi API, không sửa draft gốc; chỉ một accessible dialog. |
+| B6 | Đạt: backend và UI dùng chung Zod/parser; HTTP từ chối dữ liệu sai trước khi lưu, giữ các kiểm tra quyền. |
+| B7 | Đạt: template hai router và switch + 3 PC; áp dụng đồng bộ initial/grading/profile, kiểm schema và browser save. |
+
+### Điểm review của agent chính: 9,2/10
+
+| Nhóm | Điểm | Nhận xét |
+| --- | ---: | --- |
+| Học viên A1–A8 | 3,7/4 | Luồng chính đạt; hint hiện dựa vào task/type/mode, chưa chẩn đoán sâu từng lỗi routing/ACL/NAT. |
+| Admin B1–B6 | 2,8/3 | Builder/validation/preview đạt; form nhiều cổng/check còn dài, có thể cải thiện cách thu gọn từng card. |
+| Validation/đồng bộ/tương thích | 1/1 | Dùng chung parser, giữ draft, quyền và snapshot; các lỗi dữ liệu phát hiện trong review đã sửa. |
+| Kiểm thử/browser/accessibility | 1,2/1,5 | Component + HTTP/DB + Chromium đạt; chưa có browser E2E nối trực tiếp DB, chưa kiểm Firefox/WebKit hoặc screen reader chuyên dụng. |
+| Tài liệu và B7 | 0,5/0,5 | Có props/state/schema, ví dụ TypeScript/GSAP và hai template. |
+
+- Đây là nghiệm thu UI cục bộ; OAuth, GitHub Actions/Vercel production và Docker scale không nằm trong lần xác minh này. Các kết quả KH lịch sử bên dưới vẫn giữ nguyên phạm vi riêng.
+- Nhánh hiện tại là `developer`; đợt UI này chưa commit/push. Các thay đổi formatter và file ngoài phạm vi xuất hiện đồng thời được giữ nguyên, không được tính là phần code UI đã review.
+
 # Chia commit và push nhánh hiện tại — 2026-09-08
 
 ## Mục tiêu và phạm vi

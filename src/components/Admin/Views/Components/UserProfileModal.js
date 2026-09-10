@@ -26,13 +26,18 @@ const UserProfileModal = ({ isOpen, onClose, user, onArchive, onEdit }) => {
   // Group progress by courseId
   const courseProgressMap = new Map();
   if (user.progress && user.progress.length > 0) {
-    user.progress.forEach(p => {
+    user.progress.forEach((p) => {
       const courseId = p.course?.id || p.courseId;
       const title = p.course?.title || 'Khóa học không xác định';
       const level = p.course?.level || 'Khóa học';
-      
+
       if (!courseProgressMap.has(courseId)) {
-        courseProgressMap.set(courseId, { id: courseId, title, level, progressPercent: p.progressPercent || 0 });
+        courseProgressMap.set(courseId, {
+          id: courseId,
+          title,
+          level,
+          progressPercent: p.progressPercent || 0,
+        });
       } else {
         const existing = courseProgressMap.get(courseId);
         if ((p.progressPercent || 0) > existing.progressPercent) {
@@ -44,18 +49,17 @@ const UserProfileModal = ({ isOpen, onClose, user, onArchive, onEdit }) => {
 
   const enrolledCourses = Array.from(courseProgressMap.values());
   const totalCourses = enrolledCourses.length;
-  const completedCourses = enrolledCourses.filter(c => c.progressPercent === 100).length;
+  const completedCourses = enrolledCourses.filter((c) => c.progressPercent === 100).length;
 
   return (
     <div className="user-profile-modal-overlay" onClick={onClose}>
       <div className="user-profile-modal-content" onClick={(e) => e.stopPropagation()}>
-        
         {/* Header */}
         <div className="upm-header">
           <button className="upm-close-btn" onClick={onClose}>
             <X size={20} />
           </button>
-          
+
           <div className="upm-name-row">
             <h2 className="upm-name">{user.fullName || 'Chưa có tên'}</h2>
             <span className={`upm-status-badge ${user.isActive ? 'active' : 'inactive'}`}>
@@ -73,7 +77,9 @@ const UserProfileModal = ({ isOpen, onClose, user, onArchive, onEdit }) => {
           </div>
           <div className="upm-stat-item">
             <span className="upm-stat-label">HOẠT ĐỘNG GẦN NHẤT</span>
-            <span className="upm-stat-value">{formatTimeAgo(user.lastLogin || user.createdAt)}</span>
+            <span className="upm-stat-value">
+              {formatTimeAgo(user.lastLogin || user.createdAt)}
+            </span>
           </div>
           <div className="upm-stat-item">
             <span className="upm-stat-label">TỔNG KHÓA HỌC</span>
@@ -81,22 +87,28 @@ const UserProfileModal = ({ isOpen, onClose, user, onArchive, onEdit }) => {
           </div>
           <div className="upm-stat-item">
             <span className="upm-stat-label">TỈ LỆ HOÀN THÀNH</span>
-            <span className="upm-stat-value highlight">Đã hoàn thành {completedCourses} khóa học</span>
+            <span className="upm-stat-value highlight">
+              Đã hoàn thành {completedCourses} khóa học
+            </span>
           </div>
         </div>
 
         {/* Academic Progress */}
         <div className="upm-progress-section">
           <h3 className="upm-section-title">TIẾN TRÌNH HỌC TẬP</h3>
-          
+
           {enrolledCourses.length > 0 ? (
             <div className="upm-course-list">
-              {enrolledCourses.map(course => (
+              {enrolledCourses.map((course) => (
                 <div className="upm-course-item" key={course.id}>
                   <div className="upm-course-info">
                     <span className="upm-course-title">{course.title}</span>
                     <span className="upm-course-category">
-                      {course.level === 'BEGINNER' ? 'Chương trình cốt lõi' : (course.level === 'INTERMEDIATE' ? 'Chứng chỉ chuyên nghiệp' : 'Khóa học bổ sung')}
+                      {course.level === 'BEGINNER'
+                        ? 'Chương trình cốt lõi'
+                        : course.level === 'INTERMEDIATE'
+                          ? 'Chứng chỉ chuyên nghiệp'
+                          : 'Khóa học bổ sung'}
                     </span>
                   </div>
                   <div className="upm-course-progress-wrap">
@@ -105,7 +117,10 @@ const UserProfileModal = ({ isOpen, onClose, user, onArchive, onEdit }) => {
                     ) : (
                       <>
                         <div className="upm-progress-bar-bg">
-                          <div className="upm-progress-bar-fill" style={{ width: `${course.progressPercent}%` }}></div>
+                          <div
+                            className="upm-progress-bar-fill"
+                            style={{ width: `${course.progressPercent}%` }}
+                          ></div>
                         </div>
                         <span className="upm-progress-text">{course.progressPercent}%</span>
                       </>
@@ -115,22 +130,31 @@ const UserProfileModal = ({ isOpen, onClose, user, onArchive, onEdit }) => {
               ))}
             </div>
           ) : (
-            <div className="upm-empty-state">
-              Chưa tham gia khóa học nào
-            </div>
+            <div className="upm-empty-state">Chưa tham gia khóa học nào</div>
           )}
         </div>
 
         {/* Footer */}
         <div className="upm-footer">
-          <button className="upm-btn-archive" onClick={() => { onArchive(user); onClose(); }}>
+          <button
+            className="upm-btn-archive"
+            onClick={() => {
+              onArchive(user);
+              onClose();
+            }}
+          >
             {user.isActive ? 'KHÓA TÀI KHOẢN' : 'MỞ KHÓA TÀI KHOẢN'}
           </button>
-          <button className="upm-btn-edit" onClick={() => { onEdit(user); onClose(); }}>
+          <button
+            className="upm-btn-edit"
+            onClick={() => {
+              onEdit(user);
+              onClose();
+            }}
+          >
             CHỈNH SỬA THÔNG TIN
           </button>
         </div>
-
       </div>
     </div>
   );

@@ -8,7 +8,7 @@ import {
   Eye,
   PencilLine,
   Trash2,
-  CalendarDays
+  CalendarDays,
 } from 'lucide-react';
 import { getStatusFromExam, getDifficultyLabel, formatExamDate } from './utils';
 
@@ -50,7 +50,11 @@ export const ExamCard = ({ exam, onView, onEdit, onDelete }) => {
 
       <div className="exam-hub-mini-stats">
         <MiniStat icon={<CircleHelp size={14} />} value={exam.totalQuestions} label="Câu hỏi" />
-        <MiniStat icon={<Clock3 size={14} />} value={`${exam.durationMinutes}p`} label="Thời gian" />
+        <MiniStat
+          icon={<Clock3 size={14} />}
+          value={`${exam.durationMinutes}p`}
+          label="Thời gian"
+        />
         <MiniStat icon={<Target size={14} />} value={`${exam.passingScore}%`} label="Điểm đạt" />
         <MiniStat icon={<Users size={14} />} value={exam?._count?.results ?? 0} label="Dự thi" />
       </div>
@@ -58,9 +62,17 @@ export const ExamCard = ({ exam, onView, onEdit, onDelete }) => {
       <div className="exam-hub-bottom">
         <span className="exam-hub-difficulty">{getDifficultyLabel(exam.difficulty)}</span>
         <div className="exam-hub-actions">
-          <button type="button" onClick={onView}>   <Eye size={14} />       Xem  </button>
-          <button type="button" onClick={onEdit}>   <PencilLine size={14} /> Sửa  </button>
-          <button type="button" className="danger" onClick={onDelete}><Trash2 size={14} /> Xóa</button>
+          <button type="button" onClick={onView}>
+            {' '}
+            <Eye size={14} /> Xem{' '}
+          </button>
+          <button type="button" onClick={onEdit}>
+            {' '}
+            <PencilLine size={14} /> Sửa{' '}
+          </button>
+          <button type="button" className="danger" onClick={onDelete}>
+            <Trash2 size={14} /> Xóa
+          </button>
         </div>
       </div>
     </article>
@@ -75,7 +87,9 @@ export const ExamListRow = ({ exam, onView, onEdit, onDelete }) => {
   return (
     <article className="exam-hub-list-row">
       <div className="exam-hub-col exam-hub-col-info">
-        <div className="exam-hub-exam-icon"><FileText size={24} /></div>
+        <div className="exam-hub-exam-icon">
+          <FileText size={24} />
+        </div>
         <div className="exam-hub-exam-main">
           <h3>{exam.title}</h3>
           <div className="exam-hub-exam-sub">
@@ -93,10 +107,19 @@ export const ExamListRow = ({ exam, onView, onEdit, onDelete }) => {
       </div>
 
       <div className="exam-hub-col exam-hub-col-detail">
-        <div><CircleHelp size={14} /><span>{exam.totalQuestions} câu hỏi</span></div>
-        <div><Target size={14} />    <span>{exam.passingScore}% đạt</span></div>
-        <div><Clock3 size={14} />    <span>{exam.durationMinutes} phút</span></div>
-        <div><Users size={14} />     <span>{exam?._count?.results ?? 0} dự thi</span></div>
+        <div>
+          <CircleHelp size={14} />
+          <span>{exam.totalQuestions} câu hỏi</span>
+        </div>
+        <div>
+          <Target size={14} /> <span>{exam.passingScore}% đạt</span>
+        </div>
+        <div>
+          <Clock3 size={14} /> <span>{exam.durationMinutes} phút</span>
+        </div>
+        <div>
+          <Users size={14} /> <span>{exam?._count?.results ?? 0} dự thi</span>
+        </div>
       </div>
 
       <div className="exam-hub-col exam-hub-col-status">
@@ -105,9 +128,18 @@ export const ExamListRow = ({ exam, onView, onEdit, onDelete }) => {
       </div>
 
       <div className="exam-hub-col exam-hub-col-actions">
-        <button type="button" className="icon view" onClick={onView} aria-label="Xem kỳ thi">  <Eye size={18} />         </button>
-        <button type="button" className="icon edit" onClick={onEdit} aria-label="Sửa kỳ thi">  <PencilLine size={18} /> </button>
-        <button type="button" className="icon delete" onClick={onDelete} aria-label="Xóa kỳ thi">  <Trash2 size={18} />     </button>
+        <button type="button" className="icon view" onClick={onView} aria-label="Xem kỳ thi">
+          {' '}
+          <Eye size={18} />{' '}
+        </button>
+        <button type="button" className="icon edit" onClick={onEdit} aria-label="Sửa kỳ thi">
+          {' '}
+          <PencilLine size={18} />{' '}
+        </button>
+        <button type="button" className="icon delete" onClick={onDelete} aria-label="Xóa kỳ thi">
+          {' '}
+          <Trash2 size={18} />{' '}
+        </button>
       </div>
     </article>
   );
