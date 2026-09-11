@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
   Plus,
-  Trash2,
   ChevronDown,
   ChevronRight,
   BookOpen,
@@ -29,6 +28,7 @@ import {
 import { adminApi } from '../../../services/api/adminApi';
 import { AuthContext } from '../../../context/AuthContext';
 import AdminModal from '../Components/AdminModal';
+import DeleteButton from '../../ui/delete-button';
 import '../../../css/Admin/AdminViews.css';
 import '../../../css/Lesson.css';
 import MarkdownRenderer from '../../Common/MarkdownRenderer';
@@ -161,14 +161,11 @@ const ModuleAccordion = React.memo(function ModuleAccordion({
                     {lesson.title}
                   </span>
                 </button>
-                <button
-                  type="button"
-                  className="acm-action-btn danger acm-module-lesson-delete"
+                <DeleteButton
+                  size="sm"
                   title="Xóa bài học"
-                  onClick={() => onDeleteLesson(lesson.id)}
-                >
-                  <Trash2 size={12} />
-                </button>
+                  onConfirm={() => onDeleteLesson(lesson.id, true)}
+                />
               </div>
             ))}
           </div>
@@ -190,14 +187,11 @@ const ModuleAccordion = React.memo(function ModuleAccordion({
             >
               <Pencil size={13} />
             </button>
-            <button
-              type="button"
-              className="acm-module-delete"
+            <DeleteButton
+              size="sm"
               title="Xóa chương"
-              onClick={() => onDeleteModule(module.id)}
-            >
-              <Trash2 size={13} />
-            </button>
+              onConfirm={() => onDeleteModule(module.id, true)}
+            />
           </div>
         </div>
       ) : null}
@@ -438,8 +432,12 @@ const CourseDetail = () => {
   }, [moduleForm, editingModule, token, courseId, fetchData]);
 
   const handleDeleteModule = useCallback(
-    async (moduleId) => {
-      if (!window.confirm('Bạn có chắc muốn xóa chương này và toàn bộ bài học bên trong?')) return;
+    async (moduleId, confirmed = false) => {
+      if (
+        !confirmed &&
+        !window.confirm('Bạn có chắc muốn xóa chương này và toàn bộ bài học bên trong?')
+      )
+        return;
       try {
         await adminApi.deleteModule(token, moduleId);
         setToast('Đã xóa chương.');
@@ -457,8 +455,8 @@ const CourseDetail = () => {
   );
 
   const handleDeleteLesson = useCallback(
-    async (lessonId) => {
-      if (!window.confirm('Bạn có chắc muốn xóa bài học này?')) return;
+    async (lessonId, confirmed = false) => {
+      if (!confirmed && !window.confirm('Bạn có chắc muốn xóa bài học này?')) return;
       try {
         await adminApi.deleteLesson(token, lessonId);
         setToast('Đã xóa bài học.');
@@ -482,21 +480,21 @@ const CourseDetail = () => {
       await adminApi.createTopic(token, courseId, { title });
       setTopicInput('');
       await fetchData(true);
-      setToast('Đã thêm chủ đề.');
+      setToast('Đã thêm kỹ năng trọng tâm.');
     } catch (err) {
-      setPageError(err.message || 'Không thể thêm chủ đề.'); // Fix 6
+      setPageError(err.message || 'Không thể thêm kỹ năng trọng tâm.'); // Fix 6
     }
   }, [topicInput, token, courseId, fetchData]);
 
   const handleDeleteTopic = useCallback(
     async (topicId) => {
-      if (!window.confirm('Xóa chủ đề này?')) return;
+      if (!window.confirm('Xóa kỹ năng trọng tâm này?')) return;
       try {
         await adminApi.deleteTopic(token, topicId);
         await fetchData(true);
-        setToast('Đã xóa chủ đề.');
+        setToast('Đã xóa kỹ năng trọng tâm.');
       } catch (err) {
-        setPageError(err.message || 'Không thể xóa chủ đề.'); // Fix 6
+        setPageError(err.message || 'Không thể xóa kỹ năng trọng tâm.'); // Fix 6
       }
     },
     [token, fetchData]
@@ -603,10 +601,15 @@ const CourseDetail = () => {
       <section className="acm-topic-panel">
         <div className="acm-topic-header">
           <Tag size={15} />
-          <strong>Chủ đề khóa học</strong>
+          <strong>Kỹ năng trọng tâm</strong>
         </div>
+        <p className="acm-topic-empty">
+          Các kỹ năng này được hiển thị trong chi tiết chặng học của người dùng.
+        </p>
         <div className="acm-topic-list">
-          {topics.length === 0 ? <span className="acm-topic-empty">Chưa có chủ đề</span> : null}
+          {topics.length === 0 ? (
+            <span className="acm-topic-empty">Chưa có kỹ năng trọng tâm</span>
+          ) : null}
           {topics.map((topic) => (
             <span key={topic.id} className="acm-topic-chip">
               {topic.title}
@@ -621,7 +624,7 @@ const CourseDetail = () => {
             className="acm-input"
             value={topicInput}
             onChange={(e) => setTopicInput(e.target.value)}
-            placeholder="Thêm chủ đề mới"
+            placeholder="Ví dụ: Cấu hình VLAN và trunk 802.1Q"
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
                 e.preventDefault();
@@ -979,14 +982,11 @@ const CourseDetail = () => {
                         >
                           <Pencil size={14} />
                         </button>
-                        <button
-                          type="button"
-                          className="acm-action-btn danger"
+                        <DeleteButton
+                          size="sm"
                           title="Xóa bài học"
-                          onClick={() => handleDeleteLesson(lesson.id)}
-                        >
-                          <Trash2 size={14} />
-                        </button>
+                          onConfirm={() => handleDeleteLesson(lesson.id, true)}
+                        />
                       </div>
                     </article>
                   ))}

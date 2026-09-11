@@ -77,8 +77,8 @@ export const useExams = () => {
   // ─── Delete ─────────────────────────────────────────────────────────────────
 
   const deleteExam = useCallback(
-    async (id) => {
-      if (!window.confirm('Bạn có chắc muốn xóa bài thi này?')) return;
+    async (id, confirmed = false) => {
+      if (!confirmed && !window.confirm('Bạn có chắc muốn xóa bài thi này?')) return;
       try {
         await adminApi.deleteExam(token, id);
         fetchExams();

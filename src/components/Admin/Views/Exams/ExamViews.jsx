@@ -11,6 +11,7 @@ import {
   CalendarDays,
 } from 'lucide-react';
 import { getStatusFromExam, getDifficultyLabel, formatExamDate } from './utils';
+import DeleteButton from '../../../ui/delete-button';
 
 // ─── Shared badge ─────────────────────────────────────────────────────────────
 
@@ -70,9 +71,11 @@ export const ExamCard = ({ exam, onView, onEdit, onDelete }) => {
             {' '}
             <PencilLine size={14} /> Sửa{' '}
           </button>
-          <button type="button" className="danger" onClick={onDelete}>
-            <Trash2 size={14} /> Xóa
-          </button>
+          <DeleteButton
+            size="sm"
+            title="Xóa kỳ thi"
+            onConfirm={onDelete}
+          />
         </div>
       </div>
     </article>
@@ -136,10 +139,11 @@ export const ExamListRow = ({ exam, onView, onEdit, onDelete }) => {
           {' '}
           <PencilLine size={18} />{' '}
         </button>
-        <button type="button" className="icon delete" onClick={onDelete} aria-label="Xóa kỳ thi">
-          {' '}
-          <Trash2 size={18} />{' '}
-        </button>
+        <DeleteButton
+          size="sm"
+          title="Xóa kỳ thi"
+          onConfirm={onDelete}
+        />
       </div>
     </article>
   );
@@ -162,7 +166,7 @@ export const ExamListShell = ({ exams, onView, onEdit, onDelete }) => (
           exam={exam}
           onView={() => onView(exam)}
           onEdit={() => onEdit(exam)}
-          onDelete={() => onDelete(exam.id)}
+          onDelete={() => onDelete(exam.id, true)}
         />
       ))}
     </div>
@@ -181,7 +185,7 @@ export const ExamGrid = ({ exams, onView, onEdit, onDelete }) => (
         exam={exam}
         onView={() => onView(exam)}
         onEdit={() => onEdit(exam)}
-        onDelete={() => onDelete(exam.id)}
+        onDelete={() => onDelete(exam.id, true)}
       />
     ))}
   </div>
