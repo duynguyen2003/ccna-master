@@ -11,159 +11,54 @@ const formatCliConfigError = (error) => {
   return path ? `${path}: ${issue.message}` : issue.message;
 };
 
-module.exports.getCourses = async (req, res, next) => {
+module.exports.getCourses = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const skip = (page - 1) * limit;
-
-    const whereClause = { deletedAt: null };
-    if (!req.user || req.user.role !== 'ADMIN') {
-      whereClause.status = { in: ['PUBLISHED', 'OPEN'] };
-    }
-
-    const [courses, total] = await Promise.all([
-      prisma.course.findMany({
-        where: whereClause,
-        skip,
-        take: limit,
-        orderBy: { orderIndex: 'asc' },
-        include: {
-          modules: {
-            where: { deletedAt: null },
-            orderBy: { orderIndex: 'asc' },
-            include: {
-              lessons: {
-                where: { deletedAt: null },
-                orderBy: { orderIndex: 'asc' },
-                select: {
-                  id: true,
-                  title: true,
-                  videoDuration: true,
-                  sectionNumber: true,
-                  orderIndex: true,
-                },
-              },
-              exams: {
-                where: { status: 'OPEN', deletedAt: null },
-                include: {
-                  _count: { select: { questions: true } },
-                },
-              },
-            },
-          },
-          labs: {
-            where: { deletedAt: null },
-            select: { id: true },
-          },
-        },
-      }),
-      prisma.course.count({ where: whereClause }),
-    ]);
-
-    // Lấy tiến độ của user nếu đã đăng nhập
-    let userProgress = [];
-    if (req.user && req.user.id) {
-      userProgress = await prisma.userProgress.findMany({
-        where: { userId: req.user.id },
-      });
-    }
-
-    // Tính toán tổng thời lượng và tiến độ cho từng khóa học
-    const coursesWithStats = courses.map((course) => {
-      let totalSeconds = 0;
-      let totalLessons = 0;
-      let sumProgress = 0;
-
-      // 1. Duyệt qua tất cả bài học trong từng module để tính toán
-      let previousModuleCompleted = true; // Module đầu tiên luôn mặc định được phép mở nếu đã ghi danh
-
-      const processedModules = course.modules.map((module, mIdx) => {
-        let modTotalLessons = 0;
-        let modSumProgress = 0;
-
-        module.lessons.forEach((lesson) => {
-          totalLessons++;
-          modTotalLessons++;
-
-          // Tính thời lượng video
-          if (lesson.videoDuration) {
-            const parts = lesson.videoDuration.split(':').map(Number);
-            if (parts.length === 2) {
-              totalSeconds += (parts[0] || 0) * 60 + (parts[1] || 0);
-            } else if (parts.length === 3) {
-              totalSeconds += (parts[0] || 0) * 3600 + (parts[1] || 0) * 60 + (parts[2] || 0);
-            }
-          }
-
-          // Cộng dồn % tiến độ bài học
-          const lessonProgress = userProgress.find((p) => p.lessonId === lesson.id);
-          if (lessonProgress) {
-            sumProgress += lessonProgress.progressPercent || 0;
-            modSumProgress += lessonProgress.progressPercent || 0;
-          }
-        });
-
-        // Tính xem module này đã hoàn thành chưa (100%)
-        const modPercent = modTotalLessons > 0 ? modSumProgress / (modTotalLessons * 100) : 1;
-        const isCompleted = modPercent >= 1;
-
-        // Trạng thái của module hiện tại
-        let moduleStatus = 'locked';
-        if (previousModuleCompleted) {
-          moduleStatus = isCompleted ? 'completed' : 'active';
-        }
-
-        // Cập nhật cờ cho module tiếp theo
-        previousModuleCompleted = isCompleted;
-
-        return {
-          ...module,
-          status: moduleStatus,
-        };
-      });
-
-      // Ghi đè lại modules đã được xử lý
-      course.modules = processedModules;
-
-      // 2. Tính số Lab đã hoàn thành của khóa học này
-      const totalLabs = course.labs?.length || 0;
-      let completedLabs = 0;
-      course.labs?.forEach((lab) => {
-        const labProgress = userProgress.find((p) => p.labId === lab.id);
-        if (labProgress && labProgress.status === 'COMPLETED') {
-          completedLabs++;
-        }
-      });
-
-      // 3. Tổng hợp tiến độ: (bài học xong + lab xong) / (tổng bài học + tổng lab)
-      const totalItems = totalLessons + totalLabs;
-      // sumProgress là tổng % (mỗi bài 0-100), chia 100 để ra số bài học xong
-      const itemsDone = sumProgress / 100 + completedLabs;
-
-      // Kiểm tra xem người dùng đã ghi danh chưa (có bất kỳ record nào liên quan đến course này)
-      const hasEnrolled = userProgress.some((p) => p.courseId === course.id);
-
-      let progressPercent = 0;
-      if (totalItems > 0) {
-        progressPercent = Math.round((itemsDone / totalItems) * 100);
-        if (progressPercent > 100) progressPercent = 100;
-      }
-
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 10));
+    const { readState } = require('../services/learningPathService');
+    const state = await prisma.$transaction(
+      (db) => readState(db, req.user?.id, req.user?.role === 'ADMIN'),
+      { isolationLevel: 'RepeatableRead', timeout: 15000, maxWait: 10000 }
+    );
+    const nodes = new Map(state.path.courses.map((node) => [node.id, node]));
+    const total = state.catalog.length;
+    const courses = state.catalog.slice((page - 1) * limit, page * limit).map((course) => {
+      const node = nodes.get(course.id);
       return {
         ...course,
-        totalHours: totalSeconds > 0 ? Math.round((totalSeconds / 3600) * 10) / 10 : 0,
-        progress: progressPercent,
-        isStarted: hasEnrolled || sumProgress > 0,
+        modules: course.modules.map((module) => {
+          const progress = node.modules.find((item) => item.id === module.id);
+          return {
+            ...module,
+            status: progress.status === 'current' ? 'active' : progress.status,
+            progressPercent: progress.progressPercent,
+            canAccess: progress.canAccess,
+            lockedReason: progress.lockedReason,
+          };
+        }),
+        progress: node.progressPercent,
+        totalHours: node.estimatedHours || 0,
+        isStarted: node.isStarted,
+        learningStatus: node.status,
+        prerequisiteId: node.prerequisiteId,
+        lockedReason: node.lockedReason,
+        totalModules: node.totalModules,
+        completedModules: node.completedModules,
       };
     });
-
+    res.set('Cache-Control', 'private, no-store');
     res.json({
-      data: coursesWithStats,
+      data: courses,
       pagination: { total, page, limit, totalPages: Math.ceil(total / limit) },
     });
   } catch (error) {
-    next(error);
+    if (error.status)
+      return res.status(error.status).json({ code: error.code, message: error.message });
+    console.error('Course catalog request failed:', error.code || error.name);
+    res.status(500).json({
+      code: 'COURSES_ERROR',
+      message: 'Không thể tải danh sách khóa học. Vui lòng thử lại.',
+    });
   }
 };
 

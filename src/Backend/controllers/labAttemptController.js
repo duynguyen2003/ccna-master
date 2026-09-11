@@ -6,6 +6,7 @@ const { gradeAttempt } = require('../simulation/gradingEngine');
 const { buildLabProgress, buildLabTasks } = require('../simulation/labProgress');
 const { fail, mayAccess, withAttempt } = require('../simulation/attemptAccess');
 const { explainFeedback } = require('../simulation/labFeedback');
+const learningPathService = require('../services/learningPathService');
 const prisma = getPrisma();
 const definitionOf = (a) =>
   a.definition || { initialState: a.lab.initialState, gradingSpec: a.lab.gradingSpec };
@@ -35,13 +36,18 @@ const dto = (a, userId, deviceId) => {
     },
   };
 };
-const handle = (fn) => async (req, res, next) => {
+const handle = (fn) => async (req, res) => {
   try {
     await fn(req, res);
   } catch (e) {
     if (e instanceof z.ZodError) return res.status(400).json({ message: e.issues[0].message });
-    if (e.status) return res.status(e.status).json({ message: e.message });
-    next(e);
+    if (e.status && e.status >= 400 && e.status < 500)
+      return res.status(e.status).json({ code: e.code, message: e.message });
+    console.error('Lab request failed:', e.code || e.name);
+    res.status(500).json({
+      code: 'LAB_REQUEST_FAILED',
+      message: 'Không thể xử lý phiên Lab. Vui lòng thử lại.',
+    });
   }
 };
 const ownedRead = async (id, userId) => {
@@ -50,103 +56,35 @@ const ownedRead = async (id, userId) => {
   if (!mayAccess(a, userId)) throw fail(404, 'Không tìm thấy phiên Lab');
   return a;
 };
-const markLabProgressCompleted = async (tx, userId, lab) => {
-  if (!lab.courseId) return;
-  const existingProgress = await tx.userProgress.findFirst({
-    where: { userId, courseId: lab.courseId, labId: lab.id },
-  });
-  if (existingProgress) {
-    await tx.userProgress.update({
-      where: { id: existingProgress.id },
-      data: {
-        status: 'COMPLETED',
-        progressPercent: 100,
-        completedAt: existingProgress.completedAt || new Date(),
-      },
-    });
-  } else {
-    await tx.userProgress.create({
-      data: {
-        userId,
-        courseId: lab.courseId,
-        moduleId: lab.moduleId,
-        labId: lab.id,
-        status: 'COMPLETED',
-        progressPercent: 100,
-        completedAt: new Date(),
-      },
-    });
-  }
-
-  const [totalLessons, totalLabs, completedLessons, completedLabs] = await Promise.all([
-    tx.lesson.count({ where: { module: { courseId: lab.courseId }, deletedAt: null } }),
-    tx.lab.count({ where: { courseId: lab.courseId, deletedAt: null } }),
-    tx.userProgress.count({
-      where: { userId, courseId: lab.courseId, lessonId: { not: null }, status: 'COMPLETED' },
-    }),
-    tx.userProgress.count({
-      where: { userId, courseId: lab.courseId, labId: { not: null }, status: 'COMPLETED' },
-    }),
-  ]);
-  const totalItems = totalLessons + totalLabs;
-  const overallPercent =
-    totalItems > 0 ? Math.round(((completedLessons + completedLabs) / totalItems) * 100) : 0;
-  const summary = await tx.userProgress.findFirst({
-    where: { userId, courseId: lab.courseId, moduleId: null, lessonId: null, labId: null },
-  });
-  if (summary) {
-    await tx.userProgress.update({
-      where: { id: summary.id },
-      data: {
-        progressPercent: overallPercent,
-        status: overallPercent >= 100 ? 'COMPLETED' : 'ACTIVE',
-      },
-    });
-  } else {
-    await tx.userProgress.create({
-      data: {
-        userId,
-        courseId: lab.courseId,
-        progressPercent: overallPercent,
-        status: overallPercent >= 100 ? 'COMPLETED' : 'ACTIVE',
-      },
-    });
-  }
-  await tx.userActivity.create({
-    data: {
-      userId,
-      title: `Hoàn thành CLI Lab: ${lab.title}`,
-      type: 'LAB_COMPLETED',
-      referenceId: lab.id,
-    },
-  });
-};
-
 module.exports.startAttempt = handle(async (req, res) => {
   const labId = z.coerce.number().int().positive().parse(req.params.labId);
   const lab = await prisma.lab.findFirst({
     where: { id: labId, deletedAt: null, status: 'PUBLISHED', labType: 'CLI_SIMULATION' },
   });
   if (!lab) throw fail(404, 'Không tìm thấy CLI Lab đã xuất bản');
-  const a = await prisma.$transaction(async (tx) => {
-    await tx.$queryRaw`SELECT pg_advisory_xact_lock(${req.user.id}::int, ${labId}::int)::text AS locked`;
-    const existing = await tx.labAttempt.findFirst({
-      where: { userId: req.user.id, labId, status: 'IN_PROGRESS' },
-      include: { lab: true, commands: { orderBy: { sequence: 'asc' } } },
-    });
-    if (existing) return existing;
-    return tx.labAttempt.create({
-      data: {
-        userId: req.user.id,
-        labId,
-        definition: { initialState: lab.initialState, gradingSpec: lab.gradingSpec },
-        members: [],
-        deviceState: engine.initial(lab.initialState),
-        simulatorVersion: lab.simulatorVersion || '1.0.0',
-      },
-      include: { lab: true, commands: true },
-    });
-  });
+  const a = await prisma.$transaction(
+    async (tx) => {
+      await learningPathService.assertLabAccess(tx, req.user.id, lab);
+      await tx.$queryRaw`SELECT pg_advisory_xact_lock(${req.user.id}::int, ${labId}::int)::text AS locked`;
+      const existing = await tx.labAttempt.findFirst({
+        where: { userId: req.user.id, labId, status: 'IN_PROGRESS' },
+        include: { lab: true, commands: { orderBy: { sequence: 'asc' } } },
+      });
+      if (existing) return existing;
+      return tx.labAttempt.create({
+        data: {
+          userId: req.user.id,
+          labId,
+          definition: { initialState: lab.initialState, gradingSpec: lab.gradingSpec },
+          members: [],
+          deviceState: engine.initial(lab.initialState),
+          simulatorVersion: lab.simulatorVersion || '1.0.0',
+        },
+        include: { lab: true, commands: true },
+      });
+    },
+    { timeout: 15000, maxWait: 10000 }
+  );
   res.status(201).json({ data: dto(a, req.user.id) });
 });
 module.exports.getAttempt = handle(async (req, res) => {
@@ -228,11 +166,14 @@ module.exports.submitAttempt = handle(async (req, res) => {
         submittedAt: result.passed ? new Date() : null,
       },
     });
-    if (result.passed) {
-      await tx.$queryRaw`SELECT pg_advisory_xact_lock(${a.userId}::int, 0::int)::text AS locked`;
-      await markLabProgressCompleted(tx, a.userId, a.lab);
-    }
-    return { attempt: dto({ ...updated, lab: a.lab }, req.user.id), result };
+    const progress = result.passed
+      ? await learningPathService.completeGradedLab(tx, a.userId, a.lab)
+      : null;
+    return {
+      attempt: dto({ ...updated, lab: a.lab }, req.user.id),
+      result,
+      ...(progress ? { learningPath: progress.learningPath, transition: progress.transition } : {}),
+    };
   });
   res.json({ data });
 });

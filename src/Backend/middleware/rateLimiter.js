@@ -52,9 +52,23 @@ const cliCommandLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+const learningProgressLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 120,
+  // Mounted after verifyToken; isolate users sharing a classroom's public IP.
+  keyGenerator: (req) => String(req.user.id),
+  message: {
+    code: 'PROGRESS_RATE_LIMITED',
+    message: 'Bạn đang lưu tiến độ quá nhanh. Vui lòng đợi một lát.',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 module.exports = {
   authLimiter,
   forgotPasswordLimiter,
   examSubmitLimiter,
   cliCommandLimiter,
+  learningProgressLimiter,
 };

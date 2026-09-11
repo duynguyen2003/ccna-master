@@ -1,8 +1,19 @@
 const express = require('express');
 const router = express.Router();
 const learningController = require('../controllers/learningController');
+const learningPathController = require('../controllers/learningPathController');
+const { learningProgressLimiter } = require('../middleware/rateLimiter');
 const { verifyToken, checkRole, optionalAuth } = require('../middleware/auth');
 const upload = require('../middleware/upload');
+
+// Personal learning state must be registered before the admin-only middleware.
+router.get('/learning-path', verifyToken, learningPathController.getLearningPath);
+router.patch(
+  '/modules/:moduleId/progress',
+  verifyToken,
+  learningProgressLimiter,
+  learningPathController.completeModule
+);
 
 // Public (Optional Login for Guests)
 router.get('/courses', optionalAuth, learningController.getCourses);

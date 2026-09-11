@@ -71,6 +71,7 @@ test(
           id: `t${randomUUID().replace(/-/g, '').slice(0, 9)}`,
           code: 'LABTEST',
           title: 'Temporary CLI integration course',
+          status: 'PUBLISHED',
         },
       });
       courseId = course.id;

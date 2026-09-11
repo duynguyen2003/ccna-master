@@ -126,6 +126,7 @@ module.exports.getDashboardSummary = async (req, res, next) => {
         _avg: { progressPercent: true },
         where: {
           status: 'ACTIVE',
+          moduleId: null,
           lessonId: null,
           labId: null,
         },
@@ -202,6 +203,7 @@ module.exports.getDashboardSummary = async (req, res, next) => {
               _avg: { progressPercent: true },
               where: {
                 status: 'ACTIVE',
+                moduleId: null,
                 lessonId: null,
                 labId: null,
                 updatedAt: { lte: new Date(date.getTime() + 24 * 60 * 60 * 1000) },
@@ -290,7 +292,9 @@ module.exports.getDashboardDistribution = async (req, res, next) => {
         id: true,
         title: true,
         _count: {
-          select: { progress: { where: { status: 'ACTIVE' } } },
+          select: {
+            progress: { where: { status: 'ACTIVE', moduleId: null, lessonId: null, labId: null } },
+          },
         },
       },
     });
@@ -359,6 +363,7 @@ module.exports.getRecentStudents = async (req, res, next) => {
         fullName: true,
         createdAt: true,
         progress: {
+          where: { moduleId: null, lessonId: null, labId: null },
           take: 1,
           orderBy: { updatedAt: 'desc' },
           include: { course: { select: { title: true } } },
