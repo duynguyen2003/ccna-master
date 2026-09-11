@@ -92,10 +92,17 @@ const CourseDetail = () => {
   const isStarted = course.isStarted || course.progress > 0;
   const totalLessons =
     course.modules?.reduce((sum, m) => sum + (m.lessons?.length || m.lessonCount || 0), 0) || 0;
-  const instInitial = (course.instructor?.name || 'G').charAt(0).toUpperCase();
+  const isLocked =
+    course.canAccess === false || course.learningStatus === 'locked' || course.status === 'locked';
+
   const handleStartLearning = async () => {
     if (!isAuthenticated) {
       navigate('/login');
+      return;
+    }
+
+    if (isLocked) {
+      navigate('/roadmap');
       return;
     }
 
@@ -111,6 +118,9 @@ const CourseDetail = () => {
       navigate(`/lesson?course=${courseId}`);
     } catch (e) {
       console.error('Lỗi khi ghi danh khóa học:', e);
+      if (e?.code === 'COURSE_LOCKED' || e?.status === 403) {
+        setError(e.message || 'Khóa học này đang bị khóa. Vui lòng hoàn thành các chặng trước.');
+      }
     }
   };
 
@@ -325,7 +335,11 @@ const CourseDetail = () => {
                     style={{ background: colors.gradient }}
                     onClick={handleStartLearning}
                   >
-                    {!isAuthenticated ? (
+                    {isLocked ? (
+                      <>
+                        <Lock size={16} /> Chưa mở khóa — Xem lộ trình
+                      </>
+                    ) : !isAuthenticated ? (
                       <>
                         Đăng nhập để học{' '}
                         <span className="material-icons-round" style={{ fontSize: 18 }}>
@@ -346,9 +360,16 @@ const CourseDetail = () => {
                     )}
                   </button>
 
-                  <p className="cdp-access-note">
-                    Truy cập toàn bộ giáo trình trong thời gian có hạn
-                  </p>
+                  {isLocked ? (
+                    <p className="cdp-access-note" style={{ color: '#dc2626' }}>
+                      {course.lockedReason ||
+                        'Bạn cần hoàn thành các bài học ở chặng trước để mở khóa.'}
+                    </p>
+                  ) : (
+                    <p className="cdp-access-note">
+                      Truy cập toàn bộ giáo trình trong thời gian có hạn
+                    </p>
+                  )}
 
                   {/* Progress bar nếu đang học */}
                   {isStarted && (

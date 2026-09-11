@@ -78,7 +78,11 @@ const apiFetch = async (endpoint, token, options = {}) => {
     // Nếu là login, cho phép hiển thị lỗi sai mật khẩu thay vì quăng UNAUTHORIZED chung chung
     if (endpoint !== '/auth/login' && endpoint !== '/auth/register') {
       window.dispatchEvent(new Event('unauthorized'));
-      throw new Error('UNAUTHORIZED');
+      const error = new Error('UNAUTHORIZED');
+      error.status = 401;
+      error.code = data?.code || 'UNAUTHORIZED';
+      error.details = data?.errors || data?.details;
+      throw error;
     }
   }
 
@@ -88,7 +92,16 @@ const apiFetch = async (endpoint, token, options = {}) => {
         new CustomEvent('api_error', { detail: 'Lỗi máy chủ (500). Vui lòng thử lại sau.' })
       );
     }
-    throw new Error(data.message || data.error?.message || `Lỗi API: ${response.status}`);
+    const message = data.message || data.error?.message || `Lỗi API: ${response.status}`;
+    const error = new Error(message);
+    error.status = response.status;
+    error.code = data.code || data.error?.code;
+    error.details = data.errors || data.error?.details || data.details;
+    const retryAfter = response.headers?.get?.('retry-after');
+    if (retryAfter) {
+      error.retryAfter = parseInt(retryAfter, 10) || retryAfter;
+    }
+    throw error;
   }
 
   return data;
@@ -200,6 +213,22 @@ export const api = {
     // Logout thất bại không nên crash app — nuốt lỗi có log
     const result = await safeApiFetch('/auth/logout', token, null, { method: 'POST' });
     return result;
+  },
+
+  // ── Learning Path ─────────────────────────────────────────────────────────
+
+  getLearningPath: async (token, options = {}) => {
+    const json = await apiFetch('/learning/learning-path', token, options);
+    return json.data;
+  },
+
+  completeModule: async (token, moduleId) => {
+    const json = await apiFetch(
+      `/learning/modules/${encodeURIComponent(moduleId)}/progress`,
+      token,
+      { method: 'PATCH', body: JSON.stringify({ completed: true }) }
+    );
+    return json.data;
   },
 
   // ── Courses ───────────────────────────────────────────────────────────────

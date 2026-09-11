@@ -1,376 +1,1640 @@
-/* =========================================
-   ROADMAP PAGE
-   ========================================= */
+/* ==========================================================================
+   CCNA LEARNING GAME PATH - STYLESHEET
+   Scoped with prefix 'lp-' using Design Tokens from App.css
+   ========================================================================== */
 
-/* Main wrapper */
-.roadmap-wrapper {
-  padding: 3rem 0;
-  background: var(--slate-50);
+:root {
+  --lp-bg: #f8fafc;
+  --lp-card-bg: #ffffff;
+  --lp-border: #e2e8f0;
+  --lp-track-bed: #e2e8f0;
+  --lp-text-main: #0f172a;
+  --lp-text-muted: #64748b;
+  --lp-primary: var(--blue-primary, #2563eb);
+  --lp-primary-hover: var(--blue-hover, #1d4ed8);
+  --lp-primary-light: #eff6ff;
+  --lp-success: #10b981;
+  --lp-success-light: #ecfdf5;
+  --lp-warning: #f59e0b;
+  --lp-warning-light: #fffbeb;
+  --lp-locked: #94a3b8;
+  --lp-locked-bg: #f1f5f9;
+}
+
+/* ── Container & Layout ──────────────────────────────────────────────────── */
+
+.lp-page-wrapper {
+  background-color: var(--lp-bg);
   min-height: 100vh;
+  padding: 2.5rem 1rem 5rem;
+  color: var(--lp-text-main);
+  font-family: var(--system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
 }
 
-.roadmap-container {
-  max-width: 900px;
+.lp-container {
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 0 1.5rem;
 }
 
-/* Header section */
-.roadmap-header-wrapper {
-  text-align: center;
-  margin-bottom: 3rem;
+/* ── Header & Legend ─────────────────────────────────────────────────────── */
+
+.lp-roadmap-overview {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  padding: 1.5rem 1.75rem;
+  margin-bottom: 1.35rem;
+  background: var(--lp-card-bg);
+  border: 1px solid var(--lp-border);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
 }
 
-.roadmap-header-badge {
+.lp-overview-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.lp-overview-title-row {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.lp-overview-title {
+  margin: 0;
+  color: #0f172a;
+  font-size: 1.45rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+}
+
+.lp-overview-progress {
+  color: #64748b;
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+
+.lp-overview-description {
+  max-width: 680px;
+  margin: 0.55rem 0 0;
+  color: #475569;
+  font-size: 0.92rem;
+  line-height: 1.65;
+}
+
+.lp-layout-switch {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  background: #dbeafe;
-  color: #1d4ed8;
-  border-radius: 9999px;
-  padding: 0.35rem 1rem;
-  font-size: 0.8rem;
-  font-weight: 600;
-  margin-bottom: 1rem;
-  letter-spacing: 0.5px;
-}
-
-.roadmap-header-title {
-  font-size: 24px;
-  font-weight: 700;
-  color: #0f172a;
-  margin: 0 0 0.75rem;
-}
-
-.roadmap-header-desc {
-  color: #475569;
-  font-size: 1rem;
-  max-width: 540px;
-  margin: 0 auto;
-}
-
-/* Connection line between courses */
-.roadmap-connector-wrapper {
-  position: relative;
-}
-
-.roadmap-connector {
-  position: absolute;
-  bottom: -1.5rem;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-}
-
-.roadmap-connector-line {
-  width: 2px;
-  height: 20px;
-  background: #cbd5e1;
-}
-
-.roadmap-connector-arrow {
-  transform: rotate(90deg);
-}
-
-.roadmap-connector-line-bottom {
-  width: 2px;
-  height: 6px;
-  background: #cbd5e1;
-}
-
-/* Course card */
-.roadmap-card {
-  border-radius: 8px;
-  overflow: hidden;
-  border: 1.5px solid #e2e8f0;
-  transition: all 0.25s ease;
-  cursor: default;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.roadmap-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
-}
-
-.roadmap-card-gradient {
-  height: 5px;
-}
-
-.roadmap-card-content {
-  padding: 1.75rem 2rem;
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  flex-wrap: wrap;
-}
-
-/* Code box */
-.roadmap-card-code {
-  width: 64px;
-  height: 64px;
-  border-radius: 8px;
   flex-shrink: 0;
+  gap: 0.2rem;
+  padding: 0.25rem;
+  background: #f1f5f9;
+  border: 1px solid #dbe3ee;
+  border-radius: 0.85rem;
+}
+
+.lp-overview-controls {
   display: flex;
+  align-items: flex-start;
+  flex-direction: column;
+  flex-shrink: 0;
+  gap: 0.65rem;
+}
+
+.lp-unlock-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.lp-unlock-button {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: white;
-  font-weight: 800;
-  font-size: 0.85rem;
-  letter-spacing: 0.5px;
+  gap: 0.45rem;
+  min-height: 36px;
+  padding: 0.48rem 0.9rem;
+  color: #ffffff;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  border: 0;
+  border-radius: 0.7rem;
+  box-shadow: 0 5px 14px rgba(37, 99, 235, 0.24);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
-/* Info section */
-.roadmap-card-info {
-  flex: 1;
-  min-width: 200px;
+.lp-unlock-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 7px 18px rgba(37, 99, 235, 0.3);
 }
 
-.roadmap-card-header {
+.lp-unlock-button:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 3px;
+}
+
+.lp-unlock-button-admin {
+  color: #7c3aed;
+  background: #f5f3ff;
+  border: 1px solid #ddd6fe;
+  box-shadow: none;
+}
+
+.lp-unlock-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.lp-layout-option {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 34px;
+  padding: 0.4rem 0.75rem;
+  color: #334155;
+  background: transparent;
+  border: 0;
+  border-radius: 0.65rem;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  transition:
+    color 0.15s ease,
+    background 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.lp-layout-option:hover {
+  color: #1d4ed8;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.lp-layout-option:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+.lp-layout-option.is-active {
+  color: #1d4ed8;
+  background: #ffffff;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.12);
+}
+
+.lp-path-meta-row {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.35rem;
+  justify-content: space-between;
+  gap: 1rem 2rem;
+  margin: 0 0 1.5rem;
+  padding: 0 0.5rem;
 }
 
-.roadmap-card-title {
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: #0f172a;
-  margin: 0;
-}
-
-.roadmap-card-badge {
-  font-size: 0.7rem;
-  font-weight: 700;
-  padding: 2px 8px;
-  border-radius: 9999px;
-}
-
-.roadmap-card-badge-completed {
-  background: #dcfce7;
-  color: #15803d;
-}
-
-.roadmap-card-badge-active {
-  background: #dbeafe;
-  color: #1d4ed8;
-}
-
-.roadmap-card-desc {
-  font-size: 0.875rem;
-  color: #64748b;
-  margin: 0 0 0.875rem;
-  line-height: 1.5;
-}
-
-.roadmap-card-modules {
+/* Legend */
+.lp-legend-container {
   display: flex;
-  gap: 0.5rem;
+  align-items: center;
   flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
 }
 
-.roadmap-card-module-dot {
-  width: 8px;
-  height: 8px;
+.lp-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.825rem;
+  font-weight: 500;
+  color: #475569;
+}
+
+.lp-legend-dot {
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
 }
 
-.roadmap-card-module-dot.completed {
-  background: #22c55e;
+.lp-legend-dot-completed {
+  background-color: #2563eb;
+  box-shadow: 0 0 0 2px #dbeafe;
 }
 
-.roadmap-card-module-dot.active {
-  background: #2563eb;
+.lp-legend-dot-current {
+  background-color: var(--lp-primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
 }
 
-.roadmap-card-module-dot.inactive {
-  background: #cbd5e1;
+.lp-legend-dot-locked {
+  background-color: #e2e8f0;
+  border: 1px solid #cbd5e1;
 }
 
-.roadmap-card-module-count {
-  font-size: 0.75rem;
+.lp-path-hint {
+  margin: 0;
   color: #94a3b8;
-  margin-left: 0.25rem;
+  font-size: 0.75rem;
+  font-style: italic;
+  text-align: right;
 }
 
-/* Progress section */
-.roadmap-card-progress-wrapper {
+/* ── Banners (Cold start, Guest, Offline) ────────────────────────────────── */
+
+.lp-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.875rem 1.25rem;
+  border-radius: 0.75rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+}
+
+.lp-banner-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.lp-banner-guest {
+  background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%);
+  border: 1px solid #bfdbfe;
+  color: #1e3a8a;
+}
+
+.lp-banner-cold-start {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #92400e;
+}
+
+.lp-banner-locked-notice {
+  color: #991b1b;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+}
+
+.lp-banner-unlock-ready {
+  color: #1e40af;
+  background: linear-gradient(135deg, #eff6ff, #ecfdf5);
+  border: 1px solid #bfdbfe;
+}
+
+.lp-banner-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: var(--lp-primary);
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.45rem 0.9rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease;
+}
+
+.lp-banner-btn:hover {
+  background: var(--lp-primary-hover);
+}
+
+/* ── Stats Bar ───────────────────────────────────────────────────────────── */
+
+.lp-stats-container {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.lp-stat-card {
+  background: var(--lp-card-bg);
+  border: 1px solid var(--lp-border);
+  border-radius: 8px;
+  padding: 1rem 1.15rem;
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.lp-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.lp-stat-icon-wrapper {
+  width: 44px;
+  height: 44px;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.lp-icon-streak {
+  background: #fff7ed;
+  color: #ea580c;
+}
+
+.lp-icon-xp {
+  background: #fefce8;
+  color: #ca8a04;
+}
+
+.lp-icon-badges {
+  background: #faf5ff;
+  color: #9333ea;
+}
+
+.lp-icon-progress {
+  background: var(--lp-primary-light);
+  color: var(--lp-primary);
+}
+
+.lp-stat-info {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  gap: 0.875rem;
-  min-width: 160px;
+  min-width: 0;
 }
 
-.roadmap-card-progress {
+.lp-stat-value {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--lp-text-main);
+  line-height: 1.2;
+}
+
+.lp-stat-label {
+  font-size: 0.785rem;
+  color: var(--lp-text-muted);
+  font-weight: 600;
+  margin-top: 0.15rem;
+  white-space: nowrap;
+}
+
+.lp-stat-progress-info {
   width: 100%;
 }
 
-.roadmap-card-progress-label {
+.lp-stat-progress-header {
   display: flex;
   justify-content: space-between;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #64748b;
-  margin-bottom: 0.4rem;
+  align-items: baseline;
+  width: 100%;
 }
 
-.roadmap-card-progress-value {
-  color: #16a34a;
-}
-
-.roadmap-card-progress-bar {
+.lp-progress-bar-track {
+  width: 100%;
+  height: 8px;
   background: #e2e8f0;
   border-radius: 9999px;
-  height: 7px;
   overflow: hidden;
+  margin-top: 0.4rem;
 }
 
-.roadmap-card-progress-fill {
+.lp-progress-bar-fill {
   height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #2563eb);
   border-radius: 9999px;
   transition: width 0.6s ease;
 }
 
-/* CTA Button */
-.roadmap-card-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.65rem 1.25rem;
-  border-radius: 6px;
-  font-weight: 700;
-  font-size: 0.875rem;
-  cursor: pointer;
-  border: none;
-  color: white;
-  transition: all 0.2s;
-  white-space: nowrap;
-}
+/* ── Map Canvas Viewport ─────────────────────────────────────────────────── */
 
-.roadmap-card-btn:hover {
-  transform: translateY(-1px);
-}
-
-/* Footer */
-.roadmap-footer-note {
-  text-align: center;
-  color: #94a3b8;
-  font-size: 0.8rem;
-  margin-top: 2.5rem;
-}
-
-/* Old styles kept for compatibility */
-.roadmap-item {
-  margin-bottom: 1.5rem;
-  cursor: pointer;
-}
-
-.roadmap-header {
+.lp-map-card {
+  background: var(--lp-card-bg);
+  border: 1px solid var(--lp-border);
+  border-radius: 8px;
   padding: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  position: relative;
+  overflow: hidden;
+}
+
+.lp-map-scroll-viewport {
+  width: 100%;
+  position: relative;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+.lp-map-scroll-viewport::-webkit-scrollbar {
+  height: 6px;
+}
+
+.lp-map-scroll-viewport::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 9999px;
+}
+
+.lp-map-canvas {
+  position: relative;
+  margin: 0 auto;
+}
+
+/* Layer SVG */
+.lp-map-svg-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.lp-svg-track-bed {
+  fill: none;
+  stroke: var(--lp-track-bed);
+  stroke-width: 14px;
+  stroke-linecap: round;
+  opacity: 0.85;
+}
+
+.lp-svg-progress-path {
+  fill: none;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.8s ease;
+}
+
+.lp-svg-path-completed {
+  stroke: url(#lp-gradient-completed);
+  stroke-width: 6px;
+}
+
+.lp-svg-path-active {
+  stroke: url(#lp-gradient-active);
+  stroke-width: 6px;
+}
+
+.lp-svg-path-locked {
+  stroke: #cbd5e1;
+  stroke-width: 3px;
+  stroke-dasharray: 6 6;
+}
+
+/* Layer HTML Nodes */
+.lp-map-nodes-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* ── Course Node Item ────────────────────────────────────────────────────── */
+
+.lp-node-wrapper {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Pulsing Glow Ring */
+.lp-current-pulse-ring {
+  position: absolute;
+  inset: -10px;
+  border-radius: 50%;
+  border: 3px solid rgba(37, 99, 235, 0.6);
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.15) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.lp-unlock-confetti-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.lp-unlock-confetti-particle {
+  position: absolute;
+  display: block;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+/* Node Button */
+.lp-node-button {
+  position: relative;
+  border-radius: 50%;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  background: white;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  transition:
+    transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.2s ease;
+  outline: none;
+}
+
+.lp-node-button:focus-visible {
+  box-shadow:
+    0 0 0 3px #ffffff,
+    0 0 0 6px var(--lp-primary);
+}
+
+.lp-node-button:hover {
+  transform: scale(1.08);
+}
+
+.lp-node-btn-completed {
+  background: linear-gradient(145deg, #ffffff 0%, #ecfdf5 100%);
+}
+
+.lp-node-btn-completed:hover {
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.35);
+}
+
+.lp-node-btn-current {
+  background: linear-gradient(145deg, #ffffff 0%, #eff6ff 100%);
+}
+
+.lp-node-btn-current:hover {
+  box-shadow: 0 8px 28px rgba(37, 99, 235, 0.4);
+}
+
+.lp-node-btn-locked {
+  background: #f8fafc;
+  cursor: not-allowed;
+  opacity: 0.85;
+}
+
+.lp-node-btn-locked:hover {
+  transform: none;
+}
+
+/* SVG Progress Ring */
+.lp-node-progress-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: rotate(-90deg);
+  pointer-events: none;
+}
+
+.lp-node-progress-track {
+  fill: none;
+  stroke: #e2e8f0;
+}
+
+.lp-node-btn-completed .lp-node-progress-indicator {
+  fill: none;
+  stroke: var(--lp-success);
+  transition: stroke-dashoffset 0.6s ease;
+}
+
+.lp-node-btn-current .lp-node-progress-indicator {
+  fill: none;
+  stroke: var(--lp-primary);
+  transition: stroke-dashoffset 0.6s ease;
+}
+
+.lp-node-btn-locked .lp-node-progress-indicator {
+  fill: none;
+  stroke: #cbd5e1;
+}
+
+/* Center Icon */
+.lp-node-center-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lp-node-btn-completed .lp-node-center-icon {
+  color: var(--lp-success);
+}
+
+.lp-node-btn-current .lp-node-center-icon {
+  color: var(--lp-primary);
+}
+
+.lp-node-btn-locked .lp-node-center-icon {
+  color: var(--lp-locked);
+}
+
+/* Status Badge on Corner */
+.lp-node-badge {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  border: 2px solid white;
+  z-index: 3;
+}
+
+.lp-badge-completed {
+  background-color: var(--lp-success);
+}
+
+.lp-badge-current {
+  background-color: var(--lp-primary);
+}
+
+.lp-badge-locked {
+  background-color: var(--lp-locked);
+}
+
+/* ── Node Label Placements ───────────────────────────────────────────────── */
+
+.lp-node-label-container {
+  position: absolute;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  pointer-events: auto;
+  cursor: pointer;
+  z-index: 4;
+  white-space: normal;
+  text-align: center;
 }
 
-@media (min-width: 768px) {
-  .roadmap-header {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-  }
+.lp-label-top {
+  bottom: calc(100% + 14px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 220px;
 }
 
-.roadmap-content {
-  background-color: var(--slate-50);
-  border-top: 1px solid var(--slate-200);
-  padding: 1.5rem;
-  animation: slideDown 0.3s ease-out;
+.lp-label-bottom {
+  top: calc(100% + 14px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 220px;
 }
 
-.module-item {
+.lp-label-left {
+  right: calc(100% + 16px);
+  top: 50%;
+  transform: translateY(-50%);
+  width: 170px;
+  text-align: right;
+}
+
+.lp-label-right {
+  left: calc(100% + 16px);
+  top: 50%;
+  transform: translateY(-50%);
+  width: 170px;
+  text-align: left;
+}
+
+.lp-label-code-row {
   display: flex;
   align-items: center;
-  padding: 1rem;
-  background: white;
-  border: 1px solid var(--slate-200);
-  border-radius: 6px;
-  transition: all 0.2s;
+  gap: 0.35rem;
+  margin-bottom: 0.2rem;
+  justify-content: center;
 }
 
-.module-item:hover {
-  border-color: var(--blue-primary);
+.lp-label-left .lp-label-code-row {
+  justify-content: flex-end;
 }
 
-.progress-track {
-  width: 100%;
-  background-color: var(--slate-200);
+.lp-label-right .lp-label-code-row {
+  justify-content: flex-start;
+}
+
+.lp-label-code {
+  font-size: 0.725rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--lp-text-muted);
+  letter-spacing: 0.05em;
+}
+
+.lp-label-pill {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 1px 6px;
   border-radius: 9999px;
-  height: 0.5rem;
-  overflow: hidden;
-  margin-top: 0.25rem;
 }
 
-.progress-fill {
+.lp-pill-completed {
+  background: var(--lp-success-light);
+  color: var(--lp-success);
+}
+
+.lp-pill-current {
+  background: var(--lp-primary-light);
+  color: var(--lp-primary);
+}
+
+.lp-pill-locked {
+  background: var(--lp-locked-bg);
+  color: var(--lp-locked);
+}
+
+.lp-label-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--lp-text-main);
+  line-height: 1.25;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.lp-label-progress-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.25rem;
+  justify-content: center;
+}
+
+.lp-label-left .lp-label-progress-row {
+  justify-content: flex-end;
+}
+
+.lp-label-right .lp-label-progress-row {
+  justify-content: flex-start;
+}
+
+.lp-label-progress-text {
+  font-size: 0.75rem;
+  color: var(--lp-text-muted);
+  font-weight: 500;
+}
+
+/* ── Modal Dialog ────────────────────────────────────────────────────────── */
+
+.lp-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  animation: lpFadeIn 0.2s ease-out;
+}
+
+.lp-modal-dialog {
+  background: #ffffff;
+  border-radius: 1.5rem;
+  width: 100%;
+  max-width: 660px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow:
+    0 25px 50px -12px rgba(15, 23, 42, 0.25),
+    0 0 0 1px rgba(226, 232, 240, 0.8);
+  overflow: hidden;
+  animation: lpModalSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.lp-modal-header {
+  padding: 1.5rem 1.75rem 0.5rem;
+}
+
+.lp-modal-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.lp-modal-badge-group {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.lp-badge-code {
+  background: #eff6ff;
+  color: #2563eb;
+  font-weight: 700;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 0.375rem;
+  letter-spacing: 0.02em;
+}
+
+.lp-badge-status-completed {
+  background: #ecfdf5;
+  color: #10b981;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.lp-badge-status-inprogress {
+  background: #e0f2fe;
+  color: #0284c7;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.lp-ping-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+}
+
+.lp-ping-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #0284c7;
+  position: relative;
+  z-index: 1;
+}
+
+.lp-ping-ring {
+  position: absolute;
+  inset: -1px;
+  border-radius: 50%;
+  background: #38bdf8;
+  animation: lpPingPulse 1.4s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+@keyframes lpPingPulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  75%,
+  100% {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+}
+
+.lp-badge-status-locked {
+  background: #f1f5f9;
+  color: #64748b;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.lp-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #0284c7;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.lp-modal-close-btn {
+  background: transparent;
+  border: none;
+  border-radius: 0.5rem;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  margin-left: auto;
+}
+
+.lp-modal-close-btn:hover {
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.lp-modal-title {
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 0.45rem;
+  line-height: 1.25;
+}
+
+.lp-modal-description {
+  color: #64748b;
+  font-size: 0.85rem;
+  line-height: 1.55;
+  margin: 0;
+}
+
+/* Modal Body (scrollable) */
+.lp-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 1.75rem 1.25rem;
+}
+
+.lp-modal-body::-webkit-scrollbar {
+  width: 6px;
+}
+.lp-modal-body::-webkit-scrollbar-track {
+  background: #f8fafc;
+}
+.lp-modal-body::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+
+.lp-modal-divider {
+  height: 1px;
+  background: #f1f5f9;
+  margin: 1.15rem 0;
+}
+
+/* Stats Row (3 Columns) */
+.lp-modal-stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  align-items: center;
+  padding-top: 0.25rem;
+}
+
+.lp-modal-stat-col {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  transition: none !important;
+}
+
+.lp-modal-stat-col:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.lp-stat-icon-blue {
+  color: #2563eb;
+  flex-shrink: 0;
+}
+
+.lp-stat-icon-amber {
+  color: #f59e0b;
+  flex-shrink: 0;
+}
+
+.lp-stat-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.lp-stat-value {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.lp-stat-label {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-top: 0.15rem;
+  line-height: 1.2;
+}
+
+/* Progress Section */
+.lp-modal-progress-section {
+  margin-top: 1.15rem;
+}
+
+.lp-progress-labels {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.45rem;
+}
+
+.lp-progress-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.lp-progress-percentage {
+  font-size: 0.8125rem;
+  font-weight: 800;
+}
+
+.lp-progress-percent-green {
+  color: #059669;
+}
+
+.lp-progress-percent-blue {
+  color: #2563eb;
+}
+
+.lp-progress-track {
+  width: 100%;
+  height: 8px;
+  background: #f1f5f9;
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.lp-progress-fill {
   height: 100%;
   border-radius: 9999px;
-  transition: width 0.5s ease;
+  transition:
+    width 0.35s ease,
+    background-color 0.35s ease;
 }
 
-/* Animation trượt xuống */
-@keyframes slideDown {
+.lp-fill-green {
+  background: #10b981;
+}
+
+.lp-fill-blue {
+  background: #2563eb;
+}
+
+/* Modal Alerts */
+.lp-modal-alert {
+  margin-top: 1rem;
+  padding: 0.875rem 1rem;
+  border-radius: 0.625rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+}
+
+.lp-alert-locked {
+  background: #fff1f2;
+  border: 1px solid #fecdd3;
+  color: #9f1239;
+}
+
+.lp-alert-updating {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #92400e;
+}
+
+.lp-alert-icon {
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.lp-modal-alert p {
+  margin: 0.2rem 0 0;
+  font-size: 0.8rem;
+  opacity: 0.9;
+}
+
+/* Skills Section */
+.lp-modal-skills-section {
+  margin-top: 1.25rem;
+  padding-top: 1.15rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.lp-section-heading {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #475569;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin: 0 0 0.65rem 0;
+}
+
+.lp-skills-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.lp-skill-pill {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #334155;
+  font-size: 0.775rem;
+  font-weight: 600;
+  padding: 0.35rem 0.8rem;
+  border-radius: 0.5rem;
+  transition: border-color 0.15s ease;
+}
+
+.lp-modal-empty {
+  margin: 0;
+  color: #94a3b8;
+  font-size: 0.8rem;
+  font-style: italic;
+}
+
+/* Curriculum Section */
+.lp-modal-curriculum-section {
+  margin-top: 1.35rem;
+}
+
+.lp-curriculum-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.65rem;
+}
+
+.lp-modules-scroll-list {
+  max-height: 240px;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.lp-modules-scroll-list::-webkit-scrollbar {
+  width: 5px;
+}
+.lp-modules-scroll-list::-webkit-scrollbar-track {
+  background: #f8fafc;
+}
+.lp-modules-scroll-list::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+
+.lp-clone-module-card {
+  width: 100%;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.15s ease;
+  cursor: pointer;
+  background: #ffffff;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.lp-mod-card-checked {
+  border: 1.5px solid #bfdbfe;
+}
+
+.lp-mod-card-unchecked {
+  border: 1px solid #e2e8f0;
+}
+
+.lp-mod-card-locked {
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
+.lp-clone-module-card:not(:disabled):hover {
+  background: #f8fafc;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+}
+
+.lp-module-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.lp-module-status-icon {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #2563eb;
+}
+
+.lp-mod-card-checked .lp-module-status-icon {
+  color: #059669;
+}
+
+.lp-mod-card-locked .lp-module-status-icon {
+  color: #94a3b8;
+}
+
+.lp-module-num {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+
+.lp-module-title-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.lp-module-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1e293b;
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lp-module-content-summary {
+  color: #64748b;
+  font-size: 0.72rem;
+  font-weight: 500;
+}
+
+.lp-module-labs-sub {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.lp-sub-lab-badge {
+  font-size: 0.7rem;
+  color: #0284c7;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 0.25rem;
+  padding: 0.1rem 0.4rem;
+  font-weight: 500;
+}
+
+.lp-module-right {
+  margin-left: 0.75rem;
+  flex-shrink: 0;
+}
+
+.lp-module-duration {
+  font-size: 0.8125rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+/* Modal Footer */
+.lp-modal-footer {
+  padding: 1rem 1.75rem 1.25rem;
+  border-top: 1px solid #f1f5f9;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.lp-footer-right {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-left: auto;
+}
+
+.lp-btn-close {
+  background: transparent;
+  border: none;
+  color: #0f172a;
+  font-weight: 600;
+  font-size: 0.875rem;
+  padding: 0.6rem 1.1rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.lp-btn-close:hover {
+  background: #f1f5f9;
+}
+
+.lp-btn-action-primary {
+  background: #1d4ed8;
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 0.875rem;
+  padding: 0.6rem 1.35rem;
+  border-radius: 0.625rem;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(29, 78, 216, 0.25);
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.lp-btn-action-primary:hover {
+  background: #1e40af;
+  box-shadow: 0 6px 16px rgba(29, 78, 216, 0.35);
+}
+
+@media (max-width: 640px) {
+  .lp-modal-stats-row {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  .lp-modal-footer {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+  .lp-footer-right {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+
+/* ── Skeleton Loading ────────────────────────────────────────────────────── */
+
+.lp-skeleton-wrapper {
+  width: 100%;
+}
+
+.lp-skeleton-stats {
+  opacity: 0.85;
+}
+
+.lp-skeleton-card {
+  height: 72px;
+}
+
+.lp-skeleton-circle {
+  width: 44px;
+  height: 44px;
+  border-radius: 0.75rem;
+  background: #e2e8f0;
+  animation: lpShimmer 1.5s infinite linear;
+}
+
+.lp-skeleton-text-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  flex: 1;
+}
+
+.lp-skeleton-line {
+  height: 12px;
+  background: #e2e8f0;
+  border-radius: 4px;
+  animation: lpShimmer 1.5s infinite linear;
+}
+
+.lp-skeleton-w40 {
+  width: 40%;
+}
+.lp-skeleton-w60 {
+  width: 60%;
+}
+.lp-skeleton-w70 {
+  width: 70%;
+}
+.lp-skeleton-w80 {
+  width: 80%;
+}
+
+.lp-map-skeleton-container {
+  background: white;
+  border: 1px solid var(--lp-border);
+  border-radius: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lp-skeleton-nodes-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  width: 80%;
+}
+
+.lp-skeleton-node-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.lp-skeleton-node-circle {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: #e2e8f0;
+  animation: lpShimmer 1.5s infinite linear;
+}
+
+@keyframes lpShimmer {
+  0% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.6;
+  }
+}
+
+@keyframes lpFadeIn {
   from {
     opacity: 0;
-    transform: translateY(-10px);
   }
-
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 
-/* Mobile Responsive Adjustments */
-@media (max-width: 768px) {
-  .roadmap-card-content {
-    padding: 1.25rem;
+@keyframes lpModalSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ── Responsive Queries ──────────────────────────────────────────────────── */
+
+@media (max-width: 1023px) {
+  .lp-roadmap-overview {
+    align-items: flex-start;
+  }
+
+  .lp-path-meta-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .lp-path-hint {
+    text-align: left;
+  }
+
+  .lp-stats-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .lp-modal-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .lp-page-wrapper {
+    padding: 1.5rem 0.75rem 3rem;
+  }
+
+  .lp-roadmap-overview {
+    flex-direction: column;
     gap: 1rem;
+    padding: 1.2rem;
+    border-radius: 0.9rem;
   }
 
-  .roadmap-card-code {
-    width: 56px;
-    height: 56px;
-    border-radius: 6px;
-    font-size: 0.8rem;
+  .lp-overview-title {
+    font-size: 1.25rem;
   }
 
-  .roadmap-card-info {
-    min-width: 0;
+  .lp-overview-description {
+    font-size: 0.85rem;
   }
 
-  .roadmap-card-title {
-    font-size: 1.05rem;
+  .lp-layout-switch {
+    align-self: stretch;
   }
 
-  .roadmap-card-desc {
-    font-size: 0.8rem;
-    margin-bottom: 0.6rem;
-  }
-
-  .roadmap-card-progress-wrapper {
+  .lp-overview-controls,
+  .lp-unlock-actions {
+    align-self: stretch;
     width: 100%;
-    min-width: 100%;
-    align-items: stretch;
+  }
+
+  .lp-unlock-button {
+    flex: 1;
+  }
+
+  .lp-layout-option {
+    flex: 1;
+    padding-inline: 0.45rem;
+  }
+
+  .lp-stats-container {
+    grid-template-columns: 1fr;
     gap: 0.75rem;
   }
 
-  .roadmap-card-btn {
-    justify-content: center;
+  .lp-legend-container {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .lp-modal-dialog {
+    max-height: 94vh;
+  }
+
+  .lp-modal-header,
+  .lp-modal-stats-grid,
+  .lp-modal-section,
+  .lp-modal-footer {
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
+
+  .lp-footer-actions {
+    flex-direction: column-reverse;
+  }
+
+  .lp-footer-actions .lp-btn {
     width: 100%;
+  }
+}
+
+/* Narrow mobile (320px - 375px) */
+@media (max-width: 375px) {
+  .lp-overview-title {
+    font-size: 1.15rem;
+  }
+
+  .lp-label-title {
+    font-size: 0.8rem;
+  }
+}
+
+/* Reduced Motion Mode */
+@media (prefers-reduced-motion: reduce) {
+  .lp-current-pulse-ring,
+  .lp-unlock-confetti-particle,
+  .lp-progress-bar-fill,
+  .lp-node-progress-indicator,
+  .lp-node-button,
+  .lp-stat-card,
+  .lp-svg-progress-path,
+  .lp-modal-backdrop,
+  .lp-modal-dialog,
+  .lp-skeleton-circle,
+  .lp-skeleton-line,
+  .lp-skeleton-node-circle {
+    animation: none !important;
+    transition: none !important;
   }
 }
