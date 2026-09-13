@@ -6,6 +6,7 @@ const upload = require('../middleware/upload');
 
 // Public (Optional Login for Guests)
 router.get('/courses', optionalAuth, learningController.getCourses);
+router.get('/courses/summary', optionalAuth, learningController.getCourseSummaries);
 router.get('/labs', optionalAuth, learningController.getLabs);
 router.get('/resources', optionalAuth, learningController.getResources);
 router.get('/resources/:id/download', optionalAuth, learningController.downloadResource);

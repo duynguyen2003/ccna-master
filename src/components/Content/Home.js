@@ -52,19 +52,7 @@ const COURSE_ICONS = {
   ENSA: Shield,
 };
 const FALLBACK_ICON = TerminalSquare;
-
-const NEXT_LESSON_BY_COURSE = {
-  c1: 'Bài học tiếp theo: Subnetting cơ bản',
-  c2: 'Bài học tiếp theo: Cấu hình OSPF cơ bản',
-  c3: 'Bài học tiếp theo: Giới thiệu WAN doanh nghiệp',
-};
-
-// Tạo statusText từ progress
-const getStatusText = (progress) => {
-  if (progress === 100) return 'HOÀN THÀNH 100%';
-  if (progress > 0) return `ĐANG HỌC ${progress}%`;
-  return 'CHƯA BẮT ĐẦU';
-};
+const COURSE_SKELETON_COUNT = 3;
 
 const features = [
   {
@@ -150,6 +138,17 @@ const FeatureCard = ({ materialIcon, title, desc, to }) => (
   </Link>
 );
 
+const CourseCardSkeleton = () => (
+  <div className="course-card course-card-skeleton" aria-hidden="true">
+    <div className="course-skeleton-number skeleton-shimmer" />
+    <div className="course-skeleton-icon skeleton-shimmer" />
+    <div className="course-skeleton-title skeleton-shimmer" />
+    <div className="course-skeleton-line skeleton-shimmer" />
+    <div className="course-skeleton-line short skeleton-shimmer" />
+    <div className="course-skeleton-button skeleton-shimmer" />
+  </div>
+);
+
 const StatsSection = () => {
   const count120 = useCountUp(120);
   const count50 = useCountUp(50);
@@ -219,44 +218,15 @@ export const Home = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // Lấy dữ liệu khóa học thực từ API và tiến độ người dùng
+  // Endpoint summary đã trả sẵn tiến độ và bài học tiếp theo để Home chỉ cần một request nhẹ.
   useEffect(() => {
     let isMounted = true;
     const fetchData = async () => {
       try {
-        const [data, progressMap] = await Promise.all([
-          api.getCourses(token),
-          isAuthenticated && token ? api.getUserProgress(token) : Promise.resolve({}),
-        ]);
+        const data = await api.getCourseSummaries(token);
         if (!isMounted) return;
         const mapped = data.map((c, idx) => {
-          // Lấy progress đã tính toán từ Backend
-          const progress = c.progress || 0;
-
-          // Tìm bài học chưa hoàn thành đầu tiên
-          let nextLessonTitle = '';
-          if (c.modules) {
-            let foundNext = false;
-            for (const mod of c.modules) {
-              if (foundNext) break;
-              if (mod.lessons) {
-                for (const lesson of mod.lessons) {
-                  const lessonProg = progressMap[`lesson_${lesson.id}`];
-                  if (
-                    !lessonProg ||
-                    (lessonProg.percent < 100 && lessonProg.status !== 'COMPLETED')
-                  ) {
-                    nextLessonTitle = `Bài học tiếp theo: ${lesson.title}`;
-                    foundNext = true;
-                    break;
-                  }
-                }
-              }
-            }
-          }
-          if (!nextLessonTitle) {
-            nextLessonTitle = 'Bài học tiếp theo: Tiếp tục lộ trình hiện tại';
-          }
+          const progress = c.progress ?? 0;
 
           return {
             id: c.id, // Dùng ID thật từ DB
@@ -265,10 +235,9 @@ export const Home = () => {
             title: c.title,
             desc: c.description,
             progress: progress,
-            statusText: getStatusText(progress),
             backgroundImage:
               courseBackgrounds[idx] || courseBackgrounds[courseBackgrounds.length - 1],
-            nextLessonTitle,
+            nextLessonTitle: c.nextLessonTitle || 'Bài học tiếp theo: Tiếp tục lộ trình hiện tại',
           };
         });
         setCourses(mapped);
@@ -289,7 +258,7 @@ export const Home = () => {
   // Tự động chạy GSAP timeline & ScrollTrigger (fade in khi cuộn xuống, fade out khi cuộn ngược lên)
   useGSAP(
     () => {
-      if (loading || prefersReducedMotion()) return;
+      if (prefersReducedMotion()) return;
 
       // 1. Entrance timeline cho phần đầu trang (Banner & Thống kê)
       const tl = gsap.timeline({ defaults: { ease: 'power2.out' } });
@@ -350,26 +319,6 @@ export const Home = () => {
             },
           }
         );
-
-        if (containerRef.current?.querySelector('.course-card')) {
-          gsap.fromTo(
-            '.curriculum .course-card',
-            { opacity: 0, y: 28 },
-            {
-              opacity: 1,
-              y: 0,
-              stagger: 0.08,
-              duration: 0.45,
-              ease: 'power2.out',
-              scrollTrigger: {
-                trigger: '.course-grid-container',
-                start: 'top 85%',
-                end: 'bottom 15%',
-                toggleActions: 'play reverse play reverse',
-              },
-            }
-          );
-        }
       }
 
       // 4. Công cụ hỗ trợ: Fade in khi cuộn vào tầm nhìn, Fade out khi cuộn ngược lên
@@ -412,8 +361,15 @@ export const Home = () => {
 
       ScrollTrigger.refresh();
     },
-    { dependencies: [loading], scope: containerRef }
+    { scope: containerRef }
   );
+
+  // Nội dung course thay skeleton nhưng giữ nguyên kích thước; chỉ refresh vị trí ScrollTrigger.
+  useEffect(() => {
+    if (loading) return undefined;
+    const frameId = requestAnimationFrame(() => ScrollTrigger.refresh());
+    return () => cancelAnimationFrame(frameId);
+  }, [loading]);
 
   const next = () => setCurrent((prev) => (prev + 1) % bannerData.length);
 
@@ -527,92 +483,96 @@ export const Home = () => {
 
         <div className="course-grid-container">
           <div className="course-grid-line"></div>
-          <div className="course-grid">
-            {courses.map((course) => {
-              const Icon = course.icon;
-              const isStarted = course.progress > 0;
-              const showAsActive = !isAuthenticated || isStarted;
-              const numberClass = showAsActive ? 'active' : 'inactive';
-              const cardClass = showAsActive ? 'course-card active' : 'course-card inactive';
+          <div className="course-grid" aria-busy={loading}>
+            {loading
+              ? Array.from({ length: COURSE_SKELETON_COUNT }, (_, index) => (
+                  <CourseCardSkeleton key={`course-skeleton-${index}`} />
+                ))
+              : courses.map((course) => {
+                  const Icon = course.icon;
+                  const isStarted = course.progress > 0;
+                  const showAsActive = !isAuthenticated || isStarted;
+                  const numberClass = showAsActive ? 'active' : 'inactive';
+                  const cardClass = showAsActive ? 'course-card active' : 'course-card inactive';
 
-              return (
-                <div
-                  key={course.id}
-                  className={`${cardClass} with-bg`}
-                  style={{
-                    cursor: 'pointer',
-                    textDecoration: 'none',
-                    color: 'inherit',
-                    backgroundImage: `linear-gradient(180deg, rgba(15, 23, 42, 0.42), rgba(15, 23, 42, 0.74)), url(${course.backgroundImage})`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
-                    backgroundRepeat: 'no-repeat',
-                    '--course-bg-image': `url(${course.backgroundImage})`,
-                  }}
-                  onClick={() =>
-                    isAuthenticated
-                      ? navigate(`/course/${course.courseId}?from=home`)
-                      : navigate(`/course/${course.courseId}?from=home`)
-                  }
-                  id={`home-course-card-${course.courseId}`}
-                >
-                  <div className={`course-number ${numberClass}`}>{course.id}</div>
-                  <div className="icon-box">
-                    <Icon size={32} strokeWidth={1.5} />
-                  </div>
-                  <h3 className="course-title">
-                    {course.title.replace(' (Updated)', '').replace(/,/g, ', ')}
-                  </h3>
-                  <p className="course-desc">{course.desc}</p>
+                  return (
+                    <div
+                      key={course.id}
+                      className={`${cardClass} with-bg`}
+                      style={{
+                        cursor: 'pointer',
+                        textDecoration: 'none',
+                        color: 'inherit',
+                        backgroundImage: `linear-gradient(180deg, rgba(15, 23, 42, 0.42), rgba(15, 23, 42, 0.74)), url(${course.backgroundImage})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                        backgroundRepeat: 'no-repeat',
+                        '--course-bg-image': `url(${course.backgroundImage})`,
+                      }}
+                      onClick={() =>
+                        isAuthenticated
+                          ? navigate(`/course/${course.courseId}?from=home`)
+                          : navigate(`/course/${course.courseId}?from=home`)
+                      }
+                      id={`home-course-card-${course.courseId}`}
+                    >
+                      <div className={`course-number ${numberClass}`}>{course.id}</div>
+                      <div className="icon-box">
+                        <Icon size={32} strokeWidth={1.5} />
+                      </div>
+                      <h3 className="course-title">
+                        {course.title.replace(' (Updated)', '').replace(/,/g, ', ')}
+                      </h3>
+                      <p className="course-desc">{course.desc}</p>
 
-                  {isAuthenticated && (
-                    <div className="course-progress-section">
-                      <div
-                        className="progress-bar-bg"
-                        style={{
-                          height: '6px',
-                          background: '#e2e8f0',
-                          borderRadius: '3px',
-                          overflow: 'hidden',
+                      {isAuthenticated && (
+                        <div className="course-progress-section">
+                          <div
+                            className="progress-bar-bg"
+                            style={{
+                              height: '6px',
+                              background: '#e2e8f0',
+                              borderRadius: '3px',
+                              overflow: 'hidden',
+                            }}
+                          >
+                            <div
+                              className="progress-bar-fill"
+                              style={{
+                                width: `${course.progress}%`,
+                                height: '100%',
+                                background: 'linear-gradient(90deg, #2563eb, #3b82f6)',
+                                transition: 'width 0.5s ease-out',
+                              }}
+                            />
+                          </div>
+                          <p
+                            className={`progress-text ${course.progress === 0 ? 'inactive' : ''}`}
+                            style={{ marginTop: '6px', fontSize: '0.75rem', fontWeight: 600 }}
+                          >
+                            {course.progress > 0 ? `Tiến độ: ${course.progress}%` : 'Chưa bắt đầu'}
+                          </p>
+                        </div>
+                      )}
+
+                      <button
+                        type="button"
+                        className={`course-detail-btn ${showAsActive ? 'active' : 'inactive'}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (isAuthenticated) {
+                            navigate(`/course/${course.courseId}?from=home`);
+                          } else {
+                            navigate(`/course/${course.courseId}?from=home`);
+                          }
                         }}
                       >
-                        <div
-                          className="progress-bar-fill"
-                          style={{
-                            width: `${course.progress}%`,
-                            height: '100%',
-                            background: 'linear-gradient(90deg, #2563eb, #3b82f6)',
-                            transition: 'width 0.5s ease-out',
-                          }}
-                        />
-                      </div>
-                      <p
-                        className={`progress-text ${course.progress === 0 ? 'inactive' : ''}`}
-                        style={{ marginTop: '6px', fontSize: '0.75rem', fontWeight: 600 }}
-                      >
-                        {course.progress > 0 ? `Tiến độ: ${course.progress}%` : 'Chưa bắt đầu'}
-                      </p>
+                        Xem chi tiết
+                        <ArrowRight size={16} />
+                      </button>
                     </div>
-                  )}
-
-                  <button
-                    type="button"
-                    className={`course-detail-btn ${showAsActive ? 'active' : 'inactive'}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (isAuthenticated) {
-                        navigate(`/course/${course.courseId}?from=home`);
-                      } else {
-                        navigate(`/course/${course.courseId}?from=home`);
-                      }
-                    }}
-                  >
-                    Xem chi tiết
-                    <ArrowRight size={16} />
-                  </button>
-                </div>
-              );
-            })}
+                  );
+                })}
           </div>
         </div>
       </section>
