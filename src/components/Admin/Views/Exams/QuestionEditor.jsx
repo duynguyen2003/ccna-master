@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { OPTION_LABELS } from './constants';
 import SimpleRTE from './SimpleRTE';
+import DeleteButton from '../../../ui/delete-button';
 
 // ─── QuestionDrawer ───────────────────────────────────────────────────────────
 
@@ -424,13 +425,11 @@ export const QuestionList = ({ questions, onEdit, onDelete }) => {
               <button type="button" className="efb-icon-btn" onClick={() => onEdit(idx)}>
                 <PencilLine size={14} />
               </button>
-              <button
-                type="button"
-                className="efb-icon-btn efb-icon-danger"
-                onClick={() => onDelete(idx)}
-              >
-                <Trash2 size={14} />
-              </button>
+              <DeleteButton
+                size="sm"
+                title="Xóa câu hỏi"
+                onConfirm={() => onDelete(idx)}
+              />
             </div>
           </div>
 

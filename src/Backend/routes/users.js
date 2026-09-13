@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/userController');
 const { verifyToken } = require('../middleware/auth');
+const { learningProgressLimiter } = require('../middleware/rateLimiter');
 
 // Học viên xem Profile chính mình (cả hai đường dẫn đều hỗ trợ)
 router.get('/profile', verifyToken, userController.getProfileMe);
@@ -9,11 +10,16 @@ router.get('/profile/me', verifyToken, userController.getProfileMe);
 
 // Học viên xem tiến độ học tập
 router.get('/progress', verifyToken, userController.getUserProgress);
-router.post('/progress', verifyToken, userController.updateProgress);
+router.post('/progress', verifyToken, learningProgressLimiter, userController.updateProgress);
 
 // Tiến độ Video (Accurate tracking)
 router.get('/progress/video/:lessonId', verifyToken, userController.getVideoProgress);
-router.post('/progress/video', verifyToken, userController.updateVideoProgress);
+router.post(
+  '/progress/video',
+  verifyToken,
+  learningProgressLimiter,
+  userController.updateVideoProgress
+);
 
 // Thống kê thời gian học theo khoảng (week/month/quarter)
 router.get('/stats/study-time', verifyToken, userController.getStudyTimeStats);

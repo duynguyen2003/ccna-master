@@ -43,6 +43,11 @@ jobs:
       - name: 🧪 Run frontend component tests
         run: npm test -- --watchAll=false --runInBand --runTestsByPath src/components/Content/NetworkLab.test.js
 
+      - name: 🧪 Run learning path domain tests
+        run: npm run test:learning
+        env:
+          LEARNING_PATH_INTEGRATION: '0'
+
       - name: 🔍 Lint check
         run: >-
           npx eslint
@@ -55,6 +60,12 @@ jobs:
           src/components/Content/CliLabWorkspace.js
           src/Backend/controllers/learningController.js
           src/Backend/controllers/labAttemptController.js
+          src/Backend/controllers/learningPathController.js
+          src/Backend/controllers/adminController.js
+          src/Backend/domain/learningPath.js
+          src/Backend/services/learningPathService.js
+          src/Backend/validation/learningPathSchema.js
+          src/Backend/learningPath/*.test.js
           src/Backend/simulation/networkPackets.js
           src/Backend/simulation/networkApi.integration.test.js
           src/shared/sanitizeHtml.js
@@ -112,6 +123,13 @@ jobs:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/netmastery_test
           JWT_SECRET: ci-integration-secret
           LAB_INTEGRATION: '1'
+
+      - name: 🧪 Run learning path PostgreSQL/HTTP integration
+        run: npm run test:learning
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/netmastery_test
+          JWT_SECRET: ci-integration-secret
+          LEARNING_PATH_INTEGRATION: '1'
 
   deploy-vercel:
     name: 🚀 Deploy to Vercel

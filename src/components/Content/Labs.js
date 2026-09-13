@@ -23,6 +23,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../Toast';
 import CliLabWorkspace from './CliLabWorkspace';
 import { gsap, useGSAP, prefersReducedMotion } from '../../utils/labMotion';
+import { storeTransitionEvent } from '../../hooks/useLearningProgress';
 import { sanitizeHtml } from '../../shared/sanitizeHtml';
 
 // Giải quyết URL file lab: local path hoặc Cloudinary URL
@@ -447,7 +448,7 @@ const LabCard = ({ lab, isCompleted, onSelect, onStartCli, isGuestView, onGuestB
 };
 
 export const Labs = () => {
-  const { isAuthenticated } = useAuth();
+  const { token, user, isAuthenticated } = useAuth();
   const { showToast, ToastComponent } = useToast();
   const isGuest = !isAuthenticated;
 
@@ -461,8 +462,6 @@ export const Labs = () => {
   const [selectedLab, setSelectedLab] = useState(null);
   const [selectedCliLab, setSelectedCliLab] = useState(null);
   const [completedLabs, setCompletedLabs] = useState([]);
-
-  const { token } = useAuth();
 
   // Tự động mở bài Lab nếu có labIdParam trong URL
   useEffect(() => {
@@ -551,26 +550,37 @@ export const Labs = () => {
   useGSAP(
     () => {
       if (loading || prefersReducedMotion()) return;
+      const header = containerRef.current?.querySelector('.labs-header');
+      const filterBtns = containerRef.current?.querySelectorAll('.filter-btn');
+      const cards = containerRef.current?.querySelectorAll('.lab-card');
+      if (!header && (!filterBtns || !filterBtns.length) && (!cards || !cards.length)) return;
+
       const tl = gsap.timeline({ defaults: { ease: 'power2.out' } });
-      tl.fromTo(
-        '.labs-header',
-        { opacity: 0, y: -12 },
-        { opacity: 1, y: 0, duration: 0.35, clearProps: 'all' }
-      )
-        .fromTo(
-          '.filter-btn',
+      if (header) {
+        tl.fromTo(
+          header,
+          { opacity: 0, y: -12 },
+          { opacity: 1, y: 0, duration: 0.35, clearProps: 'all' }
+        );
+      }
+      if (filterBtns && filterBtns.length > 0) {
+        tl.fromTo(
+          filterBtns,
           { opacity: 0, y: 8 },
           { opacity: 1, y: 0, stagger: 0.03, duration: 0.25, clearProps: 'all' },
-          '-=0.15'
-        )
-        .fromTo(
-          '.lab-card',
+          header ? '-=0.15' : 0
+        );
+      }
+      if (cards && cards.length > 0) {
+        tl.fromTo(
+          cards,
           { opacity: 0, y: 15 },
           { opacity: 1, y: 0, stagger: 0.04, duration: 0.35, clearProps: 'all' },
-          '-=0.15'
+          header || (filterBtns && filterBtns.length > 0) ? '-=0.15' : 0
         );
+      }
     },
-    { dependencies: [loading], scope: containerRef }
+    { dependencies: [loading, filteredLabs.length], scope: containerRef }
   );
 
   const notifyGuestBlocked = useCallback(() => {
@@ -658,13 +668,17 @@ export const Labs = () => {
           onComplete={async (id) => {
             try {
               // Lưu vào cơ sở dữ liệu
-              await api.updateUserProgress(token, {
+              const res = await api.updateUserProgress(token, {
                 labId: id,
                 status: 'COMPLETED',
                 progressPercent: 100,
                 // Lấy courseId từ lab (nếu có) để cập nhật tiến độ tổng quát của khóa học
                 courseId: selectedLab.courseId,
               });
+
+              if (res?.transition?.changed) {
+                storeTransitionEvent(res.transition, user?.id);
+              }
 
               if (!completedLabs.includes(id)) {
                 setCompletedLabs((prev) => [...prev, id]);

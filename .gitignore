@@ -32,3 +32,4 @@ yarn-error.log*
 *.log
 
 /src/generated/prisma
+.playwright-mcp/

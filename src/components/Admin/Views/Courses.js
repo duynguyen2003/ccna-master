@@ -18,6 +18,7 @@ import { BACKEND_URL } from '../../../services/Api.js';
 import AdminModal from '../Components/AdminModal';
 import CustomSelect from '../Components/CustomSelect';
 import AdminPagination from '../Components/AdminPagination';
+import DeleteButton from '../../ui/delete-button';
 import '../../../css/Admin/AdminViews.css';
 
 const initialCourseForm = {
@@ -165,8 +166,8 @@ const Courses = () => {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Bạn có chắc muốn xóa khóa học này?')) return;
+  const handleDelete = async (id, confirmed = false) => {
+    if (!confirmed && !window.confirm('Bạn có chắc muốn xóa khóa học này?')) return;
 
     try {
       setDeletingId(id);
@@ -302,18 +303,12 @@ const Courses = () => {
                           >
                             <BookOpen size={15} />
                           </button>
-                          <button
-                            className="acm-action-btn danger"
-                            title="Xóa"
+                          <DeleteButton
+                            size="sm"
+                            title="Xóa khóa học"
                             disabled={deletingId === course.id}
-                            onClick={() => handleDelete(course.id)}
-                          >
-                            {deletingId === course.id ? (
-                              <Loader2 size={15} className="acm-spin" />
-                            ) : (
-                              <Trash2 size={15} />
-                            )}
-                          </button>
+                            onConfirm={() => handleDelete(course.id, true)}
+                          />
                         </div>
                       </td>
                     </tr>

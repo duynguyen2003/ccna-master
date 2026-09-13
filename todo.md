@@ -1,3 +1,125 @@
+# Learning Game Path — Triển khai Frontend Roadmap (2026-09-10)
+
+## Kế hoạch triển khai Frontend theo `docs/learning-path-frontend-plan.md`
+
+- [x] **Phase 1: Contract & API Layer**
+  - [x] Nâng cấp `apiFetch` trong `src/services/Api.js` (giữ nguyên error.status, error.code, error.details, error.retryAfter).
+  - [x] Thêm `api.getLearningPath` và `api.completeModule` vào `Api.js` (không dùng safeApiFetch).
+  - [x] Tạo `src/utils/learningPathAdapter.js` chuẩn hóa DTO, fallback dữ liệu an toàn mà không override status server.
+  - [x] Viết unit test cho `learningPathAdapter.js`.
+- [x] **Phase 2: Server State & Hooks**
+  - [x] Tạo `src/hooks/useLearningPath.js` với React Query v5, queryKey `['learning-path', user?.id]`, cancel on logout, timeout cold start.
+  - [x] Tạo `src/hooks/useLearningProgress.js` điều phối mutation, cập nhật snapshot query cache, phát one-time transition event.
+  - [x] Tạo `src/hooks/usePathLayout.js` dùng ResizeObserver và memoize geometry.
+- [x] **Phase 3: Pure Geometry Engine**
+  - [x] Tạo `src/utils/learningPathGeometry.js` tính toán zigzag tọa độ (desktop ngang >=1024px, mobile dọc <1024px), cubic Bezier curves, label placement, edge cases (0, 1, many nodes, narrow 320px).
+  - [x] Viết unit test cho `learningPathGeometry.js`.
+- [x] **Phase 4: Animation Utility**
+  - [x] Tạo `src/utils/learningPathMotion.js` dùng GSAP timeline cho vẽ đường SVG, pulsing glow ring cho current node, unlock transition sequence, hỗ trợ reduced-motion và cleanup.
+- [x] **Phase 5: Components Creation (`src/components/Content/learningPath/`)**
+  - [x] Tạo `LearningStats.jsx` hiển thị 4 chỉ số (Streak, XP, Badges, Overall Progress).
+  - [x] Tạo `CourseNodeItem.jsx` accessible `<button>` với circular progress, icon theo loại, badge trạng thái.
+  - [x] Tạo `CourseDetailModal.jsx` modal accessible với checklist module/lesson/lab, skills, CTA deep-link.
+  - [x] Tạo `LearningPathSkeleton.jsx` loading skeleton khớp geometry.
+  - [x] Tạo `LearningPathMap.jsx` SVG track bed + progress path + node elements.
+  - [x] Thiết kế lại `src/css/Roadmap.css` với prefix `lp-`, CSS variables và responsive đầy đủ.
+- [x] **Phase 6: Container Page (`src/components/Content/Roadmap.js`)**
+  - [x] Tích hợp page hoàn chỉnh: header, stats, map viewport, modal, guest preview/catalog, cold start indicator, retry on error, auto-scroll current node, consume transition event.
+- [x] **Phase 7: Integration Points**
+  - [x] Nối `src/components/Content/Lesson.js`: gộp 2 điểm gọi hoàn thành, xử lý toast "Xem lộ trình" và emit transition event.
+  - [x] Nối `src/components/Content/CliLabWorkspace.js`: nhận `learningPath` & `transition` khi submit đạt, cập nhật cache.
+  - [x] Nối `src/components/Content/Labs.js`: hoàn thành Packet Tracer lab cập nhật cache.
+  - [x] Cập nhật `src/components/Content/CourseDetail.js`: xử lý trạng thái khóa, hiển thị lý do và nút "Xem lộ trình".
+- [x] **Phase 8: Verification & Testing**
+  - [x] Chạy kiểm thử unit test cho geometry, adapter, component test (42/42 tests pass).
+  - [x] Chạy `npm.cmd run build` xác nhận CRA compiled successfully với 0 compile error.
+  - [x] Kiểm tra responsive, accessibility, và ghi lại kết quả nghiệm thu.
+
+### Kết quả triển khai Frontend Learning Game Path (2026-09-10)
+
+- **API & Contract Layer:** Đã nâng cấp `apiFetch` bảo toàn mã lỗi, HTTP status, `error.details` và `error.retryAfter`. Bổ sung `api.getLearningPath` và `api.completeModule` trực tiếp vào `src/services/Api.js`. Dữ liệu DTO được chuẩn hóa qua `src/utils/learningPathAdapter.js` bảo vệ nguyên vẹn các trạng thái nghiệp vụ từ backend (`completed`, `current`, `locked`, `canAccess`, `lockedReason`).
+- **Server State & Hooks:** Khởi tạo `useLearningPath.js` sử dụng React Query v5 phân vùng cache `['learning-path', user?.id]`, tự dọn dẹp khi logout/đổi tài khoản, có cơ chế phát hiện Render cold start (>4s). `useLearningProgress.js` quản lý mutation tập trung, cập nhật query cache tức thì và lưu trữ one-time transition event. `usePathLayout.js` dùng ResizeObserver và debounce an toàn.
+- **Pure Geometry Engine:** `src/utils/learningPathGeometry.js` tính toán zigzag đa điểm thuần túy toán học không query DOM layout. Hỗ trợ responsive linh hoạt: Desktop ngang (>=1024px) với nhãn xen kẽ trên/dưới; Mobile dọc (<1024px) với nhãn trái/phải, tự động guard màn hình hẹp (320px–375px) đưa nhãn xuống dưới node tránh tràn ngang.
+- **Animation:** `src/utils/learningPathMotion.js` triển khai GSAP timelines vẽ đường SVG, hiệu ứng pulsing glow ring cho current node, chuỗi unlock mượt mà và tôn trọng hoàn toàn `prefers-reduced-motion`.
+- **Giao diện & Thành phần UI:** Đã tạo toàn bộ bộ thành phần tại `src/components/Content/learningPath/`: `LearningStats.jsx` (4 chỉ số: Streak, XP, Badges, Overall Progress), `CourseNodeItem.jsx` (button accessible, SVG circular progress ring, badges trạng thái), `CourseDetailModal.jsx` (dialog accessible, checklist chương/bài/lab, deep link), `LearningPathSkeleton.jsx`, `LearningPathMap.jsx`.
+- **Container Page:** `src/components/Content/Roadmap.js` được nâng cấp toàn diện: hỗ trợ chế độ khách (Guest Preview với CTA đăng nhập), trạng thái cold start server, lỗi kết nối kèm nút thử lại, tự động cuộn tới chặng hiện tại khi tải trang.
+- **Điểm nối tích hợp:**
+  - `src/components/Content/Lesson.js`: Đã loại bỏ lệnh gọi trùng trong VideoPlayer, gộp điều phối cập nhật tiến độ, hiển thị toast hoàn thành và lưu transition event.
+  - `src/components/Content/CliLabWorkspace.js`: Lưu transition event khi học viên đạt yêu cầu chấm bài.
+  - `src/components/Content/Labs.js`: Đồng bộ completion Packet Tracer vào transition store.
+  - `src/components/Content/CourseDetail.js`: Bổ sung kiểm tra khóa học bị khóa, hiển thị lý do và nút điều hướng "Xem lộ trình".
+- **Kiểm thử & Build:**
+  - 42/42 frontend unit & component tests đạt (`Roadmap.test.js`, `learningPathAdapter.test.js`, `learningPathGeometry.test.js`, `useLearningProgress.test.js`, `NetworkLab.test.js`).
+  - 14/14 backend domain & integration tests đạt (`test:learning`).
+  - `npx prisma validate`: Schema hợp lệ.
+  - Khắc phục lỗi ESLint `user is not defined` tại `CliLabWorkspace.js` và `Labs.js` do khai báo thiếu biến `user` từ `useAuth`.
+  - `npm run build`: **Compiled successfully** không còn lỗi biên dịch hay cảnh báo ESLint.
+
+---
+
+# Format code Learning Path — 2026-09-10
+
+- [x] Kiểm tra `.prettierrc`, `.prettierignore` và phạm vi code vừa triển khai.
+- [x] Format 14 file JavaScript backend/test liên quan Learning Path bằng Prettier theo cấu hình hiện có (2 spaces, single quote, printWidth 100).
+- [x] Kiểm tra formatter, đối chiếu cú pháp trước/sau để xác nhận chỉ đổi trình bày, ghi kết quả và bài học.
+- [x] Format phần frontend Learning Path vừa xuất hiện trong workspace: page, component, hook, service, utility, test và CSS liên quan; không chạm nhóm Admin/Navbar ngoài phạm vi.
+- [x] Chạy Prettier check, ESLint/test FE liên quan và ghi kết quả.
+
+File dự kiến: `src/Backend/controllers/{adminController,labAttemptController,learningController,userController,learningPathController}.js`, `domain/learningPath.js`, `services/learningPathService.js`, `validation/learningPathSchema.js`, `middleware/rateLimiter.js`, `routes/{learning,users}.js`, `learningPath/{learningPath.test,learningPath.integration.test}.js`, `simulation/networkApi.integration.test.js`; `todo.md` và `lessons.md` ghi nhật ký. Mục tiêu: code thống nhất định dạng mà giữ nguyên logic đã kiểm thử.
+
+Kết quả: dùng Prettier 3.7.4 có sẵn trong extension VS Code; 12 file được format, 2 file đã đúng định dạng. Tất cả 14 file đạt `prettier.check`, đối chiếu AST Babel trước/sau không đổi logic, ESLint và `git diff --check` đều đạt. Lượt kiểm tra đầu phát hiện method chain cần thêm lượt format; đã xử lý và kiểm tra lại thành công. Kiểm tra tiếp theo xác nhận `package.json` và `.github/workflows/ci-cd.yml` cũng đã đúng format; JSON example trong tài liệu và CI YAML parse hợp lệ. `npm.cmd run test:learning` sau format đạt 14/14 unit test, 1 integration test được skip đúng vì không bật database test. Không cần cài dependency hoặc chạy lại database/build cho thay đổi chỉ định dạng.
+
+Phần frontend Learning Path xuất hiện tiếp trong workspace được format theo cùng cấu hình: 12/23 file thay đổi định dạng, 11 file đã đúng sẵn; tất cả đạt `prettier.check` và JS/JSX AST tương đương sau khi chuẩn hóa khoảng trắng JSX. Bốn suite Roadmap/hook/adapter/geometry đạt 32/32 test; CRA production build thành công. ESLint đạt 0 lỗi, còn 7 warning về biến/ref/hook dependency trong code FE; không sửa logic trong tác vụ chỉ-format này. Nhóm Admin/Navbar ngoài Learning Path được giữ nguyên.
+
+---
+
+# Learning Game Path: backend và bàn giao frontend — 2026-09-10
+
+## Kế hoạch đã kiểm tra trước khi code
+
+- [x] Đọc `coure.md`, `Agent.md`, kiểm tra routing, AuthContext, API client, Prisma, các luồng lesson/video/Lab và CI hiện tại.
+- [x] Tạo domain/service dùng chung: course theo `orderIndex, id`, prerequisite tuần tự, progress từ lesson/Lab đang hiển thị, một current node, DTO cho FE.
+- [x] Thêm GET `/api/learning/learning-path` và PATCH `/api/learning/modules/:moduleId/progress`, JWT + Zod + lỗi nghiệp vụ rõ ràng.
+- [x] Nối API progress/video cũ và CLI Lab vào cùng service; kiểm tra quan hệ ID, khóa course/module, tài khoản active, transaction và chống ghi trùng khi nhiều request.
+- [x] Đồng bộ số liệu GET courses với Learning Path; XP tính phía server từ completion thật, badge lưu bảng hiện có, streak đọc `User.streak` theo đúng phạm vi đặc tả.
+- [x] Viết test domain + HTTP/PostgreSQL cho auth, payload, ID không tồn tại, vượt khóa, hoàn thành/mở khóa, retry/concurrency, rollback và luồng cũ.
+- [x] Viết một bản `docs/learning-path-frontend-plan.md` đủ để Agent FE triển khai: API/DTO thực tế, DB mapping, flow, cache, routing, geometry, animation, accessibility, từng giai đoạn và tiêu chí nghiệm thu.
+- [x] Chạy kiểm tra backend, Prisma, lint, build CRA; ghi kết quả, giới hạn và bài học.
+
+## File dự kiến thay đổi và lý do
+
+- `src/Backend/domain/learningPath.js`, `src/Backend/services/learningPathService.js`: tập trung nguồn sự thật và transaction; tái sử dụng schema hiện có, không reset DB.
+- `src/Backend/validation/learningPathSchema.js`, `src/Backend/controllers/learningPathController.js`, `src/Backend/routes/learning.js`, `src/Backend/routes/users.js`, `src/Backend/middleware/rateLimiter.js`: API và validation progress.
+- `src/Backend/controllers/learningController.js`, `userController.js`, `labAttemptController.js`: nối luồng hiện hữu, sửa moduleId chuỗi bị parseInt và các phép tổng hợp không thống nhất.
+- `src/Backend/controllers/adminController.js`: lọc đúng course summary để module summary mới không làm sai số liệu admin; bổ sung kiểm thử HTTP cho trường hợp này.
+- `src/Backend/learningPath/*.test.js`, `package.json`, `.github/workflows/ci-cd.yml`: kiểm thử nghiệp vụ và đưa vào CI hiện tại, giữ các thay đổi đang có của người dùng.
+- `docs/learning-path-frontend-plan.md`, `todo.md`, `lessons.md`: hợp đồng bàn giao và báo cáo. Không triển khai giao diện trong lượt này theo yêu cầu người dùng.
+
+## Kết quả backend và hợp đồng — 2026-09-10
+
+- Hai API mới nằm đúng prefix `/api/learning`; giữ API ghi lesson/enrollment/Packet Tracer tại `/api/users/progress` và video tại `/api/users/progress/video`. String moduleId được giữ nguyên, server kiểm tra liên kết course/module/lesson/Lab.
+- Dùng domain chung tính progress theo task chưa xóa và Lab đã xuất bản, loại dòng trùng khi tính, không tin summary cũ. Module rỗng hoặc course gần 100% không được tự mở khóa. GET courses dùng cùng phép tính; bộ lọc admin được bổ sung moduleId/lessonId/labId null cho số liệu course.
+- Mọi ghi tiến độ dùng PostgreSQL advisory transaction lock theo user, đồng bộ task/module/course/activity/badge. CLI grading ghi completion trong cùng transaction với kết quả attempt. Lỗi cấp badge đã được kiểm chứng rollback thật bằng trigger tạm; lỗi trả client không lộ Prisma/stack.
+- XP là điểm hoàn thành curriculum hiện tại tính từ server (lesson 10, Lab 50, module 25, course 100), không thêm ví XP vĩnh viễn. Badge lưu UserBadge; streak đọc User.streak hiện hữu, chưa thêm thuật toán streak tự tăng theo ngày học, đúng giới hạn mục 55 coure.md.
+- Không thay schema, không migration/reset/seed DB thật. `prisma db push` chỉ chạy trên PostgreSQL tạm `learning_path_test` tại 127.0.0.1:55432. Không chạm container/database dự án đang chạy.
+- Bản bàn giao duy nhất cho thiết kế FE: `docs/learning-path-frontend-plan.md` (contract, types, lỗi, DB mapping, query cache, route, geometry, UI states, animation ownership, accessibility, 8 giai đoạn và checklist nghiệm thu).
+
+### Kết quả kiểm tra
+
+- `npm.cmd run test:learning` với `LEARNING_PATH_INTEGRATION=1`: **34/34 đạt**, gồm domain và HTTP/PostgreSQL; auth, ID, quan hệ, khóa, empty module, admin aggregates, retry, concurrency, dữ liệu legacy trùng, CLI completion và rollback.
+- `npm.cmd run test:cli` với `LAB_INTEGRATION=1`: **53/53 đạt**; có test HTTP/PostgreSQL cũ và 40 request đọc đồng thời không lỗi.
+- `npm.cmd test -- --watchAll=false --runInBand --runTestsByPath src/components/Content/NetworkLab.test.js`: **10/10 đạt**, kiểm tra hồi quy UI Lab/Topology hiện có.
+- ESLint trên toàn bộ file backend/test đã sửa và tạo: đạt, không lỗi/cảnh báo lint.
+- `npx.cmd prisma validate`: schema hợp lệ. `npx.cmd prisma db push` trên DB tạm: thành công. Prisma cảnh báo preview feature `driverAdapters` cũ đã deprecated; chưa sửa schema chỉ để dọn warning không liên quan.
+- `npm.cmd run build`, với `BUILD_PATH=build-learning-path-check`, `CI=false`: **Compiled successfully**. Bundle hiện hữu được CRA cảnh báo lớn; không có lỗi build. Build output dùng thư mục riêng để giữ artifact đang được người dùng sử dụng.
+- YAML CI, step integration mới, 6 JSON examples và các code fence của tài liệu hợp lệ; `git diff --check` đạt.
+- Lần gọi `npm`/`npx` đầu bị Windows ExecutionPolicy chặn file .ps1; đã chạy lại thành công bằng `npm.cmd`/`npx.cmd`, không thay policy hệ thống. Không cài thêm dependency.
+- Có cảnh báo runtime deprecated từ pg/Prisma adapter trong integration và `fs.F_OK` của tooling CRA trên Node 24; các suite vẫn đạt. Đây không phải lỗi nghiệp vụ. Lỗi `private database failure` trong log là fixture rollback có chủ đích và test đã xác nhận không lộ nội dung này qua HTTP.
+- Chưa triển khai UI/animation, chưa deploy Render/Vercel và chưa chạy GitHub Actions từ xa trong lượt này; các giới hạn được ghi rõ trong bản kế hoạch FE.
+- Đã dừng và tự xóa container PostgreSQL tạm đúng ID đã tạo; xóa riêng `build-learning-path-check` sau khi kiểm tra đường dẫn nằm trong workspace. Các container `ccna-master-backend-1`, `ccna-master-db-1` đang có vẫn giữ nguyên.
+
+---
+
 # Thiết kế lại UI lab Cisco — kế hoạch và nghiệm thu 2026-09-08
 
 ## Sửa CORS cho frontend local cổng 3001 — 2026-09-09
@@ -1303,3 +1425,191 @@ Giữ React/Express/PostgreSQL, dùng simulator version mới cho topology; gi�
 - Job kiểm tra đủ ba secret trước khi chạy; khi thiếu secret, quality gate vẫn kết thúc bằng thông báo hướng dẫn và không chạy deploy.
 - YAML parse, kiểm tra trigger/step/command, `git diff --check`, CLI 33 pass/1 skip, component 7/7 và quét secret trên file thay đổi đều đạt.
 - GitHub Actions run `34223016697` đã xác minh quality gate và PostgreSQL integration pass; bước `vercel pull` vẫn trả `Could not retrieve Project Settings` dù cả ba secret đều tồn tại. Cần cập nhật lại giá trị/quyền của `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID` từ đúng Vercel project; không đánh dấu deployment thật đạt khi bước này còn lỗi.
+# Thay dữ liệu mock trong modal Learning Path bằng dữ liệu thật — 2026-09-10
+
+## Mục tiêu đo được
+
+- Modal chi tiết khóa học chỉ hiển thị dữ liệu từ DTO `GET /api/learning/learning-path`; không còn curriculum CCNA hard-code, tiến độ giả, checkbox mô phỏng hoặc nút `Test Unlock`.
+- Người dùng chỉ có thể hoàn thành/mở khóa qua tiến độ bài học và lab thật do backend xác nhận.
+- “Kỹ năng trọng tâm” lấy từ `CourseTopic` do Admin quản trị; thời lượng lấy từ `Lesson.videoDuration` của video/bài học Admin tải lên.
+- Bổ sung kiểm thử để xác nhận dữ liệu API được render nguyên trạng và không còn điều khiển giả.
+
+## File dự kiến thay đổi
+
+- `src/components/Content/learningPath/CourseDetailModal.jsx`
+- `src/components/Content/Roadmap.test.js`
+- `src/components/Admin/Views/CourseDetail.js`
+- `src/css/Roadmap.css`
+- `src/utils/learningPathAdapter.js`
+- `docs/learning-path-frontend-plan.md`
+- `todo.md`
+- `lessons.md`
+
+## Kế hoạch đã kiểm tra
+
+- [x] Gỡ toàn bộ `CCNA_CURRICULUM_DATA`, logic nhận diện mock và state hoàn thành cục bộ khỏi modal.
+- [x] Render khóa học, module, kỹ năng, thời lượng, huy hiệu và trạng thái trực tiếp từ DTO backend; điều hướng theo lesson/lab thật.
+- [x] Đổi màn hình Admin từ “Chủ đề khóa học” thành “Kỹ năng trọng tâm” để `CourseTopic` có ý nghĩa dữ liệu rõ ràng.
+- [x] Loại CSS của checkbox/test unlock, bổ sung trạng thái module và empty state cần thiết.
+- [x] Cập nhật unit test, chạy test Learning Path, lint/build phù hợp và ghi kết quả.
+
+## Giải thích thay đổi
+
+- Modal không còn tự nhận diện CCNA 1/2/3 hoặc dựng 15/17 module. Mọi tiêu đề, mô tả, tiến độ, trạng thái khóa, module, bài học, lab, kỹ năng, thời lượng và huy hiệu đều lấy từ DTO backend.
+- Module trong modal là nút điều hướng đến bài học/lab thật. Trạng thái hoàn thành chỉ để hiển thị và do backend tính từ `UserProgress`; client không còn API hay state để tự đánh dấu hoàn thành.
+- `CourseTopic` được dùng làm nguồn dữ liệu chính thức cho “Kỹ năng trọng tâm”. Admin nhập kỹ năng ở trang chi tiết khóa học; backend đã sắp xếp và trả các bản ghi này trong `course.skills`.
+- `estimatedHours` và `module.duration` do backend cộng các giá trị `Lesson.videoDuration`; nếu Admin chưa nhập thời lượng, UI hiển thị “Chưa cập nhật” thay vì số giờ giả.
+- Adapter không tự sinh tên huy hiệu khi backend không gửi, tránh biến fallback giao diện thành dữ liệu nghiệp vụ.
+
+## Kết quả kiểm tra
+
+- Prettier: 6 file frontend liên quan đã được format theo `.prettierrc`.
+- ESLint theo phạm vi thay đổi: 0 lỗi, 0 cảnh báo.
+- Jest: 2 suite, 21/21 test pass; có kiểm tra dữ liệu thật, empty state kỹ năng và sự vắng mặt của `Test Unlock`/checkbox mô phỏng.
+- Backend Learning Path: 14/14 test khả dụng pass; 1 suite PostgreSQL integration được skip vì môi trường hiện tại không có `TEST_DATABASE_URL`.
+- Production build: compiled successfully khi dùng thư mục kiểm tra riêng `.tmp-learning-path-build`; thư mục này đã được xóa. Lần build vào `build/` mặc định bị Windows khóa `build/manifest.json`, không phải lỗi biên dịch.
+# Audit checklist FE Learning Path và bỏ nhãn “Cập nhật” — 2026-09-11
+
+## Mục tiêu đo được
+
+- Đối chiếu 11 mục trong checklist `docs/learning-path-frontend-plan.md` với source/test hiện tại và đánh dấu đúng trạng thái thực tế.
+- Ghi rõ bằng chứng hoặc phần còn thiếu cho mọi checklist chưa hoàn thành.
+- Không còn nhãn “Cập nhật” trên node khóa ITN khi `contentReady=false`.
+
+## File dự kiến thay đổi
+
+- `src/components/Content/learningPath/CourseNodeItem.jsx`
+- `src/components/Content/Roadmap.test.js`
+- `src/css/Roadmap.css`
+- `docs/learning-path-frontend-plan.md`
+- `todo.md`
+- `lessons.md`
+
+## Kế hoạch đã kiểm tra
+
+- [x] Xóa nhãn cập nhật và icon/style không còn sử dụng khỏi course node.
+- [x] Thêm regression test bảo đảm `contentReady=false` không hiện chữ “Cập nhật” trên ITN.
+- [x] Cập nhật checklist bàn giao theo kết quả audit, giữ nguyên checkbox cho hạng mục chưa đạt và ghi lý do cụ thể.
+- [x] Format, chạy test/lint/build phù hợp và ghi kết quả.
+
+## Kết quả audit và kiểm tra
+
+- Checklist FE đạt 8/11 mục. Ba mục chưa hoàn tất được giữ `[ ]` và ghi nguyên nhân ngay trong `docs/learning-path-frontend-plan.md`: cleanup cache/event khi đổi user, kết nối unlock animation với transition, và test đầy đủ focus/reduced-motion/page states.
+- Course node không còn render chữ “Cập nhật” khi `contentReady=false`; đã xóa luôn import `AlertCircle` và selector `.lp-label-updating` không còn sử dụng.
+- Prettier và ESLint theo phạm vi thay đổi đạt, 0 lỗi/cảnh báo.
+- Learning Path frontend: 4 suite, 35/35 test pass.
+- CRA production build thành công với `BUILD_PATH=.tmp-learning-path-audit-build`; thư mục build tạm đã được xóa sau kiểm tra. Cảnh báo kích thước bundle lớn vẫn là cảnh báo hiện hữu.
+# Bỏ hậu tố “(Updated)” khỏi tiêu đề Learning Path — 2026-09-11
+
+## Mục tiêu và file thay đổi
+
+- [x] Chuẩn hóa `Course.title` tại `src/utils/learningPathAdapter.js` để bỏ hậu tố `(Updated)` không phân biệt hoa thường.
+- [x] Thêm regression test tại `src/utils/learningPathAdapter.test.js` cho tiêu đề ITN trong ảnh.
+- [x] Chạy format, test và lint; ghi kết quả vào `todo.md` và `lessons.md`.
+
+## Kết quả
+
+- `Introduction to Networks (Updated)` được chuẩn hóa thành `Introduction to Networks` trước khi truyền vào node và modal Learning Path.
+- Prettier và ESLint đạt; 2 suite liên quan đạt 22/22 test.
+# Thiết kế lại header Roadmap và hiệu ứng mở khóa thật — 2026-09-11
+
+## Mục tiêu đo được
+
+- Header Roadmap bám bố cục ảnh tham chiếu: card ngang, thông tin lộ trình bên trái, bộ chọn Tự động/Ngang/Dọc bên phải, legend và hướng dẫn nằm dưới card.
+- Không có nút `+1 Module` hoặc nút mở khóa/test giả trên giao diện người dùng.
+- Bộ chọn hướng hiển thị hoạt động thật và không làm sai geometry responsive.
+- Khi backend trả transition hoàn thành course và `unlockedCourseId`, GSAP chạy chuỗi node hoàn thành → confetti tại đúng node → đường nối → node mới mở; reduced motion bỏ chuyển động.
+- Không thay đổi quyền mở khóa: trạng thái vẫn lấy từ backend.
+
+## File dự kiến thay đổi
+
+- `src/components/Content/Roadmap.js`
+- `src/components/Content/learningPath/LearningPathMap.jsx`
+- `src/utils/learningPathGeometry.js`
+- `src/utils/learningPathGeometry.test.js`
+- `src/utils/learningPathMotion.js`
+- `src/utils/learningPathMotion.test.js`
+- `src/components/Content/Roadmap.test.js`
+- `src/css/Roadmap.css`
+- `docs/learning-path-frontend-plan.md`
+- `todo.md`
+- `lessons.md`
+
+## Kế hoạch đã kiểm tra
+
+- [x] Tạo header/segmented control responsive theo ảnh và bỏ các action demo.
+- [x] Bổ sung override Auto/Ngang/Dọc vào geometry, giữ mặc định responsive.
+- [x] Nối transition thật từ Roadmap vào LearningPathMap và GSAP unlock sequence.
+- [x] Tạo confetti bằng GSAP/DOM tại tọa độ node, có cleanup và reduced-motion.
+- [x] Bổ sung test cho geometry mode, UI không có `+1 Module`, và trigger unlock thật.
+- [x] Format, test, lint, build và kiểm tra trực quan bằng browser nếu môi trường chạy được.
+
+## Giải thích và kết quả
+
+- Header chuyển sang card ngang theo ảnh: tiêu đề và tiến độ chặng bên trái, bộ chọn Tự động/Ngang/Dọc bên phải; legend và hướng dẫn click nằm ở hàng riêng phía dưới. Mobile tự xếp dọc.
+- Không thêm `+1 Module` hay nút “Mở khóa chặng sau” demo. Bộ chọn layout thay đổi geometry thật; quyền course/module vẫn hoàn toàn do backend quyết định.
+- Khi consume transition có `courseCompleted=true` và `unlockedCourseId`, map tìm đúng node/đường nối bằng ID, chạy GSAP phồng node hoàn thành, bắn 36 hạt confetti tại tọa độ node, vẽ đường và làm node tiếp theo nảy sáng. Cleanup xóa timeline/DOM particles; reduced motion hoàn tất tức thời không tạo confetti.
+- Tài liệu frontend được cập nhật; checklist hiện đạt 9/11, còn cleanup cache/event khi đổi user và độ phủ test accessibility/page states.
+- Prettier và ESLint theo phạm vi thay đổi đạt 0 lỗi/cảnh báo. Learning Path đạt 5 suite, 41/41 test. CRA production build thành công; thư mục build tạm đã xóa.
+- Dev server biên dịch thành công tại cổng 3010 nhưng runtime không có browser instance khả dụng, nên không chụp được ảnh QA trực quan trong phiên này.
+# Nút xác nhận mở khóa cho học viên và quyền test Admin — 2026-09-11
+
+## Mục tiêu đo được
+
+- Học viên chỉ thấy nút “Mở khóa chặng tiếp theo” sau transition backend xác nhận course đạt 100% và có `unlockedCourseId`.
+- Chặng kế tiếp được giữ ở trạng thái khóa về mặt trình bày cho tới khi học viên bấm nút; thao tác không ghi giả tiến độ hoặc thay quyền backend.
+- Admin luôn có nút test hiệu ứng với một cặp course hợp lệ, không cần sửa dữ liệu học và có thể chạy lại nhiều lần.
+- Confetti/GSAP chỉ chạy sau click, không tự chạy khi vừa mở Roadmap.
+
+## File dự kiến thay đổi
+
+- `src/components/Content/Roadmap.js`
+- `src/components/Content/Roadmap.test.js`
+- `src/css/Roadmap.css`
+- `docs/learning-path-frontend-plan.md`
+- `todo.md`
+- `lessons.md`
+
+## Kế hoạch đã kiểm tra
+
+- [x] Giữ transition ở trạng thái chờ và chỉ consume khi học viên bấm mở khóa.
+- [x] Thêm CTA mở khóa trong header, che trạng thái current của node kế tiếp trước lúc xác nhận.
+- [x] Thêm CTA test riêng cho Admin, chọn cặp node từ dữ liệu thật và chỉ chạy hiệu ứng UI.
+- [x] Cập nhật thông báo, CSS responsive và accessibility cho CTA.
+- [x] Bổ sung test, format, lint và production build.
+
+## Giải thích và kết quả
+
+- Học viên nhận CTA từ transition vừa hoàn thành hoặc snapshot backend có cặp `completed → current` mà chặng mới chưa bắt đầu. Trước khi bấm, node tiếp theo được che thành locked ở presentation; sau click mới consume event, bỏ lớp che và chạy animation.
+- LocalStorage chỉ ghi acknowledgment theo `userId/courseId/unlockedCourseId` để snapshot cũ không hiện CTA lặp lại sau refresh; progress, XP và quyền truy cập vẫn do backend quyết định.
+- Admin luôn thấy `Admin: Test mở khóa` khi đăng nhập ở Roadmap. Preview chọn hai course kề nhau từ dữ liệu thật, tạm đổi presentation thành completed/current trong lúc animation rồi trở lại snapshot; không gọi mutation.
+- CTA có `button` semantic, focus ring, trạng thái disabled nếu chưa đủ hai course và layout responsive.
+- Prettier đạt; ESLint JavaScript đạt 0 lỗi/cảnh báo; 5 suite Learning Path đạt 44/44 test; CRA production build thành công và thư mục build tạm đã xóa.
+# Tăng độ cao và mật độ pháo hoa mở khóa — 2026-09-11
+
+## Mục tiêu và file thay đổi
+
+- [x] Tăng số particle và biên độ tỏa trong `src/utils/learningPathMotion.js`.
+- [x] Điều chỉnh quỹ đạo bay cao, thời gian rơi và độ xoay để hiệu ứng rõ nhưng vẫn cleanup đầy đủ.
+- [x] Cập nhật `src/utils/learningPathMotion.test.js`, format, lint, test và build.
+- [x] Ghi kết quả vào `todo.md` và `lessons.md`.
+
+## Kết quả
+
+- Tăng pháo hoa từ 36 lên 84 hạt; kích thước hạt biến thiên 4–9px để cụm pháo hoa dày nhưng vẫn có chiều sâu.
+- Nâng đỉnh quỹ đạo từ 45–80px lên 110–194px, mở rộng tỏa ngang lên 90–174px và kéo dài toàn bộ nhịp bay/rơi lên khoảng 1,55 giây.
+- Cleanup DOM và nhánh Reduced Motion được giữ nguyên; test xác nhận đúng 84 hạt và xóa layer khi animation bị dừng.
+- Prettier đạt; ESLint đạt 0 lỗi/cảnh báo; 5 suite đạt 44/44 test; production build thành công.
+
+# Nâng thêm độ cao pháo hoa — 2026-09-11
+
+- [x] Tăng biên độ bay lên của particle nhưng giữ mật độ 84 hạt.
+- [x] Cân lại thời gian bay và rơi để quỹ đạo cao vẫn tự nhiên.
+- [x] Format, lint, chạy test animation và production build.
+- [x] Ghi kết quả kiểm tra và bài học.
+
+## Kết quả
+
+- Đỉnh quỹ đạo được nâng từ 110–194px lên 220–360px; số lượng giữ nguyên 84 hạt.
+- Pha bay tăng lên 0,72 giây, pha rơi 1,2 giây và tween tỏa ngang/fade kéo dài 1,92 giây để chuyển động cao vẫn liền mạch.
+- Prettier đạt; ESLint đạt 0 lỗi/cảnh báo; 2 suite trọng tâm đạt 19/19 test; production build thành công.

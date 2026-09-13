@@ -5,6 +5,7 @@ import { AuthContext } from '../../../context/AuthContext';
 import { BACKEND_URL } from '../../../services/Api.js';
 import AdminModal from '../Components/AdminModal';
 import AdminPagination from '../Components/AdminPagination';
+import DeleteButton from '../../ui/delete-button';
 import '../../../css/Admin/AdminViews.css';
 
 const Resources = () => {
@@ -73,8 +74,8 @@ const Resources = () => {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Xóa tài liệu này?')) {
+  const handleDelete = async (id, confirmed = false) => {
+    if (confirmed || window.confirm('Xóa tài liệu này?')) {
       try {
         await adminApi.deleteResource(token, id);
         fetchResources();
@@ -175,13 +176,11 @@ const Resources = () => {
                       >
                         <FileDown size={16} />
                       </a>
-                      <button
-                        className="admin-action-btn delete"
-                        title="Xóa"
-                        onClick={() => handleDelete(r.id)}
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                      <DeleteButton
+                        size="sm"
+                        title="Xóa tài liệu"
+                        onConfirm={() => handleDelete(r.id, true)}
+                      />
                     </div>
                   </td>
                 </tr>

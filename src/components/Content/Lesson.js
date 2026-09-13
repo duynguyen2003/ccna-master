@@ -16,6 +16,8 @@ import api from '../../services/Api';
 import MarkdownRenderer from '../Common/MarkdownRenderer';
 import errorIllustration from '../../image/fix1.png';
 import YouTube from 'react-youtube';
+import { storeTransitionEvent } from '../../hooks/useLearningProgress';
+import { useToast } from '../Toast';
 
 const MOBILE_BREAKPOINT = 1024;
 const RESOURCE_BREAKPOINT = 1280;
@@ -110,14 +112,6 @@ const VideoPlayer = ({ url, lessonId, courseId, moduleId, token, user, onProgres
 
         if (isFinished && !videoData.isCompleted) {
           setVideoData((prev) => ({ ...prev, isCompleted: true }));
-          // Mark hoàn thành bài học ở bảng UserProgress
-          api.updateUserProgress(token, {
-            courseId,
-            moduleId,
-            lessonId,
-            progressPercent: 100,
-            status: 'COMPLETED',
-          });
         }
 
         lastReportedTimeRef.current = floorTime;
@@ -215,6 +209,7 @@ const Lesson = () => {
   const [rightOpen, setRightOpen] = useState(() => getViewportWidth() >= RESOURCE_BREAKPOINT);
 
   const [course, setCourse] = useState(null);
+  const { showToast, ToastComponent } = useToast();
   const [modules, setModules] = useState([]);
   const [activeModule, setActiveModule] = useState(null);
   const [lessons, setLessons] = useState([]);
@@ -532,6 +527,14 @@ const Lesson = () => {
           lessonId,
           progressPercent: currentPercent,
           status: completed ? 'COMPLETED' : 'ACTIVE',
+        })
+        .then((res) => {
+          if (res?.transition?.changed) {
+            storeTransitionEvent(res.transition, user?.id);
+          }
+          if (completed && !lastSync.completed) {
+            showToast('Chúc mừng! Bạn đã hoàn thành bài học này.', 'success');
+          }
         })
         .catch((err) => console.error('Failed to sync progress:', err));
     }
@@ -872,6 +875,7 @@ const Lesson = () => {
           </div>
         </div>
       </div>
+      {ToastComponent}
     </div>
   );
 };

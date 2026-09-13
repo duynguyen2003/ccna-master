@@ -18,6 +18,7 @@ import { adminApi } from '../../../services/api/adminApi';
 import { AuthContext } from '../../../context/AuthContext';
 import AdminModal from '../Components/AdminModal';
 import UserProfileModal from './Components/UserProfileModal';
+import DeleteButton from '../../ui/delete-button';
 import '../../../css/Admin/AdminViews.css';
 import '../../../css/Admin/AdminUsers.css';
 
@@ -184,9 +185,9 @@ const Users = () => {
     }
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (id, confirmed = false) => {
     try {
-      if (window.confirm('Bạn có chắc muốn xóa tài khoản này? Hành động này không thể hoàn tác.')) {
+      if (confirmed || window.confirm('Bạn có chắc muốn xóa tài khoản này? Hành động này không thể hoàn tác.')) {
         await adminApi.deleteUser(token, id);
         fetchUsers();
       }
@@ -509,14 +510,11 @@ const Users = () => {
                         </div>
                       </div>
 
-                      <button
-                        className="admin-action-btn delete admin-users-tooltip-trigger"
-                        aria-label="Xóa tài khoản"
-                        onClick={() => handleDelete(user.id)}
-                      >
-                        <span className="admin-users-tooltip">Xóa tài khoản</span>
-                        <Trash2 size={16} />
-                      </button>
+                      <DeleteButton
+                        size="sm"
+                        title="Xóa tài khoản"
+                        onConfirm={() => handleDelete(user.id, true)}
+                      />
                     </div>
                   </td>
                 </tr>
