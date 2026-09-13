@@ -11,6 +11,108 @@ const formatCliConfigError = (error) => {
   return path ? `${path}: ${issue.message}` : issue.message;
 };
 
+module.exports.getCourseSummaries = async (req, res, next) => {
+  try {
+    const whereClause = { deletedAt: null };
+    if (!req.user || req.user.role !== 'ADMIN') {
+      whereClause.status = { in: ['PUBLISHED', 'OPEN'] };
+    }
+
+    const [courses, userProgress] = await Promise.all([
+      prisma.course.findMany({
+        where: whereClause,
+        orderBy: { orderIndex: 'asc' },
+        take: 10,
+        select: {
+          id: true,
+          code: true,
+          title: true,
+          description: true,
+          modules: {
+            where: { deletedAt: null },
+            orderBy: { orderIndex: 'asc' },
+            select: {
+              lessons: {
+                where: { deletedAt: null },
+                orderBy: { orderIndex: 'asc' },
+                select: { id: true, title: true },
+              },
+            },
+          },
+          labs: {
+            where: { deletedAt: null },
+            select: { id: true },
+          },
+        },
+      }),
+      req.user?.id
+        ? prisma.userProgress.findMany({
+            where: { userId: req.user.id },
+            select: {
+              courseId: true,
+              lessonId: true,
+              labId: true,
+              status: true,
+              progressPercent: true,
+            },
+          })
+        : Promise.resolve([]),
+    ]);
+
+    const progressByCourse = new Map();
+    userProgress.forEach((progress) => {
+      const current = progressByCourse.get(progress.courseId) || [];
+      current.push(progress);
+      progressByCourse.set(progress.courseId, current);
+    });
+
+    const summaries = courses.map((course) => {
+      const courseProgress = progressByCourse.get(course.id) || [];
+      const lessonProgress = new Map(
+        courseProgress.filter((item) => item.lessonId !== null).map((item) => [item.lessonId, item])
+      );
+      const courseLabIds = new Set(course.labs.map((lab) => lab.id));
+      const completedLabIds = new Set(
+        courseProgress
+          .filter(
+            (item) =>
+              item.labId !== null && courseLabIds.has(item.labId) && item.status === 'COMPLETED'
+          )
+          .map((item) => item.labId)
+      );
+      const lessons = course.modules.flatMap((module) => module.lessons);
+      const lessonProgressTotal = lessons.reduce(
+        (total, lesson) => total + (lessonProgress.get(lesson.id)?.progressPercent || 0),
+        0
+      );
+      const totalItems = lessons.length + course.labs.length;
+      const completedItems = lessonProgressTotal / 100 + completedLabIds.size;
+      const progress =
+        totalItems > 0 ? Math.min(100, Math.round((completedItems / totalItems) * 100)) : 0;
+      const nextLesson = lessons.find((lesson) => {
+        const current = lessonProgress.get(lesson.id);
+        return !current || current.progressPercent < 100 || current.status !== 'COMPLETED';
+      });
+
+      return {
+        id: course.id,
+        code: course.code,
+        title: course.title,
+        description: course.description,
+        progress,
+        isStarted: courseProgress.length > 0,
+        nextLessonTitle: nextLesson
+          ? `Bài học tiếp theo: ${nextLesson.title}`
+          : 'Bài học tiếp theo: Tiếp tục lộ trình hiện tại',
+      };
+    });
+
+    res.json({ data: summaries });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports.getCourses = async (req, res, next) => {
   try {
     const page = parseInt(req.query.page) || 1;

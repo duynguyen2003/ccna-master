@@ -210,6 +210,11 @@ export const api = {
     return courses.map(mapCourse);
   },
 
+  getCourseSummaries: async (token) => {
+    const json = await safeApiFetch('/learning/courses/summary', token, { data: [] });
+    return json.data || [];
+  },
+
   getModulesByCourse: async (token, courseId) => {
     const json = await safeApiFetch(`/learning/courses/${courseId}/modules`, token, { data: [] });
     return json.data || [];
