@@ -23,6 +23,7 @@ import { api } from '../../services/Api';
 import { useAuth } from '../../context/AuthContext';
 import '../../css/LabWorkspace.css';
 import { gsap, prefersReducedMotion } from '../../utils/labMotion';
+import { storeTransitionEvent } from '../../hooks/useLearningProgress';
 import CliTerminal from './CliTerminal';
 import NetworkTopology from './NetworkTopology';
 import {
@@ -96,6 +97,7 @@ export default function CliLabWorkspace({
 }) {
   const auth = useAuth() || {};
   const token = auth.token;
+  const user = auth.user;
   const isPreview = Boolean(preview);
   const [attempt, setAttempt] = useState(null);
   const latest = useRef(null);
@@ -453,6 +455,9 @@ export default function CliLabWorkspace({
       if (result.result.passed) {
         onPassed(String(current.labId));
         onNotify('Cấu hình đã đạt yêu cầu.', 'success');
+        if (result.transition?.changed) {
+          storeTransitionEvent(result.transition, user?.id);
+        }
         setAchievements(await api.cliAchievements(token));
       }
     });

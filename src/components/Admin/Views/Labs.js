@@ -21,6 +21,7 @@ import { AuthContext } from '../../../context/AuthContext';
 import AdminModal from '../Components/AdminModal';
 import AdminPagination from '../Components/AdminPagination';
 import CustomSelect from '../Components/CustomSelect';
+import DeleteButton from '../../ui/delete-button';
 import '../../../css/Admin/AdminViews.css';
 import CliLabWorkspace from '../../Content/CliLabWorkspace';
 import { validateCliLabConfig } from './adminLabConfig';
@@ -573,8 +574,8 @@ const Labs = () => {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Bạn có chắc muốn xóa bài Lab này?')) return;
+  const handleDelete = async (id, confirmed = false) => {
+    if (!confirmed && !window.confirm('Bạn có chắc muốn xóa bài Lab này?')) return;
     try {
       await adminApi.deleteLab(token, id);
       fetchLabs(currentPage);
@@ -769,14 +770,11 @@ const Labs = () => {
                         <div className="labm-step-card-head">
                           <strong>Bước {index + 1}</strong>
                           {formData.steps.length > 1 ? (
-                            <button
-                              type="button"
-                              className="labm-step-remove"
-                              onClick={() => handleRemoveStep(index)}
+                            <DeleteButton
+                              size="sm"
                               title="Xóa bước"
-                            >
-                              <Trash2 size={15} />
-                            </button>
+                              onConfirm={() => handleRemoveStep(index)}
+                            />
                           ) : null}
                         </div>
 
@@ -1076,13 +1074,11 @@ const Labs = () => {
                         >
                           <Pencil size={16} />
                         </button>
-                        <button
-                          className="admin-action-btn delete"
-                          title="Xóa"
-                          onClick={() => handleDelete(lab.id)}
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                        <DeleteButton
+                          size="sm"
+                          title="Xóa bài Lab"
+                          onConfirm={() => handleDelete(lab.id, true)}
+                        />
                       </div>
                     </td>
                   </tr>

@@ -167,3 +167,52 @@
 - **Tránh gắn đồng thời ScrollTrigger Scrub và Entrance Timeline trên cùng phần tử (Lỗi Banner bị ẩn khi cuộn ngược lên):**
   Khi một phần tử vừa được animate bằng `timeline.fromTo({ opacity: 0 }, ...)` vừa được gắn thêm `gsap.to(..., { scrub: 1, scrollTrigger: ... })`, ScrollTrigger khởi tạo ngay lập tức và đọc giá trị hiện tại của phần tử (đang là `opacity: 0` do timeline vừa thiết lập) làm giá trị gốc tại `scrollY = 0`. Hậu quả là khi người dùng cuộn ngược về đỉnh trang, ScrollTrigger đưa opacity trở về đúng giá trị gốc là 0, làm phần tử biến mất hoàn toàn.
   *Giải pháp*: Không gắn tween scrub lên các phần tử hero ở đỉnh trang vốn đã có entrance timeline. Để banner tự do hiển thị 100% với CSS gốc sau khi timeline entrance chạy xong, chỉ áp dụng ScrollTrigger đảo chiều cho các section nội dung bên dưới.
+## Format code — 2026-09-10
+
+- Ưu tiên formatter sẵn có và cấu hình `.prettierrc` của repo; có thể dùng Prettier đóng gói trong extension VS Code khi project chưa cài package riêng.
+- Kiểm tra định dạng sau khi ghi file và đối chiếu AST trước/sau để bảo đảm thay đổi chỉ là trình bày. Một số method chain cần thêm lượt format mới đạt trạng thái ổn định; không bỏ qua `prettier.check` sau lần format đầu.
+- Với JSX, Prettier có thể ngắt dòng `JSXText`; khi đối chiếu AST cho tác vụ format cần chuẩn hóa khoảng trắng JSX theo cách trình duyệt hiển thị, đồng thời vẫn chạy component test và production build để kiểm chứng.
+
+## Learning Path và đồng bộ progress — 2026-09-10
+
+- Schema có `Module.id` là chuỗi thì mọi đường ghi phải giữ đúng kiểu; `parseInt` âm thầm làm mất liên kết module dù course/lesson vẫn có dữ liệu.
+- Course/module summary là dữ liệu tổng hợp. Khi tính điều kiện mở khóa phải đọc các task hiện đang có hiệu lực, gom theo ID và loại soft-delete/DRAFT; không đếm số dòng UserProgress hoặc tin status của summary do client gửi.
+- Khi thêm module summary vào bảng progress dùng chung, cần rà các dashboard query trước đó chỉ lọc `lessonId = labId = null`; bổ sung `moduleId = null` cho số liệu course để không làm tăng enrollment hoặc sai tiến độ trung bình.
+- Khóa progression phải đi qua mọi đường ghi, gồm API lesson cũ, video và grader Lab. Một endpoint mới bảo vệ tốt vẫn chưa đủ nếu endpoint cũ cập nhật được course bị khóa.
+- User-scoped PostgreSQL transaction lock dùng chung giúp chống đua giữa lesson completion và CLI grading qua nhiều backend process. Kiểm thử cả double-submit, hai task khác nhau ghi đồng thời và lỗi ở bước cấp badge để chứng minh atomicity.
+- Progress làm tròn có thể mở khóa sớm ở 99.9%; trạng thái completed cần điều kiện task hoàn thành thực, và phần trăm chưa đủ điều kiện phải tối đa 99. Module rỗng không mặc định là completed.
+- Hợp đồng FE phải tách snapshot hiện tại và transition do chính mutation tạo ra. Snapshot phục vụ render/reload; transition phục vụ animation một lần. Response đến muộn và đổi tài khoản cần được xử lý ở query cache.
+- Heartbeat thời gian học cộng delta không có tính idempotent như completion. Không hứa hẹn retry an toàn cho cả hai; ghi rõ giới hạn và yêu cầu cleanup timer/không auto retry ở kế hoạch FE.
+- Inspect transport thực tế trước khi viết kế hoạch: dependency Axios có mặt không có nghĩa flow học viên dùng Axios. Giữ wrapper fetch, auth event và CRA base URL hiện có thay vì tạo một client song song.
+- Điểm hoàn thành suy ra từ curriculum khác ví XP vĩnh viễn; `User.streak` có field không đồng nghĩa đã có thuật toán cập nhật streak. Ghi rõ nghĩa của chỉ số để Agent FE không trình bày vượt quá khả năng backend.
+# Learning Path dùng dữ liệu thật trong modal — 2026-09-10
+
+- Không để dữ liệu minh họa cùng tồn tại trong component production với DTO backend: logic nhận diện theo mã/tên khóa học có thể âm thầm ghi đè dữ liệu Admin và tạo cảm giác tiến độ giả.
+- Kỹ năng trọng tâm cần là dữ liệu biên tập có chủ đích. Tái sử dụng `CourseTopic` giúp Admin chỉnh sửa trực tiếp, ổn định hơn việc suy kỹ năng từ tiêu đề video và không cần thay đổi schema.
+- Các giá trị thiếu phải có empty state rõ ràng (`Chưa cập nhật`, `Admin chưa cập nhật...`) thay vì fallback mang ý nghĩa nghiệp vụ như số giờ, tên huy hiệu hoặc lesson ID giả.
+# Audit checklist Learning Path — 2026-09-11
+
+- Checklist bàn giao phải được đối chiếu với điểm gọi thực tế, không chỉ với việc utility/component đã tồn tại. `playUnlockSequence` có source nhưng chưa được dùng nên hạng mục animation transition vẫn chưa hoàn thành.
+- `contentReady=false` là dữ liệu nghiệp vụ hữu ích cho empty state trong modal, nhưng không bắt buộc phải biến thành nhãn cảnh báo trên course node. Có thể bỏ nhãn “Cập nhật” mà vẫn giữ chặn completion giả ở backend.
+# Phân biệt badge cập nhật và hậu tố trong dữ liệu — 2026-09-11
+
+- Chữ “Cập nhật” trên node có thể đến từ hai nguồn độc lập: badge theo `contentReady` và hậu tố `(Updated)` trong `Course.title`. Khi xử lý yêu cầu giao diện phải kiểm tra cả dữ liệu render lẫn các element phụ của component.
+# Roadmap unlock animation từ transition thật — 2026-09-11
+
+- Action minh họa như `+1 Module` hoặc “Mở khóa chặng sau” không được đặt trên UI production. Cùng hiệu ứng đó phải được kích hoạt từ `courseCompleted + unlockedCourseId` do backend trả về.
+- Confetti không bắt buộc thêm dependency: GSAP có thể điều khiển các particle DOM tạm thời đặt theo `getBoundingClientRect()` của node. Cần xóa layer khi timeline hoàn tất hoặc component cleanup và bỏ hoàn toàn particle khi reduced motion.
+- Bộ chọn Ngang/Dọc phải đi vào geometry engine; chỉ đổi trạng thái active của segmented control sẽ tạo UI giả không có tác dụng.
+# Unlock acknowledgement dành cho học viên và Admin preview — 2026-09-11
+
+- Backend có thể cấp quyền chặng kế tiếp ngay trong snapshot nhưng UI vẫn có thể trì hoãn phần trình bày để học viên chủ động nhận phần thưởng. Lớp khóa tạm chỉ được áp dụng khi có bằng chứng completion thật và không được gửi ngược thành trạng thái nghiệp vụ.
+- Transition trong RAM phù hợp với điều hướng SPA; để hỗ trợ tài khoản đã hoàn thành hoặc reload, có thể suy CTA từ cặp `completed → current chưa bắt đầu` và chỉ lưu acknowledgment giao diện theo user/course.
+- Nút test Admin phải là preview thuần UI: dùng ID course thật để kiểm tra refs/geometry/confetti, không gọi endpoint progress hoặc thay đổi database.
+
+## Pháo hoa mở khóa cần đủ độ cao và mật độ — 2026-09-11
+
+- Với node roadmap khoảng 72px, quỹ đạo 45–80px trông giống confetti rung quanh node hơn là pháo hoa. Biên độ bay cao 110–194px và tỏa ngang 90–174px tạo cảm giác bắn lên rõ ràng.
+- 84 hạt với stagger ngắn 0,004 giây cho cụm dày mà vẫn nằm trong một timeline có cleanup; luôn giữ nhánh `prefers-reduced-motion` không tạo particle.
+
+## Cân thời gian theo độ cao quỹ đạo — 2026-09-11
+
+- Khi tăng độ cao particle lên gần gấp đôi, cần tăng đồng thời thời gian pha bay, pha rơi và fade. Nếu chỉ đổi tọa độ Y, pháo hoa sẽ di chuyển quá gấp và mất cảm giác trọng lực.

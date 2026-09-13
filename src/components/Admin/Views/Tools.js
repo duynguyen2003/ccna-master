@@ -3,6 +3,7 @@ import { Plus, Trash2, ToggleLeft, ToggleRight, Wrench } from 'lucide-react';
 import { adminApi } from '../../../services/api/adminApi';
 import { AuthContext } from '../../../context/AuthContext';
 import AdminModal from '../Components/AdminModal';
+import DeleteButton from '../../ui/delete-button';
 import '../../../css/Admin/AdminViews.css';
 
 const Tools = () => {
@@ -57,8 +58,8 @@ const Tools = () => {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Xóa công cụ này?')) {
+  const handleDelete = async (id, confirmed = false) => {
+    if (confirmed || window.confirm('Xóa công cụ này?')) {
       try {
         await adminApi.deleteTool(token, id);
         fetchTools();
@@ -154,13 +155,11 @@ const Tools = () => {
                           <ToggleLeft size={18} />
                         )}
                       </button>
-                      <button
-                        className="admin-action-btn delete"
-                        title="Xóa"
-                        onClick={() => handleDelete(t.id)}
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                      <DeleteButton
+                        size="sm"
+                        title="Xóa công cụ"
+                        onConfirm={() => handleDelete(t.id, true)}
+                      />
                     </div>
                   </td>
                 </tr>

@@ -1,0 +1,185 @@
+/* =========================================
+   Gooey Nav Component Styles (Rare UI / Shadcn)
+   ========================================= */
+
+.gooey-nav-container {
+  display: inline-flex;
+  position: relative;
+  user-select: none;
+  isolation: isolate;
+}
+
+.gooey-nav-list {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  position: relative;
+  box-sizing: border-box;
+}
+
+.gooey-nav-list.orientation-horizontal {
+  flex-direction: row;
+  align-items: center;
+}
+
+.gooey-nav-list.orientation-vertical {
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Gooey Nav Segment (Li) */
+.gooey-nav-segment {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+  overflow: visible;
+  margin: 0;
+}
+
+.gooey-nav-list.orientation-horizontal .gooey-nav-segment {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+.gooey-nav-list.orientation-vertical .gooey-nav-segment {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+.gooey-nav-segment.is-active {
+  z-index: 4;
+}
+
+.gooey-nav-segment.is-inactive {
+  z-index: 2;
+}
+
+.gooey-nav-segment.is-inactive:hover {
+  filter: brightness(0.96);
+}
+
+/* Item Link or Button */
+.gooey-nav-item-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  background: transparent;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+  font-family: inherit;
+  transition: color 0.25s ease, opacity 0.2s ease, transform 0.15s ease;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+/* Stacked Layout (Icon on top, label below - default for app sidebar) */
+.gooey-nav-item-stacked {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 74px;
+  padding: 10px 6px 9px;
+  min-height: 58px;
+}
+
+/* Inline Layout (Icon on left, label on right) */
+.gooey-nav-item-inline {
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 9px 18px;
+}
+
+/* Icon & Label Typography */
+.gooey-nav-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.gooey-nav-icon .material-icons-round {
+  font-size: 22px;
+  transition: transform 0.2s ease;
+}
+
+.gooey-nav-item-link.is-active .gooey-nav-icon .material-icons-round {
+  transform: scale(1.05);
+}
+
+.gooey-nav-label-text {
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.15;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* SVG Neck Seam */
+.gooey-nav-seam-svg {
+  pointer-events: none;
+  position: absolute;
+  overflow: visible;
+  z-index: 1;
+}
+
+.gooey-nav-seam-h {
+  top: 0;
+  right: 100%;
+  height: 100%;
+}
+
+.gooey-nav-seam-v {
+  left: 0;
+  bottom: 100%;
+  width: 100%;
+}
+
+/* Mobile Adjustments */
+@media (max-width: 768px) {
+  .gooey-nav-container {
+    max-width: 100%;
+    justify-content: center;
+  }
+
+  .gooey-nav-list.orientation-horizontal {
+    align-items: center;
+    justify-content: center;
+    max-width: 100%;
+  }
+
+  .gooey-nav-segment {
+    height: 50px;
+    flex-shrink: 0;
+  }
+
+  .gooey-nav-item-stacked {
+    width: auto;
+    min-width: 56px;
+    padding: 5px 6px 4px;
+    min-height: 50px;
+    height: 50px;
+    gap: 2px;
+  }
+
+  .gooey-nav-icon .material-icons-round {
+    font-size: 20px;
+  }
+
+  .gooey-nav-label-text {
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: -0.2px;
+  }
+}
