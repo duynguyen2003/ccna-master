@@ -364,6 +364,38 @@ export const Home = () => {
     { scope: containerRef }
   );
 
+  // Fade course card nhanh khi vào viewport và đảo chiều khi rời viewport.
+  // Không dịch chuyển hoặc delay theo API nên không tạo lại cảm giác tải chậm.
+  useGSAP(
+    () => {
+      if (loading || prefersReducedMotion()) return;
+
+      const courseCards = gsap.utils.toArray(
+        '.curriculum .course-card:not(.course-card-skeleton)',
+        containerRef.current
+      );
+      if (!courseCards.length) return;
+
+      gsap.fromTo(
+        courseCards,
+        { autoAlpha: 0 },
+        {
+          autoAlpha: 1,
+          duration: 0.22,
+          stagger: 0.02,
+          ease: 'power1.out',
+          scrollTrigger: {
+            trigger: '.course-grid-container',
+            start: 'top 88%',
+            end: 'bottom 12%',
+            toggleActions: 'play reverse play reverse',
+          },
+        }
+      );
+    },
+    { dependencies: [loading], scope: containerRef, revertOnUpdate: true }
+  );
+
   // Nội dung course thay skeleton nhưng giữ nguyên kích thước; chỉ refresh vị trí ScrollTrigger.
   useEffect(() => {
     if (loading) return undefined;
