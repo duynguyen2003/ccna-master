@@ -62,17 +62,18 @@ model User {
   deletedAt      DateTime? @map("deleted_at") // Xóa mềm
 
   // Quan hệ (Relations)
-  refreshTokens       RefreshToken[]
-  passwordResetTokens PasswordResetToken[]
-  progress            UserProgress[]
-  examResults         ExamResult[]
-  notes               UserNote[]
-  activities          UserActivity[]
-  badges              UserBadge[]
-  adminLogs           AdminLog[]
-  videoProgress       VideoProgress[]
-  studyLogs           StudyLog[]
-  labAttempts         LabAttempt[]
+  refreshTokens         RefreshToken[]
+  passwordResetTokens   PasswordResetToken[]
+  progress              UserProgress[]
+  examResults           ExamResult[]
+  notes                 UserNote[]
+  activities            UserActivity[]
+  badges                UserBadge[]
+  adminLogs             AdminLog[]
+  videoProgress         VideoProgress[]
+  videoProgressSessions VideoProgressSession[]
+  studyLogs             StudyLog[]
+  labAttempts           LabAttempt[]
 
   @@map("users")
 }
@@ -171,10 +172,11 @@ model Lesson {
   createdAt     DateTime  @default(now()) @map("created_at")
   deletedAt     DateTime? @map("deleted_at")
 
-  module        Module          @relation(fields: [moduleId], references: [id], onDelete: Cascade)
-  progress      UserProgress[]
-  notes         UserNote[]
-  videoProgress VideoProgress[]
+  module                Module                 @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  progress              UserProgress[]
+  notes                 UserNote[]
+  videoProgress         VideoProgress[]
+  videoProgressSessions VideoProgressSession[]
 
   @@map("lessons")
 }
@@ -443,19 +445,39 @@ model QuestionBank {
 }
 
 model VideoProgress {
-  id             Int      @id @default(autoincrement())
-  userId         Int      @map("user_id")
-  lessonId       Int      @map("lesson_id")
-  watchedSeconds Int      @default(0) @map("watched_seconds")
-  lastPosition   Int      @default(0) @map("last_position")
-  isCompleted    Boolean  @default(false) @map("is_completed")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  id             Int       @id @default(autoincrement())
+  userId         Int       @map("user_id")
+  lessonId       Int       @map("lesson_id")
+  watchedSeconds Int       @default(0) @map("watched_seconds")
+  lastPosition   Int       @default(0) @map("last_position")
+  lastPositionAt DateTime? @map("last_position_at")
+  isCompleted    Boolean   @default(false) @map("is_completed")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 
   @@unique([userId, lessonId])
   @@map("video_progress")
+}
+
+model VideoProgressSession {
+  id             Int      @id @default(autoincrement())
+  userId         Int      @map("user_id")
+  lessonId       Int      @map("lesson_id")
+  sessionId      String   @map("session_id") @db.Uuid
+  startedAt      DateTime @map("started_at")
+  lastSequence   Int      @map("last_sequence")
+  lastCapturedAt DateTime @map("last_captured_at")
+  watchedSeconds Int      @default(0) @map("watched_seconds")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, lessonId, sessionId])
+  @@map("video_progress_sessions")
 }
 
 model StudyLog {
