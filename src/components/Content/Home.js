@@ -1,18 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   ArrowRight,
-  ChevronLeft,
-  ChevronRight,
+  BookOpen,
+  ClipboardCheck,
   Code2,
+  Network,
   Router,
   Shield,
   TerminalSquare,
 } from 'lucide-react';
-import { A1, A5, A4 } from '../../image';
 import course1 from '../../image/course1.jpg';
 import course2 from '../../image/course2.jpg';
 import course3 from '../../image/course3.jpg';
+import labPreview from '../../image/landing-lab.png';
+import roadmapPreview from '../../image/landing-roadmap.png';
+import examPreview from '../../image/landing-exam.png';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/Api';
 import { gsap, useGSAP, ScrollTrigger, prefersReducedMotion } from '../../utils/homeMotion';
@@ -21,26 +24,6 @@ import { gsap, useGSAP, ScrollTrigger, prefersReducedMotion } from '../../utils/
    STATIC DATA
 ================================= */
 
-const bannerData = [
-  {
-    image: A1,
-    title: 'Chinh phục CCNA 200-301 cùng chúng tôi',
-    subtitle: 'Bắt đầu hành trình trở thành Network Engineer chuyên nghiệp.',
-    link: '/roadmap',
-  },
-  {
-    image: A5,
-    title: 'Hệ thống luyện thi trắc nghiệm thông minh',
-    subtitle: 'Ngân hàng câu hỏi cập nhật liên tục, sát với đề thi thực tế.',
-    link: '/exam',
-  },
-  {
-    image: A4,
-    title: 'Thực hành Lab không giới hạn',
-    subtitle: 'Rèn luyện kỹ năng cấu hình thực tế với hàng trăm bài Lab chất lượng.',
-    link: '/labs',
-  },
-];
 const courseBackgrounds = [course1, course2, course3];
 
 // Icon mapping theo code khóa học
@@ -52,12 +35,6 @@ const COURSE_ICONS = {
   ENSA: Shield,
 };
 const FALLBACK_ICON = TerminalSquare;
-
-const NEXT_LESSON_BY_COURSE = {
-  c1: 'Bài học tiếp theo: Subnetting cơ bản',
-  c2: 'Bài học tiếp theo: Cấu hình OSPF cơ bản',
-  c3: 'Bài học tiếp theo: Giới thiệu WAN doanh nghiệp',
-};
 
 // Tạo statusText từ progress
 const getStatusText = (progress) => {
@@ -82,7 +59,7 @@ const features = [
   {
     materialIcon: 'terminal',
     title: 'Tra cứu Cisco CLI',
-    desc: 'Từ điển lệnh IOS đầy đủ cho Router và Switch.',
+    desc: 'Tra cứu các lệnh IOS thường dùng cho Router và Switch.',
     to: '/tools/cli',
   },
   {
@@ -92,43 +69,6 @@ const features = [
     to: '/tools/ports',
   },
 ];
-
-/* ===============================
-   HOOKS
- ================================= */
-
-/**
- * Counts from 0 → target over `duration` ms, then resets and repeats every `interval` ms.
- */
-const useCountUp = (target, duration = 1500, interval = 3000) => {
-  const [count, setCount] = useState(0);
-
-  useEffect(() => {
-    let frameId;
-    let startTime = null;
-
-    const animate = (timestamp) => {
-      if (!startTime) startTime = timestamp;
-      const elapsed = timestamp - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      // ease-out quad
-      const eased = 1 - (1 - progress) * (1 - progress);
-      setCount(Math.floor(eased * target));
-
-      if (progress < 1) {
-        frameId = requestAnimationFrame(animate);
-      }
-    };
-
-    frameId = requestAnimationFrame(animate);
-
-    return () => {
-      cancelAnimationFrame(frameId);
-    };
-  }, [target, duration]);
-
-  return count;
-};
 
 /* ===============================
    REUSABLE COMPONENTS
@@ -150,55 +90,16 @@ const FeatureCard = ({ materialIcon, title, desc, to }) => (
   </Link>
 );
 
-const StatsSection = () => {
-  const count120 = useCountUp(120);
-  const count50 = useCountUp(50);
-  const count1000 = useCountUp(1000);
-
-  return (
-    <section className="stats-grid">
-      <div className="stat-card">
-        <div className="stat-icon icon-blue">
-          <span className="material-icons-round">play_circle</span>
-        </div>
-        <div className="stat-info">
-          <h3>{count120}+</h3>
-          <p>Giờ học video</p>
-        </div>
-      </div>
-      <div className="stat-card">
-        <div className="stat-icon icon-indigo">
-          <span className="material-icons-round">terminal</span>
-        </div>
-        <div className="stat-info">
-          <h3>{count50}+</h3>
-          <p>Bài lab thực hành</p>
-        </div>
-      </div>
-      <div className="stat-card">
-        <div className="stat-icon icon-purple">
-          <span className="material-icons-round">fact_check</span>
-        </div>
-        <div className="stat-info">
-          <h3>{count1000}+</h3>
-          <p>Câu hỏi ôn thi</p>
-        </div>
-      </div>
-      <div className="stat-card">
-        <div className="stat-icon icon-emerald">
-          <span className="material-icons-round">support_agent</span>
-        </div>
-        <div className="stat-info">
-          <div className="stat-value-row">
-            <h3>24/7</h3>
-            <span className="online-dot" title="Đang online"></span>
-          </div>
-          <p>Hỗ trợ cộng đồng</p>
-        </div>
-      </div>
-    </section>
-  );
-};
+/* ===============================
+   HERO TYPEWRITER CONFIG
+ ================================= */
+const HERO_PREFIX = 'Học CCNA theo lộ trình.';
+const HERO_HIGHLIGHT_PHRASES = [
+  'Thực hành mạng ngay khi học.',
+  'Làm lab cấu hình Cisco thực tế.',
+  'Luyện thi chứng chỉ CCNA 200-301.',
+  'Tự tin làm chủ hạ tầng mạng.',
+];
 
 /* ===============================
    MAIN COMPONENT
@@ -207,17 +108,90 @@ const StatsSection = () => {
 export const Home = () => {
   const { token, isAuthenticated } = useAuth();
   const navigate = useNavigate();
-  const [current, setCurrent] = useState(0);
+  const location = useLocation();
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const containerRef = useRef(null);
   const resumeCourse = courses.find((c) => c.progress > 0 && c.progress < 100) || null;
 
-  // Tự động chuyển banner
+  // Hiệu ứng chữ chạy từng chữ một (Typewriter effect) hiện đại cho tiêu đề banner
+  const isReducedMotion = prefersReducedMotion();
+  const [prefixText, setPrefixText] = useState(isReducedMotion ? HERO_PREFIX : '');
+  const [highlightText, setHighlightText] = useState(isReducedMotion ? HERO_HIGHLIGHT_PHRASES[0] : '');
+  const [isPrefixDone, setIsPrefixDone] = useState(isReducedMotion);
+  const [phraseIndex, setPhraseIndex] = useState(0);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   useEffect(() => {
-    const timer = setInterval(() => setCurrent((prev) => (prev + 1) % bannerData.length), 5000);
-    return () => clearInterval(timer);
-  }, []);
+    if (isReducedMotion) return;
+
+    // 1. Chạy gõ dòng prefix lần đầu
+    if (!isPrefixDone) {
+      if (prefixText.length < HERO_PREFIX.length) {
+        const timeout = setTimeout(() => {
+          setPrefixText(HERO_PREFIX.slice(0, prefixText.length + 1));
+        }, 36);
+        return () => clearTimeout(timeout);
+      } else {
+        const timeout = setTimeout(() => {
+          setIsPrefixDone(true);
+        }, 120);
+        return () => clearTimeout(timeout);
+      }
+    }
+
+    // 2. Chạy gõ / xóa cụm từ highlight
+    const currentFullPhrase = HERO_HIGHLIGHT_PHRASES[phraseIndex];
+
+    if (!isDeleting) {
+      if (highlightText.length < currentFullPhrase.length) {
+        const timeout = setTimeout(() => {
+          setHighlightText(currentFullPhrase.slice(0, highlightText.length + 1));
+        }, 46);
+        return () => clearTimeout(timeout);
+      } else {
+        // Dừng 2.4s để người dùng đọc câu trọn vẹn
+        const timeout = setTimeout(() => {
+          setIsDeleting(true);
+        }, 2400);
+        return () => clearTimeout(timeout);
+      }
+    } else {
+      if (highlightText.length > 0) {
+        const timeout = setTimeout(() => {
+          setHighlightText(highlightText.slice(0, -1));
+        }, 22);
+        return () => clearTimeout(timeout);
+      } else {
+        const timeout = setTimeout(() => {
+          setIsDeleting(false);
+          setPhraseIndex((prev) => (prev + 1) % HERO_HIGHLIGHT_PHRASES.length);
+        }, 180);
+        return () => clearTimeout(timeout);
+      }
+    }
+  }, [prefixText, highlightText, isPrefixDone, isDeleting, phraseIndex, isReducedMotion]);
+
+  const scrollToSection = (sectionId) => {
+    document.getElementById(sectionId)?.scrollIntoView({
+      behavior: prefersReducedMotion() ? 'auto' : 'smooth',
+      block: 'start',
+    });
+  };
+
+  useEffect(() => {
+    if (new URLSearchParams(location.search).get('section') === 'faq') {
+      document.getElementById('home-faq')?.scrollIntoView({ block: 'start' });
+    } else if (location.hash) {
+      const targetId = location.hash.replace('#', '');
+      setTimeout(() => {
+        document.getElementById(targetId)?.scrollIntoView({
+          behavior: prefersReducedMotion() ? 'auto' : 'smooth',
+          block: 'start',
+        });
+      }, 100);
+    }
+  }, [location.search, location.hash]);
 
   // Lấy dữ liệu khóa học thực từ API và tiến độ người dùng
   useEffect(() => {
@@ -286,30 +260,55 @@ export const Home = () => {
     };
   }, [token, isAuthenticated]);
 
+  // Các phần giới thiệu là nội dung tĩnh: animate ngay, không đợi API khóa học.
+  useGSAP(
+    () => {
+      if (prefersReducedMotion()) return;
+
+      const fadeOnScroll = (selector, trigger, stagger = 0) => {
+        if (!containerRef.current?.querySelector(selector)) return;
+
+        gsap.fromTo(
+          selector,
+          { opacity: 0, y: 18 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.45,
+            stagger,
+            ease: 'power2.out',
+            scrollTrigger: {
+              trigger,
+              start: 'top 88%',
+              end: 'bottom 12%',
+              toggleActions: 'play reverse play reverse',
+            },
+          }
+        );
+      };
+
+      fadeOnScroll('.landing-steps .landing-section-heading', '.landing-steps');
+      fadeOnScroll('.landing-step-card', '.landing-steps__grid', 0.08);
+      fadeOnScroll('.landing-faq .landing-section-heading', '.landing-faq');
+      fadeOnScroll('.landing-faq__list', '.landing-faq');
+      fadeOnScroll('.landing-final-cta', '.landing-final-cta');
+      ScrollTrigger.refresh();
+    },
+    { scope: containerRef }
+  );
+
   // Tự động chạy GSAP timeline & ScrollTrigger (fade in khi cuộn xuống, fade out khi cuộn ngược lên)
   useGSAP(
     () => {
       if (loading || prefersReducedMotion()) return;
 
-      // 1. Entrance timeline cho phần đầu trang (Banner & Thống kê)
+      // Giữ một hiệu ứng xuất hiện cho hero, không gắn scrub khi cuộn.
       const tl = gsap.timeline({ defaults: { ease: 'power2.out' } });
 
       tl.fromTo(
-        '.banner-container',
+        '.landing-hero',
         { opacity: 0, y: -16 },
         { opacity: 1, y: 0, duration: 0.45, clearProps: 'opacity,transform' }
-      ).fromTo(
-        '.stat-card',
-        { opacity: 0, y: 16, scale: 0.98 },
-        {
-          opacity: 1,
-          y: 0,
-          scale: 1,
-          stagger: 0.06,
-          duration: 0.35,
-          clearProps: 'opacity,transform',
-        },
-        '-=0.2'
       );
 
       // 2. Continue learning section (nếu có bài học đang dở)
@@ -415,10 +414,6 @@ export const Home = () => {
     { dependencies: [loading], scope: containerRef }
   );
 
-  const next = () => setCurrent((prev) => (prev + 1) % bannerData.length);
-
-  const prev = () => setCurrent((prev) => (prev - 1 + bannerData.length) % bannerData.length);
-
   const handleResumeLearning = () => {
     if (!isAuthenticated) {
       navigate('/login');
@@ -434,49 +429,73 @@ export const Home = () => {
 
   return (
     <div className="home-wrapper" ref={containerRef}>
-      {/* ================= Banner ================= */}
-      <section className="banner-section">
-        <div className="banner-container">
-          <button className="nav-btn prev" onClick={prev}>
-            <ChevronLeft size={24} />
-          </button>
-
-          <button className="nav-btn next" onClick={next}>
-            <ChevronRight size={24} />
-          </button>
-
-          {bannerData.map((slide, i) => (
-            <div key={i} className={`banner-slide ${i === current ? 'active' : ''}`}>
-              <div className="banner-text-content">
-                <h1 className="banner-title">{slide.title}</h1>
-                <p className="banner-subtitle">{slide.subtitle}</p>
-                <Link to={slide.link} className="btn-primary-compact">
-                  Bắt đầu ngay <ArrowRight size={18} style={{ marginLeft: '8px' }} />
-                </Link>
-              </div>
-              <div
-                className="banner-image-content"
-                style={{ backgroundImage: `url(${slide.image})` }}
-              ></div>
-            </div>
-          ))}
-
-          <div className="banner-indicators">
-            {bannerData.map((_, i) => (
-              <button
-                key={i}
-                className={`indicator-dot ${i === current ? 'active' : ''}`}
-                onClick={() => setCurrent(i)}
+      <section className="landing-hero" aria-labelledby="landing-title">
+        <div className="landing-hero__content">
+          <p className="landing-eyebrow">NETMASTERY · HỌC VÀ LUYỆN THI CCNA</p>
+          <h1
+            id="landing-title"
+            aria-label="Học CCNA theo lộ trình. Thực hành mạng ngay khi học."
+          >
+            <span className="hero-title-prefix">{prefixText}</span>
+            {!isPrefixDone && (
+              <span
+                className="hero-typewriter-cursor hero-typewriter-cursor--prefix"
+                aria-hidden="true"
               />
-            ))}
+            )}
+            {' '}
+            <span className="hero-title-highlight">
+              {highlightText}
+              {isPrefixDone && (
+                <span className="hero-typewriter-cursor" aria-hidden="true" />
+              )}
+            </span>
+          </h1>
+          <p className="landing-hero__description">
+            Từ bài học nền tảng đến lab cấu hình và bài thi thử, bạn có thể học và tự kiểm tra
+            trong cùng một nền tảng. Phù hợp cho người mới bắt đầu học mạng.
+          </p>
+          <div className="landing-hero__actions">
+            <Link to="/roadmap" className="landing-button landing-button--primary">
+              Xem lộ trình học <ArrowRight size={18} aria-hidden="true" />
+            </Link>
+            <button
+              type="button"
+              className="landing-button landing-button--secondary"
+              onClick={() => scrollToSection('home-how-it-works')}
+            >
+              Xem cách học
+            </button>
           </div>
+        </div>
+
+        <div className="landing-hero__journey" aria-label="Ba phần trong hành trình học CCNA">
+          <div className="landing-journey__heading">
+            <span>Hành trình học CCNA</span>
+            <span>CCNA 200-301</span>
+          </div>
+          <ol className="landing-journey__list">
+            <li>
+              <span className="landing-journey__icon"><BookOpen size={19} aria-hidden="true" /></span>
+              <span><strong>Học kiến thức nền tảng</strong><small>Theo từng khóa học và bài học</small></span>
+              <span className="landing-journey__number">01</span>
+            </li>
+            <li>
+              <span className="landing-journey__icon"><Network size={19} aria-hidden="true" /></span>
+              <span><strong>Thực hành cấu hình</strong><small>Áp dụng kiến thức trong bài lab</small></span>
+              <span className="landing-journey__number">02</span>
+            </li>
+            <li>
+              <span className="landing-journey__icon"><ClipboardCheck size={19} aria-hidden="true" /></span>
+              <span><strong>Tự kiểm tra</strong><small>Luyện tập với bài thi thử</small></span>
+              <span className="landing-journey__number">03</span>
+            </li>
+          </ol>
+          <div className="landing-journey__footer">Học theo nhịp độ phù hợp với bạn</div>
         </div>
       </section>
 
-      {/* ================= Stats ================= */}
-      <StatsSection />
-
-      {/* ================= Continue Learning ================= */}
+      {/* Khóa học đang dở cần xuất hiện trước nội dung giới thiệu cho học viên. */}
       {isAuthenticated && resumeCourse && (
         <section className="continue-learning">
           <div className="continue-learning-inner">
@@ -518,8 +537,58 @@ export const Home = () => {
         </section>
       )}
 
+
+      <section id="home-how-it-works" className="landing-steps" aria-labelledby="landing-steps-title">
+        <div className="landing-section-heading">
+          <p className="landing-eyebrow">MỘT LỘ TRÌNH, BA CÁCH HỌC</p>
+          <h2 id="landing-steps-title">Đi từ hiểu kiến thức đến làm được bài tập</h2>
+          <p>Mỗi bước có một nơi để học, thực hành và kiểm tra kết quả.</p>
+        </div>
+        <div className="landing-steps__grid">
+          <article className="landing-step-card">
+            <span className="landing-step-card__number">01</span>
+            <BookOpen size={28} aria-hidden="true" />
+            <img
+              className="landing-step-card__image landing-step-card__image--roadmap"
+              src={roadmapPreview}
+              alt="Giao diện lộ trình học CCNA với ba chặng kiến thức"
+              loading="lazy"
+            />
+            <h3>Học theo lộ trình</h3>
+            <p>Bắt đầu từ kiến thức mạng nền tảng và theo dõi phần đã hoàn thành.</p>
+            <Link to="/roadmap">Xem lộ trình <ArrowRight size={16} aria-hidden="true" /></Link>
+          </article>
+          <article className="landing-step-card">
+            <span className="landing-step-card__number">02</span>
+            <Network size={28} aria-hidden="true" />
+            <img
+              className="landing-step-card__image landing-step-card__image--lab"
+              src={labPreview}
+              alt="Giao diện xem trước lab với sơ đồ mạng và danh sách nhiệm vụ"
+              loading="lazy"
+            />
+            <h3>Làm lab thực hành</h3>
+            <p>Chọn bài lab để luyện thao tác cấu hình và xử lý tình huống mạng.</p>
+            <Link to="/labs">Khám phá lab <ArrowRight size={16} aria-hidden="true" /></Link>
+          </article>
+          <article className="landing-step-card">
+            <span className="landing-step-card__number">03</span>
+            <ClipboardCheck size={28} aria-hidden="true" />
+            <img
+              className="landing-step-card__image landing-step-card__image--exam"
+              src={examPreview}
+              alt="Giao diện trung tâm kiểm tra với các bài thi thử CCNA"
+              loading="lazy"
+            />
+            <h3>Luyện thi và xem lại</h3>
+            <p>Làm bài kiểm tra, xem kết quả và ôn lại nội dung cần cải thiện.</p>
+            <Link to="/exam/testing-center">Xem bài kiểm tra <ArrowRight size={16} aria-hidden="true" /></Link>
+          </article>
+        </div>
+      </section>
+
       {/* ================= Curriculum ================= */}
-      <section className="curriculum">
+      <section id="home-courses" className="curriculum">
         <div className="section-header">
           <h2 className="section-title">Lộ trình học CCNA chuẩn Cisco</h2>
           <p className="section-desc">Đi từ nền tảng đến sẵn sàng thi CCNA 200-301.</p>
@@ -527,6 +596,15 @@ export const Home = () => {
 
         <div className="course-grid-container">
           <div className="course-grid-line"></div>
+          {loading && <p className="home-course-status" role="status">Đang tải khóa học...</p>}
+          {!loading && courses.length === 0 && (
+            <div className="home-course-status" role="status">
+              <p>Chưa hiển thị được danh sách khóa học.</p>
+              <Link to="/roadmap">
+                Xem lộ trình học <ArrowRight size={16} aria-hidden="true" />
+              </Link>
+            </div>
+          )}
           <div className="course-grid">
             {courses.map((course) => {
               const Icon = course.icon;
@@ -536,11 +614,11 @@ export const Home = () => {
               const cardClass = showAsActive ? 'course-card active' : 'course-card inactive';
 
               return (
-                <div
+                <Link
                   key={course.id}
+                  to={`/course/${course.courseId}?from=home`}
                   className={`${cardClass} with-bg`}
                   style={{
-                    cursor: 'pointer',
                     textDecoration: 'none',
                     color: 'inherit',
                     backgroundImage: `linear-gradient(180deg, rgba(15, 23, 42, 0.42), rgba(15, 23, 42, 0.74)), url(${course.backgroundImage})`,
@@ -549,11 +627,6 @@ export const Home = () => {
                     backgroundRepeat: 'no-repeat',
                     '--course-bg-image': `url(${course.backgroundImage})`,
                   }}
-                  onClick={() =>
-                    isAuthenticated
-                      ? navigate(`/course/${course.courseId}?from=home`)
-                      : navigate(`/course/${course.courseId}?from=home`)
-                  }
                   id={`home-course-card-${course.courseId}`}
                 >
                   <div className={`course-number ${numberClass}`}>{course.id}</div>
@@ -595,22 +668,11 @@ export const Home = () => {
                     </div>
                   )}
 
-                  <button
-                    type="button"
-                    className={`course-detail-btn ${showAsActive ? 'active' : 'inactive'}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (isAuthenticated) {
-                        navigate(`/course/${course.courseId}?from=home`);
-                      } else {
-                        navigate(`/course/${course.courseId}?from=home`);
-                      }
-                    }}
-                  >
+                  <span className={`course-detail-btn ${showAsActive ? 'active' : 'inactive'}`}>
                     Xem chi tiết
                     <ArrowRight size={16} />
-                  </button>
-                </div>
+                  </span>
+                </Link>
               );
             })}
           </div>
@@ -618,7 +680,7 @@ export const Home = () => {
       </section>
 
       {/* ================= Features ================= */}
-      <section className="features">
+      <section id="home-tools" className="features">
         <div className="section-header">
           <h2 className="section-title">Công cụ hỗ trợ học tập</h2>
           <p>Các tiện ích giúp bạn tối ưu hóa quá trình học tập và thực hành mạng.</p>
@@ -629,6 +691,38 @@ export const Home = () => {
             <FeatureCard key={i} {...item} />
           ))}
         </div>
+      </section>
+
+      <section id="home-faq" className="landing-faq" aria-labelledby="landing-faq-title">
+        <div className="landing-section-heading">
+          <p className="landing-eyebrow">CÂU HỎI THƯỜNG GẶP</p>
+          <h2 id="landing-faq-title">Bắt đầu học thế nào?</h2>
+        </div>
+        <div className="landing-faq__list">
+          <details>
+            <summary>Tôi mới học mạng, nên bắt đầu ở đâu?</summary>
+            <p>Bạn có thể mở lộ trình học để xem các chặng và chọn bài học nền tảng trước.</p>
+          </details>
+          <details>
+            <summary>Có thể xem nội dung trước khi đăng ký không?</summary>
+            <p>Bạn có thể xem lộ trình và danh sách lab. Để lưu tiến độ và bắt đầu thực hành, hãy đăng nhập.</p>
+          </details>
+          <details>
+            <summary>Tôi có thể tự kiểm tra sau khi học không?</summary>
+            <p>Có. Mục Kiểm tra có các bài thi thử và phần xem lại kết quả để bạn tiếp tục ôn tập.</p>
+          </details>
+        </div>
+      </section>
+
+      <section className="landing-final-cta" aria-labelledby="landing-final-title">
+        <div>
+          <p className="landing-eyebrow">BẮT ĐẦU TỪ BƯỚC ĐẦU TIÊN</p>
+          <h2 id="landing-final-title">Sẵn sàng học CCNA theo lộ trình của bạn?</h2>
+          <p>Xem các chặng học, chọn bài phù hợp và bắt đầu thực hành khi bạn sẵn sàng.</p>
+        </div>
+        <Link to={isAuthenticated ? '/roadmap' : '/register'} className="landing-button landing-button--light">
+          {isAuthenticated ? 'Mở lộ trình học' : 'Tạo tài khoản'} <ArrowRight size={18} aria-hidden="true" />
+        </Link>
       </section>
     </div>
   );

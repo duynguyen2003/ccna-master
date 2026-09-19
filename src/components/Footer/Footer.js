@@ -3,24 +3,20 @@ import { Link } from 'react-router-dom';
 import '../../css/Footer.css';
 
 const COL_COURSES = [
-  { label: 'Mạng căn bản (Network Fundamentals)', to: '/roadmap' },
-  { label: 'Định tuyến & Chuyển mạch (Routing & Switching)', to: '/lesson' },
-  { label: 'Bảo mật mạng (Security)', to: '/lesson' },
-  { label: 'Tự động hóa mạng (Automation)', to: '/lesson' },
+  { label: 'Lộ trình học CCNA', to: '/roadmap' },
+  { label: 'Danh sách bài lab', to: '/labs' },
+  { label: 'Bài thi thử', to: '/exam/testing-center' },
 ];
 
 const COL_RESOURCES = [
-  { label: 'Làm đề thi thử (Mock Exams)', to: '/exam' },
-  { label: 'Bài tập Packet Tracer Labs', to: '/labs' },
   { label: 'Công cụ Subnetting Calculator', to: '/tools/subnet' },
-  { label: 'Lộ trình học tập', to: '/roadmap' },
+  { label: 'Công cụ VLSM Calculator', to: '/tools/vlsm' },
+  { label: 'Tra cứu Cisco CLI', to: '/tools/cli' },
+  { label: 'Tra cứu Port & Giao thức', to: '/tools/ports' },
 ];
 
 const COL_ABOUT = [
-  { label: 'Giới thiệu đồ án tốt nghiệp', to: '/' },
-  { label: 'Câu hỏi thường gặp (FAQ)', to: '/' },
-  { label: 'Điều khoản sử dụng', to: '/' },
-  { label: 'Chính sách bảo mật', to: '/' },
+  { label: 'Câu hỏi thường gặp (FAQ)', to: '/?section=faq' },
 ];
 
 const NavColumn = ({ title, links }) => (
@@ -55,16 +51,6 @@ const Footer = () => {
             <p className="footer__brand-slogan">
               Nền tảng học và luyện thi CCNA thực chiến. Từ nền tảng đến kỹ sư mạng chuyên nghiệp.
             </p>
-            <ul className="footer__contact-list">
-              <li className="footer__contact-item">
-                <span className="material-icons-round">mail_outline</span>
-                contact@netmastery.edu.vn
-              </li>
-              <li className="footer__contact-item">
-                <span className="material-icons-round">phone_in_talk</span>
-                1900 1234
-              </li>
-            </ul>
           </div>
 
           <NavColumn title="Khóa học" links={COL_COURSES} />

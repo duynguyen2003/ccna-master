@@ -12,7 +12,8 @@ const navItems = [
     label: 'Khóa học',
     href: '/roadmap',
     icon: <span className="material-icons-round">auto_stories</span>,
-    isActive: (pathname) => pathname === '/roadmap' || pathname.startsWith('/course'),
+    isActive: (pathname) =>
+      pathname === '/roadmap' || pathname.startsWith('/course') || pathname === '/lesson',
   },
   {
     label: 'Thực hành',
