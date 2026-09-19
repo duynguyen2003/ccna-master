@@ -1159,49 +1159,89 @@
   border: 1px solid #cbd5e1;
   border-radius: 8px;
   overflow: hidden;
+  min-width: 0;
+}
+
+.acm-editor-split {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 8px;
 }
 
 .acm-editor-toolbar {
-  height: 34px;
-  padding: 0 8px;
+  min-height: 42px;
+  padding: 6px;
   display: flex;
   align-items: center;
-  gap: 6px;
+  flex-wrap: wrap;
+  gap: 4px;
   border-bottom: 1px solid #e2e8f0;
-  background-color: #ffffff;
+  background-color: #f8fafc;
 }
 
 .acm-editor-toolbar button {
-  width: 24px;
-  height: 24px;
+  min-height: 30px;
+  padding: 4px 7px;
   border: 1px solid transparent;
   background: transparent;
-  color: #475569;
-  border-radius: 6px;
+  color: #334155;
+  border-radius: 5px;
   cursor: pointer;
-  font-size: 11px;
-}
-
-.acm-editor-toolbar button:hover {
-  background-color: #e2e8f0;
-}
-
-.acm-editor-toolbar span {
-  margin-left: auto;
-  font-size: 10px;
-  color: #64748b;
+  font: 600 11px/1.2 var(--system-ui);
   display: inline-flex;
   align-items: center;
   gap: 4px;
 }
 
+.acm-editor-toolbar button:hover,
+.acm-editor-toolbar button:focus-visible {
+  border-color: #bfdbfe;
+  background-color: #eff6ff;
+  color: #1d4ed8;
+}
+
+.acm-editor-toolbar button:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 1px;
+}
+
 .acm-editor-textarea {
   width: 100%;
-  min-height: 180px;
+  min-height: 350px;
+  padding: 14px;
   border: none;
   border-radius: 0;
-  font-family: var(--system-ui);
+  outline: none;
+  font: 13px/1.6 ui-monospace, SFMono-Regular, Consolas, monospace;
   resize: vertical;
+}
+
+.acm-editor-textarea:focus-visible {
+  box-shadow: inset 0 0 0 2px #93c5fd;
+}
+
+.acm-editor-preview {
+  min-width: 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.acm-preview-heading {
+  border-bottom: 1px solid #e2e8f0;
+  padding: 10px 14px;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.acm-preview-content {
+  padding: 14px;
+  max-height: 430px;
+  overflow: auto;
 }
 
 .acm-review-card {
@@ -1377,6 +1417,10 @@
 }
 
 @media (max-width: 900px) {
+  .acm-editor-split {
+    grid-template-columns: 1fr;
+  }
+
   .acm-form-grid.two-cols {
     grid-template-columns: 1fr;
   }

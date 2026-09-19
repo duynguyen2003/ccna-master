@@ -24,6 +24,13 @@ import {
   Clock,
   Eye,
   Pencil,
+  Bold,
+  Italic,
+  Heading2,
+  List,
+  Code2,
+  Lightbulb,
+  Sparkles,
 } from 'lucide-react';
 import { adminApi } from '../../../services/api/adminApi';
 import { AuthContext } from '../../../context/AuthContext';
@@ -32,6 +39,7 @@ import DeleteButton from '../../ui/delete-button';
 import '../../../css/Admin/AdminViews.css';
 import '../../../css/Lesson.css';
 import MarkdownRenderer from '../../Common/MarkdownRenderer';
+import { formatLessonMarkdown } from './lessonMarkdown';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const stepLabels = ['Cơ bản', 'Nội dung', 'Rà soát'];
@@ -43,6 +51,17 @@ const initialLessonForm = {
   videoUrl: '',
   videoDuration: '',
 };
+const markdownTools = [
+  { action: 'heading', label: 'Tiêu đề', Icon: Heading2 },
+  { action: 'bold', label: 'Đậm', Icon: Bold },
+  { action: 'italic', label: 'Nghiêng', Icon: Italic },
+  { action: 'list', label: 'Danh sách', Icon: List },
+  { action: 'link', label: 'Liên kết', Icon: Link },
+  { action: 'code', label: 'Mã CLI', Icon: Code2 },
+  { action: 'note', label: 'Ghi chú', Icon: Lightbulb },
+  { action: 'tip', label: 'Mẹo', Icon: Sparkles },
+  { action: 'warning', label: 'Cảnh báo', Icon: AlertTriangle },
+];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const isValidUrl = (value) => {
@@ -229,6 +248,7 @@ const CourseDetail = () => {
   const [editingModule, setEditingModule] = useState(null);
   const [moduleForm, setModuleForm] = useState(initialModuleForm);
   const [lessonForm, setLessonForm] = useState(initialLessonForm);
+  const contentTextareaRef = useRef(null);
   const [topicInput, setTopicInput] = useState('');
   const [step, setStep] = useState(1);
 
@@ -398,6 +418,26 @@ const CourseDetail = () => {
       if (lessonErrors[field]) setLessonErrors((prev) => ({ ...prev, [field]: '' }));
     },
     [lessonErrors]
+  );
+
+  const insertLessonFormatting = useCallback(
+    (action) => {
+      const textarea = contentTextareaRef.current;
+      if (!textarea) return;
+      const result = formatLessonMarkdown(
+        lessonForm.contentHtml,
+        textarea.selectionStart,
+        textarea.selectionEnd,
+        action
+      );
+      handleLessonChange('contentHtml', result.value);
+      window.requestAnimationFrame(() => {
+        if (contentTextareaRef.current !== textarea) return;
+        textarea.focus();
+        textarea.setSelectionRange(result.selectionStart, result.selectionEnd);
+      });
+    },
+    [handleLessonChange, lessonForm.contentHtml]
   );
 
   const handleSubmitModule = useCallback(async () => {
@@ -763,95 +803,46 @@ const CourseDetail = () => {
                         placeholder="VD: 10:30"
                       />
                     </label>
-                    <label className="acm-field">
+                    <div className="acm-field">
                       <span>
                         <AlignLeft size={12} /> Nội dung bài học (Markdown)
                       </span>
-                      <div
-                        className="acm-editor-split"
-                        style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}
-                      >
-                        <div className="acm-editor-box" style={{ flex: 1 }}>
-                          <div
-                            className="acm-editor-toolbar"
-                            style={{
-                              borderBottom: '1px solid #e2e8f0',
-                              padding: '0.5rem',
-                              background: '#f8fafc',
-                              display: 'flex',
-                              justifyContent: 'space-between',
-                            }}
-                          >
-                            <span
-                              style={{ fontSize: '0.75rem', fontWeight: 600, color: '#64748b' }}
-                            >
-                              Soạn thảo Markdown
-                            </span>
-                            <span
-                              style={{
-                                fontSize: '0.75rem',
-                                color: '#94a3b8',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '0.25rem',
-                              }}
-                            >
-                              <Clock size={11} /> Auto save
-                            </span>
+                      <div className="acm-editor-split">
+                        <div className="acm-editor-box">
+                          <div className="acm-editor-toolbar" role="toolbar" aria-label="Định dạng nội dung bài học">
+                            {markdownTools.map(({ action, label, Icon }) => (
+                              <button
+                                key={action}
+                                type="button"
+                                title={`Chèn ${label.toLowerCase()}`}
+                                aria-label={`Chèn ${label.toLowerCase()}`}
+                                onMouseDown={(event) => event.preventDefault()}
+                                onClick={() => insertLessonFormatting(action)}
+                              >
+                                <Icon size={14} aria-hidden="true" />
+                                {label}
+                              </button>
+                            ))}
                           </div>
                           <textarea
+                            ref={contentTextareaRef}
                             className="acm-editor-textarea"
-                            style={{
-                              width: '100%',
-                              minHeight: '350px',
-                              padding: '1rem',
-                              border: 'none',
-                              outline: 'none',
-                              resize: 'vertical',
-                              fontFamily: 'monospace',
-                              fontSize: '14px',
-                              lineHeight: 1.6,
-                            }}
+                            aria-label="Nội dung bài học"
                             value={lessonForm.contentHtml}
                             onChange={(e) => handleLessonChange('contentHtml', e.target.value)}
-                            placeholder="Sử dụng Markdown..."
+                            placeholder="Viết nội dung bài học hoặc chọn các nút định dạng phía trên..."
                           />
                         </div>
-                        <div
-                          className="acm-editor-preview"
-                          style={{
-                            flex: 1,
-                            border: '1px solid #e2e8f0',
-                            borderRadius: '0.5rem',
-                            background: '#fff',
-                            overflow: 'hidden',
-                            display: 'flex',
-                            flexDirection: 'column',
-                          }}
-                        >
-                          <div
-                            style={{
-                              borderBottom: '1px solid #e2e8f0',
-                              padding: '0.5rem 1rem',
-                              background: '#f8fafc',
-                              fontSize: '0.75rem',
-                              fontWeight: 600,
-                              color: '#64748b',
-                            }}
-                          >
-                            Xem trước (Live Preview)
-                          </div>
-                          <div
-                            className="acm-preview-content"
-                            style={{ padding: '1rem', overflowY: 'auto', maxHeight: '400px' }}
-                          >
+                        <div className="acm-editor-preview">
+                          <div className="acm-preview-heading">Xem trước nội dung</div>
+                          <div className="acm-preview-content">
                             <MarkdownRenderer content={lessonForm.contentHtml || ''} />
                           </div>
                         </div>
                       </div>
-                    </label>
+                    </div>
                     <small className="acm-field-hint">
-                      {lessonForm.contentHtml.length} ký tự (Lưu dạng Markdown)
+                      Chọn một đoạn để định dạng nhanh. {lessonForm.contentHtml.length} ký tự; nội dung được lưu khi bấm Lưu bài học.
                     </small>
                   </div>
                 ) : null}

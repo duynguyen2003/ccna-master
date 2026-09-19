@@ -1,5 +1,12 @@
 import React from 'react';
 import { marked } from 'marked';
+import { sanitizeHtml } from '../../shared/sanitizeHtml';
+
+const escapeHtml = (value) => String(value)
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;');
 
 // Configure custom markdown renderer
 const renderer = new marked.Renderer();
@@ -7,9 +14,9 @@ const renderer = new marked.Renderer();
 renderer.code = function ({ text, lang }) {
   // CLI/Cisco blocks use a special black background
   if (!lang || lang === 'cli' || lang === 'cisco') {
-    return `<pre class="lc-code-block">\n${text}\n</pre>\n`;
+    return `<pre class="lc-code-block">\n${escapeHtml(text)}\n</pre>\n`;
   }
-  return `<pre><code>${text}</code></pre>\n`;
+  return `<pre><code>${escapeHtml(text)}</code></pre>\n`;
 };
 
 renderer.blockquote = function ({ text, tokens }) {
@@ -60,10 +67,10 @@ const parseMarkdown = (content) => {
         return `> [!${type.toUpperCase()}]\n> ` + lines.join('\n> ') + '\n\n';
       }
     );
-    return marked.parse(processed);
+    return sanitizeHtml(marked.parse(processed));
   } catch (error) {
     console.error('[MarkdownRenderer] Lỗi parse nội dung:', error);
-    return `<p>${content}</p>`;
+    return `<p>${escapeHtml(content)}</p>`;
   }
 };
 
