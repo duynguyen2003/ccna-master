@@ -1,5 +1,22 @@
 # Bài học triển khai
 
+## Giao diện bài học ba cột và YouTube — 2026-09-19
+
+- `react-youtube` phiên bản đang dùng nhận `className` cho div bọc player; prop sai có thể bị bỏ qua hoàn toàn. Chỉ ép `iframe { height: 100% }` không đủ nếu wrapper thật không có class/chiều cao. Cần đo `getBoundingClientRect()` của frame, wrapper và iframe trên browser.
+- Với layout ba cột, cho phần giữa cuộn riêng trong container cao theo viewport giúp hai sidebar giữ nguyên vị trí. Ở chế độ drawer phải đặt chiều cao rõ bằng `calc(100vh - var(--header-height))`; chỉ dùng `top`, `bottom`, `height: auto` vẫn có thể co theo nội dung khi phần tử là flex item.
+- Breakpoint trong state React phải trùng CSS. Khi dưới 1280px, chỉ mở một drawer tại một thời điểm và dùng overlay chung để không che khuất nội dung hoặc tạo hai lớp điều khiển cạnh tranh.
+- Mốc thời gian có thể bổ sung vào ghi chú text hiện hữu bằng cú pháp `[mm:ss]`: không cần migration, vẫn tự lưu như trước và có thể parse thành nút seek. Player phải áp lại giới hạn tua của học viên cho mọi lệnh seek đến từ UI.
+- Test DOM xác nhận cấu trúc và hành vi, nhưng lỗi iframe 150px chỉ lộ rõ khi đo browser thật. Với lỗi bố cục video nhúng, luôn kiểm tra cả DOM do thư viện bên thứ ba sinh ra và computed size ở các viewport mục tiêu.
+
+## Tiến độ video và ghi chú bài học — 2026-09-19
+
+- Vị trí phát video và thời gian học phải là hai số riêng: tua đến một mốc không tạo thời gian học; tốc độ phát 2x vẫn chỉ cộng giây thực tế tab đang phát.
+- Heartbeat cần `sessionId`, sequence và tổng giây theo phiên để retry hoặc request lệch thứ tự không cộng lặp. Timestamp chụp sự kiện giúp bookmark không bị request cũ ghi lùi; timestamp bắt đầu phiên giúp snapshot đầu sau mất mạng vẫn được tính.
+- Khi resume từ bookmark, chờ GET thành công trước khi gắn player và chưa gửi snapshot trong lúc lệnh seek còn chờ. Một trạng thái lưu thành công không đồng nghĩa bài học đã hoàn thành; UI chỉ nhận completion từ phản hồi server.
+- Thiết kế bài học phải xét bài chỉ có nội dung chữ. Nếu chỉ có video mới phát tín hiệu hoàn thành, bài đọc sẽ không có cách mở bài tiếp theo.
+- Với giao diện nhiều sidebar, breakpoint CSS và state React phải trùng nhau. Kiểm tra cả khoảng giữa các breakpoint; ở 1024–1279 px, nút mở sổ tay từng bị ẩn cùng với panel.
+- Toolbar chèn mẫu Markdown và preview giảm yêu cầu nhớ cú pháp cho admin, đồng thời giữ dữ liệu cũ. Render HTML từ Markdown phải qua sanitizer; kiểm thử chuỗi độc hại và callout để tránh mất giao diện hoặc tạo XSS.
+
 ## CORS local và backend Docker — 2026-09-09
 
 - Không dùng `startsWith` để kiểm tra origin vì hostname giả mạo có thể mang tiền tố giống origin hợp lệ. Chuẩn hóa rồi so khớp toàn bộ origin bằng allowlist chính xác.
@@ -216,3 +233,64 @@
 ## Cân thời gian theo độ cao quỹ đạo — 2026-09-11
 
 - Khi tăng độ cao particle lên gần gấp đôi, cần tăng đồng thời thời gian pha bay, pha rơi và fade. Nếu chỉ đổi tọa độ Y, pháo hoa sẽ di chuyển quá gấp và mất cảm giác trọng lực.
+
+## Trang chủ theo hướng landing page — 2026-09-17
+
+- Hero carousel tự chuyển có thể giữ nhiều H1 và CTA ẩn trong DOM, vẫn nhận focus bằng bàn phím. Một hero cố định với CTA theo hành động thật giúp nội dung đầu trang rõ và dễ kiểm tra hơn.
+- Số liệu marketing ghi cứng hoặc thông tin liên hệ mẫu làm giảm độ tin cậy; khi chưa có nguồn dữ liệu xác thực, nên dùng ảnh giao diện thật và mô tả chức năng có thể truy cập. Ảnh lấy từ chế độ xem trước phải được ghi rõ là bản xem trước.
+- Với `HashRouter`, liên kết `#section` trực tiếp dễ xung đột với route. Điều hướng trong Home bằng `scrollIntoView`; liên kết từ footer dùng query route để Home tự cuộn tới FAQ.
+- Cùng một Home phục vụ khách và học viên: chỉ ẩn sidebar với khách, đưa “Tiếp tục bài học” lên trước nội dung giới thiệu cho học viên. Giữ riêng animation xuất hiện của hero và không xóa inline style chứa ảnh nền khóa học.
+- Ảnh chụp toàn trang sau khi đã cuộn có thể đặt sticky header/nav ở giữa ảnh; nên chụp thêm viewport đầu trang để đánh giá đúng bố cục thực tế.
+
+## Tinh chỉnh landing — 2026-09-18
+
+- “Font mặc định” có thể là font serif mặc định của tài liệu hoặc font sans-serif của giao diện hệ thống. Khi người dùng yêu cầu không có chân, dùng rõ `system-ui, sans-serif` và đo computed font ở cả header, nội dung, footer; giới hạn bằng class route Home để không đổi các trang học/lab.
+- Ảnh lab trong thẻ bước 02 đã đủ giới thiệu thao tác. Lặp cùng ảnh và liên kết ở panel ngay bên dưới làm trang dài mà không thêm thông tin; bỏ panel giúp mạch ba bước chuyển thẳng sang lộ trình.
+- Nội dung landing tĩnh nên có ScrollTrigger riêng, không đợi API khóa học. Fade hai chiều dùng một tween/selector và bỏ qua khi reduced motion; không gắn thêm tween cuộn vào hero từng lỗi và không dùng `clearProps: all` trên thẻ khóa học có ảnh nền inline.
+- Kích thước banner nên đo bằng `getBoundingClientRect()` ở desktop và mobile sau khi chỉnh typography; giảm `min-height` đơn lẻ không đủ nếu nội dung và padding vẫn quyết định chiều cao thực tế.
+
+## Đồng bộ lưới công cụ — 2026-09-18
+
+- Một section có tiêu đề căn giữa vẫn có thể lệch bố cục nếu riêng lưới thẻ dùng `max-width` lớn hơn các section xung quanh. So sánh tọa độ hai mép và chiều rộng thật ở nhiều viewport để tìm nguyên nhân.
+- Khi thu lưới bốn cột, cần dời ngưỡng chuyển sang bốn cột lên màn hình đủ rộng; nếu giữ ngưỡng 1024px, nội dung mỗi thẻ trở nên chật dù tổng lưới đã đúng khung.
+
+## Chuyển động mũi tên liên kết — 2026-09-18
+
+- Với icon SVG bên trong liên kết, chỉ transform icon sẽ giữ nguyên vị trí chữ và vùng bấm. Dùng transition có độ bật vừa phải cho cả lúc hover và lúc rời, đồng thời tắt hoàn toàn transform trong `prefers-reduced-motion: reduce`.
+
+## Đồng bộ chuyển động Home — 2026-09-18
+
+- Một trang có thể trộn SVG Lucide và icon font dạng `span`; muốn cùng hiệu ứng phải nhắm đúng cả hai, và `span` cần `display: inline-block` để transform hoạt động. Khi chỉ mũi tên cần lùi, tránh transform cả nút chứa nó vì hai chuyển động dễ triệt tiêu nhau.
+- “Giảm border” ở banner cần đối chiếu CSS: banner không có border viền ngoài mà có radius lớn. Giảm đúng bán kính góc của banner, khung con và ba thẻ liên quan thay vì đổi độ dày viền 1px đang dùng.
+
+## Trạng thái lộ trình và cuộn khi mở khóa học — 2026-09-18
+
+- Khi điều hướng SPA từ thẻ khóa học ở phần thấp trang Home, route mới có thể giữ `scrollY` cũ rồi bị trình duyệt ép xuống đáy nếu trang mới ngắn hơn. Tái hiện cả `scrollY` và `maxScroll` trước khi sửa; đặt lại cuộn trong route đích trước khi vẽ để tránh chớp ở cuối trang.
+- Trạng thái completed/current nên dùng đúng token màu của node tương ứng. Animation chú thích chỉ cần trên dấu nhỏ và phải tắt khi người dùng chọn reduced motion.
+
+## Nền giấy ô ly cho trang trắng — 2026-09-18
+
+- Nền white của Layout có thể bị các wrapper white cấp trang che kín; đặt pattern trên lớp nền nội dung chung và chỉ làm trong suốt các wrapper cấp trang đang phủ trắng. Giữ card, form, modal và vùng điều hướng opaque để chữ dễ đọc.
+- Khi giao diện có route nền xám riêng như lộ trình và bài học, đánh dấu route được nhận pattern thay vì áp dụng lên toàn bộ `body`; kiểm tra computed background và ảnh chụp ở cả desktop/mobile.
+
+## Kiểm thử browser và bảo vệ ghi chú — 2026-09-19
+
+- Không biến lỗi GET dữ liệu có thể chỉnh sửa thành giá trị rỗng mặc định: editor trống sau503 có thể ghi đè dữ liệu thật. Chỉ mở nhập sau khi tải thành công; hiển thị lỗi/thử lại và hủy hiệu lực kết quả fetch cũ khi đổi bài. Kiểm tra cả GET503, phản hồi chậm/đổi bài và POST503/retry/reload trên DB QA.
+- `overflow: hidden` có thể che lỗi responsive mà không tăng scrollWidth. Cần đo bounding box của main/nút, xem screenshot và thao tác form; admin sidebar desktop phải thành drawer trên màn nhỏ. Chọn lại route hiện tại cũng phải đóng drawer.
+- Effect cleanup chạy khi dependency thay đổi, không chỉ lúc unmount. Close timer modal bị hủy bởi handler bàn phím mới sau setIsClosing; tách timer cleanup thành effect chỉ unmount và kiểm tra X/Escape/backdrop trực tiếp.
+- Test fixture cũng phải theo schema sản phẩm: profile network-v2 dùng state devices/links, CLI lab phải liên kết course. Validation lỗi fixture không được báo thành lỗi sản phẩm.
+- Tách lỗi injection/advertising bên thứ ba khỏi lỗi ứng dụng; ghi rõ các ca chưa bao phủ. Bộ frontend có assertion cũ84 khi animation đã đổi120 từ trước thì báo FAIL chính xác, không sửa unrelated source để làm xanh báo cáo.
+- Upload/download nên đối chiếu hash và tên file. Xóa metadata không chứng minh file vật lý đã bị xóa; kiểm tra URL cũ và dọn đúng file QA sau thử nghiệm.
+
+## Bóng thẻ trên nền sáng — 2026-09-19
+
+- Khi nhiều nhóm thẻ cùng nằm trên nền trắng/lưới, dùng một token shadow theo phạm vi trang giúp độ nổi đồng nhất và tránh sửa JSX. Áp token ở trạng thái thường, giữ shadow hover riêng để vẫn có phản hồi tương tác.
+- Với danh sách tài liệu dạng bảng, đặt shadow trên khung danh sách tạo một bề mặt rõ ràng hơn so với đặt shadow cho từng dòng liền nhau; tránh làm bảng bị rối hoặc bóng chồng lên nhau.
+
+## Animation bộ lọc lab — 2026-09-19
+
+- Animation entrance gắn với số lượng phần tử lọc sẽ chạy lại mỗi lần đổi category. Nếu chỉ muốn animation khi mở một flow cụ thể, bỏ dependency render khỏi timeline và đặt animation ở root component được mount bởi action đó.
+
+## Điều chỉnh bo góc tài liệu — 2026-09-19
+
+- Khi thẻ đã có border và shadow nhẹ, radius 6–8px đủ tách bề mặt mà không làm danh sách tài liệu trông quá mềm hoặc giống card marketing.

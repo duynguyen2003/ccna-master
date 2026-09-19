@@ -370,12 +370,13 @@ export const api = {
   // ── User Notes ────────────────────────────────────────────────────────────
 
   getUserNote: async (token, lessonId) => {
-    const json = await safeApiFetch(`/users/notes/${lessonId}`, token, { content: '' });
+    const json = await apiFetch(`/users/notes/${lessonId}`, token);
     return json.content || '';
   },
 
-  updateUserNote: (token, noteData) =>
+  updateUserNote: (token, noteData, options = {}) =>
     apiFetch('/users/notes', token, {
+      ...options,
       method: 'POST',
       body: JSON.stringify(noteData),
     }),
@@ -384,8 +385,9 @@ export const api = {
 
   getVideoProgress: (token, lessonId) => apiFetch(`/users/progress/video/${lessonId}`, token),
 
-  updateVideoProgress: (token, videoData) =>
+  updateVideoProgress: (token, videoData, options = {}) =>
     apiFetch('/users/progress/video', token, {
+      ...options,
       method: 'POST',
       body: JSON.stringify(videoData),
     }),

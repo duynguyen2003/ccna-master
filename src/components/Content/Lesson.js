@@ -5,197 +5,42 @@ import {
   ChevronRight,
   Menu,
   FileText,
-  AlertCircle,
   CheckCircle,
   Play,
   ArrowLeft as ArrowLeftIcon,
   Map,
+  Clock,
+  X,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/Api';
 import MarkdownRenderer from '../Common/MarkdownRenderer';
 import errorIllustration from '../../image/fix1.png';
-import YouTube from 'react-youtube';
+import VideoProgressPlayer, { formatVideoTime } from './VideoProgressPlayer';
 import { storeTransitionEvent } from '../../hooks/useLearningProgress';
 import { useToast } from '../Toast';
 
-const MOBILE_BREAKPOINT = 1024;
-const RESOURCE_BREAKPOINT = 1280;
+const PANEL_BREAKPOINT = 1280;
 
 const getViewportWidth = () =>
-  typeof window === 'undefined' ? RESOURCE_BREAKPOINT : window.innerWidth;
+  typeof window === 'undefined' ? PANEL_BREAKPOINT : window.innerWidth;
 
-const getYoutubeVideoId = (url) => {
-  if (!url) return null;
-  const patterns = [
-    /youtu\.be\/([^?&]+)/,
-    /youtube\.com\/watch\?v=([^&]+)/,
-    /youtube\.com\/embed\/([^?&]+)/,
-  ];
-  for (const pattern of patterns) {
-    const match = url.match(pattern);
-    if (match) return match[1];
-  }
-  try {
-    const u = new URL(url.trim());
-    if (u.hostname === 'youtu.be') return u.pathname.slice(1).split('?')[0];
-    if (u.hostname.includes('youtube.com')) return u.searchParams.get('v');
-  } catch {
-    /* ignore */
-  }
-  return null;
+const formatLessonTitle = (value) => {
+  const title = String(value || '').trim();
+  if (!title) return 'Bài học';
+  return title === title.toLocaleLowerCase('vi-VN')
+    ? title.charAt(0).toLocaleUpperCase('vi-VN') + title.slice(1)
+    : title;
 };
 
-const VideoPlayer = ({ url, lessonId, courseId, moduleId, token, user, onProgressChange }) => {
-  const playerRef = useRef(null);
-  const intervalRef = useRef(null);
-  const lastReportedTimeRef = useRef(0);
-  const maxViewedTimeRef = useRef(0); // [ANTI-CHEAT] Lưu mốc thời gian lớn nhất học viên đã xem
-  const youtubeId = getYoutubeVideoId(url);
-  const [videoData, setVideoData] = useState({
-    lastPosition: 0,
-    watchedSeconds: 0,
-    isCompleted: false,
-  });
-
-  const isAdmin = user?.role === 'ADMIN';
-
-  // 1. Lấy tiến độ cũ để Resume
-  useEffect(() => {
-    if (lessonId && token) {
-      api
-        .getVideoProgress(token, lessonId)
-        .then((res) => {
-          if (res.data) {
-            setVideoData(res.data);
-            maxViewedTimeRef.current = res.data.lastPosition || 0;
-          }
-        })
-        .catch((err) => console.error('Error fetching video progress:', err));
-    }
-  }, [lessonId, token]);
-
-  const startTracking = (player) => {
-    stopTracking();
-    lastReportedTimeRef.current = Math.floor(player.getCurrentTime());
-
-    intervalRef.current = setInterval(() => {
-      const currentTime = player.getCurrentTime();
-      const duration = player.getDuration();
-      const floorTime = Math.floor(currentTime);
-
-      // [ANTI-CHEAT] Chặn tua nhanh đối với Học viên
-      if (!isAdmin && floorTime > maxViewedTimeRef.current + 3) {
-        player.seekTo(maxViewedTimeRef.current);
-        return;
-      }
-
-      // Cập nhật mốc thời gian lớn nhất đã xem
-      if (floorTime > maxViewedTimeRef.current) {
-        maxViewedTimeRef.current = floorTime;
-      }
-
-      const delta = floorTime - lastReportedTimeRef.current;
-
-      // Nếu user xem được ít nhất 5s thực tế (không phải nhảy cóc)
-      if (delta >= 5 && delta < 15) {
-        const isFinished = floorTime / duration >= 0.9 || videoData.isCompleted;
-
-        api
-          .updateVideoProgress(token, {
-            lessonId,
-            watchedSeconds: delta,
-            lastPosition: floorTime,
-            isCompleted: isFinished,
-          })
-          .catch((e) => console.error('Failed to sync video time:', e));
-
-        if (isFinished && !videoData.isCompleted) {
-          setVideoData((prev) => ({ ...prev, isCompleted: true }));
-        }
-
-        lastReportedTimeRef.current = floorTime;
-      } else if (delta < 0 || delta >= 15) {
-        lastReportedTimeRef.current = floorTime;
-      }
-
-      // Cập nhật UI Progress bar
-      if (duration > 0) {
-        const percent = (currentTime / duration) * 100;
-        onProgressChange &&
-          onProgressChange({
-            played: percent / 100,
-            playedSeconds: floorTime,
-            loaded: 1,
-            loadedSeconds: duration,
-            isCompleted: videoData.isCompleted || percent >= 90,
-          });
-      }
-    }, 1000);
-  };
-
-  const stopTracking = () => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-  };
-
-  const onReady = (event) => {
-    playerRef.current = event.target;
-    // Seek tới vị trí cũ nếu có
-    if (videoData.lastPosition > 0) {
-      event.target.seekTo(videoData.lastPosition);
-    }
-  };
-
-  const onStateChange = (event) => {
-    // 1: PLAYING, 2: PAUSED, 0: ENDED
-    if (event.data === 1) {
-      startTracking(event.target);
-    } else {
-      stopTracking();
-    }
-  };
-
-  useEffect(() => {
-    return () => stopTracking();
-  }, []);
-
-  const onError = (event) => {
-    console.warn('YouTube Player Error:', event.data);
-  };
-
-  if (youtubeId) {
-    return (
-      <YouTube
-        videoId={youtubeId}
-        opts={{
-          width: '100%',
-          height: '100%',
-          playerVars: {
-            rel: 0,
-            modestbranding: 1,
-          },
-        }}
-        onReady={onReady}
-        onStateChange={onStateChange}
-        onError={onError}
-        containerClassName="video-player-container"
-        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
-      />
-    );
-  }
-
-  return (
-    <div className="video-error">
-      {url ? (
-        <video src={url} controls style={{ width: '100%', height: '100%' }} />
-      ) : (
-        'Chưa có video'
-      )}
-    </div>
-  );
+const timestampToSeconds = (value) => {
+  const parts = String(value || '')
+    .split(':')
+    .map(Number);
+  if (parts.some((part) => !Number.isFinite(part))) return null;
+  if (parts.length === 2) return parts[0] * 60 + parts[1];
+  if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+  return null;
 };
 
 const Lesson = () => {
@@ -205,8 +50,8 @@ const Lesson = () => {
   const { token, user } = useAuth();
 
   const [viewportWidth, setViewportWidth] = useState(getViewportWidth);
-  const [leftOpen, setLeftOpen] = useState(() => getViewportWidth() >= MOBILE_BREAKPOINT);
-  const [rightOpen, setRightOpen] = useState(() => getViewportWidth() >= RESOURCE_BREAKPOINT);
+  const [leftOpen, setLeftOpen] = useState(() => getViewportWidth() >= PANEL_BREAKPOINT);
+  const [rightOpen, setRightOpen] = useState(() => getViewportWidth() >= PANEL_BREAKPOINT);
 
   const [course, setCourse] = useState(null);
   const { showToast, ToastComponent } = useToast();
@@ -216,14 +61,25 @@ const Lesson = () => {
   const [selectedLessonId, setSelectedLessonId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [noteContent, setNoteContent] = useState('');
+  const [noteLoad, setNoteLoad] = useState({ lessonId: null, status: 'loading' });
+  const [noteAttempt, setNoteAttempt] = useState(0);
   const [saveStatus, setSaveStatus] = useState('idle'); // 'idle' | 'saving' | 'saved' | 'error'
   const debounceTimer = useRef(null);
   const currentLessonRef = useRef(selectedLessonId);
+  const pendingNoteRef = useRef(null);
+  const lastEnqueuedNoteRef = useRef(null);
+  const noteWriteRef = useRef(Promise.resolve());
+  const noteEditedRef = useRef(false);
+  const noteTextareaRef = useRef(null);
+  const [seekRequest, setSeekRequest] = useState(null);
 
   const [lessonProgress, setLessonProgress] = useState({});
+  const [videoMetrics, setVideoMetrics] = useState({});
+  const [lessonSaveStatus, setLessonSaveStatus] = useState({});
+  const lastSyncRef = useRef({});
+  const progressRetryTimersRef = useRef({});
 
-  const isMobile = viewportWidth < MOBILE_BREAKPOINT;
-  const isCompact = viewportWidth < RESOURCE_BREAKPOINT;
+  const isCompact = viewportWidth < PANEL_BREAKPOINT;
 
   useEffect(() => {
     // Hàm cập nhật kích thước
@@ -238,17 +94,14 @@ const Lesson = () => {
 
   // Tự động đóng/mở sidebar khi thay đổi kích thước màn hình (chuyển breakpoint)
   useEffect(() => {
-    if (isMobile) {
+    if (isCompact) {
       setLeftOpen(false);
-      setRightOpen(false);
-    } else if (isCompact) {
-      setLeftOpen(true);
       setRightOpen(false);
     } else {
       setLeftOpen(true);
       setRightOpen(true);
     }
-  }, [isMobile, isCompact]);
+  }, [isCompact]);
 
   useEffect(() => {
     const initLesson = async () => {
@@ -281,6 +134,15 @@ const Lesson = () => {
                   played: (p.progressPercent || 0) / 100,
                   playedSeconds: 0,
                   completed: p.status === 'COMPLETED',
+                };
+                lastSyncRef.current[p.lessonId] = {
+                  percent: p.progressPercent || 0,
+                  completed: p.status === 'COMPLETED',
+                  time: 0,
+                  inFlight: false,
+                  pending: null,
+                  retries: 0,
+                  nextRetryAt: 0,
                 };
               }
             });
@@ -369,82 +231,115 @@ const Lesson = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, modules, token]);
 
-  // 1. Fetch note mỗi khi đổi lesson
+  const saveNoteSnapshot = useCallback(
+    (snapshot, keepalive = false) => {
+      if (!token || !snapshot) return Promise.resolve();
+      if (lastEnqueuedNoteRef.current === snapshot) return noteWriteRef.current;
+      lastEnqueuedNoteRef.current = snapshot;
+      noteWriteRef.current = noteWriteRef.current
+        .catch(() => {})
+        .then(() => api.updateUserNote(token, snapshot, { keepalive }));
+      noteWriteRef.current
+        .then(() => {
+          if (pendingNoteRef.current === snapshot) pendingNoteRef.current = null;
+          if (currentLessonRef.current === snapshot.lessonId) setSaveStatus('saved');
+        })
+        .catch((error) => {
+          lastEnqueuedNoteRef.current = null;
+          if (currentLessonRef.current === snapshot.lessonId) setSaveStatus('error');
+          console.error('[Lesson] Lỗi lưu ghi chú:', error);
+        });
+      return noteWriteRef.current;
+    },
+    [token]
+  );
+
+  // Tải ghi chú của đúng bài, không ghi đè nội dung vừa được người dùng nhập.
   useEffect(() => {
     if (!selectedLessonId) return;
 
     currentLessonRef.current = selectedLessonId;
+    noteEditedRef.current = false;
     setNoteContent('');
     setSaveStatus('idle');
-
-    // Hủy debounce đang pending của lesson cũ
-    if (debounceTimer.current) {
-      clearTimeout(debounceTimer.current);
-    }
+    if (!token) return;
+    let active = true;
+    setNoteLoad({ lessonId: selectedLessonId, status: 'loading' });
 
     const fetchNote = async () => {
       try {
         const content = await api.getUserNote(token, selectedLessonId);
-        // Chỉ set nếu user chưa chuyển sang lesson khác
-        if (currentLessonRef.current === selectedLessonId) {
+        if (active && currentLessonRef.current === selectedLessonId && !noteEditedRef.current) {
           setNoteContent(content);
+          setNoteLoad({ lessonId: selectedLessonId, status: 'ready' });
         }
       } catch (error) {
+        if (active && currentLessonRef.current === selectedLessonId) {
+          setNoteLoad({ lessonId: selectedLessonId, status: 'error' });
+        }
         console.error('[Lesson] Lỗi tải ghi chú:', error);
       }
     };
 
     fetchNote();
-  }, [selectedLessonId, token]);
-
-  // 2. Auto-save với debounce 700ms
-  const handleNoteChange = useCallback(
-    (e) => {
-      const value = e.target.value;
-      setNoteContent(value);
-      if (!token) return;
-      setSaveStatus('saving');
-
+    return () => {
+      active = false;
       if (debounceTimer.current) clearTimeout(debounceTimer.current);
+      if (pendingNoteRef.current?.lessonId === selectedLessonId) {
+        saveNoteSnapshot(pendingNoteRef.current, true);
+      }
+    };
+  }, [selectedLessonId, token, saveNoteSnapshot, noteAttempt]);
 
-      debounceTimer.current = setTimeout(async () => {
-        // Chỉ save nếu vẫn đang ở đúng lesson
-        if (currentLessonRef.current !== selectedLessonId) return;
-
-        try {
-          await api.updateUserNote(token, {
-            lessonId: selectedLessonId,
-            content: value,
-          });
-          setSaveStatus('saved');
-          // Sau 2s thì reset status về idle để sạch giao diện
-          setTimeout(() => setSaveStatus('idle'), 2000);
-        } catch (error) {
-          setSaveStatus('error');
-          console.error('[Lesson] Lỗi lưu ghi chú:', error);
-        }
-      }, 700);
+  // Debounce khi nhập và gửi ngay phần chưa lưu khi đổi bài hoặc rời trang.
+  const updateNoteContent = useCallback(
+    (value) => {
+      if (!token || noteLoad.lessonId !== selectedLessonId || noteLoad.status !== 'ready') return;
+      setNoteContent(value);
+      noteEditedRef.current = true;
+      setSaveStatus('saving');
+      const snapshot = { lessonId: selectedLessonId, content: value };
+      pendingNoteRef.current = snapshot;
+      if (debounceTimer.current) clearTimeout(debounceTimer.current);
+      debounceTimer.current = setTimeout(() => saveNoteSnapshot(snapshot), 700);
     },
-    [selectedLessonId, token]
+    [selectedLessonId, token, saveNoteSnapshot, noteLoad]
   );
 
-  // 3. Cleanup khi unmount
+  const handleNoteChange = useCallback(
+    (event) => updateNoteContent(event.target.value),
+    [updateNoteContent]
+  );
+
+  // Dọn timer hoàn thành bài khi rời trang.
   useEffect(() => {
+    const retryTimers = progressRetryTimersRef.current;
     return () => {
       if (debounceTimer.current) clearTimeout(debounceTimer.current);
+      Object.values(retryTimers).forEach(clearTimeout);
     };
   }, []);
-
-  const lastSyncRef = React.useRef({});
 
   const selectedLesson = useMemo(
     () => lessons.find((lesson) => lesson.id === selectedLessonId) ?? lessons[0],
     [lessons, selectedLessonId]
   );
+  const selectedLessonTitle = formatLessonTitle(selectedLesson?.title);
+  const noteTimestamps = useMemo(() => {
+    const timestamps = [];
+    const seen = new Set();
+    for (const match of noteContent.matchAll(/\[((?:\d{1,2}:)?\d{1,2}:\d{2})\]/g)) {
+      const seconds = timestampToSeconds(match[1]);
+      if (seconds === null || seen.has(seconds)) continue;
+      seen.add(seconds);
+      timestamps.push({ label: match[1], seconds });
+    }
+    return timestamps.sort((first, second) => first.seconds - second.seconds);
+  }, [noteContent]);
 
   const completedCount = lessons.filter((lesson) => lessonProgress[lesson.id]?.completed).length;
   const progressPercent = lessons.length ? (completedCount / lessons.length) * 100 : 0;
-  const showOverlay = (isMobile && leftOpen) || (isCompact && rightOpen);
+  const showOverlay = isCompact && (leftOpen || rightOpen);
 
   const updateLessonCompletion = (lessonId, completed) => {
     setLessons((currentLessons) =>
@@ -453,17 +348,15 @@ const Lesson = () => {
   };
 
   const closePanels = () => {
-    if (isMobile) {
-      setLeftOpen(false);
-    }
     if (isCompact) {
+      setLeftOpen(false);
       setRightOpen(false);
     }
   };
 
   const handleSelectLesson = (lessonId) => {
     setSelectedLessonId(lessonId);
-    if (isMobile) {
+    if (isCompact) {
       setLeftOpen(false);
     }
   };
@@ -481,63 +374,138 @@ const Lesson = () => {
   const toggleRightSidebar = () => {
     setRightOpen((current) => {
       const next = !current;
-      if (next && isMobile) {
+      if (next && isCompact) {
         setLeftOpen(false);
       }
       return next;
     });
   };
 
-  const handleProgress = (lessonId, state) => {
-    const playedRatio = state.played || 0;
-    const loadedRatio = state.loaded || 0;
-
-    if (loadedRatio === 0 && playedRatio >= 0.95) return;
-
-    // Sử dụng trạng thái hoàn thành từ VideoPlayer truyền lên
-    const completed = state.isCompleted;
-
-    setLessonProgress((currentProgress) => ({
-      ...currentProgress,
-      [lessonId]: {
-        ...currentProgress[lessonId],
-        ...state,
-        completed,
-      },
+  const handleVideoMetrics = (lessonId, patch) => {
+    setVideoMetrics((current) => ({
+      ...current,
+      [lessonId]: { ...current[lessonId], ...patch },
     }));
-
-    if (completed) {
-      updateLessonCompletion(lessonId, true);
+    if (patch.serverCompleted) {
+      setLessonProgress((current) => ({
+        ...current,
+        [lessonId]: { ...current[lessonId], completed: true },
+      }));
+      if (lastSyncRef.current[lessonId]) lastSyncRef.current[lessonId].completed = true;
     }
+  };
 
-    // Sync to backend every 10% or when completed, with at least 5s between syncs
-    const lastSync = lastSyncRef.current[lessonId] || { percent: 0, time: 0 };
-    const currentPercent = Math.round(playedRatio * 100);
-    const now = Date.now();
+  const scheduleProgressSync = (lessonId, state) => {
+    if (!token || !(course?.id || courseId)) return;
+    const sync = (lastSyncRef.current[lessonId] ||= {
+      percent: 0,
+      completed: false,
+      time: 0,
+      inFlight: false,
+      pending: null,
+      retries: 0,
+      nextRetryAt: 0,
+    });
+    if (sync.completed) return;
+    sync.pending = {
+      percent: Math.max(sync.pending?.percent || 0, state.percent),
+      completed: Boolean(sync.pending?.completed || state.completed),
+    };
 
-    if (
-      (currentPercent >= lastSync.percent + 10 || (completed && !lastSync.completed)) &&
-      now - lastSync.time > 5000
-    ) {
-      lastSyncRef.current[lessonId] = { percent: currentPercent, time: now, completed };
+    const sendPending = () => {
+      if (sync.inFlight || sync.completed || !sync.pending || Date.now() < sync.nextRetryAt) return;
+      const pending = sync.pending;
+      if (
+        !pending.completed &&
+        (pending.percent < sync.percent + 10 || Date.now() - sync.time < 5000)
+      ) {
+        return;
+      }
+      sync.pending = null;
+      sync.inFlight = true;
+      setLessonSaveStatus((current) => ({ ...current, [lessonId]: 'saving' }));
       api
         .updateUserProgress(token, {
-          courseId,
+          courseId: course?.id || courseId,
           moduleId: activeModule?.id,
           lessonId,
-          progressPercent: currentPercent,
-          status: completed ? 'COMPLETED' : 'ACTIVE',
+          progressPercent: pending.percent,
+          status: pending.completed ? 'COMPLETED' : 'ACTIVE',
         })
-        .then((res) => {
-          if (res?.transition?.changed) {
-            storeTransitionEvent(res.transition, user?.id);
+        .then((response) => {
+          const wasCompleted = sync.completed;
+          sync.percent = Math.max(sync.percent, response?.data?.progressPercent || pending.percent);
+          sync.completed = response?.data?.status === 'COMPLETED';
+          sync.time = Date.now();
+          sync.retries = 0;
+          sync.nextRetryAt = 0;
+          setLessonSaveStatus((current) => ({ ...current, [lessonId]: 'saved' }));
+          if (response?.transition?.changed) {
+            storeTransitionEvent(response.transition, user?.id);
           }
-          if (completed && !lastSync.completed) {
-            showToast('Chúc mừng! Bạn đã hoàn thành bài học này.', 'success');
+          if (sync.completed) {
+            setLessonProgress((current) => ({
+              ...current,
+              [lessonId]: { ...current[lessonId], completed: true },
+            }));
+            updateLessonCompletion(lessonId, true);
+            if (!wasCompleted) showToast('Chúc mừng! Bạn đã hoàn thành bài học này.', 'success');
           }
         })
-        .catch((err) => console.error('Failed to sync progress:', err));
+        .catch((error) => {
+          console.error('Không lưu được tiến độ bài học:', error);
+          sync.pending = {
+            percent: Math.max(sync.pending?.percent || 0, pending.percent),
+            completed: Boolean(sync.pending?.completed || pending.completed),
+          };
+          sync.retries += 1;
+          setLessonSaveStatus((current) => ({ ...current, [lessonId]: 'error' }));
+          if (sync.retries <= 2) {
+            const delay = sync.retries * 2000;
+            sync.nextRetryAt = Date.now() + delay;
+            progressRetryTimersRef.current[lessonId] = window.setTimeout(() => {
+              sync.nextRetryAt = 0;
+              sendPending();
+            }, delay);
+          } else {
+            sync.nextRetryAt = Infinity;
+          }
+        })
+        .finally(() => {
+          sync.inFlight = false;
+          if (sync.pending && sync.nextRetryAt === 0) sendPending();
+        });
+    };
+    sendPending();
+  };
+
+  const handleProgress = (lessonId, state) => {
+    const played = Math.max(0, Math.min(1, state.played || 0));
+    setLessonProgress((current) => ({
+      ...current,
+      [lessonId]: {
+        ...current[lessonId],
+        played,
+        playedSeconds: state.playedSeconds || 0,
+        durationSeconds: state.loadedSeconds || 0,
+        completed: Boolean(current[lessonId]?.completed || state.serverCompleted),
+      },
+    }));
+    if (state.serverCompleted && lastSyncRef.current[lessonId]) {
+      lastSyncRef.current[lessonId].completed = true;
     }
+    scheduleProgressSync(lessonId, {
+      percent: Math.round(played * 100),
+      completed: Boolean(state.eligibleCompletion),
+    });
+  };
+
+  const retryProgressSave = (lessonId) => {
+    const sync = lastSyncRef.current[lessonId];
+    if (!sync?.pending) return;
+    sync.retries = 0;
+    sync.nextRetryAt = 0;
+    scheduleProgressSync(lessonId, sync.pending);
   };
 
   // Logic điều hướng bài học
@@ -546,7 +514,64 @@ const Lesson = () => {
   const hasNext = currentIndex < lessons.length - 1;
 
   const currentProgress = lessonProgress[selectedLessonId]?.played || 0;
-  const isNextDisabled = !hasNext || currentProgress < 0.7;
+  const isNextDisabled =
+    !hasNext || (!lessonProgress[selectedLessonId]?.completed && currentProgress < 0.7);
+  const activeProgress = lessonProgress[selectedLessonId] || {};
+  const activeMetrics = videoMetrics[selectedLessonId] || {};
+  const displayedPosition = activeMetrics.playedSeconds ?? activeProgress.playedSeconds ?? 0;
+  const displayedDuration = activeProgress.durationSeconds || activeMetrics.durationSeconds || 0;
+  const displayedPercent = displayedDuration > 0
+    ? Math.max(0, Math.min(100, Math.round((displayedPosition / displayedDuration) * 100)))
+    : 0;
+  const resumePosition = Math.max(0, activeMetrics.lastPosition || 0);
+  const progressSaveFailed =
+    activeMetrics.saveStatus === 'error' || lessonSaveStatus[selectedLessonId] === 'error';
+  const nextDisabledReason = !hasNext
+    ? 'Đây là bài cuối cùng trong chương.'
+    : !lessonProgress[selectedLessonId]?.completed && !selectedLesson?.videoUrl
+      ? 'Đánh dấu đã đọc xong để mở bài tiếp theo.'
+      : !lessonProgress[selectedLessonId]?.completed && currentProgress < 0.7
+        ? 'Xem ít nhất 70% video để mở bài tiếp theo.'
+        : '';
+  const progressStatusText = progressSaveFailed
+    ? 'Lưu tiến độ chưa thành công.'
+    : !token
+      ? 'Đăng nhập để lưu tiến độ và ghi chú.'
+      : activeMetrics.saveStatus === 'loading'
+        ? 'Đang tải vị trí xem tiếp…'
+        : activeMetrics.saveStatus === 'saving' || lessonSaveStatus[selectedLessonId] === 'saving'
+          ? 'Đang lưu tiến độ…'
+          : 'Đã bật tự động lưu tiến độ.';
+
+  const seekVideoTo = (seconds) => {
+    if (!selectedLesson?.videoUrl || !Number.isFinite(seconds)) return;
+    setSeekRequest({ seconds, id: `${selectedLesson.id}-${seconds}-${Date.now()}` });
+    const frame = document.querySelector('.lc-video-frame');
+    frame?.scrollIntoView?.({
+      behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+      block: 'center',
+    });
+  };
+
+  const insertCurrentTimestamp = () => {
+    if (!selectedLesson?.videoUrl || noteLoad.status !== 'ready') return;
+    const label = formatVideoTime(displayedPosition);
+    const marker = `[${label}] `;
+    const textarea = noteTextareaRef.current;
+    const start = textarea?.selectionStart ?? noteContent.length;
+    const end = textarea?.selectionEnd ?? start;
+    const prefix = noteContent.slice(0, start);
+    const separator = prefix && !prefix.endsWith('\n') ? '\n' : '';
+    const nextValue = `${prefix}${separator}${marker}${noteContent.slice(end)}`;
+    const cursor = prefix.length + separator.length + marker.length;
+    updateNoteContent(nextValue);
+    const focusEditor = () => {
+      noteTextareaRef.current?.focus();
+      noteTextareaRef.current?.setSelectionRange(cursor, cursor);
+    };
+    if (window.requestAnimationFrame) window.requestAnimationFrame(focusEditor);
+    else focusEditor();
+  };
 
   const handleNext = () => {
     if (hasNext && !isNextDisabled) {
@@ -606,8 +631,14 @@ const Lesson = () => {
 
       <div className="lesson-sidebar" style={{ display: leftOpen ? 'block' : 'none' }}>
         <div className="ls-header">
-          <small className="ls-course-label">{course?.code} Course</small>
+          <small className="ls-course-label">{course?.title || course?.code || 'Khóa học'}</small>
           <h3 className="ls-module-title">{activeModule?.title}</h3>
+          <div className="ls-progress-summary">
+            <span>Tiến độ chương</span>
+            <strong>
+              {completedCount}/{lessons.length} bài
+            </strong>
+          </div>
           <div className="ls-progress-bg">
             <div className="ls-progress-bar" style={{ width: `${progressPercent}%` }}></div>
           </div>
@@ -617,16 +648,18 @@ const Lesson = () => {
           {lessons.map((lesson) => {
             const isActive = lesson.id === selectedLessonId;
             const isCompleted = lessonProgress[lesson.id]?.completed;
+            const lessonDuration =
+              isActive && displayedDuration > 0
+                ? formatVideoTime(displayedDuration)
+                : lesson.videoDuration;
 
             return (
               <div key={lesson.id} className="ls-section-item">
-                <div className="ls-section-label">
-                  Section {lesson.sectionNumber || lesson.orderIndex}
-                </div>
                 <button
                   type="button"
                   className={`ls-section-btn ${isActive ? 'active' : ''}`}
                   onClick={() => handleSelectLesson(lesson.id)}
+                  aria-current={isActive ? 'page' : undefined}
                 >
                   <div className="ls-section-btn-icon">
                     {isCompleted ? (
@@ -639,11 +672,12 @@ const Lesson = () => {
                   </div>
                   <div className="ls-section-btn-content">
                     <span className={`ls-section-btn-text ${isActive ? 'active' : ''}`}>
-                      {lesson.title}
+                      {formatLessonTitle(lesson.title)}
                     </span>
-                    {lesson.videoDuration && (
-                      <span className="ls-section-btn-duration">{lesson.videoDuration}</span>
-                    )}
+                    <span className="ls-section-btn-meta">
+                      Bài {lesson.sectionNumber || lesson.orderIndex}
+                      {lessonDuration ? ` · ${lessonDuration}` : ''}
+                    </span>
                   </div>
                 </button>
               </div>
@@ -664,68 +698,36 @@ const Lesson = () => {
             >
               <Menu size={20} />
             </button>
-            {/* Breadcrumb */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.35rem',
-                fontSize: '0.85rem',
-                color: '#64748b',
-                minWidth: 0,
-                flex: 1,
-              }}
-            >
+            <nav className="lc-breadcrumb" aria-label="Đường dẫn bài học">
               {courseId && (
                 <>
                   <button
                     type="button"
                     id="lesson-back-to-course"
                     onClick={() => navigate(`/course/${courseId}?from=lesson`)}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.25rem',
-                      background: 'none',
-                      border: 'none',
-                      color: '#2563eb',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      fontSize: '0.85rem',
-                      padding: 0,
-                      flexShrink: 0,
-                    }}
                   >
-                    <ArrowLeftIcon size={14} /> Khóa học
+                    Khóa học
                   </button>
-                  <span style={{ color: '#cbd5e1', flexShrink: 0 }}>/</span>
+                  <span aria-hidden="true">›</span>
                 </>
               )}
-              <span
-                style={{
-                  fontWeight: 500,
-                  color: '#0f172a',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}
-              >
-                {selectedLesson?.sectionNumber
-                  ? `Section ${selectedLesson.sectionNumber}`
-                  : `Lesson ${selectedLesson?.orderIndex || ''}`}{' '}
-                — {selectedLesson?.title || ''}
-              </span>
-            </div>
+              <span>{course?.code || course?.title || 'Khóa học'}</span>
+              <span aria-hidden="true">›</span>
+              <span>{activeModule?.title || 'Chương'}</span>
+              <span aria-hidden="true">›</span>
+              <strong>Bài {selectedLesson.sectionNumber || selectedLesson.orderIndex}</strong>
+            </nav>
           </div>
           <div className="lc-topbar-right">
             <button
               type="button"
               onClick={toggleRightSidebar}
               className="lc-topbar-doc-btn"
-              aria-label="Toggle lesson resources"
+              aria-label="Mở hoặc đóng ghi chú bài học"
               aria-expanded={rightOpen}
             >
               <FileText size={20} />
+              <span>Ghi chú</span>
             </button>
             <button
               type="button"
@@ -736,142 +738,267 @@ const Lesson = () => {
             >
               <ChevronLeft size={16} className="icon-mr-4" /> Trước
             </button>
-            <button
-              type="button"
-              className={`btn btn-primary lc-btn-next ${isNextDisabled ? 'disabled' : ''}`}
-              onClick={handleNext}
-              disabled={isNextDisabled}
-              title={
-                !hasNext
-                  ? 'Hết bài học'
-                  : currentProgress < 0.7
-                    ? 'Bạn cần học ít nhất 70% để tiếp tục'
-                    : ''
-              }
-            >
-              Tiếp theo <ChevronRight size={16} className="icon-ml-4" />
-            </button>
+            <span className="lc-next-control" title={isNextDisabled ? nextDisabledReason : undefined}>
+              <button
+                type="button"
+                className="btn btn-primary lc-btn-next"
+                onClick={handleNext}
+                disabled={isNextDisabled}
+                aria-describedby={isNextDisabled ? 'lc-next-help' : undefined}
+              >
+                Tiếp theo <ChevronRight size={16} className="icon-ml-4" />
+              </button>
+            </span>
+            {isNextDisabled && (
+              <span id="lc-next-help" className="sr-only">
+                {nextDisabledReason}
+              </span>
+            )}
           </div>
         </div>
 
         <div className="lesson-main">
           <div className="lc-main-container">
-            <div
-              className="video-placeholder"
-              style={{
-                position: 'relative',
-                width: '100%',
-                paddingTop: '56.25%',
-                borderRadius: '0.75rem',
-                overflow: 'hidden',
-                marginBottom: '2rem',
-                background: '#000',
-              }}
-            >
-              {selectedLesson ? (
-                <VideoPlayer
+            {selectedLesson.videoUrl && (
+              <div className="lc-video-frame">
+                <VideoProgressPlayer
+                  key={selectedLesson.id}
                   url={selectedLesson.videoUrl}
                   lessonId={selectedLesson.id}
-                  courseId={courseId}
-                  moduleId={activeModule?.id}
                   token={token}
                   user={user}
+                  seekRequest={seekRequest}
                   onProgressChange={(state) => handleProgress(selectedLesson.id, state)}
+                  onMetricsChange={handleVideoMetrics}
                 />
-              ) : (
-                <div
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#64748b',
-                  }}
-                >
-                  Đang chuẩn bị video...
-                </div>
-              )}
-            </div>
+              </div>
+            )}
 
-            <h1 className="lc-title">{selectedLesson?.title || ''}</h1>
-
-            <div className="lc-alert-box" style={{ marginTop: 0 }}>
-              <h4 className="lc-alert-title">
-                <AlertCircle size={20} className="icon-mr-8" />
-                Tiến độ video
-              </h4>
-              <p className="lc-alert-text">
-                Đã xem: {Math.round((lessonProgress[selectedLesson?.id]?.played ?? 0) * 100)}% |
-                Thời gian xem: {Math.round(lessonProgress[selectedLesson?.id]?.playedSeconds ?? 0)}s
-                | Trạng thái:{' '}
-                {lessonProgress[selectedLesson?.id]?.completed ? 'Hoàn thành' : 'Đang học'}
+            <header className="lc-lesson-heading">
+              <span className="lc-eyebrow">
+                Bài {selectedLesson.sectionNumber || selectedLesson.orderIndex || ''}
+              </span>
+              <h1 className="lc-title">{selectedLessonTitle}</h1>
+              <p>
+                {selectedLesson.videoUrl
+                  ? selectedLesson.contentHtml?.trim()
+                    ? 'Tiến độ được lưu tự động khi bạn xem. Ghi chú giảng viên nằm bên dưới.'
+                    : 'Tiến độ được lưu tự động khi bạn xem.'
+                  : 'Đọc nội dung bài học bên dưới và đánh dấu đã đọc xong khi hoàn thành.'}
               </p>
-            </div>
+            </header>
 
-            <div className="lc-text-content">
-              {selectedLesson?.contentHtml ? (
-                <MarkdownRenderer content={selectedLesson.contentHtml} />
-              ) : (
-                <p className="lc-paragraph">Chưa có nội dung văn bản cho bài học này.</p>
-              )}
-            </div>
+            {selectedLesson.videoUrl ? (
+              <section className="lc-progress-card" aria-label="Tiến độ học bài">
+                <div className="lc-progress-head">
+                  <div>
+                    <span className="lc-progress-label">Tiến độ video</span>
+                    <h2>
+                      {formatVideoTime(displayedPosition)} /{' '}
+                      {displayedDuration ? formatVideoTime(displayedDuration) : '—'}
+                    </h2>
+                  </div>
+                  <span
+                    className={
+                      activeProgress.completed
+                        ? 'lc-progress-badge completed'
+                        : activeProgress.played
+                          ? 'lc-progress-badge active'
+                          : 'lc-progress-badge'
+                    }
+                  >
+                    {activeProgress.completed
+                      ? 'Hoàn thành'
+                      : activeProgress.played
+                        ? 'Đang học'
+                        : 'Chưa bắt đầu'}
+                  </span>
+                </div>
+                <div
+                  className="lc-progress-track"
+                  role="progressbar"
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={displayedPercent}
+                  aria-label="Mốc video đã phát"
+                >
+                  <div className="lc-progress-fill" style={{ width: displayedPercent + '%' }} />
+                </div>
+                <div className="lc-progress-summary">
+                  <div>
+                    <strong>{displayedDuration ? `${displayedPercent}%` : '—'}</strong>
+                    <span role="status">{progressStatusText}</span>
+                  </div>
+                  {resumePosition > 0 && (
+                    <button
+                      type="button"
+                      className="lc-resume-btn"
+                      onClick={() => seekVideoTo(resumePosition)}
+                    >
+                      <Play size={15} fill="currentColor" />
+                      Tiếp tục từ {formatVideoTime(resumePosition)}
+                    </button>
+                  )}
+                  {lessonSaveStatus[selectedLessonId] === 'error' && (
+                    <button
+                      type="button"
+                      className="lc-progress-retry"
+                      onClick={() => retryProgressSave(selectedLessonId)}
+                    >
+                      Thử lưu lại
+                    </button>
+                  )}
+                </div>
+              </section>
+            ) : (
+              <section className="lc-progress-card" aria-label="Tiến độ bài đọc">
+                <div className="lc-progress-head">
+                  <div>
+                    <span className="lc-progress-label">Tiến độ bài đọc</span>
+                    <h2>Bài đọc</h2>
+                  </div>
+                  <span className={`lc-progress-badge ${activeProgress.completed ? 'completed' : ''}`}>
+                    {activeProgress.completed ? 'Hoàn thành' : 'Chưa hoàn thành'}
+                  </span>
+                </div>
+                <p>Đánh dấu sau khi bạn đã đọc nội dung từ giảng viên.</p>
+                {!activeProgress.completed && (
+                  <button
+                    type="button"
+                    className="lc-text-complete-btn"
+                    onClick={() =>
+                      scheduleProgressSync(selectedLesson.id, { percent: 100, completed: true })
+                    }
+                    disabled={!token || lessonSaveStatus[selectedLessonId] === 'saving'}
+                  >
+                    Đã đọc xong
+                  </button>
+                )}
+                <div className="lc-progress-foot" role="status">
+                  <span>
+                    {!token
+                      ? 'Đăng nhập để lưu tiến độ bài đọc.'
+                      : lessonSaveStatus[selectedLessonId] === 'saving'
+                        ? 'Đang lưu tiến độ…'
+                        : lessonSaveStatus[selectedLessonId] === 'error'
+                          ? 'Lưu tiến độ chưa thành công.'
+                          : activeProgress.completed
+                            ? 'Tiến độ đã được lưu.'
+                            : 'Tiến độ được lưu khi bạn xác nhận đã đọc xong.'}
+                  </span>
+                  {lessonSaveStatus[selectedLessonId] === 'error' && (
+                    <button type="button" onClick={() => retryProgressSave(selectedLessonId)}>
+                      Thử lưu lại
+                    </button>
+                  )}
+                </div>
+              </section>
+            )}
+
+            {selectedLesson.contentHtml?.trim() && (
+              <section className="lc-lesson-notes" aria-labelledby="lesson-notes-title">
+                <div className="lc-notes-head">
+                  <div>
+                    <span className="lc-progress-label">Tài liệu bài học</span>
+                    <h2 id="lesson-notes-title">Ghi chú từ giảng viên</h2>
+                  </div>
+                  <FileText size={20} aria-hidden="true" />
+                </div>
+                <div className="lc-text-content">
+                  <MarkdownRenderer content={selectedLesson.contentHtml} />
+                </div>
+              </section>
+            )}
           </div>
         </div>
       </div>
 
       <div className="lesson-sidebar-right" style={{ display: rightOpen ? 'flex' : 'none' }}>
-        <div className="rs-header">Tài nguyên & Ghi chú</div>
-
-        <div className="rs-content">
+        <div className="rs-header">
           <div>
-            <h4 className="rs-section-title">Tài liệu đính kèm</h4>
-            <div className="rs-resource-list">
-              <p style={{ fontSize: '0.85rem', color: '#64748b', padding: '0.5rem' }}>
-                Chưa có tài liệu cho bài học này.
-              </p>
-            </div>
+            <strong>Ghi chú</strong>
+            <span>Chỉ bạn nhìn thấy</span>
           </div>
-
-          <div>
-            <h4 className="rs-section-title">Ghi chú cá nhân</h4>
+          <button type="button" onClick={toggleRightSidebar} aria-label="Thu gọn ghi chú">
+            <X size={18} />
+          </button>
+        </div>
+        <div className="rs-content">
+          <div className="rs-note-toolbar">
+            <span>Ghi chú cá nhân</span>
+            <button
+              type="button"
+              onClick={insertCurrentTimestamp}
+              disabled={
+                !token ||
+                !selectedLesson.videoUrl ||
+                noteLoad.lessonId !== selectedLessonId ||
+                noteLoad.status !== 'ready'
+              }
+            >
+              <Clock size={14} /> Gắn mốc {formatVideoTime(displayedPosition)}
+            </button>
+          </div>
+          {selectedLesson.videoUrl && noteTimestamps.length > 0 && (
+            <div className="rs-note-timestamps" aria-label="Các mốc thời gian trong ghi chú">
+              {noteTimestamps.map((timestamp) => (
+                <button
+                  type="button"
+                  key={timestamp.seconds}
+                  onClick={() => seekVideoTo(timestamp.seconds)}
+                >
+                  <Play size={12} fill="currentColor" /> {timestamp.label}
+                </button>
+              ))}
+            </div>
+          )}
+          <div className="rs-note-editor">
             <textarea
+              ref={noteTextareaRef}
               className="rs-textarea"
+              aria-label="Ghi chú cá nhân cho bài học"
               placeholder={
                 token
-                  ? 'Viết ghi chú tại đây... (được lưu tự động)'
+                  ? 'Ví dụ: Kiểm tra bảng định tuyến bằng lệnh show ip route…'
                   : 'Vui lòng đăng nhập để viết và lưu ghi chú cá nhân...'
               }
               value={noteContent}
               onChange={handleNoteChange}
-              disabled={!token}
-              maxLength={10000}
-            ></textarea>
-            <div
-              className="rs-note-status"
-              style={{
-                fontSize: '0.75rem',
-                marginTop: '4px',
-                textAlign: 'right',
-                minHeight: '1.2em',
+              onBlur={() => {
+                if (debounceTimer.current) clearTimeout(debounceTimer.current);
+                if (pendingNoteRef.current) saveNoteSnapshot(pendingNoteRef.current);
               }}
-            >
-              {saveStatus === 'saving' && <span style={{ color: '#64748b' }}> đang lưu...</span>}
-              {saveStatus === 'saved' && <span style={{ color: '#16a34a' }}>Đã lưu ✓</span>}
-              {saveStatus === 'error' && (
-                <span style={{ color: '#dc2626' }}>Lỗi lưu, thử lại sau.</span>
+              disabled={!token || noteLoad.lessonId !== selectedLessonId || noteLoad.status !== 'ready'}
+              maxLength={10000}
+            />
+            <div className="rs-note-status" role="status">
+              <span>
+                {token && (noteLoad.lessonId !== selectedLessonId || noteLoad.status === 'loading')
+                  ? 'Đang tải ghi chú…'
+                  : token && noteLoad.status === 'error'
+                    ? 'Chưa tải được ghi chú. Nội dung đã lưu vẫn được giữ nguyên.'
+                    : saveStatus === 'saving'
+                      ? 'Đang lưu…'
+                      : saveStatus === 'saved'
+                        ? 'Đã lưu'
+                        : saveStatus === 'error'
+                          ? 'Lưu chưa thành công'
+                          : token
+                            ? 'Tự lưu khi bạn nhập'
+                            : 'Cần đăng nhập'}
+              </span>
+              {token && noteLoad.lessonId === selectedLessonId && noteLoad.status === 'error' && (
+                <button type="button" onClick={() => setNoteAttempt((attempt) => attempt + 1)}>
+                  Thử tải lại
+                </button>
+              )}
+              {saveStatus === 'error' && noteLoad.status === 'ready' && (
+                <button type="button" onClick={() => saveNoteSnapshot(pendingNoteRef.current)}>
+                  Thử lại
+                </button>
               )}
             </div>
-          </div>
-
-          <div className="rs-discussion-box">
-            <h4 className="rs-discussion-title">
-              <span style={{ marginRight: '0.5rem' }}>💬</span> Thảo luận bài học
-            </h4>
-            <p className="rs-discussion-text">Bắt đầu thảo luận về bài học này.</p>
-            <button type="button" className="rs-discussion-btn">
-              Gửi câu hỏi
-            </button>
+            <small>{noteContent.length.toLocaleString('vi-VN')} / 10.000 ký tự</small>
           </div>
         </div>
       </div>

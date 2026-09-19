@@ -242,8 +242,12 @@ test(
               method: 'POST',
               body: {
                 lessonId: lessons[3].id,
-                watchedSeconds: 5,
+                sessionId: '80d82836-a38e-4ba6-986f-4441e878940c',
+                sessionStartedAt: new Date(Date.now() - 5000).toISOString(),
+                sequence: 1,
+                sessionWatchedSeconds: 5,
                 lastPosition: 5,
+                capturedAt: new Date().toISOString(),
                 isCompleted: true,
               },
             }),
@@ -324,6 +328,14 @@ test(
           const students = await request('/admin/dashboard/students', { token });
           assertStatus(students, 200);
           assert.equal(students.body.find((student) => student.id === userIds[0]).progress, 20);
+          const profile = await request(`/admin/users/${userIds[0]}`, { token });
+          assertStatus(profile, 200);
+          assert.ok(profile.body.progress.length > 0);
+          assert.ok(
+            profile.body.progress.every(
+              (row) => row.moduleId === null && row.lessonId === null && row.labId === null
+            )
+          );
         }
       );
 
@@ -372,25 +384,145 @@ test(
       );
 
       await t.test(
-        'video telemetry remains atomic and cannot independently finish a lesson',
+        'video telemetry is idempotent, orders bookmarks and cannot finish a lesson',
         async () => {
+          const sessionId = '7d0c3113-36bc-4c4e-b772-75646112f4e1';
+          const capturedAt = new Date(Date.now() - 20000);
           const body = {
             lessonId: lessons[2].id,
-            watchedSeconds: 5,
+            sessionId,
+            sessionStartedAt: new Date(capturedAt.getTime() - 5000).toISOString(),
+            sequence: 1,
+            sessionWatchedSeconds: 5,
             lastPosition: 590,
+            capturedAt: capturedAt.toISOString(),
             isCompleted: true,
           };
           assertStatus(await request('/users/progress/video', { method: 'POST', body }), 200);
+          // Retrying the same batch must not inflate any of the three counters.
+          assertStatus(await request('/users/progress/video', { method: 'POST', body }), 200);
+          const next = {
+            ...body,
+            sequence: 2,
+            sessionWatchedSeconds: 9,
+            lastPosition: 594,
+            capturedAt: new Date(capturedAt.getTime() + 4000).toISOString(),
+          };
+          assertStatus(await request('/users/progress/video', { method: 'POST', body: next }), 200);
+          assertStatus(
+            await request('/users/progress/video', {
+              method: 'POST',
+              body: { ...body, lastPosition: 100 },
+            }),
+            200
+          );
+          assertStatus(
+            await request('/users/progress/video', {
+              method: 'POST',
+              body: {
+                ...body,
+                sessionId: 'f4e63c08-8610-493a-bcf2-8be51ca5d1e4',
+                sessionWatchedSeconds: 3,
+                lastPosition: 100,
+                capturedAt: new Date(capturedAt.getTime() - 1000).toISOString(),
+              },
+            }),
+            200
+          );
           const video = await prisma.videoProgress.findUnique({
             where: { userId_lessonId: { userId: userIds[0], lessonId: lessons[2].id } },
           });
           assert.equal(video.isCompleted, false);
+          assert.equal(video.watchedSeconds, 12);
+          assert.equal(video.lastPosition, 594);
           assert.equal((await getPath()).courses[0].modules[1].lessons[0].completed, false);
           assert.equal(await prisma.studyLog.count({ where: { userId: userIds[0] } }), 1);
+          assert.equal(
+            (await prisma.studyLog.findFirst({ where: { userId: userIds[0] } })).duration,
+            12
+          );
+          assert.equal(
+            (await prisma.user.findUnique({ where: { id: userIds[0] } })).totalStudyTime,
+            0
+          );
+          const oversized = {
+            ...body,
+            sessionId: 'a6122d96-8157-431d-9d53-0664a5759595',
+            sessionStartedAt: new Date().toISOString(),
+            sessionWatchedSeconds: 10000,
+            lastPosition: 595,
+            capturedAt: new Date().toISOString(),
+          };
+          assertStatus(await request('/users/progress/video', { method: 'POST', body: oversized }), 200);
           assertStatus(
             await request('/users/progress/video', {
               method: 'POST',
-              body: { ...body, watchedSeconds: 86400 },
+              body: { ...oversized, sequence: 2, sessionWatchedSeconds: 10005 },
+            }),
+            200
+          );
+          assert.equal(
+            (await prisma.videoProgress.findUnique({
+              where: { userId_lessonId: { userId: userIds[0], lessonId: lessons[2].id } },
+            })).watchedSeconds,
+            317
+          );
+          assert.equal(
+            (await prisma.user.findUnique({ where: { id: userIds[0] } })).totalStudyTime,
+            5
+          );
+          const delayedStart = new Date(Date.now() - 20 * 60 * 1000);
+          const delayed = {
+            ...body,
+            sessionId: '1c427785-bcc8-4668-8968-3c433715b475',
+            sessionStartedAt: new Date(delayedStart.getTime() - 5000).toISOString(),
+            sessionWatchedSeconds: 5,
+            lastPosition: 100,
+            capturedAt: delayedStart.toISOString(),
+          };
+          assertStatus(await request('/users/progress/video', { method: 'POST', body: delayed }), 200);
+          assertStatus(
+            await request('/users/progress/video', {
+              method: 'POST',
+              body: {
+                ...delayed,
+                sequence: 2,
+                sessionWatchedSeconds: 605,
+                lastPosition: 200,
+                capturedAt: new Date(delayedStart.getTime() + 10 * 60 * 1000).toISOString(),
+              },
+            }),
+            200
+          );
+          assert.equal(
+            (await prisma.videoProgress.findUnique({
+              where: { userId_lessonId: { userId: userIds[0], lessonId: lessons[2].id } },
+            })).watchedSeconds,
+            922
+          );
+          const offlineStart = new Date(Date.now() - 10 * 60 * 1000);
+          const firstAfterOffline = {
+            ...body,
+            sessionId: 'd8604530-ae0f-4f8a-b0d8-8d7b309428b8',
+            sessionStartedAt: offlineStart.toISOString(),
+            sessionWatchedSeconds: 600,
+            lastPosition: 300,
+            capturedAt: new Date().toISOString(),
+          };
+          assertStatus(
+            await request('/users/progress/video', { method: 'POST', body: firstAfterOffline }),
+            200
+          );
+          assert.equal(
+            (await prisma.videoProgress.findUnique({
+              where: { userId_lessonId: { userId: userIds[0], lessonId: lessons[2].id } },
+            })).watchedSeconds,
+            1522
+          );
+          assertStatus(
+            await request('/users/progress/video', {
+              method: 'POST',
+              body: { ...body, sessionWatchedSeconds: 604801 },
             }),
             400
           );

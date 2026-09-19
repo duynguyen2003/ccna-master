@@ -21,8 +21,12 @@ const moduleProgressSchema = z.object({ completed: z.literal(true) }).strict();
 const videoProgressSchema = z
   .object({
     lessonId: numericId,
-    watchedSeconds: z.number().int().min(0).max(300),
+    sessionId: z.string().uuid(),
+    sessionStartedAt: z.string().datetime({ offset: true }),
+    sequence: z.number().int().positive().max(2147483647),
+    sessionWatchedSeconds: z.number().int().min(0).max(604800),
     lastPosition: z.number().int().min(0).max(86400),
+    capturedAt: z.string().datetime({ offset: true }),
     isCompleted: z.boolean().optional(),
   })
   .strict();

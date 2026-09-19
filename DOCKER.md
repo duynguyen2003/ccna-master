@@ -34,16 +34,6 @@ docker compose up -d --scale backend=1 --force-recreate
 
 Không chạy nhiều lệnh đồng bộ schema song song và không dùng `--accept-data-loss` để bỏ qua cảnh báo database. Scale nhiều host cần storage chia sẻ và cấu hình vận hành riêng; xem giới hạn trong `lab.md`.
 
-### Kết quả kiểm chứng local ngày 2026-09-08
-
-- Target Docker `backend` build và healthcheck thành công; target này phải copy cả `src/Backend` và `src/shared` vì controller dùng sanitizer chung.
-- Compose merge được kiểm tra với 2 replica, lệnh khởi động server trực tiếp và không còn publish port cố định trên backend.
-- Hai backend cùng PostgreSQL/uploads vượt qua integration: 46 pass, 0 fail, 0 skip. Start/command/submit đồng thời vẫn được khóa qua DB và chỉ ghi tiến độ một lần.
-- 20 request `/api/debug-ping` qua Nginx được chia đều 10/10 giữa hai backend.
-- Burst 40 request vào `/api/lab-attempts/` trả 25 phản hồi từ backend và 15 phản hồi HTTP 429, xác nhận `limit_req` hoạt động.
-- Volume uploads được ghi từ replica 1 và đọc từ replica 2. DB còn 0 hàng test sau suite; container, network, volume và image kiểm thử đã được xóa.
-
-Đợt kiểm chứng chỉ build target backend, không chạy target `frontend-build` và không thay đổi stack `ccna-master-*` đang có.
 
 ## Yêu cầu
 

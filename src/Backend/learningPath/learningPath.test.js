@@ -252,10 +252,26 @@ test('Zod preserves string module IDs and rejects impersonation, ambiguity and a
   assert.equal(moduleProgressSchema.safeParse({ completed: false }).success, false);
   assert.equal(moduleProgressSchema.safeParse({ completed: 'true' }).success, false);
   assert.equal(moduleProgressSchema.safeParse({ completed: true, userId: 2 }).success, false);
-  assert.equal(
-    videoProgressSchema.safeParse({ lessonId: 1, watchedSeconds: 10000, lastPosition: 2 }).success,
-    false
-  );
+  const videoHeartbeat = {
+    lessonId: 1,
+    sessionId: '7d0c3113-36bc-4c4e-b772-75646112f4e1',
+    sessionStartedAt: '2026-09-18T09:59:55.000Z',
+    sequence: 1,
+    sessionWatchedSeconds: 5,
+    lastPosition: 2,
+    capturedAt: '2026-09-18T10:00:00.000Z',
+  };
+  assert.equal(videoProgressSchema.safeParse(videoHeartbeat).success, true);
+  for (const invalid of [
+    { sessionId: 'not-a-uuid' },
+    { sessionStartedAt: 'not-a-date' },
+    { sequence: 0 },
+    { sessionWatchedSeconds: 604801 },
+    { capturedAt: 'yesterday' },
+    { watchedSeconds: 5 },
+  ]) {
+    assert.equal(videoProgressSchema.safeParse({ ...videoHeartbeat, ...invalid }).success, false);
+  }
 });
 
 test('study calendar date is consistently Vietnam time across UTC midnight', () => {

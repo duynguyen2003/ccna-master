@@ -23,25 +23,30 @@ const UserProfileModal = ({ isOpen, onClose, user, onArchive, onEdit }) => {
     return `${days} ngày trước`;
   };
 
-  // Group progress by courseId
+  // Course percentages come only from course summary rows. A completed lesson
+  // must not make its entire course appear completed in the admin view.
   const courseProgressMap = new Map();
   if (user.progress && user.progress.length > 0) {
-    user.progress.forEach((p) => {
+    user.progress.filter((p) =>
+      p.moduleId === null && p.lessonId === null && p.labId === null
+    ).forEach((p) => {
       const courseId = p.course?.id || p.courseId;
+      if (!courseId) return;
       const title = p.course?.title || 'Khóa học không xác định';
       const level = p.course?.level || 'Khóa học';
+      const progressPercent = Math.max(0, Math.min(100, Number(p.progressPercent) || 0));
 
       if (!courseProgressMap.has(courseId)) {
         courseProgressMap.set(courseId, {
           id: courseId,
           title,
           level,
-          progressPercent: p.progressPercent || 0,
+          progressPercent,
         });
       } else {
         const existing = courseProgressMap.get(courseId);
-        if ((p.progressPercent || 0) > existing.progressPercent) {
-          existing.progressPercent = p.progressPercent;
+        if (progressPercent > existing.progressPercent) {
+          existing.progressPercent = progressPercent;
         }
       }
     });

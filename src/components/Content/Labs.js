@@ -22,7 +22,7 @@ import { api, BACKEND_URL } from '../../services/Api.js';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../Toast';
 import CliLabWorkspace from './CliLabWorkspace';
-import { gsap, useGSAP, prefersReducedMotion } from '../../utils/labMotion';
+import { prefersReducedMotion } from '../../utils/labMotion';
 import { storeTransitionEvent } from '../../hooks/useLearningProgress';
 import { sanitizeHtml } from '../../shared/sanitizeHtml';
 
@@ -84,9 +84,13 @@ const LabGuideModal = ({ lab, onClose, onComplete, isGuestView, onGuestBlocked }
     return () => {
       document.removeEventListener('keydown', handleKey);
       document.body.style.overflow = '';
-      if (closeTimer.current) window.clearTimeout(closeTimer.current);
     };
   }, [handleKey]);
+
+  // Đổi handler bàn phím khi bắt đầu animation không được hủy timer đóng.
+  useEffect(() => () => {
+    if (closeTimer.current) window.clearTimeout(closeTimer.current);
+  }, []);
 
   const currentStep = lab.steps?.[step];
 
@@ -545,50 +549,12 @@ export const Labs = () => {
     return matchCat && matchSearch;
   });
 
-  const containerRef = useRef(null);
-
-  useGSAP(
-    () => {
-      if (loading || prefersReducedMotion()) return;
-      const header = containerRef.current?.querySelector('.labs-header');
-      const filterBtns = containerRef.current?.querySelectorAll('.filter-btn');
-      const cards = containerRef.current?.querySelectorAll('.lab-card');
-      if (!header && (!filterBtns || !filterBtns.length) && (!cards || !cards.length)) return;
-
-      const tl = gsap.timeline({ defaults: { ease: 'power2.out' } });
-      if (header) {
-        tl.fromTo(
-          header,
-          { opacity: 0, y: -12 },
-          { opacity: 1, y: 0, duration: 0.35, clearProps: 'all' }
-        );
-      }
-      if (filterBtns && filterBtns.length > 0) {
-        tl.fromTo(
-          filterBtns,
-          { opacity: 0, y: 8 },
-          { opacity: 1, y: 0, stagger: 0.03, duration: 0.25, clearProps: 'all' },
-          header ? '-=0.15' : 0
-        );
-      }
-      if (cards && cards.length > 0) {
-        tl.fromTo(
-          cards,
-          { opacity: 0, y: 15 },
-          { opacity: 1, y: 0, stagger: 0.04, duration: 0.35, clearProps: 'all' },
-          header || (filterBtns && filterBtns.length > 0) ? '-=0.15' : 0
-        );
-      }
-    },
-    { dependencies: [loading, filteredLabs.length], scope: containerRef }
-  );
-
   const notifyGuestBlocked = useCallback(() => {
     showToast('Guest chỉ được xem thông tin lab. Vui lòng đăng nhập để thực hành.', 'info');
   }, [showToast]);
 
   return (
-    <div className="labs-page" ref={containerRef}>
+    <div className="labs-page">
       {ToastComponent}
 
       {/* Thông báo thiết bị di động */}

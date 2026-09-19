@@ -355,29 +355,94 @@ async function updateVideoProgress(userId, input) {
   return transaction(userId, async (db, state) => {
     const { course, module, lesson } = findLesson(state, input.lessonId);
     assertAccess(course, module);
+    const now = new Date();
+    const sessionKey = {
+      userId,
+      lessonId: input.lessonId,
+      sessionId: input.sessionId,
+    };
+    const previousSession = await db.videoProgressSession.findUnique({
+      where: { userId_lessonId_sessionId: sessionKey },
+    });
+    const previousVideo = await db.videoProgress.findUnique({
+      where: { userId_lessonId: { userId, lessonId: input.lessonId } },
+    });
+
+    // A retry or a delayed heartbeat from this player session has already been
+    // counted. The user lock also serializes concurrent requests across replicas.
+    if (previousSession && input.sequence <= previousSession.lastSequence) return previousVideo;
+
+    const rawCapturedAt = new Date(input.capturedAt);
+    const rawStartedAt = new Date(input.sessionStartedAt);
+    const previousSeconds = previousSession?.watchedSeconds || 0;
+    const elapsedSinceSync = previousSession
+      ? Math.max(0, Math.ceil((now - previousSession.updatedAt) / 1000))
+      : 0;
+    const elapsedSinceCapture = previousSession
+      ? Math.max(0, Math.ceil((rawCapturedAt - previousSession.lastCapturedAt) / 1000))
+      : 0;
+    const elapsedSinceStart = previousSession
+      ? 0
+      : Math.max(0, Math.ceil((rawCapturedAt - rawStartedAt) / 1000));
+    // Permit a long offline interval without letting one heartbeat claim an
+    // unlimited amount of study time. The first snapshot can cover playback
+    // before the initial connection succeeds. Advance the session cursor even
+    // if capped so subsequent valid heartbeats are never rejected forever.
+    const maxCreditableSeconds = Math.min(
+      86400,
+      Math.max(300, elapsedSinceSync + 15, elapsedSinceCapture + 15, elapsedSinceStart + 15)
+    );
+    const watchedSeconds = Math.min(
+      Math.max(0, input.sessionWatchedSeconds - previousSeconds),
+      maxCreditableSeconds
+    );
+    const sessionData = {
+      lastSequence: input.sequence,
+      lastCapturedAt:
+        previousSession && previousSession.lastCapturedAt > rawCapturedAt
+          ? previousSession.lastCapturedAt
+          : rawCapturedAt,
+      watchedSeconds: Math.max(previousSeconds, input.sessionWatchedSeconds),
+    };
+    if (previousSession) {
+      await db.videoProgressSession.update({ where: { id: previousSession.id }, data: sessionData });
+    } else {
+      await db.videoProgressSession.create({
+        data: { ...sessionKey, ...sessionData, startedAt: rawStartedAt },
+      });
+    }
+
+    // Client clocks may run ahead of the server. Clamp the bookmark timestamp
+    // so a single future-dated event cannot block later resume updates.
+    const capturedAt = new Date(Math.min(rawCapturedAt.getTime(), now.getTime()));
+    const newerPosition =
+      !previousVideo?.lastPositionAt || capturedAt > previousVideo.lastPositionAt;
     const video = await db.videoProgress.upsert({
       where: { userId_lessonId: { userId, lessonId: input.lessonId } },
       create: {
         userId,
         lessonId: input.lessonId,
-        watchedSeconds: input.watchedSeconds,
+        watchedSeconds,
         lastPosition: input.lastPosition,
+        lastPositionAt: capturedAt,
         isCompleted: lesson.completed,
       },
       update: {
-        watchedSeconds: { increment: input.watchedSeconds },
-        lastPosition: input.lastPosition,
+        watchedSeconds: { increment: watchedSeconds },
+        ...(newerPosition
+          ? { lastPosition: input.lastPosition, lastPositionAt: capturedAt }
+          : {}),
         ...(lesson.completed ? { isCompleted: true } : {}),
       },
     });
     // This is resume telemetry. Completion evidence remains UserProgress; a
     // browser's isCompleted flag cannot independently unlock a course.
-    if (input.watchedSeconds > 0) {
-      const date = studyDate();
+    if (watchedSeconds > 0) {
+      const date = studyDate(now);
       await db.studyLog.upsert({
         where: { userId_date: { userId, date } },
-        create: { userId, date, duration: input.watchedSeconds },
-        update: { duration: { increment: input.watchedSeconds } },
+        create: { userId, date, duration: watchedSeconds },
+        update: { duration: { increment: watchedSeconds } },
       });
       const totals = await db.studyLog.aggregate({ where: { userId }, _sum: { duration: true } });
       await db.user.update({

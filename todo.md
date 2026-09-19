@@ -1,3 +1,197 @@
+# Sửa tiến độ video và trải nghiệm ghi chú bài học — 2026-09-18
+
+# Tinh gọn giao diện học video ba cột — 2026-09-19
+
+## Kế hoạch trước khi sửa
+
+- [x] Khóa layout bài học theo viewport: video 16:9 lấp đầy mọi wrapper YouTube; hai sidebar sticky, tự cuộn và cùng chuyển thành drawer dưới 1280px.
+- [x] Sửa active menu `/lesson` về “Khóa học”; chuẩn hóa breadcrumb theo cấp Khóa học › mã khóa › chương › bài, bỏ “Section” và định dạng tiêu đề nháp viết thường khi hiển thị.
+- [x] Làm rõ mục lục: hiển thị tiến độ `x/y bài`, đồng bộ thời lượng bài đang mở với duration thật của player và giảm nhãn in hoa/màu xanh không cần thiết.
+- [x] Thu gọn tiến độ video thành một hàng có thanh tiến độ, trạng thái lưu và nút “Tiếp tục từ …”; bỏ hai ô số liệu gần trùng nhau; làm nút “Tiếp theo” tương phản rõ và có tooltip lý do khi bị khóa.
+- [x] Tinh gọn cột ghi chú: bỏ thẻ giới thiệu lớn, cho phép đóng ở mọi viewport, chèn mốc thời gian hiện tại và bấm mốc để seek video; định dạng bộ đếm `10.000`; ẩn hoàn toàn ghi chú giảng viên khi không có nội dung.
+- [x] Giảm H1 còn 28–30px, tăng tương phản chữ phụ, cập nhật reduced motion/responsive; thêm test có ý nghĩa, chạy test/build/diff và kiểm tra browser nếu môi trường cho phép.
+
+## File dự kiến thay đổi và lý do
+
+- `src/components/Header/Navbar.js`: nhận diện `/lesson` thuộc mục Khóa học.
+- `src/components/Content/Lesson.js`: bố cục nội dung, breadcrumb, mục lục, tiến độ, tooltip, timestamp notes và trạng thái sidebar.
+- `src/components/Content/VideoProgressPlayer.jsx`: nhận lệnh seek từ nút tiếp tục/mốc ghi chú và giữ quy tắc giới hạn tua hiện có.
+- `src/css/Lesson.css`: video wrapper, sticky/drawer, typography, contrast, progress và note controls.
+- `src/components/Content/Lesson.test.jsx`: kiểm tra empty instructor note, title/breadcrumb/progress và seek từ timestamp.
+- `todo.md`, `lessons.md`: ghi kế hoạch, kết quả và bài học theo `Agent.md`.
+
+## Kiểm tra lại kế hoạch trước khi code
+
+- [x] Root cause đã xác định: nav “Khóa học” thiếu `/lesson`; wrapper YouTube mới chỉ ép iframe; layout dùng hai breakpoint khác nhau; progress render thời gian ở bốn vị trí; instructor note luôn render empty state; note cá nhân vẫn là một textarea nhưng có thể thêm timestamp bằng chuỗi `[mm:ss]` mà không đổi schema/API.
+
+## Thay đổi và lý do
+
+- `Navbar.js`: route `/lesson` dùng trạng thái active của “Khóa học”, tránh làm người học hiểu nhầm đang ở Trang chủ.
+- `Lesson.js`: breadcrumb theo cấp, tiêu đề nháp được chuẩn hóa khi hiển thị, mục lục có `x/y bài` và duration thật; tiến độ video được gom vào một card gọn với trạng thái lưu/nút tiếp tục; nút bài tiếp theo có lý do khóa cho tooltip và trình đọc màn hình.
+- `Lesson.js`, `VideoProgressPlayer.jsx`: ghi chú cá nhân hỗ trợ chèn mốc `[mm:ss]`, hiển thị chip mốc và seek có kiểm soát; player báo duration ngay khi ready. Giữ giới hạn tua của học viên và schema ghi chú hiện có.
+- `VideoProgressPlayer.jsx`, `Lesson.css`: dùng đúng prop `className` của `react-youtube`, rồi ép div/iframe trung gian lấp đầy khung 16:9; đây là nguyên nhân trực tiếp của vùng tối trống.
+- `Lesson.css`: hai cột cao theo viewport, cuộn riêng và thành drawer ở 1279px trở xuống; H1 tối đa 30px, chữ phụ đạt tương phản, control mobile cùng hàng/cùng chiều cao và animation tắt khi reduced motion.
+- `Lesson.js`: cột phải dùng thống nhất tên “Ghi chú”, bỏ thẻ giới thiệu, có nút thu gọn; phần ghi chú giảng viên không render khi rỗng.
+
+## Kết quả kiểm tra
+
+- ESLint bốn file JS/JSX liên quan: **0 lỗi, 0 cảnh báo**. Test hồi quy trang bài học: **3/3 PASS**. Frontend suite: **77/78 PASS**; còn đúng assertion cũ `learningPathMotion.test.js` kỳ vọng 84 confetti trong khi source hiện tạo 120, đã được ghi trong báo cáo QA trước thay đổi này.
+- Production build cuối tại `qa-artifacts/build-lesson-ui-final`: **Compiled successfully**; `git diff --check`: đạt.
+- Playwright trên DB QA riêng: 1440×900, 768×1024 và 390×844 đều không tràn ngang; iframe bằng đúng kích thước frame, tỉ lệ đo được khoảng 1,78; sidebar desktop sticky khi main cuộn, hai drawer dưới 1280px cao hết viewport và mở loại trừ nhau.
+- Browser xác nhận “Khóa học” active; breadcrumb đúng cấp; duration mục lục/player cùng `0:19`; tiến độ chương `2/2 bài`; nút khóa có mô tả; chèn/lưu/click mốc `0:19` hoạt động. Contrast đo được 4,76:1–7,58:1 cho chữ phụ, bộ đếm và nút khóa.
+- Chrome DevTools: 0 console error; API ứng dụng trả 200/204/304, không có 4xx/5xx. Chỉ còn warning `postMessage` và request quảng cáo bị abort từ iframe YouTube trong lúc hot reload, không phải request ứng dụng.
+
+# Giảm bo góc mục tài liệu — 2026-09-19
+
+## Kế hoạch trước khi sửa
+
+- [x] Giảm `border-radius` của thẻ tài liệu ghim và khung danh sách tài liệu, giữ nguyên shadow, nền và hover.
+- [x] Kiểm tra CSS diff và production build nhanh; ghi kết quả và bài học.
+
+## File dự kiến thay đổi và lý do
+
+- `src/css/Doc.css`: giảm bo góc hai bề mặt tài liệu vừa được bổ sung.
+- `todo.md`, `lessons.md`: ghi kế hoạch, kết quả và bài học theo `Agent.md`.
+
+## Kiểm tra lại kế hoạch trước khi code
+
+- [x] Đã xác định hai giá trị cần chỉnh là `.pinned-card` `10px` và `.doc-list-container` `12px`; các radius khác thuộc control/icon nên giữ nguyên.
+
+## Thay đổi và lý do
+
+- `Doc.css`: giảm bo góc `.pinned-card` từ `10px` xuống `6px`, `.doc-list-container` từ `12px` xuống `8px` để phù hợp hơn với phong cách giao diện thẳng và gọn.
+
+## Kết quả kiểm tra
+
+- Production build tại `qa-artifacts/build-radius`: **Compiled successfully**.
+- `git diff --check`: đạt; shadow, nền, hover và các control khác được giữ nguyên.
+
+# Hover lift và animation CLI Lab — 2026-09-19
+
+## Kế hoạch trước khi sửa
+
+- [x] Thêm hiệu ứng nổi nhẹ khi hover cho thẻ bước học Home, thẻ lab và thẻ tài liệu ghim; giữ shadow nền và trạng thái hover riêng hiện có.
+- [x] Bỏ timeline GSAP phụ thuộc vào `filteredLabs.length` để đổi category chỉ thay danh sách, không fade lại header/filter/card.
+- [x] Thêm fade/scale khi mở CLI Lab và tắt animation khi `prefers-reduced-motion`; chạy test/build và kiểm tra diff.
+
+## File dự kiến thay đổi và lý do
+
+- `src/css/Home.css`: hover lift cho ba thẻ bước học và hỗ trợ reduced motion.
+- `src/css/Doc.css`: hover lift nhẹ cho thẻ tài liệu ghim.
+- `src/css/Labs.css`: hover/reduced motion cho lab card và fade/scale cho CLI workspace.
+- `src/components/Content/Labs.js`: loại bỏ animation danh sách chạy lại khi đổi category.
+- `todo.md`, `lessons.md`: ghi kế hoạch, kết quả và bài học theo `Agent.md`.
+
+## Kiểm tra lại kế hoạch trước khi code
+
+- [x] Đã xác định dependency gây lặp là `[loading, filteredLabs.length]`; `CliLabWorkspace` được mount qua `selectedCliLab`, nên animation mở thực hành có thể đặt ở overlay/workspace mà không ảnh hưởng bộ lọc.
+
+## Thay đổi và lý do
+
+- `Home.css`, `Doc.css`, `Labs.css`: thêm hover lift 2–4px, shadow đậm hơn nhẹ và transition cho các thẻ; các nhánh reduced motion giữ nguyên shadow nền và bỏ transform.
+- `Labs.js`: xóa timeline GSAP chạy theo số lượng lab lọc được; category filter giờ chỉ render dữ liệu mới.
+- `Labs.css`: thêm fade overlay và scale nhẹ cho CLI workspace khi mở thực hành; không gắn animation vào danh sách lab.
+
+## Kết quả kiểm tra
+
+- Production build tại `qa-artifacts/build-hover`: **Compiled successfully**.
+- Kiểm tra tĩnh: `Labs.js` không còn `useGSAP`/timeline phụ thuộc filter; animation CLI chỉ nằm trên `.cli-workspace-overlay` và `.cli-workspace`; `git diff --check` đạt.
+- Browser tích hợp không có phiên khả dụng trong môi trường hiện tại, nên chưa chụp ảnh trực quan; không thay đổi API hoặc dữ liệu tiến độ.
+
+# Bóng nhẹ cho thẻ tài liệu và lab — 2026-09-19
+
+## Kế hoạch trước khi sửa
+
+- [x] Tạo token bóng slate xám nhẹ theo phạm vi từng trang và áp dụng cho thẻ tài liệu ghim, khung danh sách tài liệu và thẻ lab hiển thị trên nền trắng/lưới.
+- [x] Giữ nguyên bố cục, kích thước ảnh, nút tải/mở lab và shadow hover hiện có; không áp dụng vào modal lab, bảng điều khiển hoặc ô tìm kiếm.
+- [x] Chạy production build, kiểm tra selector tĩnh và `git diff --check`; ghi kết quả và bài học.
+
+## File dự kiến thay đổi và lý do
+
+- `src/css/Doc.css`: làm nổi các bề mặt tài liệu đang trong suốt trên nền lưới.
+- `src/css/Labs.css`: tăng độ tách nhẹ cho thẻ lab nền trắng, giữ trạng thái hover riêng.
+- `todo.md`, `lessons.md`: ghi kế hoạch, kết quả và bài học theo `Agent.md`.
+
+## Kiểm tra lại kế hoạch trước khi code
+
+- [x] Đã đối chiếu JSX: `pinned-card` và `list-row` là các mục tài liệu; `lab-card` là thẻ nội dung chính. Các selector này độc lập với modal và vùng thao tác CLI nên có thể sửa CSS tại chỗ.
+
+## Thay đổi và lý do
+
+- `Doc.css`: thêm `--doc-card-shadow`, nền trắng, viền, bo góc và shadow cho thẻ tài liệu ghim; bọc danh sách tài liệu trong một bề mặt card có shadow để các dòng không bị chìm vào nền lưới.
+- `Labs.css`: đổi shadow trạng thái thường của `.lab-card` sang cùng mức slate nhẹ; shadow hover xanh dương vẫn giữ nguyên.
+
+## Kết quả kiểm tra
+
+- Production build tại `qa-artifacts/build-shadow`: **Compiled successfully**; CSS production có các thay đổi mới.
+- Kiểm tra tĩnh: hai bề mặt tài liệu dùng `var(--doc-card-shadow)`, lab card dùng shadow mới; `git diff --check` đạt.
+- Không có browser tích hợp khả dụng trong phiên này, nên chưa có ảnh chụp trực quan; không thay đổi JSX hay hành vi tương tác.
+
+## Kế hoạch trước khi code
+
+- [x] Xác nhận hợp đồng hiện tại của player → API → PostgreSQL và các nhánh ghi chú; giữ nguyên dữ liệu học tập đã có.
+- [x] Đổi heartbeat video thành phiên có số thứ tự và tổng giây phát thực tế; retry cùng dữ liệu không cộng trùng, request cũ không kéo lùi vị trí xem tiếp. Mỗi thao tác ghi video, nhật ký học và tổng thời gian phải ở cùng transaction.
+- [x] Sửa player: tải bookmark trước khi phát, reset khi đổi bài, lưu định kỳ và khi pause/end/rời bài, thử lại khi lỗi; phần trăm hoàn thành và nhãn thời gian phải đúng nghĩa, không báo hoàn thành trước phản hồi server.
+- [x] Cải tiến UI học viên quanh video: thanh tiến độ, vị trí xem tiếp, trạng thái lưu và nội dung bài học dưới video dễ đọc trên desktop/mobile; làm rõ ghi chú cá nhân so với nội dung admin biên soạn.
+- [x] Cải tiến màn soạn bài admin bằng toolbar chọn/chèn định dạng và mẫu Ghi chú/Mẹo/Cảnh báo, vẫn lưu Markdown và xem trước; sửa nhãn lưu sai. Làm sạch HTML khi render Markdown.
+- [x] Sửa màn admin tổng hợp tiến độ khóa học chỉ từ bản ghi course summary; kiểm tra hồi quy các số liệu học tập liên quan.
+- [x] Viết/chạy kiểm thử có ý nghĩa cho heartbeat trùng/lệch thứ tự, resume/flush/completion, toolbar và render an toàn; chạy build và kiểm tra giao diện nếu môi trường cho phép. Ghi kết quả và giới hạn ở đây, ghi bài học vào `lessons.md`.
+
+## File dự kiến thay đổi và lý do
+
+- `prisma/schema.prisma`: lưu trạng thái phiên heartbeat và thời điểm bookmark để chống ghi trùng/lùi vị trí; không xóa bản ghi video hiện có.
+- `src/Backend/validation/learningPathSchema.js`, `src/Backend/services/learningPathService.js`, `src/Backend/learningPath/learningPath.integration.test.js`: hợp đồng POST và ghi DB nguyên tử, kiểm thử retry/thứ tự.
+- `src/components/Content/Lesson.js`, `src/components/Content/VideoProgressPlayer.jsx`, `src/services/Api.js`, `src/css/Lesson.css`: tách player có vòng đời riêng theo bài học, sửa đồng bộ và UI tiến độ/ghi chú học viên.
+- `src/components/Admin/Views/CourseDetail.js`, `src/components/Admin/Views/lessonMarkdown.js`, `src/css/Admin/AdminCourseManagement.css`: toolbar soạn nội dung bài học và helper chèn Markdown.
+- `src/components/Common/MarkdownRenderer.js`, `src/shared/sanitizeHtml.js`: render Markdown an toàn, giữ kiểu callout hiện có.
+- `src/components/Admin/Views/Components/UserProfileModal.js`: đọc course summary đúng cấp.
+- `Markdown/youtube-progress-tracking.md`: đánh dấu hướng dẫn Mongoose/API cũ là lịch sử và ghi hợp đồng Prisma/API hiện hành để tránh áp dụng nhầm.
+- `src/components/Content/VideoProgressPlayer.test.jsx`, `src/components/Content/Lesson.test.jsx`, `src/components/Admin/Views/lessonMarkdown.test.js`, `src/components/Common/MarkdownRenderer.test.js`: kiểm thử resume/flush/đổi bài, bài chỉ có chữ, mẫu định dạng và render an toàn; `todo.md`, `lessons.md` ghi kế hoạch và kết quả.
+
+## Kiểm tra lại kế hoạch
+
+- Có hai dữ liệu khác nghĩa: bookmark/thời gian xem ở `VideoProgress`, phần trăm/hoàn thành ở `UserProgress`. Bản sửa giữ completion riêng vì bài học có thể chỉ có nội dung chữ; không tự gắn chứng nhận học tập cho một heartbeat video.
+- Bài chỉ có nội dung chữ cần thao tác xác nhận đã đọc để mở bài tiếp theo; chỉ hiện hoàn thành sau phản hồi từ `UserProgress`.
+- Nội dung bài học hiện lưu Markdown trong `contentHtml`; toolbar chỉ chèn Markdown để tương thích dữ liệu cũ. Ghi chú cá nhân là `UserNote` riêng.
+- Các file đang có thay đổi của người dùng sẽ được giữ nguyên; chỉ sửa đúng các vùng liên quan ở danh sách trên.
+
+## Thay đổi, lý do và kết quả — 2026-09-19
+
+- Player gửi `sessionId`, `sessionStartedAt`, `sequence`, tổng giây phát thực tế và bookmark. Server lưu trạng thái phiên để heartbeat lặp không cộng trùng; transaction cập nhật bookmark, giây xem, nhật ký học và tổng phút của user. `capturedAt` giữ request cũ khỏi ghi lùi bookmark. Việc đo giây thật sửa lỗi tua hoặc tốc độ phát làm số phút học sai.
+- Player chờ tải bookmark rồi mới gắn video; nếu GET lỗi có nút thử lại. Khi YouTube đang tua tới vị trí đã lưu, player chưa gửi bookmark 0. Lưu mỗi khoảng 10 giây và khi pause/end/rời trang; trạng thái hoàn thành chỉ đổi sau phản hồi server. Bài chỉ có nội dung chữ có nút “Đã đọc xong”, cũng chờ xác nhận server.
+- Trang học có tiến độ phát, thời gian xem đã ghi, trạng thái lưu, nội dung giảng viên dưới video và sổ tay cá nhân tách biệt. Sổ tay mở được ở màn hình dưới 1440 px; trên màn hình rộng nằm cạnh video. Admin có toolbar Markdown và xem trước, không phải nhớ ký hiệu callout; HTML render được làm sạch. Màn admin tiến độ lọc đúng cấp khóa học.
+- Kiểm tra: 34/34 HTTP/PostgreSQL integration trên database `_test` tách biệt (đã xóa), 14/14 backend unit (integration mặc định skip), 11/11 frontend component/unit liên quan, 23/23 sanitizer Node, Prisma validate, ESLint các file liên quan, `git diff --check` và CRA production build đều đạt. Build có cảnh báo bundle lớn vốn có.
+- Giới hạn: browser runtime không có browser kết nối, nên chưa kiểm tra trực quan bằng screenshot; responsive đã rà CSS và sửa lỗi nút sổ tay 1024–1279 px. Telemetry phía client không chứng minh người học tập trung hoặc đã xem đủ từng đoạn. Dữ liệu `watched_seconds` lịch sử có thể được tính theo vị trí video. Schema mới cần áp dụng lên database triển khai bằng quy trình Prisma của dự án trước khi chạy backend mới; chưa thay đổi database dự án.
+
+---
+
+# Bóng xám nhẹ cho các thẻ Home — 2026-09-19
+
+## Kế hoạch trước khi sửa
+
+- [x] Tạo một mức `box-shadow` xám slate nhẹ dùng chung trong phạm vi Home và áp dụng cho 5 nhóm thẻ đang hiển thị: tiếp tục học, ba bước học, khóa học, công cụ và FAQ.
+- [x] Giữ nguyên viền, nền, bố cục và hiệu ứng hover hiện có; xác minh không có media query desktop/mobile ghi đè bóng mới.
+- [x] Chạy production build và `git diff --check`; ghi kết quả và bài học sau khi hoàn tất.
+
+## File dự kiến thay đổi và lý do
+
+- `src/css/Home.css`: định nghĩa bóng dùng chung và áp dụng đúng các bề mặt thẻ của Home.
+- `todo.md`, `lessons.md`: ghi kế hoạch, kết quả và bài học theo `Agent.md`.
+
+## Kiểm tra lại kế hoạch trước khi code
+
+- [x] Các nhóm thẻ Home đang dùng nhiều bóng khác nhau, trong đó thẻ bước học và công cụ chỉ có alpha `0.04`, FAQ chưa có bóng; đây là nguyên nhân khiến bề mặt trắng khó tách khỏi nền sáng. Chỉ cần sửa CSS của Home, không cần thay JSX hay các trang khác.
+
+## Thay đổi và lý do
+
+- `Home.css`: thêm token `--home-card-shadow: 0 6px 18px rgba(71, 85, 105, 0.12)` trong `.home-wrapper`; dùng token này cho thẻ tiếp tục học, ba bước học, khóa học, công cụ và FAQ. Mức slate xám nhẹ tạo ranh giới trên nền sáng và giữ các hiệu ứng hover đậm hơn đang có.
+
+## Kết quả kiểm tra
+
+- Production build tại `qa-artifacts/build-shadow`: **Compiled successfully**; bản CSS đã build có token bóng mới.
+- Kiểm tra tĩnh: đúng 5 nhóm thẻ dùng `var(--home-card-shadow)`; không có breakpoint desktop/mobile ghi đè các thuộc tính này; `git diff --check` đạt.
+- Browser tích hợp không có phiên khả dụng (`agent.browsers.list()` trả về rỗng), nên chưa có ảnh chụp trực quan cho thay đổi này. Server dev đã được dừng sau khi thử kết nối.
+
 # Learning Game Path — Triển khai Frontend Roadmap (2026-09-10)
 
 ## Kế hoạch triển khai Frontend theo `docs/learning-path-frontend-plan.md`
@@ -1613,3 +1807,269 @@ Giữ React/Express/PostgreSQL, dùng simulator version mới cho topology; gi�
 - Đỉnh quỹ đạo được nâng từ 110–194px lên 220–360px; số lượng giữ nguyên 84 hạt.
 - Pha bay tăng lên 0,72 giây, pha rơi 1,2 giây và tween tỏa ngang/fade kéo dài 1,92 giây để chuyển động cao vẫn liền mạch.
 - Prettier đạt; ESLint đạt 0 lỗi/cảnh báo; 2 suite trọng tâm đạt 19/19 test; production build thành công.
+
+# Trang chủ theo hướng landing page — 2026-09-17
+
+## Kế hoạch trước khi sửa
+
+- [x] Thay carousel bằng một hero cố định: một H1 nêu rõ học CCNA qua bài học, lab và thi thử; hai CTA có đích rõ ràng đến lộ trình và phần cách học.
+- [x] Thêm phần “Cách học” ba bước, minh họa bằng ảnh giao diện lab có thật và liên kết tới các route học/lab/thi đang tồn tại.
+- [x] Cho khách xem trang chủ toàn chiều rộng với điều hướng theo phần; giữ sidebar và khối “Tiếp tục bài học” cho người đã đăng nhập.
+- [x] Bỏ các số liệu/cam kết viết cố định chưa được xác thực; thêm FAQ ngắn, CTA cuối trang và sửa liên kết FAQ ở footer về đúng phần nội dung.
+- [x] Kiểm tra build, giao diện desktop/mobile, điều hướng bằng bàn phím và diff; ghi kết quả tại đây rồi thêm bài học vào `lessons.md`.
+
+## File dự kiến thay đổi và lý do
+
+- `src/components/Content/Home.js`, `src/css/Home.css`: nội dung, thứ tự và trình bày landing page; giữ dữ liệu khóa học và tiến độ đang hoạt động.
+- `src/components/Content/Layout.js`, `src/css/Navbar.css`: ẩn sidebar riêng trên trang chủ của khách để phần giới thiệu có đủ không gian.
+- `src/components/Footer/Footer.js`: liên kết FAQ tới nội dung thật và bỏ thông tin liên hệ mẫu chưa xác thực.
+- `src/image/landing-lab.png`: ảnh chụp giao diện lab thật từ bộ review hiện có để minh họa sản phẩm.
+- `src/image/landing-roadmap.png`, `src/image/landing-exam.png`: ảnh chụp màn hình lộ trình và trung tâm thi thử từ ứng dụng đang chạy để minh họa đủ cả ba bước.
+- `todo.md`, `lessons.md`: lưu kế hoạch, lý do, kết quả kiểm tra và kinh nghiệm theo `Agent.md`.
+
+## Kiểm tra lại kế hoạch trước khi code
+
+- [x] Đối chiếu CTA với `/roadmap`, `/labs`, `/exam/testing-center`; ảnh review là giao diện xem trước lab của chính dự án và sẽ được ghi đúng ngữ cảnh.
+- [x] Đã thấy nhiều thay đổi chưa commit; phạm vi chỉ gồm các file nêu trên, không đụng backend, dữ liệu hay Docker.
+- [x] Rà lại tiêu chí ba bước: đã chụp và xem ảnh lộ trình khách và tab Thi thử CCNA từ ứng dụng thật; ảnh không chứa dữ liệu cá nhân và tab thi có bài kiểm tra thực để minh họa.
+
+## Thay đổi và lý do
+
+- Hero cố định thay ba slide tự chuyển sau 5 giây; một thông điệp chính và hai CTA cụ thể giúp khách hiểu sản phẩm, đồng thời loại các H1/nút ẩn vẫn nhận focus.
+- Phần ba bước nối trực tiếp lộ trình, lab và thi thử; mỗi bước có ảnh chụp giao diện tương ứng. Ảnh lab từ màn hình xem trước hiện có và được chú thích rõ trạng thái xem trước. Ảnh lộ trình và tab Thi thử được chụp từ ứng dụng đang chạy với dữ liệu thật.
+- Layout chỉ ẩn sidebar với khách ở Home và các route xác thực hiển thị Home phía sau modal; điều hướng theo phần đặt ngay trên Home. Học viên đã đăng nhập vẫn có sidebar và khối học tiếp.
+- Sau khi rà giao diện, chuyển khối “Tiếp tục bài học” lên ngay dưới hero để học viên đã đăng nhập thấy bài đang học trước phần giới thiệu ba bước.
+- Bỏ bốn chỉ số/cam kết viết cứng vì chưa có nguồn dữ liệu xác thực. FAQ, CTA cuối trang và footer hiện trỏ tới nội dung/route thật; xóa số điện thoại, email và liên kết mẫu.
+- Thẻ khóa học đổi thành một liên kết có thể đi bằng bàn phím; khi API không có khóa học, trang vẫn hiển thị đường dẫn sang lộ trình thay vì khoảng trống.
+
+## Kết quả kiểm tra
+
+- `npm.cmd run build` với `BUILD_PATH=build-landing-check`, `CI=false`: **Compiled successfully** sau thay đổi cuối.
+- ESLint trên `Home.js`, `Layout.js`, `Footer.js`: **0 lỗi, 0 cảnh báo**. `git diff --check` trên các file đã sửa: đạt.
+- Browser trên bản build ở 1440×900 và 390×844: mỗi trang có một H1, đủ ba ảnh tải được, không tràn ngang; nút FAQ kích hoạt bằng Enter và link FAQ footer hoạt động, không có lỗi JavaScript. Phiên đăng nhập giả lập chỉ dùng để kiểm tra sidebar hiện lại; không kiểm tra xác thực thật.
+- Browser trên ứng dụng dev dùng API đang chạy: ba khóa học tải được và thẻ liên kết hiển thị đúng; focus thẻ đầu rồi nhấn Enter mở `/course/ITN?from=home`. Trang lộ trình và tab Thi thử có dữ liệu để chụp ảnh minh họa. Không thay đổi dữ liệu backend.
+- Đã dừng server preview cổng 4319 và xóa đúng thư mục build tạm cùng script/ảnh QA tạm; ba ảnh đã sao chép vào `src/image` được giữ làm tài sản của trang chủ.
+
+# Tinh chỉnh landing: chuyển động, font và bố cục — 2026-09-18
+
+## Kế hoạch trước khi sửa
+
+- [x] Thêm fade in/fade out theo cuộn cho phần ba bước, FAQ và CTA cuối; giữ hero một hiệu ứng xuất hiện, giữ nhánh reduced motion và không động vào animation thẻ khóa học đang hoạt động.
+- [x] Dùng thống nhất font giao diện sans-serif mặc định của hệ thống (`system-ui, sans-serif`) trên riêng các route hiển thị Home (gồm Header/Footer), không thay font của các trang học/lab/admin; kiểm tra font thực tế bằng trình duyệt.
+- [x] Giảm chiều cao và cỡ chữ/padding của hero trên desktop; rút gọn hero trên mobile để phần nội dung tiếp theo xuất hiện sớm hơn.
+- [x] Xóa khối giới thiệu lab lớn bên dưới ba thẻ vì thẻ bước 02 đã có cùng ảnh và link lab; giữ ba ảnh minh họa tương ứng trong ba thẻ.
+- [x] Kiểm tra build, lint, chuyển động thường/reduced motion, desktop/mobile, không tràn và các link; ghi kết quả ở đây và bài học vào `lessons.md`.
+
+## File dự kiến thay đổi và lý do
+
+- `src/components/Content/Home.js`: thêm fade hai chiều cho các phần mới và bỏ nội dung lab lặp.
+- `src/css/Home.css`: thu nhỏ hero, đặt font riêng cho route Home và xóa CSS của khối lab đã bỏ.
+- `src/components/Content/Layout.js`: gắn class cho các route hiển thị Home để font không ảnh hưởng những trang khác.
+- `todo.md`, `lessons.md`: theo đúng quy trình trong `Agent.md`.
+
+## Kiểm tra lại kế hoạch trước khi code
+
+- [x] Đã xác định nguyên nhân: `App.css` áp font hệ thống cho body, Footer có font riêng; chữ trong ảnh PNG không đổi được bằng CSS. Người dùng xác nhận font phải không chân nên dùng `system-ui, sans-serif` thay vì font serif mặc định của trình duyệt. Khối lab lớn lặp đúng ảnh/link của thẻ bước 02.
+- [x] Đã xác định phần thiếu fade là ba bước, FAQ và CTA; hero từng bị lỗi khi thêm tween cuộn thứ hai nên sẽ giữ hiệu ứng xuất hiện hiện có. Các thay đổi chưa commit ngoài phạm vi được giữ nguyên.
+
+## Thay đổi và lý do
+
+- `Home.js`: thêm ScrollTrigger riêng cho các phần giới thiệu tĩnh, chạy ngay khi Home mount để không chớp theo lúc API khóa học tải xong; `toggleActions` cho fade in/fade out khi cuộn hai chiều. Hero và thẻ khóa học giữ animation cũ để tránh lỗi hồi quy đã ghi trong `lessons.md`.
+- `Home.js`: bỏ toàn bộ panel lab lớn vì thẻ bước 02 đã có đúng ảnh và liên kết lab; sau ba thẻ đi thẳng vào lộ trình khóa học để nội dung không lặp.
+- `Layout.js` và `Home.css`: gắn class cho route Home và dùng cùng `system-ui, sans-serif` từ header qua footer; giữ nguyên font các route khác. Font trong ảnh PNG là pixel của ảnh, nên không thể đổi bằng CSS.
+- `Home.css`: giảm min-height hero 510px xuống 420px, giảm cỡ chữ/padding và ẩn khối minh họa hành trình trên mobile vì ba bước ngay bên dưới đã trình bày nội dung đó. Xóa CSS của panel lab đã bỏ.
+
+## Kết quả kiểm tra
+
+- CRA production build: **Compiled successfully**; ESLint `Home.js`/`Layout.js`: 0 lỗi, 0 cảnh báo; `git diff --check`: đạt.
+- Chromium trên bản build ở 1440×900 và 390×844: hero cao lần lượt 420px và 413,5px; Header, H1, mô tả, Footer đều có computed `font-family: system-ui, sans-serif`; không tràn ngang; không còn panel lab lớn, ảnh lab trong thẻ bước 02 còn đúng một lần và link đến `/labs`.
+- Kiểm tra cuộn: thẻ ba bước fade in, fade out, fade in lại; FAQ và CTA cuối fade in. Với `prefers-reduced-motion: reduce`, nội dung giữ opacity 1. Route `/roadmap` không có class font Home; phiên đăng nhập giả lập vẫn có sidebar.
+
+# Đồng bộ bốn thẻ công cụ với bố cục Home — 2026-09-18
+
+## Kế hoạch trước khi sửa
+
+- [x] Đưa lưới công cụ vào cùng khung rộng tối đa 1240px với phần ba bước/FAQ, giữ bốn cột desktop và bố cục responsive hiện có; đo lại vị trí hai mép bằng trình duyệt.
+- [x] Đồng bộ bo góc, bóng nhẹ và cỡ chữ của thẻ công cụ với thẻ nội dung landing; giữ nguyên nội dung, icon, liên kết và animation.
+- [x] Kiểm tra build, lint, desktop/mobile và tràn ngang; ghi kết quả ở đây và bài học vào `lessons.md`.
+
+## File dự kiến thay đổi và lý do
+
+- `src/css/Home.css`: nguyên nhân chính là `.features-grid` rộng tối đa 1500px, trong khi `.landing-steps` và `.landing-faq` rộng tối đa 1240px; đồng bộ style của `.feat-card` với thẻ landing.
+- `todo.md`, `lessons.md`: ghi kế hoạch, kết quả và bài học theo `Agent.md`.
+
+## Kiểm tra lại kế hoạch trước khi code
+
+- [x] Đã đối chiếu ảnh người dùng với CSS: ở màn hình rộng, bốn thẻ kéo sát hai mép vì `max-width: 1500px`; các phần khác nằm trong khung 1240px. Chỉ CSS của mục công cụ cần sửa; JSX và logic điều hướng không liên quan.
+
+## Thay đổi và lý do
+
+- `Home.css`: đặt `.features-grid` cùng chiều rộng và lề responsive với phần ba bước; giữ 4 cột từ 1200px, 2 cột ở màn hình trung bình, 1 cột trên điện thoại để thẻ không bị quá hẹp.
+- `Home.css`: đồng bộ khoảng cách 18px, bo góc 14px, bóng nhẹ và cỡ chữ 18/14px với thẻ landing; giữ nút, icon, nội dung và link cũ.
+
+## Kết quả kiểm tra
+
+- CRA production build: **Compiled successfully**; ESLint `Home.js`: 0 lỗi, 0 cảnh báo; `git diff --check`: đạt.
+- Chromium ở 1900, 1199, 900 và 390px: hai mép lưới công cụ trùng với phần ba bước (1900px: x=330, rộng 1240px; 390px: x=14, rộng 362px); lần lượt hiển thị 4, 2, 2 và 1 cột; không tràn ngang. Đã xem ảnh chụp desktop/mobile.
+
+# Hiệu ứng mũi tên ba bước học — 2026-09-18
+
+## Kế hoạch trước khi sửa
+
+- [x] Chỉ tạo chuyển động cho ba mũi tên của liên kết trong `.landing-step-card`: khi hover lùi trái khoảng 6px, khi rời hover trở lại vị trí đầu với nhịp bật nhẹ; không làm dịch chữ hay đổi kích thước thẻ.
+- [x] Hỗ trợ focus bằng bàn phím và `prefers-reduced-motion: reduce`; giữ liên kết và hiệu ứng fade của thẻ hiện có.
+- [x] Kiểm tra CSS/build và đo trạng thái trước hover, khi hover, sau hover, reduced motion trên trình duyệt; ghi kết quả và bài học.
+
+## File dự kiến thay đổi và lý do
+
+- `src/css/Home.css`: ba liên kết đã dùng chung SVG `ArrowRight`, nên một selector có thể điều khiển chuyển động chính xác mà không sửa JSX.
+- `todo.md`, `lessons.md`: ghi kế hoạch, kết quả và bài học theo `Agent.md`.
+
+## Kiểm tra lại kế hoạch trước khi code
+
+- [x] Đã xác định ba mũi tên trong ảnh nằm tại `.landing-step-card a > svg`; CSS hiện chỉ đổi gạch chân khi hover, chưa có transform/transition trên SVG. Giới hạn selector vào ba thẻ để các mũi tên khác trên Home không bị ảnh hưởng.
+
+## Thay đổi và lý do
+
+- `Home.css`: thêm transition 480ms với nhịp bật nhẹ cho SVG; hover/focus dịch trái 5px và nén ngang còn 80% như kéo mũi tên về sau. Khi rời hover, CSS trở về transform mặc định, tạo cảm giác nhả dây cung mà không đổi vị trí chữ hay diện tích liên kết.
+- `Home.css`: khi bật reduced motion, bỏ transition và transform để mũi tên đứng yên.
+
+## Kết quả kiểm tra
+
+- CRA production build: **Compiled successfully**; `git diff --check`: đạt.
+- Chromium: cả ba mũi tên có computed transform `none` ban đầu, `matrix(0.8, 0, 0, 1, -5, 0)` khi hover, rồi trở về `none` sau khi rời chuột; href giữ đúng `/roadmap`, `/labs`, `/exam/testing-center`. Trên mobile với reduced motion, transform là `none` và transition `0s`.
+
+# Mũi tên thống nhất và giảm bo góc Home — 2026-09-18
+
+## Kế hoạch trước khi sửa
+
+- [x] Áp dụng cùng chuyển động kéo/lùi mũi tên cho mọi nút và liên kết có mũi tên trong nội dung Home: hero, tiếp tục học, ba bước, trạng thái khóa học, thẻ khóa học, bốn thẻ công cụ và CTA cuối. Hover/focus dịch trái 5px, nén ngang 80%, rời hover về vị trí cũ; reduced motion đứng yên.
+- [x] Giảm bo góc banner từ 24px xuống 12px (mobile 16px xuống 10px), khung hành trình trong banner từ 18px xuống 12px và ba thẻ dưới “MỘT LỘ TRÌNH, BA CÁCH HỌC” từ 14px xuống 8px; giữ nguyên cấu trúc và nội dung.
+- [x] Kiểm tra build, hover/rời hover, reduced motion, bo góc desktop/mobile và không tràn ngang; ghi kết quả cùng bài học.
+
+## File dự kiến thay đổi và lý do
+
+- `src/css/Home.css`: toàn bộ mũi tên và bo góc cần đổi đều nằm trong Home; dùng selector theo biểu tượng mũi tên, không sửa logic JSX.
+- `todo.md`, `lessons.md`: ghi kế hoạch, kết quả và bài học theo `Agent.md`.
+
+## Kiểm tra lại kế hoạch trước khi code
+
+- [x] Đã xác định các `ArrowRight` của Home là SVG trong nút/liên kết; riêng bốn thẻ công cụ dùng span `material-icons-round` có chữ `arrow_forward`. Banner không có border viền ngoài, chỉ có `border-radius`; giảm radius đúng với vấn đề thị giác. Selector giới hạn trong `.home-wrapper` để không ảnh hưởng trang học, lab, admin.
+
+## Thay đổi và lý do
+
+- `Home.css`: thay selector chỉ dành cho ba thẻ bước bằng selector SVG mũi tên trong mọi nút/liên kết Home; thêm selector cho icon chữ của bốn thẻ công cụ. Bỏ dịch chuyển cả nút “Khám phá” khi hover để chỉ mũi tên lùi, cùng cảm giác với các CTA khác. Giữ nhịp 480ms, focus bàn phím và reduced motion.
+- `Home.css`: giảm radius hero desktop/mobile, bảng hành trình trong hero, ba thẻ bước và ảnh trong thẻ để các góc cân đối hơn; không thay border 1px hiện có.
+
+## Kết quả kiểm tra
+
+- CRA production build: **Compiled successfully**; `git diff --check`: đạt.
+- Chromium desktop 1440px: hero/journey/step/image có radius lần lượt 12/12/8/6px; mobile 390px: 10/12/8/6px; không tràn ngang. Đã xem ảnh chụp banner và ba thẻ.
+- Hover/rời hover trên mũi tên hero, thẻ bước, thẻ công cụ, CTA cuối và link trạng thái khóa học: `none` → `matrix(0.8, 0, 0, 1, -5, 0)` → `none`. Với reduced motion, cả SVG và icon công cụ có transform `none`, transition `0s`. Nút tiếp tục học và thẻ khóa học dùng cùng selector SVG nhưng không xuất hiện trong phiên khách thử nghiệm.
+
+# Trạng thái lộ trình và vị trí cuộn trang khóa học — 2026-09-18
+
+## Kế hoạch trước khi sửa
+
+- [x] Đổi dấu và chữ “Đã hoàn thành (100%)” trong chú thích lộ trình sang xanh lá cùng token thành công đang dùng cho node; giữ “Đang học” màu xanh dương.
+- [x] Thêm nhịp sáng/tắt nhẹ cho dấu “Đang học” (khoảng 1,6 giây/chu kỳ); tắt animation khi `prefers-reduced-motion: reduce`.
+- [x] Khi mở route `/course/:courseId`, hiển thị trang chi tiết từ đầu thay vì giữ vị trí cuộn của Home; không thay thao tác mở modal khi bấm node lộ trình.
+- [x] Kiểm tra build/lint, màu và animation trên trình duyệt, đường đi từ Home sang khóa học ở desktop/mobile, reduced motion; ghi kết quả và bài học.
+
+## File dự kiến thay đổi và lý do
+
+- `src/css/Roadmap.css`: hai dấu chú thích đang cùng màu xanh dương; tạo trạng thái xanh lá và pulse scoped cho dấu hiện tại.
+- `src/components/Content/CourseDetail.js`: route chi tiết khóa học giữ vị trí cuộn từ trang trước; đặt lại cuộn khi courseId được mở.
+- `todo.md`, `lessons.md`: ghi kế hoạch, kết quả và bài học theo `Agent.md`.
+
+## Kiểm tra lại kế hoạch trước khi code
+
+- [x] Đã tái hiện trên Chromium với dữ liệu khóa học giả lập: Home trước khi bấm ở `scrollY=1057`; route chi tiết sau khi mở ở `scrollY=414`, đúng cuối trang (`max=414`). Bấm node lộ trình mở modal giữ `scrollY=0`, nên sửa route chi tiết thay vì modal hoặc scroll của toàn ứng dụng. CSS chú thích xác nhận completed đang `#2563eb` và current dùng token xanh dương.
+
+## Thay đổi và lý do
+
+- `Roadmap.css`: dấu completed dùng `--lp-success`, vòng nền dùng `--lp-success-light`, chữ dùng xanh lá đậm để dễ đọc; dấu current giữ xanh dương và nhịp sáng 1,6 giây. Nhánh reduced motion tắt animation.
+- `CourseDetail.js`: `useLayoutEffect` đưa cửa sổ lên đầu ngay khi `courseId` được mở, trước khi trang chi tiết vẽ; sửa tận nơi việc route giữ `scrollY` từ trang Home và tránh ảnh hưởng modal lộ trình hay route khác.
+
+## Kết quả kiểm tra
+
+- CRA production build: **Compiled successfully**; `git diff --check`: đạt. ESLint `CourseDetail.js`: 0 lỗi, 2 cảnh báo `activeTab`/`setActiveTab` chưa dùng đã có ở HEAD trước thay đổi này.
+- Chromium với cùng dữ liệu giả lập: completed dot `rgb(16, 185, 129)`, chữ `rgb(4, 120, 87)`; current có `lpLegendCurrentPulse` chu kỳ 1,6 giây. Reduced motion: animation `none`.
+- Desktop: từ Home `scrollY=1057`, mở khóa học còn `scrollY=0` (trước sửa xuống cuối ở `414/414`); mobile: từ `1966` về `0`. Bấm node lộ trình mở/đóng modal vẫn giữ vị trí cuộn `0`.
+
+# Nền giấy ô ly cho các trang trắng — 2026-09-18
+
+## Kế hoạch trước khi sửa
+
+- [x] Thêm lưới giấy ô ly xanh lam rất nhạt (ô nhỏ 32px, đường nhấn mỗi 160px) vào lớp nền nội dung của các route người học đang dùng nền trắng; không áp dụng lên `/roadmap` và `/lesson` vốn có nền xám.
+- [x] Gỡ lớp nền trắng phủ toàn trang ở Home, chi tiết khóa học và các màn hình thi để lưới hiện ra; giữ nền trắng của thẻ, header, footer, sidebar, modal và vùng làm bài có chủ đích.
+- [x] Kiểm tra build, desktop/mobile, ít nhất Home, trang chi tiết, trang thi, trang lộ trình và công cụ; xác nhận lưới không tràn và các trang nền xám giữ nguyên; ghi kết quả và bài học.
+
+## File dự kiến thay đổi và lý do
+
+- `src/components/Content/Layout.js`: đánh dấu route có nền giấy ô ly theo loại trang.
+- `src/css/Navbar.css`: nơi định nghĩa Layout chung, thêm nền lưới và chỉ bỏ lớp phủ trắng ở các wrapper cấp trang liên quan.
+- `todo.md`, `lessons.md`: ghi kế hoạch, kết quả và bài học theo `Agent.md`.
+
+## Kiểm tra lại kế hoạch trước khi code
+
+- [x] Đã xác định `--bg-color` và `--bg-page` đều trắng; các trang Home, chi tiết khóa học, thi, lab, tài liệu, hồ sơ và công cụ dùng nền trắng của Layout. `/roadmap` có `#f8fafc`, `/lesson` có nền slate nên loại khỏi class lưới. Một số wrapper trắng (`.features`, `.cdp-page`, `.cdp-loading-container`, `.exam-page`, `.take-exam-page`, `.exam-result-page`, `.review-exam-page`) cần trong suốt để không che nền; thẻ trắng giữ nguyên.
+
+## Thay đổi và lý do
+
+- `Layout.js`: gắn `layout-container--graph-paper` cho các route người học có nền trắng; loại `/roadmap` và `/lesson` vì có nền xám riêng. Admin dùng layout riêng nên không bị tác động.
+- `Navbar.css`: vẽ lưới 32px với đường nhấn 160px bằng các CSS gradient xanh lam nhạt trên `.main-wrapper`; chuyển các wrapper phủ nền trắng toàn trang sang trong suốt để lưới hiện ra. Nền của card, điều hướng, modal và footer không đổi.
+
+## Kết quả kiểm tra
+
+- CRA production build: **Compiled successfully**; ESLint `Layout.js`: 0 lỗi, 0 cảnh báo; `git diff --check`: đạt.
+- Chromium desktop: Home, chi tiết khóa học và trung tâm thi có class lưới/background gradient; `.features` và `.cdp-page` trong suốt; lộ trình không có class lưới và vẫn có nền `rgb(248, 250, 252)`. Route bài học không có class lưới. Chromium mobile: trang công cụ Subnet có lưới; không tràn ngang ở các trang đã kiểm tra. Đã xem ảnh chụp Home, chi tiết khóa học và công cụ trên mobile.
+# Kiểm thử browser theo `testdevtool.md` — 2026-09-19
+
+### Tiếp tục sau khi môi trường dừng — 2026-09-19
+
+### Kế hoạch sửa các lỗi HIGH sau khi thu thập bằng chứng browser
+
+- [x] Kiểm tra upload/download tài liệu local bằng `qa-artifacts/qa-upload.txt`; đối chiếu SHA-256 trùng, hủy/xác nhận xóa qua UI, dọn đúng file upload QA. File nguồn/tải về nhỏ được giữ làm bằng chứng.
+
+- [x] Chạy frontend, Node CLI/learning, production build và integration ở `qa_learning_test`/`qa_lab_test`; kết quả PASS/FAIL/skip được ghi báo cáo. Đã dừng frontend/backend/cluster QA.
+
+- [x] H01: `src/components/Admin/Layout/AdminLayout.js`, `TopBar.js`, `src/css/Admin/AdminLayout.css`: drawer dưới1024px, đóng theo menu/route/Escape/backdrop; main toàn chiều rộng. Browser PASS24 tổ hợp route/viewport, nút/form mobile, chọn lại route đang mở; desktop collapse76px vẫn hoạt động.
+- [x] H02: `src/services/Api.js`, `src/components/Content/Lesson.js`, `Lesson.test.jsx`: GET lỗi truyền ra; khóa nhập đến khi tải thành công, lỗi/thử lại; bỏ fetch cũ. Browser PASS GET503, delay2.5s/đổi bài, POST503/retry/reload; regression2/2 PASS.
+- [x] H03: `src/components/Content/Labs.js`: cleanup close timer chỉ khi unmount, độc lập handler bàn phím; browser PASS X/Escape/backdrop, mở CLI lab sau đóng.
+- Kiểm tra lại kế hoạch: cả ba lỗi đã tái hiện qua Playwright MCP trên DB QA; H02 có mất dữ liệu thật trong DB QA, H03 có overlay chặn click, H01 có screenshot mobile. Chỉ sửa các vùng gây lỗi; MEDIUM/LOW được ghi báo cáo.
+- File QA fixture `qa-artifacts/seed-browser.cjs`: dùng `ccna-network-v2` với dạng state devices/links; admin validator đã phát hiện profile không khớp của fixture ban đầu (không tính là bug sản phẩm).
+
+- Frontend/backend 3000/3001/5500/5501 và Docker không còn chạy. Dùng PostgreSQL 17 cài sẵn để tạo cluster QA riêng trong thư mục TEMP có tên ASCII trên cổng 55433; khởi động backend 5501 và frontend 3001 với biến môi trường chỉ tới DB QA.
+- Không giả định dữ liệu QA lần trước còn tồn tại; tạo fixture nhỏ gồm admin, học viên, khóa học, bài đọc/video, lab, bài thi, tài liệu và công cụ để kiểm thử. Fixture/harness tạm thuộc `qa-artifacts/`; báo cáo kết quả ở `qa-testdevtool-2026-09-19.md` và `lessons.md`. Chưa sửa source sản phẩm trước khi thu thập bug.
+
+## Kế hoạch trước khi sửa code
+
+- [x] Đọc `testdevtool.md` và `Agent.md`; xác định URL frontend `http://localhost:3000`, backend `http://localhost:5500`, và kiểm tra trạng thái Git để không ghi đè thay đổi sẵn có.
+- [x] Playwright MCP kiểm thử các luồng chính, accessibility, form/search/dropdown/modal/login/logout, học/video/ghi chú/thi/CLI/tools/tài liệu; responsive13 trang học viên và8 route admin ở1440/768/390px. Các biến thể chưa bao phủ được ghi rõ báo cáo.
+- [x] Chrome DevTools MCP đối chiếu console/HTTP login, bài đọc, kết quả thi và labs: không có error ở đường bình thường, API200/304; ghi nhận warning Recharts/YouTube và503 injection riêng.
+- [x] Dựng cluster PostgreSQL QA55433, backend5501/frontend3001; mọi ghi dữ liệu dùng DB QA riêng, không dùng DB từ xa của project.
+- [x] Viết `qa-testdevtool-2026-09-19.md` trước khi sửa source: 0 CRITICAL,3 HIGH,4 MEDIUM,2 LOW; HIGH đều có browser repro trước sửa.
+- [x] Cả3 HIGH đã thêm file nguồn vào kế hoạch, sửa, reload, tái hiện lại và xác minh browser PASS; bảng chi tiết trong báo cáo.
+- [x] Ghi kết quả/giới hạn/bài học; dừng server QA3001/5501 và PostgreSQL55433, dọn file upload QA và build tạm. Giữ cluster dữ liệu QA đã dừng trong TEMP, fixture và ảnh để tái kiểm thử.
+
+## File dự kiến thay đổi và lý do
+
+- `todo.md`, `lessons.md`: kế hoạch, kết quả và bài học theo `Agent.md`.
+- `qa-testdevtool-2026-09-19.md`: bug report và bằng chứng kiểm thử browser theo yêu cầu `testdevtool.md`.
+- File source của bug CRITICAL/HIGH sẽ được liệt kê tên cụ thể tại đây sau khi xác định nguyên nhân và trước khi sửa; chưa sửa code trong giai đoạn lập bug report.
+
+## Kiểm tra lại kế hoạch
+
+- Giai đoạn đầu site dùng3000/5500. Khi tiếp tục phiên, các server đã dừng; kiểm thử ghi dữ liệu chuyển sang môi trường cô lập3001/5501 với DB QA55433.
+- Phạm vi “toàn bộ” là các luồng người dùng và kích thước màn hình nêu trong `testdevtool.md`; phân biệt ca đã thao tác được với ca bị giới hạn bởi dữ liệu/quyền truy cập.
+
+## Kết quả đợt QA tiếp tục — 2026-09-19
+
+- **3 HIGH đã sửa và browser PASS**, còn4 MEDIUM/2 LOW trong báo cáo. Không sửa source của các lỗi mức thấp khi chưa được yêu cầu thêm.
+- Video thực tế: phát/pause7s, DB watched/position7; reload resume7; xem hết19s → watched/position19, StudyLog19 giây, lesson/module/course COMPLETED. Ghi chú giảng viên toolbar/preview/lưu/reload đúng; ghi chú cá nhân được bảo vệ khi GET lỗi hoặc trả chậm.
+- Frontend **76/77 PASS**: một assertion confetti84 không khớp source120 có từ trước QA; chưa đổi animation/test này. Node unit53 PASS; learning integration20/20 PASS; lab integration14/14 PASS; production build cuối cùng Compiled successfully; diff check PASS.
+- Upload/download SHA-256 khớp; delete metadata hoạt động nhưng file vật lý còn tồn tại (LOW L02), file QA đã được dọn.
+- Chưa kiểm thử Google OAuth, email reset, file Packet Tracer thật, mọi biến thể upload/lab/exam và deployment nhiều replica; giới hạn được ghi trong report, không báo toàn hệ thống PASS.
+
+---

@@ -2,12 +2,13 @@
 .header {
   height: var(--header-height);
   background-color: var(--card-bg);
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1.5px solid #ccc;
   padding: 0 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+  position: relative;
   position: sticky;
   top: 0;
   z-index: 1000;
@@ -59,6 +60,16 @@
   display: flex;
   justify-content: center;
   min-width: 0;
+  transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s ease;
+  opacity: 1;
+  visibility: visible;
+}
+
+.header-center.is-hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(-8px);
 }
 
 .search-box {
@@ -86,7 +97,6 @@
   color: var(--text-color);
   outline: none;
   transition: all 0.2s;
-  margin-right: 50px;
 }
 
 .search-input:focus {
@@ -533,64 +543,640 @@
 @media (max-width: 768px) {
   .header {
     height: var(--header-height);
-    padding: 0 16px;
+    padding: 0 12px;
     flex-wrap: nowrap;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
   }
 
   .header-left {
     flex: 0 0 auto;
+    gap: 6px;
   }
 
-  .logo-text {
+  .logo-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+  }
+
+  .logo-icon .material-icons-round {
+    font-size: 20px;
+  }
+
+  .logo-text,
+  .logo-subtitle {
     display: none;
-    /* Hide logo text completely to save space for search bar */
   }
 
   .header-center {
     flex: 1 1 auto;
+    min-width: 0;
     justify-content: center;
   }
 
   .search-box {
     width: 100%;
-    max-width: none;
+    max-width: 240px;
   }
 
   .search-input {
-    padding: 8px 12px 8px 36px;
+    height: 34px;
+    font-size: 13px;
+    padding: 6px 28px 6px 32px;
+  }
+
+  .search-icon {
+    font-size: 16px;
+    left: 10px;
   }
 
   .header-right {
     flex: 0 0 auto;
     margin-left: 0;
-    gap: 8px;
+    gap: 6px;
   }
 
-  .header-login-btn,
-  .header-register-btn {
+  .header-login-btn {
     padding: 6px 10px;
-    font-size: 11px;
+    font-size: 12px;
+    gap: 4px;
+  }
+
+  .header-login-btn .material-icons-round {
+    font-size: 16px !important;
+  }
+
+  .header-register-btn {
+    padding: 6px 12px;
+    font-size: 12px;
   }
 
   .user-dropdown {
-    width: min(280px, calc(100vw - 32px));
+    width: min(280px, calc(100vw - 24px));
+    right: 0;
+  }
+
+  .search-results-dropdown {
+    position: fixed;
+    top: 56px;
+    left: 12px;
+    right: 12px;
+    width: auto;
+    max-width: 480px;
+    margin: 0 auto;
+    transform: none;
+    max-height: calc(100vh - 72px);
   }
 }
 
 @media (max-width: 480px) {
   .header {
-    padding-left: 12px;
-    padding-right: 12px;
+    padding: 0 8px;
+    gap: 6px;
   }
 
-  .header-right {
-    width: auto;
+  .header-login-btn .material-icons-round {
+    display: none;
   }
 
-  .header-login-btn,
+  .header-login-btn {
+    padding: 5px 8px;
+    font-size: 11.5px;
+  }
+
   .header-register-btn {
-    min-height: auto;
+    padding: 5px 10px;
+    font-size: 11.5px;
+  }
+
+  .search-box {
+    max-width: none;
+  }
+
+  .search-input {
+    padding: 5px 24px 5px 28px;
+    font-size: 12px;
+  }
+}
+
+/* =========================================
+   iPhone Notch Navigation Menu (Tai thỏ)
+   ========================================= */
+
+:root {
+  --notch-bg: #ffffff;
+  --notch-border: #94a3b8;
+  --notch-text: #475569;
+  --notch-hover-text: #0f172a;
+  --notch-hover-bg: #f1f5f9;
+  --notch-active-text: #2563eb;
+  --notch-active-bg: #eff6ff;
+  --notch-shadow: drop-shadow(0 14px 28px rgba(15, 23, 42, 0.12));
+}
+
+/* 1. Header Notch Container (Tai thỏ liền khối)
+   Treo từ mép dưới header, căn chính giữa, liền mạch không vết đứt */
+.header-notch-nav,
+.landing-section-nav.header-notch-nav {
+  position: absolute;
+  top: calc(100% - 1px);
+  left: 50%;
+  transform: translateX(-50%) translateY(0);
+  display: flex;
+  align-items: stretch;
+  z-index: 100;
+  filter: var(--notch-shadow);
+  white-space: nowrap;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease, visibility 0.35s ease;
+  opacity: 1;
+  visibility: visible;
+  user-select: none;
+  clip-path: inset(0px -100px -600px -100px);
+}
+
+/* Ẩn khi ở đầu banner hero hoặc chưa cuộn tới */
+.header-notch-nav.is-hidden,
+.landing-section-nav.header-notch-nav.is-hidden {
+  transform: translateX(-50%) translateY(-100%);
+  opacity: 0;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+.header-notch-nav.is-hidden *,
+.landing-section-nav.header-notch-nav.is-hidden * {
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+.header-notch-nav.is-visible,
+.landing-section-nav.header-notch-nav.is-visible {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+/* Dải bridge che hoàn toàn viền 1px dưới của header để header + tai thỏ là 1 khối */
+.notch-bridge {
+  position: absolute;
+  top: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: var(--notch-bg, #ffffff);
+  z-index: 5;
+  pointer-events: none;
+}
+
+/* 2 Cánh cong S-curve: lượn xuống, cong lên, cong lên, lượn xuống */
+.notch-cap {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  display: block;
+  pointer-events: none;
+  position: relative;
+  z-index: 2;
+}
+
+.notch-cap--left {
+  margin-right: -1px;
+}
+
+.notch-cap--right {
+  margin-left: -1px;
+}
+
+/* Khối nội dung tai thỏ ở giữa */
+.notch-content {
+  height: 44px;
+  background-color: var(--notch-bg, #ffffff);
+  border-bottom: 1.5px solid var(--notch-border, #94a3b8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 3;
+  box-sizing: border-box;
+  /* Chỉ bật transition width sau khi đã set width lần đầu (thêm class "ready" sau 2 frame) để tránh nhảy lúc load */
+}
+
+.notch-content.ready {
+  transition: width 0.38s cubic-bezier(0.3, 1.15, 0.4, 1);
+}
+
+/* .row chứa menu điều hướng và nút kính lúp */
+.notch-content .row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 4px;
+  white-space: nowrap;
+  opacity: 1;
+  transition: opacity 0.2s ease, visibility 0.2s;
+}
+
+/* Khi mở (open): .row mờ dần và ẩn (opacity 0, visibility hidden) */
+.notch-content.open .row {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.15s ease, visibility 0.15s;
+}
+
+/* Danh sách link điều hướng */
+.notch-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.header-notch-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--notch-text, #475569);
+  font-weight: 500;
+  font-size: 14px;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  text-decoration: none;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  line-height: 1.2;
+  white-space: nowrap;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.header-notch-link:hover {
+  color: var(--notch-hover-text, #0f172a);
+  background-color: var(--notch-hover-bg, #f1f5f9);
+}
+
+.header-notch-link[aria-current='page'],
+.header-notch-link.active {
+  color: var(--notch-active-text, #2563eb);
+  background-color: var(--notch-active-bg, #eff6ff);
+  font-weight: 600;
+}
+
+.header-notch-link:focus-visible {
+  outline: 2px solid var(--blue-primary, #2563eb);
+  outline-offset: 2px;
+}
+
+.notch-text-short {
+  display: none;
+}
+
+.notch-text-full {
+  display: inline;
+}
+
+/* Vạch phân cách giữa nav links và nút tìm kiếm */
+.notch-divider {
+  width: 1px;
+  height: 18px;
+  background-color: var(--notch-border, #e2e8f0);
+  margin: 0 4px;
+  flex-shrink: 0;
+}
+
+/* Nút icon kính lúp trong .row */
+.notch-search-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--notch-text, #475569);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  flex-shrink: 0;
+}
+
+.notch-search-btn:hover {
+  background-color: var(--notch-hover-bg, #f1f5f9);
+  color: var(--notch-hover-text, #0f172a);
+}
+
+.notch-search-btn:focus-visible {
+  outline: 2px solid var(--blue-primary, #2563eb);
+  outline-offset: 2px;
+}
+
+.notch-search-btn .material-icons-round {
+  font-size: 20px;
+}
+
+/* .field ô tìm kiếm: mặc định ẩn */
+.notch-content .field {
+  position: absolute;
+  inset: 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.15s ease, visibility 0.15s;
+}
+
+/* Khi mở: .field hiện ra (delay 0.12s) */
+.notch-content.open .field {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition: opacity 0.25s ease 0.12s, visibility 0.25s 0.12s;
+}
+
+.field-icon {
+  font-size: 20px;
+  color: var(--notch-text, #64748b);
+  margin-left: 4px;
+  flex-shrink: 0;
+}
+
+.field-input {
+  flex: 1;
+  height: 32px;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 13.5px;
+  color: var(--text-color, #0f172a);
+  padding: 0 4px;
+  min-width: 0;
+}
+
+.field-input::placeholder {
+  color: var(--text-muted, #94a3b8);
+}
+
+.field-clear-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--text-muted, #94a3b8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+
+.field-clear-btn:hover {
+  background-color: var(--notch-hover-bg, #f1f5f9);
+  color: var(--text-color, #0f172a);
+}
+
+.field-clear-btn .material-icons-round {
+  font-size: 16px;
+}
+
+/* Nút Esc */
+.field-esc-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 7px;
+  background: var(--notch-hover-bg, #f1f5f9);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--notch-text, #64748b);
+  transition: all 0.15s;
+  flex-shrink: 0;
+  margin-right: 2px;
+}
+
+.field-esc-btn:hover {
+  background-color: var(--border-color, #e2e8f0);
+  color: var(--text-color, #0f172a);
+}
+
+.field-esc-btn .esc-badge {
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+/* Dropdown kết quả tìm kiếm thả xuống từ tai thỏ */
+.notch-search-results-dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border: 1px solid var(--notch-border, #e2e8f0);
+  border-radius: 12px;
+  box-shadow:
+    0 20px 25px -5px rgba(15, 23, 42, 0.12),
+    0 8px 10px -6px rgba(15, 23, 42, 0.06);
+  z-index: 1050;
+  overflow: hidden;
+  max-height: 380px;
+  overflow-y: auto;
+  animation: notch-search-dropdown-in 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes notch-search-dropdown-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Dark mode theme */
+[data-theme='dark'] .header-notch-nav,
+.dark .header-notch-nav,
+.header.header--dark .header-notch-nav,
+.header.is-dark .header-notch-nav,
+.header.dark .header-notch-nav,
+.header[data-theme='dark'] .header-notch-nav,
+[data-theme='dark'] .landing-section-nav.header-notch-nav,
+.dark .landing-section-nav.header-notch-nav,
+.header.header--dark .landing-section-nav.header-notch-nav,
+.header.is-dark .landing-section-nav.header-notch-nav,
+.header.dark .landing-section-nav.header-notch-nav,
+.header[data-theme='dark'] .landing-section-nav.header-notch-nav {
+  --notch-bg: #1e293b;
+  --notch-border: #334155;
+  --notch-text: #cbd5e1;
+  --notch-hover-text: #ffffff;
+  --notch-hover-bg: rgba(255, 255, 255, 0.12);
+  --notch-active-text: #ffffff;
+  --notch-active-bg: rgba(255, 255, 255, 0.16);
+  --notch-shadow: drop-shadow(0 14px 28px rgba(0, 0, 0, 0.45));
+}
+
+[data-theme='dark'] .notch-search-results-dropdown,
+.dark .notch-search-results-dropdown {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+[data-theme='dark'] .field-esc-btn,
+.dark .field-esc-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: #334155;
+  color: #cbd5e1;
+}
+
+[data-theme='dark'] .field-esc-btn:hover,
+.dark .field-esc-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+}
+
+[data-theme='dark'] .field-input,
+.dark .field-input {
+  color: #ffffff;
+}
+
+[data-theme='dark'] .field-icon,
+.dark .field-icon {
+  color: #94a3b8;
+}
+
+/* Responsive Notch */
+@media (max-width: 900px) {
+  .header-notch-link {
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 640px) {
+
+  .header-notch-nav,
+  .landing-section-nav.header-notch-nav {
+    max-width: calc(100vw - 8px);
+    clip-path: inset(0px 0px -400px 0px);
+  }
+
+  .notch-text-full {
+    display: none;
+  }
+
+  .notch-text-short {
+    display: inline;
+  }
+
+  .notch-cap {
+    width: 24px;
+    height: 38px;
+  }
+
+  .notch-content {
+    height: 38px;
+    max-width: calc(100vw - 56px);
+  }
+
+  .notch-content .row {
+    gap: 2px;
+    padding: 0 2px;
+  }
+
+  .notch-nav-links {
+    gap: 1px;
+  }
+
+  .header-notch-link {
+    padding: 4px 6px;
+    font-size: 11.5px;
+    font-weight: 500;
+  }
+
+  .notch-divider {
+    height: 14px;
+    margin: 0 2px;
+  }
+
+  .notch-search-btn {
+    width: 28px;
+    height: 28px;
+  }
+
+  .notch-search-btn .material-icons-round {
+    font-size: 18px;
+  }
+
+  .notch-content .field {
+    inset: 0 6px;
+    gap: 6px;
+  }
+
+  .field-icon {
+    font-size: 18px;
+    margin-left: 2px;
+  }
+
+  .field-input {
+    font-size: 12.5px;
+    height: 28px;
+  }
+
+  .field-esc-btn {
+    padding: 2px 5px;
+  }
+
+  .field-esc-btn .esc-badge {
+    font-size: 10px;
+  }
+
+  .notch-search-results-dropdown {
+    position: fixed;
+    top: 54px;
+    left: 10px;
+    right: 10px;
+    width: auto;
+    max-width: none;
+    max-height: calc(100vh - 70px);
+    border-radius: 12px;
+  }
+}
+
+@media (max-width: 380px) {
+  .notch-cap {
+    width: 18px;
+    height: 36px;
+  }
+
+  .notch-content {
+    height: 36px;
+    max-width: calc(100vw - 44px);
+  }
+
+  .header-notch-link {
+    padding: 3px 4px;
+    font-size: 11px;
+  }
+
+  .notch-search-btn {
+    width: 26px;
+    height: 26px;
+  }
+
+  .notch-search-results-dropdown {
+    left: 8px;
+    right: 8px;
   }
 }

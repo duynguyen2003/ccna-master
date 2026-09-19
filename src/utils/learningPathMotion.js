@@ -2,7 +2,7 @@ import { gsap, prefersReducedMotion } from './labMotion';
 
 const CONFETTI_COLORS = ['#2563eb', '#38bdf8', '#10b981', '#f59e0b', '#ec4899'];
 
-const createNodeConfetti = (nodeElement, particleCount = 84) => {
+const createNodeConfetti = (nodeElement, particleCount = 120) => {
   if (!nodeElement || typeof document === 'undefined') return null;
 
   const rect = nodeElement.getBoundingClientRect();
@@ -160,7 +160,7 @@ export const playUnlockSequence = ({
             },
             rotation: (index) => (index % 2 === 0 ? 1 : -1) * (240 + index * 20),
             opacity: 0,
-            duration: 1.92,
+            duration: 1.55,
             stagger: 0.004,
             ease: 'power1.out',
           },
@@ -169,8 +169,8 @@ export const playUnlockSequence = ({
         .to(
           confetti.particles,
           {
-            y: (index) => -220 - (index % 8) * 20,
-            duration: 0.72,
+            y: (index) => -110 - (index % 8) * 12,
+            duration: 0.5,
             ease: 'power2.out',
           },
           'confettiBurst'
@@ -179,10 +179,10 @@ export const playUnlockSequence = ({
           confetti.particles,
           {
             y: (index) => 135 + (index % 7) * 12,
-            duration: 1.2,
+            duration: 1.05,
             ease: 'power2.in',
           },
-          'confettiBurst+=0.72'
+          'confettiBurst+=0.5'
         );
     }
 

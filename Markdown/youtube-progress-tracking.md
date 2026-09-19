@@ -1,5 +1,31 @@
 # Hướng Dẫn Sửa: Theo Dõi Tiến Độ Video YouTube
 
+> **Lưu ý (19/09/2026):** Phần hướng dẫn bên dưới mô tả bản thiết kế cũ dùng Mongoose và
+> `/api/progress/video`; không phải luồng đang chạy. Giữ lại phần này để đối chiếu lịch sử.
+
+## Luồng hiện hành (Prisma/PostgreSQL)
+
+1. `VideoProgressPlayer.jsx` gọi `GET /api/users/progress/video/:lessonId` và chờ vị trí
+   đã lưu trước khi gắn player. Nếu tải lỗi, người học phải thử lại để tránh phát từ đầu rồi
+   ghi đè vị trí cũ.
+2. Khi video đang phát trong tab hiển thị, player đo **giây thực tế** bằng đồng hồ monotonic.
+   Cứ khoảng 10 giây và khi tạm dừng, kết thúc hoặc rời trang, client gửi
+   `POST /api/users/progress/video` gồm `lessonId`, `sessionId` (UUID), `sessionStartedAt`, `sequence`,
+   `sessionWatchedSeconds` (tổng giây đã phát trong phiên), `lastPosition` (giây trên video)
+   và `capturedAt` (ISO timestamp). Vị trí video và thời gian đã xem là hai số khác nghĩa;
+   tua đến phút thứ 20 không tạo ra 20 phút học.
+3. `learningPathService.updateVideoProgress` ghi `video_progress_sessions` để loại heartbeat
+   lặp hoặc đến sai thứ tự. Cùng transaction, server cập nhật `video_progress` (bookmark và
+   tổng giây xem), `study_logs.duration` (giây) và `users.total_study_time` (phút).
+4. Phần trăm và trạng thái hoàn thành bài học ở `user_progress`, qua
+   `POST /api/users/progress`. Client chỉ hiển thị hoàn thành sau khi server xác nhận.
+   Bookmark video không tự cấp quyền mở khóa khóa học. `user_notes` lưu ghi chú cá nhân
+   riêng với nội dung bài học do admin biên soạn.
+
+Luồng này là telemetry phía trình duyệt, không chứng minh người học đã chú ý hoặc xem đủ
+từng đoạn video. Các bản ghi `watched_seconds` tồn tại trước thay đổi có thể từng được tính
+theo vị trí video, nên không nên diễn giải chúng là thời gian xem thực tế lịch sử.
+
 ---
 
 ## Mục Lục

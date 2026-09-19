@@ -102,8 +102,13 @@ module.exports.getById = async (req, res, next) => {
         streak: true,
         totalStudyTime: true,
         progress: {
+          where: { moduleId: null, lessonId: null, labId: null },
           select: {
             id: true,
+            courseId: true,
+            moduleId: true,
+            lessonId: true,
+            labId: true,
             progressPercent: true,
             course: { select: { id: true, title: true, level: true } },
           },
