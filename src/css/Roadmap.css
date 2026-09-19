@@ -224,13 +224,26 @@
 }
 
 .lp-legend-dot-completed {
-  background-color: #2563eb;
-  box-shadow: 0 0 0 2px #dbeafe;
+  background-color: var(--lp-success);
+  box-shadow: 0 0 0 2px var(--lp-success-light);
+}
+
+.lp-legend-dot-completed + span {
+  color: #047857;
+  font-weight: 600;
 }
 
 .lp-legend-dot-current {
   background-color: var(--lp-primary);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+  animation: lpLegendCurrentPulse 1.6s ease-in-out infinite;
+}
+
+@keyframes lpLegendCurrentPulse {
+  50% {
+    opacity: 0.55;
+    box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.08);
+  }
 }
 
 .lp-legend-dot-locked {
@@ -1622,6 +1635,7 @@
 
 /* Reduced Motion Mode */
 @media (prefers-reduced-motion: reduce) {
+  .lp-legend-dot-current,
   .lp-current-pulse-ring,
   .lp-unlock-confetti-particle,
   .lp-progress-bar-fill,

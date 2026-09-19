@@ -3,7 +3,7 @@ import { LogOut, Menu } from 'lucide-react';
 import { AuthContext } from '../../../context/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 
-const TopBar = ({ onToggleSidebar }) => {
+const TopBar = ({ onToggleSidebar, sidebarExpanded }) => {
   const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
   const location = useLocation();
@@ -41,13 +41,19 @@ const TopBar = ({ onToggleSidebar }) => {
   return (
     <div className="admin-topbar">
       <div className="topbar-left">
-        <button className="topbar-menu-btn" onClick={onToggleSidebar}>
+        <button
+          className="topbar-menu-btn"
+          onClick={onToggleSidebar}
+          aria-label="Mở hoặc đóng menu quản trị"
+          aria-controls="admin-navigation"
+          aria-expanded={sidebarExpanded}
+        >
           <Menu size={22} />
         </button>
         <span className="topbar-breadcrumb">{getPageTitle()}</span>
       </div>
       <div className="topbar-actions">
-        <button className="admin-logout-btn" onClick={handleLogout}>
+        <button className="admin-logout-btn" onClick={handleLogout} aria-label="Logout">
           <LogOut size={16} />
           <span>Logout</span>
         </button>

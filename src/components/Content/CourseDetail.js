@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Play, CheckCircle, Lock, ChevronRight, Map, ArrowLeft } from 'lucide-react';
 import { api } from '../../services/Api';
@@ -34,6 +34,10 @@ const CourseDetail = () => {
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('curriculum');
   const [expandedModule, setExpandedModule] = useState(null);
+
+  useLayoutEffect(() => {
+    window.scrollTo(0, 0);
+  }, [courseId]);
 
   useEffect(() => {
     const fetchCourse = async () => {
