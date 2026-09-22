@@ -184,9 +184,24 @@ const CheckFields = ({ check, state, onFieldChange }) => {
             { placeholder: '192.168.2.10' }
           )
         : null}
-      {check.type === 'ospf_neighbor_full'
+      {['ospf_neighbor_full', 'eigrp_neighbor_up'].includes(check.type)
         ? selectInput('Thiết bị láng giềng', check.neighborId, neighborOptions, (value) =>
             onFieldChange('neighborId', value)
+          )
+        : null}
+      {check.type === 'eigrp_as_configured'
+        ? textInput('EIGRP AS number', check.asNumber, (value) => onFieldChange('asNumber', value), {
+            type: 'number',
+            min: 1,
+            max: 65535,
+          })
+        : null}
+      {check.type === 'eigrp_static_neighbor'
+        ? textInput(
+            'IPv4 của static neighbor',
+            check.neighborIp,
+            (value) => onFieldChange('neighborIp', value),
+            { placeholder: '192.1.12.2' }
           )
         : null}
       {check.type === 'acl_exists'
@@ -223,7 +238,7 @@ export default function GradingSpecBuilder({ value, initialState, onChange, disa
   const updateCheckField = (index, field, value) => {
     const check = checks[index] || {};
     const nextCheck =
-      field === 'points' || field === 'vlanId'
+      field === 'points' || field === 'vlanId' || field === 'asNumber'
         ? checkField(check, field, value)
         : updateOptionalField(check, field, value);
     updateSpec({

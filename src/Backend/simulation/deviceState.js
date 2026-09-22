@@ -36,10 +36,14 @@ const normalizeInterfaceName = (input) => {
 };
 
 const createInitialState = (initialState = {}) => {
-  const deviceType = initialState.deviceType === 'SWITCH' ? 'SWITCH' : 'ROUTER';
+  const deviceType = ['ROUTER', 'SWITCH', 'PC'].includes(initialState.deviceType)
+    ? initialState.deviceType
+    : 'ROUTER';
   const defaultNames =
     deviceType === 'SWITCH'
       ? ['GigabitEthernet0/1', 'GigabitEthernet0/2']
+      : deviceType === 'PC'
+        ? ['GigabitEthernet0/0']
       : ['GigabitEthernet0/0', 'GigabitEthernet0/1'];
   const names =
     Array.isArray(initialState.interfaces) && initialState.interfaces.length
@@ -61,11 +65,14 @@ const createInitialState = (initialState = {}) => {
     schemaVersion: 1,
     revision: 0,
     deviceType,
-    hostname: initialState.hostname || (deviceType === 'SWITCH' ? 'Switch' : 'Router'),
+    hostname:
+      initialState.hostname ||
+      (deviceType === 'SWITCH' ? 'Switch' : deviceType === 'PC' ? 'PC' : 'Router'),
     mode: MODES.USER,
     context: { interface: null, vlanId: null },
     interfaces,
     vlans: { 1: { name: 'default', status: 'active' } },
+    defaultGateway: initialState.defaultGateway || null,
     startupConfig: null,
   };
 };

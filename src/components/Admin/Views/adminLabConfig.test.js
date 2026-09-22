@@ -22,12 +22,15 @@ describe('admin CLI lab config contract', () => {
       'ccna-basic-v1',
       'ccna-network-v2',
     ]);
-    expect(SUPPORTED_CHECK_TYPES).toHaveLength(16);
+    expect(SUPPORTED_CHECK_TYPES).toHaveLength(19);
     expect(SUPPORTED_CHECK_TYPES.map((check) => check.value)).toEqual(
       expect.arrayContaining([
         'reachable',
         'route_exists',
         'ospf_neighbor_full',
+        'eigrp_as_configured',
+        'eigrp_neighbor_up',
+        'eigrp_static_neighbor',
         'stp_root',
         'acl_exists',
         'nat_static_exists',

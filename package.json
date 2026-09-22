@@ -55,6 +55,7 @@
     "test:cli": "node --test src/Backend/simulation/*.test.js",
     "test:learning": "node --test src/Backend/learningPath/*.test.js",
     "bench:cli": "node src/Backend/simulation/benchmark.js",
+    "import:lab:eigrp01": "node scripts/import-eigrp01.cjs",
     "prisma:generate": "prisma generate",
     "format": "npx prettier --write \"src/**/*.{js,jsx,css,json}\" \"scripts/**/*.{js,cjs}\"",
     "ui:review:build": "node ../lab-ui-review/build.cjs",

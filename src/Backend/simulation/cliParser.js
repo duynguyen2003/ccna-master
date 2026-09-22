@@ -22,11 +22,13 @@ const getProfile = (profileId = 'ccna-basic-v1') => {
   return profile;
 };
 
-const getModeCommands = (profile, mode, deviceType) =>
+const getModeCommands = (profile, deviceState) =>
   profile.commands.filter(
     (command) =>
-      command.modes.includes(mode) &&
-      (!command.deviceTypes || command.deviceTypes.includes(deviceType))
+      command.modes.includes(deviceState.mode) &&
+      (!command.deviceTypes || command.deviceTypes.includes(deviceState.deviceType)) &&
+      (!command.routingProtocols ||
+        command.routingProtocols.includes(deviceState.context?.routingProtocol))
   );
 
 const validateParameter = (spec, value) => {
@@ -93,7 +95,9 @@ const structurallyMatches = (command, inputTokens, negated) => {
 };
 
 const requiredTokenCount = (command, negated) =>
-  command.tokens.filter((token) => !(negated && token.optionalOnNegate)).length;
+  command.tokens.filter(
+    (token) => !token.optional && !(negated && token.optionalOnNegate)
+  ).length;
 
 const findErrorPosition = (commands, inputTokens, negated, rawInput) => {
   for (let index = 0; index < inputTokens.length; index += 1) {
@@ -118,7 +122,7 @@ const parseCommand = (profileId, deviceState, rawInput) => {
   const negated = tokens[0]?.lower === 'no';
   if (negated) tokens = tokens.slice(1);
 
-  const commands = getModeCommands(profile, deviceState.mode, deviceState.deviceType);
+  const commands = getModeCommands(profile, deviceState);
   const matches = commands
     .map((command) => structurallyMatches(command, tokens, negated))
     .filter(Boolean);
@@ -153,7 +157,11 @@ const parseCommand = (profileId, deviceState, rawInput) => {
 
   for (let index = 0; index < match.command.tokens.length; index += 1) {
     const spec = match.command.tokens[index];
-    if (!spec.parameter || (negated && spec.optionalOnNegate && !tokens[index])) continue;
+    if (
+      !spec.parameter ||
+      ((spec.optional || (negated && spec.optionalOnNegate)) && !tokens[index])
+    )
+      continue;
     const value =
       spec.type === 'rest'
         ? tokens
@@ -195,7 +203,7 @@ function getCompletions(profileId, deviceState, rawInput = '') {
   const position = endsWithSpace ? tokens.length : Math.max(0, tokens.length - 1);
   const prefix = endsWithSpace || tokens.length === 0 ? '' : tokens[position].lower;
   const baseTokens = tokens.slice(0, position);
-  const commands = getModeCommands(profile, deviceState.mode, deviceState.deviceType)
+  const commands = getModeCommands(profile, deviceState)
     .filter((command) => !negated || command.negatable)
     .filter((command) => structurallyMatches(command, baseTokens, negated));
 
@@ -205,6 +213,9 @@ function getCompletions(profileId, deviceState, rawInput = '') {
     if (!spec) {
       candidates.push({ value: '<cr>', help: 'Execute the command', kind: 'enter' });
       return;
+    }
+    if (spec.optional) {
+      candidates.push({ value: '<cr>', help: 'Execute the command', kind: 'enter' });
     }
     if (spec.keyword && spec.keyword.startsWith(prefix)) {
       candidates.push({ value: spec.keyword, help: spec.help || '', kind: 'keyword' });

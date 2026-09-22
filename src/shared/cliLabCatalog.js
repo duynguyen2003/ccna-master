@@ -15,8 +15,8 @@ const CLI_PROFILE_CATALOG = Object.freeze([
   Object.freeze({
     id: 'ccna-network-v2',
     label: 'CCNA Network v2',
-    description: 'Topology nhiều thiết bị: định tuyến, OSPF, STP, ACL và NAT.',
-    simulatorVersion: '2.0.0',
+    description: 'Topology nhiều thiết bị: định tuyến, OSPF, EIGRP, STP, ACL và NAT.',
+    simulatorVersion: '2.1.0',
     topology: true,
   }),
 ]);
@@ -111,6 +111,27 @@ const CLI_CHECK_CATALOG = Object.freeze([
     label: 'OSPF neighbor FULL',
     description: 'Kiểm tra adjacency OSPF đã hội tụ tới trạng thái FULL.',
     fields: Object.freeze(['deviceId', 'neighborId']),
+    supports: 'topology-only',
+  }),
+  Object.freeze({
+    type: 'eigrp_as_configured',
+    label: 'EIGRP đúng autonomous system',
+    description: 'Kiểm tra router đã bật EIGRP với đúng AS number.',
+    fields: Object.freeze(['deviceId', 'asNumber']),
+    supports: 'topology-only',
+  }),
+  Object.freeze({
+    type: 'eigrp_neighbor_up',
+    label: 'EIGRP neighbor đang UP',
+    description: 'Kiểm tra quan hệ láng giềng EIGRP giữa hai router.',
+    fields: Object.freeze(['deviceId', 'neighborId']),
+    supports: 'topology-only',
+  }),
+  Object.freeze({
+    type: 'eigrp_static_neighbor',
+    label: 'EIGRP static neighbor đúng',
+    description: 'Kiểm tra địa chỉ neighbor unicast và interface đã cấu hình.',
+    fields: Object.freeze(['deviceId', 'interface', 'neighborIp']),
     supports: 'topology-only',
   }),
   Object.freeze({

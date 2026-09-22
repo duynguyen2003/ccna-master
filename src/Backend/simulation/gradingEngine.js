@@ -42,6 +42,29 @@ const evaluateCheck = (wholeState, check) => {
       expected = true;
       passed = actual;
       break;
+    case 'eigrp_as_configured':
+      actual = state.eigrp?.asNumber ?? null;
+      expected = check.asNumber;
+      passed = actual === expected;
+      break;
+    case 'eigrp_neighbor_up':
+      actual = Object.values(wholeState.eigrpNeighbors || {}).some(
+        (neighbor) =>
+          neighbor.deviceId === check.deviceId &&
+          neighbor.neighborId === check.neighborId &&
+          neighbor.state === 'UP'
+      );
+      expected = true;
+      passed = actual;
+      break;
+    case 'eigrp_static_neighbor':
+      actual = (state.eigrp?.neighbors || []).some(
+        (neighbor) =>
+          neighbor.interface === check.interface && neighbor.address === check.neighborIp
+      );
+      expected = { interface: check.interface, neighborIp: check.neighborIp };
+      passed = actual;
+      break;
     case 'stp_root':
       actual = wholeState.stp?.[check.vlanId]?.roots[check.deviceId];
       expected = check.deviceId;

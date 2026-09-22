@@ -8,6 +8,7 @@ const { gradeAttempt } = require('./gradingEngine');
 const { withAttempt, mayAccess } = require('./attemptAccess');
 const { explainFeedback } = require('./labFeedback');
 const { sanitizeHtml } = require('../../shared/sanitizeHtml');
+const eigrpLab = require('../../shared/labs/eigrp01');
 const port = (name, ipAddress, subnetMask = '255.255.255.0') => ({
   name,
   ipAddress,
@@ -18,7 +19,12 @@ const end = (deviceId, name) => ({ deviceId, interface: name });
 const wire = (id, a, b) => ({ id, a, b, enabled: true });
 const definition = () => ({
   devices: [
-    { id: 'PC1', deviceType: 'PC', interfaces: [port('GigabitEthernet0/0', '192.168.1.10')] },
+    {
+      id: 'PC1',
+      deviceType: 'PC',
+      defaultGateway: '192.168.1.1',
+      interfaces: [port('GigabitEthernet0/0', '192.168.1.10')],
+    },
     {
       id: 'R1',
       deviceType: 'ROUTER',
@@ -35,7 +41,12 @@ const definition = () => ({
         port('GigabitEthernet0/1', '192.168.2.1'),
       ],
     },
-    { id: 'PC2', deviceType: 'PC', interfaces: [port('GigabitEthernet0/0', '192.168.2.10')] },
+    {
+      id: 'PC2',
+      deviceType: 'PC',
+      defaultGateway: '192.168.2.1',
+      interfaces: [port('GigabitEthernet0/0', '192.168.2.10')],
+    },
   ],
   links: [
     wire('L1', end('PC1', 'GigabitEthernet0/0'), end('R1', 'GigabitEthernet0/0')),
@@ -62,8 +73,6 @@ test('lab guide sanitizer keeps formatting and removes executable HTML', () => {
 });
 function network(staticRouting = true) {
   let s = engine.initial(definition());
-  s = config(s, 'PC1', ['ip default-gateway 192.168.1.1']);
-  s = config(s, 'PC2', ['ip default-gateway 192.168.2.1']);
   if (staticRouting) {
     s = config(s, 'R1', ['ip route 192.168.2.0 255.255.255.0 10.0.0.2']);
     s = config(s, 'R2', ['ip route 192.168.1.0 255.255.255.0 10.0.0.1']);
@@ -154,6 +163,66 @@ test('OSPF transitions INIT to EXCHANGE to FULL and installs routes after two ti
   s = engine.execute(s, { type: 'link', linkId: 'L2', enabled: false }).state;
   assert.equal(Object.keys(s.ospfNeighbors).length, 0);
   assert.equal(s.devices.R1.ospfRoutes.length, 0);
+});
+test('EIGRP golden solution forms multicast/static neighbors, installs D routes and scores 100%', () => {
+  let state = engine.initial(eigrpLab.initialState);
+  for (const action of eigrpLab.solutionActions) {
+    const result = engine.execute(state, action);
+    assert.equal(result.isError, false, `${action.deviceId}: ${action.command}: ${result.output}`);
+    state = result.state;
+  }
+  const grade = gradeAttempt(state, eigrpLab.gradingSpec);
+  assert.equal(grade.score, 100);
+  assert.equal(grade.passed, true);
+  assert.equal(state.eigrpNeighbors['R1:GigabitEthernet1/12>R2:GigabitEthernet1/12'].mode, 'STATIC');
+  assert.ok(routeTable(state, 'R1').some((route) => route.protocol === 'D' && route.network === '4.0.0.0'));
+  const output = engine.execute(state, {
+    type: 'command',
+    deviceId: 'R1',
+    command: 'show ip eigrp neighbors',
+  });
+  assert.match(output.output, /192\.1\.12\.2/);
+});
+test('EIGRP passive-interface removes adjacency and no form restores the static neighbor', () => {
+  let state = engine.initial(eigrpLab.initialState);
+  for (const action of eigrpLab.solutionActions) state = engine.execute(state, action).state;
+  state = commands(state, 'R1', [
+    'configure terminal',
+    'router eigrp 1',
+    'passive-interface g1/12',
+    'end',
+  ]);
+  assert.equal(
+    Object.values(state.eigrpNeighbors).some(
+      (neighbor) => neighbor.deviceId === 'R1' && neighbor.neighborId === 'R2'
+    ),
+    false
+  );
+  state = commands(state, 'R1', [
+    'configure terminal',
+    'router eigrp 1',
+    'no passive-interface g1/12',
+    'end',
+  ]);
+  assert.equal(
+    Object.values(state.eigrpNeighbors).some(
+      (neighbor) => neighbor.deviceId === 'R1' && neighbor.neighborId === 'R2'
+    ),
+    true
+  );
+});
+test('PC exposes host commands only and interface output follows cable operational state', () => {
+  let state = network();
+  const rejected = engine.execute(state, { type: 'command', deviceId: 'PC1', command: 'enable' });
+  assert.equal(rejected.isError, true);
+  state = engine.execute(state, { type: 'link', linkId: 'L2', enabled: false }).state;
+  state = engine.execute(state, { type: 'command', deviceId: 'R1', command: 'enable' }).state;
+  const output = engine.execute(state, {
+    type: 'command',
+    deviceId: 'R1',
+    command: 'show interfaces',
+  });
+  assert.match(output.output, /GigabitEthernet0\/1 is down, line protocol is down/);
 });
 test('STP blocks redundant triangle link and elects lower-priority root', () => {
   let s = engine.initial({
