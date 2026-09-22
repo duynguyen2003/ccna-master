@@ -14,7 +14,9 @@ const routes = require('./routes');
 
 // Initialize Express app
 const app = express();
-const PORT = process.env.PORT || 5000;
+// Keep the local React and Express ports independent. Docker can continue
+// providing PORT=5000 when BACKEND_PORT is not configured.
+const PORT = process.env.BACKEND_PORT || process.env.PORT || 5000;
 const allowedOrigins = new Set(
   [
     'http://localhost:3000',
