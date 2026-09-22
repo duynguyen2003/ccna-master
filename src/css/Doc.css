@@ -117,6 +117,7 @@
   flex-wrap: wrap;
 }
 
+.doc-filters .filter-btn,
 .filter-btn {
   padding: 0.5rem 1.25rem;
   border-radius: 6px;
@@ -126,18 +127,27 @@
   font-size: 0.9rem;
   font-weight: 500;
   cursor: pointer;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.08),
+    0 1px 2px rgba(0, 0, 0, 0.04);
   transition: all 0.2s ease;
 }
 
+.doc-filters .filter-btn:hover,
 .filter-btn:hover {
   background-color: #f1f5f9;
   color: var(--doc-text-main);
+  box-shadow:
+    0 3px 6px rgba(0, 0, 0, 0.1),
+    0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
+.doc-filters .filter-btn.active,
 .filter-btn.active {
   background-color: var(--doc-primary);
   color: #ffffff;
   border-color: var(--doc-primary);
+  box-shadow: 0 2px 6px rgba(30, 64, 175, 0.35);
 }
 
 /* Sections */
