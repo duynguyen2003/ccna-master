@@ -108,6 +108,7 @@ export default function CliLabWorkspace({
   const [busy, setBusy] = useState(false);
   const busyRef = useRef(false);
   const [error, setError] = useState('');
+  const [startRetry, setStartRetry] = useState(0);
   const [replay, setReplay] = useState(null);
   const [sequence, setSequence] = useState(0);
   const [joinId, setJoinId] = useState('');
@@ -121,6 +122,7 @@ export default function CliLabWorkspace({
   const [hintOpen, setHintOpen] = useState(false);
   const [secondaryPanel, setSecondaryPanel] = useState(null);
   const [pulseTaskId, setPulseTaskId] = useState('');
+  const [focusedTaskId, setFocusedTaskId] = useState('');
   const [terminalShakeKey, setTerminalShakeKey] = useState(0);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState(0);
@@ -142,10 +144,10 @@ export default function CliLabWorkspace({
       ? { ...displayed.devices[deviceId], id: deviceId }
       : null
     : displayed;
-  const selectedTask = useMemo(
-    () => nextTaskForDevice(tasks, displayedProgress, deviceId),
-    [tasks, displayedProgress, deviceId]
-  );
+  const selectedTask = useMemo(() => {
+    const focused = tasks.find((task) => task.id === focusedTaskId);
+    return focused || nextTaskForDevice(tasks, displayedProgress, deviceId);
+  }, [tasks, focusedTaskId, displayedProgress, deviceId]);
   const hintText = deriveActionHint(selectedTask, active, displayed);
   const previewLabel = preview?.badge || 'Xem trước bản nháp';
   const labId = lab?.id;
@@ -265,6 +267,7 @@ export default function CliLabWorkspace({
     previewInitialState,
     previewGradingSpec,
     previewLab,
+    startRetry,
     token,
   ]);
 
@@ -422,9 +425,18 @@ export default function CliLabWorkspace({
   const selectLink = (link) => {
     setSelectedLink(link.id);
     if (!selected.current) selectDevice(link.a.deviceId, false);
-    if (!replay && latest.current?.status === 'IN_PROGRESS' && !busyRef.current) {
-      action({ type: 'link', linkId: link.id, enabled: link.enabled === false });
-    }
+  };
+
+  const focusTask = (task) => {
+    setFocusedTaskId(task.id);
+    if (task.deviceId && displayed?.devices?.[task.deviceId]) selectDevice(task.deviceId);
+    setHintOpen(true);
+  };
+
+  const toggleSelectedLink = () => {
+    const link = latest.current?.state?.links?.find((entry) => entry.id === selectedLink);
+    if (!link || replay || latest.current?.status !== 'IN_PROGRESS' || busyRef.current) return;
+    action({ type: 'link', linkId: link.id, enabled: link.enabled === false });
   };
 
   const join = () =>
@@ -661,16 +673,32 @@ export default function CliLabWorkspace({
           </button>
         </header>
 
-        {error && (
+        {error && attempt && (
           <div role="alert" className="cli-workspace-error cli-lab-error">
             {error}
           </div>
         )}
 
         {!attempt ? (
-          <p className="cli-lab-loading">
-            {isPreview ? 'Đang tải mô phỏng xem trước…' : 'Đang mở phiên thực hành…'}
-          </p>
+          error ? (
+            <div role="alert" className="cli-lab-loading">
+              <p>{error}</p>
+              <button
+                type="button"
+                className="cli-lab-session-button"
+                onClick={() => {
+                  setError('');
+                  setStartRetry((value) => value + 1);
+                }}
+              >
+                Thử mở lại phiên
+              </button>
+            </div>
+          ) : (
+            <p className="cli-lab-loading">
+              {isPreview ? 'Đang tải mô phỏng xem trước…' : 'Đang mở phiên thực hành…'}
+            </p>
+          )
         ) : (
           <>
             <div className="cli-lab-session-strip">
@@ -807,9 +835,23 @@ export default function CliLabWorkspace({
                             : ' · Bấm vào thiết bị để cấu hình'}
                         </span>
                       </div>
-                      <span className="cli-lab-topology-legend">
-                        <i className="is-up" /> Kết nối <i className="is-down" /> Ngắt dây
-                      </span>
+                      <div className="cli-lab-topology-legend">
+                        <span>
+                          <i className="is-up" /> Kết nối <i className="is-down" /> Ngắt dây
+                        </span>
+                        {selectedLink && (
+                          <button
+                            type="button"
+                            className="cli-lab-session-button"
+                            disabled={!editable}
+                            onClick={toggleSelectedLink}
+                          >
+                            {displayed.links?.find((link) => link.id === selectedLink)?.enabled === false
+                              ? 'Nối lại dây'
+                              : 'Ngắt dây đã chọn'}
+                          </button>
+                        )}
+                      </div>
                     </div>
                     <div
                       className={`cli-lab-topology-stage ${tourStepId === 'topology' ? 'is-tour-target' : ''}`}
@@ -897,7 +939,7 @@ export default function CliLabWorkspace({
                           className="cli-lab-term-tip"
                           title="Probe mô phỏng đường đi của gói tin qua từng hop trong topology"
                         >
-                          Bấm vào dây để mô phỏng ngắt/nối đường truyền; marker gói tin sẽ đi qua
+                          Chọn một dây trên topology rồi dùng nút Ngắt/Nối để mô phỏng sự cố; marker gói tin sẽ đi qua
                           các hop thực tế khi có kết quả.
                         </p>
                       </div>
@@ -1021,6 +1063,16 @@ export default function CliLabWorkspace({
                             data-task-id={task.id}
                             className={`cli-lab-task-card status-${status} ${pulse ? 'is-pulsing' : ''}`}
                             key={task.id}
+                            role="button"
+                            tabIndex={0}
+                            aria-label={`Chọn nhiệm vụ ${task.title}`}
+                            onClick={() => focusTask(task)}
+                            onKeyDown={(event) => {
+                              if (event.key === 'Enter' || event.key === ' ') {
+                                event.preventDefault();
+                                focusTask(task);
+                              }
+                            }}
                           >
                             <span
                               className="cli-lab-task-status"
@@ -1062,6 +1114,7 @@ export default function CliLabWorkspace({
                         <h3>{attempt.score}/100 điểm</h3>
                         <Sparkles size={16} />
                       </div>
+                      <p>Điểm đạt: {attempt.lab.passingScore ?? 70}/100</p>
                       <button
                         disabled={busy || isPreview}
                         onClick={() =>

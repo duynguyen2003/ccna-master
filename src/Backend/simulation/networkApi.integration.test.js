@@ -99,6 +99,9 @@ test(
           labType: 'CLI_SIMULATION',
           initialState,
           gradingSpec,
+          objective: 'Configure the target hostname.',
+          guideContent: '<p>Open R1 and set the hostname.</p>',
+          steps: [{ title: 'Configure R1', commands: ['hostname Target'], note: '' }],
           status: 'PUBLISHED',
         });
         assert.equal(result.status, 201, JSON.stringify(result.body));

@@ -257,7 +257,7 @@ export const api = {
   // ── Labs ──────────────────────────────────────────────────────────────────
 
   getLabs: async (token) => {
-    const json = await safeApiFetch('/learning/labs', token, { data: [] });
+    const json = await apiFetch('/learning/labs?limit=100', token);
     const labs = json.data?.labs || json.data || [];
     return labs.map(mapLab);
   },

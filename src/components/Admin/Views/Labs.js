@@ -539,8 +539,8 @@ const Labs = () => {
         payload.append('gradingSpec', formData.gradingSpecText);
       }
 
-      if (formData.courseId) payload.append('courseId', formData.courseId);
-      if (formData.moduleId) payload.append('moduleId', formData.moduleId);
+      payload.append('courseId', formData.courseId);
+      payload.append('moduleId', formData.moduleId);
 
       if (formData.filePka) payload.append('filePka', formData.filePka);
       if (formData.thumbnailImg) payload.append('thumbnailImg', formData.thumbnailImg);

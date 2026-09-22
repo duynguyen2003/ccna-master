@@ -178,6 +178,68 @@ test('topology cable click and keyboard activation share the link callback', () 
   expect(onLinkSelect).toHaveBeenNthCalledWith(2, networkTemplate.links[0]);
 });
 
+test('workspace selects a cable without toggling it until the explicit action button is used', async () => {
+  const a = example();
+  a.state.devices.R2 = {
+    hostname: 'R2',
+    deviceType: 'ROUTER',
+    mode: 'USER_EXEC',
+    interfaces: {},
+  };
+  a.state.links = [
+    {
+      id: 'L1',
+      enabled: true,
+      a: { deviceId: 'R1', interface: 'GigabitEthernet0/0' },
+      b: { deviceId: 'R2', interface: 'GigabitEthernet0/0' },
+    },
+  ];
+  api.startCliLabAttempt.mockResolvedValue(a);
+  api.cliAction.mockResolvedValue({
+    state: { ...a.state, revision: 1, links: [{ ...a.state.links[0], enabled: false }] },
+    prompt: 'Router>',
+    progress: { completed: 0, total: 0, checks: [] },
+    event: { sequence: 1, command: 'link L1 down' },
+  });
+  render(
+    <CliLabWorkspace
+      lab={{ id: 1 }}
+      onNotify={jest.fn()}
+      onClose={jest.fn()}
+      onPassed={jest.fn()}
+    />
+  );
+  const cable = await screen.findByRole('button', { name: /Chọn dây L1/ });
+  fireEvent.click(cable);
+  expect(api.cliAction).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole('button', { name: 'Ngắt dây đã chọn' }));
+  await waitFor(() =>
+    expect(api.cliAction).toHaveBeenCalledWith(
+      'test',
+      'test-attempt',
+      { type: 'link', linkId: 'L1', enabled: false },
+      0
+    )
+  );
+});
+
+test('workspace offers retry when opening an attempt fails', async () => {
+  api.startCliLabAttempt
+    .mockRejectedValueOnce(new Error('Máy chủ Lab chưa sẵn sàng'))
+    .mockResolvedValueOnce(example());
+  render(
+    <CliLabWorkspace
+      lab={{ id: 1 }}
+      onNotify={jest.fn()}
+      onClose={jest.fn()}
+      onPassed={jest.fn()}
+    />
+  );
+  fireEvent.click(await screen.findByRole('button', { name: 'Thử mở lại phiên' }));
+  expect(await screen.findByText('Network lab')).toBeInTheDocument();
+  expect(api.startCliLabAttempt).toHaveBeenCalledTimes(2);
+});
+
 test('student progress renders three states and keeps advanced tools collapsed', async () => {
   const a = {
     ...example(),
