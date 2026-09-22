@@ -31,5 +31,9 @@ yarn-debug.log*
 yarn-error.log*
 *.log
 
+# local development notes
+/todo.md
+/lessons.md
+
 /src/generated/prisma
 .playwright-mcp/
