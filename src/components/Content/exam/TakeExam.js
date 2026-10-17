@@ -7,48 +7,33 @@ import { useToast } from '../../Toast';
 import { api } from '../../../services/Api';
 
 // ─── Timer Hook ────────────────────────────────────────────────
-const useTimer = (totalSeconds, initialLeft) => {
-  const [timeLeft, setTimeLeft] = useState(initialLeft !== undefined ? initialLeft : totalSeconds);
-  const [ready, setReady] = useState(totalSeconds > 0);
-
+const useTimer = (deadline, clockOffset) => {
+  const [now, setNow] = useState(Date.now);
   useEffect(() => {
-    if (totalSeconds > 0) {
-      if (!ready) {
-        setTimeLeft(initialLeft !== undefined ? initialLeft : totalSeconds);
-        setReady(true);
-      }
-    }
-  }, [totalSeconds, initialLeft, ready]);
-
-  useEffect(() => {
-    if (!ready || timeLeft <= 0) return;
-    const t = setTimeout(() => setTimeLeft((prev) => prev - 1), 1000);
-    return () => clearTimeout(t);
-  }, [timeLeft, ready]);
-
-  const format = (s) => {
-    if (!ready) return '--:--:--';
-    const h = Math.floor(s / 3600);
-    const m = Math.floor((s % 3600) / 60);
-    const sec = s % 60;
-    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+    const timer = setInterval(() => setNow(Date.now()), 250);
+    return () => clearInterval(timer);
+  }, []);
+  const timeLeft = deadline
+    ? Math.max(0, Math.ceil((new Date(deadline).getTime() - now - clockOffset) / 1000))
+    : 0;
+  const h = Math.floor(timeLeft / 3600),
+    m = Math.floor((timeLeft % 3600) / 60),
+    sec = timeLeft % 60;
+  return {
+    timeLeft,
+    isWarning: timeLeft > 0 && timeLeft < 300,
+    formatted: deadline ? [h, m, sec].map((v) => String(v).padStart(2, '0')).join(':') : '--:--:--',
   };
-
-  const elapsed = ready ? totalSeconds - timeLeft : 0;
-  const isWarning = ready && timeLeft > 0 && timeLeft < 300;
-
-  return { timeLeft, elapsed, isWarning, formatted: format(timeLeft), ready };
 };
 
 // ─── Component ────────────────────────────────────────────────
-const TakeExam = () => {
+const TakeExamSession = () => {
   const navigate = useNavigate();
   const { examId } = useParams();
-  const { isAuthenticated, loading, token } = useAuth();
+  const { isAuthenticated, loading, token, user } = useAuth();
   const { showToast, ToastComponent } = useToast();
 
-  const EXAM_DURATION = 90 * 60;
-  const STORAGE_KEY = `ccna_exam_session_${examId}`;
+  const STORAGE_KEY = `ccna_exam_session_${user?.id}_${examId}`;
 
   // Khôi phục session từ localStorage
   const getSavedSession = () => {
@@ -63,9 +48,7 @@ const TakeExam = () => {
   const initialQ = savedSession?.currentQ ?? 0;
   const initialAnswers = savedSession?.userAnswers || {};
   const initialFlags = savedSession?.flagged ? new Set(savedSession.flagged) : new Set();
-  const initialTime = savedSession?.timeLeft > 0 ? savedSession.timeLeft : undefined;
 
-  const [exam, setExam] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [loadingData, setLoadingData] = useState(true);
   const [currentQ, setCurrentQ] = useState(initialQ);
@@ -74,47 +57,81 @@ const TakeExam = () => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Fetch Exam Data
+  const [attempt, setAttempt] = useState(null);
+  const [clockOffset, setClockOffset] = useState(0);
+  const [loadError, setLoadError] = useState('');
+  const active = React.useRef(true);
   useEffect(() => {
-    const fetchExam = async () => {
+    active.current = true;
+    return () => {
+      active.current = false;
+    };
+  }, []);
+  useEffect(() => {
+    let cancelled = false;
+    const fetchAttempt = async () => {
       try {
-        const examData = await api.getExamById(token, examId);
-        if (examData) {
-          setExam(examData);
-          setQuestions(examData.questions || []);
+        const saved = getSavedSession();
+        let data;
+        if (saved?.attemptId) {
+          try {
+            data = await api.getExamAttempt(token, examId, saved.attemptId);
+          } catch (error) {
+            if (error.status !== 404) throw error;
+          }
         }
-      } catch (err) {
-        console.error('Failed to fetch exam', err);
+        if (!data) data = await api.startExamAttempt(token, examId);
+        if (cancelled) return;
+        if (data.resultId) {
+          localStorage.removeItem(STORAGE_KEY);
+          navigate('/exam/result/' + data.resultId);
+          return;
+        }
+        setAttempt(data);
+        setClockOffset(new Date(data.serverTime).getTime() - Date.now());
+        setQuestions(data.exam.questions);
+        if (saved?.attemptId !== data.id) {
+          setUserAnswers({});
+          setFlagged(new Set());
+          setCurrentQ(0);
+        } else setCurrentQ(Math.min(saved?.currentQ || 0, data.exam.questions.length - 1));
+      } catch (error) {
+        if (!cancelled)
+          setLoadError(error.message || 'Không tải được phiên thi. Vui lòng thử lại.');
       } finally {
-        setLoadingData(false);
+        if (!cancelled) setLoadingData(false);
       }
     };
-    if (token) fetchExam();
-  }, [examId, token]);
-
-  const duration = loadingData
-    ? 0
-    : exam?.durationMinutes
-      ? exam.durationMinutes * 60
-      : EXAM_DURATION;
-  const { timeLeft, elapsed, isWarning, formatted } = useTimer(duration, initialTime);
+    if (token) fetchAttempt();
+    else if (!loading) setLoadingData(false);
+    return () => {
+      cancelled = true;
+    };
+    // The component is keyed by account and exam; changes create a fresh session.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [examId, token, loading]);
+  const { timeLeft, isWarning, formatted } = useTimer(attempt?.expiresAt, clockOffset);
 
   // Lưu session vào localStorage
   useEffect(() => {
+    if (!attempt || loadingData) return;
     const sessionData = {
+      attemptId: attempt.id,
       currentQ,
       userAnswers,
       flagged: Array.from(flagged),
-      timeLeft,
     };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(sessionData));
-  }, [currentQ, userAnswers, flagged, timeLeft, STORAGE_KEY]);
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(sessionData));
+    } catch {}
+  }, [currentQ, userAnswers, flagged, STORAGE_KEY, attempt, loadingData]);
 
   const question = questions[currentQ];
   const totalQ = questions.length;
 
   const selectAnswer = useCallback(
     (index) => {
+      if (!question || timeLeft <= 0) return;
       // [BUG-01 FIX] index luôn là NUMBER — nhất quán giữa click chuột và phím tắt
       setUserAnswers((prev) => {
         const currentAnswers = prev[question.id] || [];
@@ -131,7 +148,7 @@ const TakeExam = () => {
         }
       });
     },
-    [question]
+    [question, timeLeft]
   );
 
   const toggleFlag = useCallback(() => {
@@ -170,20 +187,17 @@ const TakeExam = () => {
   }, [currentQ, totalQ, question?.options, selectAnswer, toggleFlag, showConfirm]);
 
   const handleSubmit = useCallback(async () => {
-    if (isSubmitting) return;
-
-    console.log('>>> [FRONTEND] handleSubmit starting...', { examId, userAnswers, elapsed });
+    if (isSubmitting || !attempt) return;
 
     setIsSubmitting(true);
     setShowConfirm(false);
 
     try {
-      localStorage.removeItem(STORAGE_KEY);
-
-      const res = await api.submitExam(token, examId, userAnswers, elapsed);
-      console.log('>>> [FRONTEND] API Response:', res);
+      const res = await api.submitExam(token, examId, attempt.id, userAnswers);
+      if (!active.current) return;
 
       if (res && res.resultId) {
+        localStorage.removeItem(STORAGE_KEY);
         navigate(`/exam/result/${res.resultId}`);
       } else {
         showToast('Nộp bài thành công nhưng không lấy được ID kết quả.', 'warning');
@@ -191,22 +205,19 @@ const TakeExam = () => {
       }
     } catch (err) {
       console.error('>>> [FRONTEND] Lỗi khi nộp bài:', err);
-      showToast('Có lỗi xảy ra khi nộp bài. Vui lòng thử lại!', 'error');
+      if (!active.current) return;
+      showToast(err.message || 'Có lỗi xảy ra khi nộp bài. Vui lòng thử lại!', 'error');
       setIsSubmitting(false);
     }
-  }, [navigate, examId, userAnswers, elapsed, token, isSubmitting, showToast, STORAGE_KEY]);
+  }, [navigate, examId, userAnswers, attempt, token, isSubmitting, showToast, STORAGE_KEY]);
 
-  // Auto-submit khi hết giờ
-  const timerStartedRef = React.useRef(false);
+  const autoSubmitted = React.useRef(false);
   useEffect(() => {
-    if (timeLeft > 0) {
-      timerStartedRef.current = true;
+    if (attempt && timeLeft <= 1 && !loadingData && !autoSubmitted.current) {
+      autoSubmitted.current = true;
+      if (Date.now() + clockOffset < new Date(attempt.expiresAt).getTime()) handleSubmit();
     }
-    // [BUG-04 FIX] Thêm guard !loadingData để tránh submit khi data chưa load xong
-    if (timerStartedRef.current && timeLeft === 0 && duration > 0 && !loadingData) {
-      handleSubmit();
-    }
-  }, [timeLeft, duration, loadingData, handleSubmit]);
+  }, [attempt, timeLeft, loadingData, handleSubmit, clockOffset]);
 
   const getQDotClass = (index) => {
     const q = questions[index];
@@ -216,6 +227,24 @@ const TakeExam = () => {
       return 'take-exam__q-dot take-exam__q-dot--answered';
     return 'take-exam__q-dot take-exam__q-dot--unanswered';
   };
+
+  const expired =
+    attempt && timeLeft === 0 && Date.now() + clockOffset >= new Date(attempt.expiresAt).getTime();
+  if (loadError || (expired && !isSubmitting))
+    return (
+      <div className="take-exam-page">
+        <p role="alert">{loadError || 'Phiên thi đã hết thời gian nộp bài.'}</p>
+        <button
+          onClick={() => {
+            localStorage.removeItem(STORAGE_KEY);
+            window.location.reload();
+          }}
+        >
+          Thử lại / Bắt đầu lượt mới
+        </button>
+        {ToastComponent}
+      </div>
+    );
 
   if (loading || loadingData) {
     return (
@@ -597,4 +626,9 @@ const TakeExam = () => {
   );
 };
 
+const TakeExam = () => {
+  const { user } = useAuth();
+  const { examId } = useParams();
+  return <TakeExamSession key={String(user?.id) + ':' + examId} />;
+};
 export default TakeExam;

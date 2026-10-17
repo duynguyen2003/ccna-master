@@ -2,6 +2,12 @@ const { getPrisma } = require('../config/database');
 const { uploadBufferToCloudinary } = require('../config/cloudinary');
 const { adminActionLogger } = require('../middleware/logging');
 const { parseCliLabConfig } = require('../validation/cliLabSchema');
+const {
+  assertCourseModule,
+  assertPublishReady,
+  parseJsonArray,
+  validateLabFields,
+} = require('../validation/labPublication');
 const { sanitizeHtml } = require('../../shared/sanitizeHtml');
 const prisma = getPrisma();
 const formatCliConfigError = (error) => {
@@ -300,11 +306,11 @@ module.exports.deleteCourse = async (req, res, next) => {
 
 module.exports.getLabs = async (req, res, next) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 10));
     const skip = (page - 1) * limit;
 
-    const whereClause = {};
+    const whereClause = { deletedAt: null };
     if (!req.user || req.user.role !== 'ADMIN') {
       whereClause.status = 'PUBLISHED';
     }
@@ -359,9 +365,19 @@ module.exports.createLab = async (req, res, next) => {
       commandProfile,
     } = req.body;
 
-    if (!title) {
-      return res.status(400).json({ message: 'Vui lòng nhập tên bài Lab' });
-    }
+    const normalizedStatus = status || 'DRAFT';
+    const normalizedDifficulty = difficulty || 'EASY';
+    const normalizedCourseId = courseId || null;
+    const normalizedModuleId = moduleId || null;
+    const parsedTools = parseJsonArray(tools, 'tools') || [];
+    const parsedSteps = parseJsonArray(steps, 'steps') || [];
+    validateLabFields({
+      title,
+      status: normalizedStatus,
+      difficulty: normalizedDifficulty,
+      tools: parsedTools,
+      steps: parsedSteps,
+    });
 
     let cliConfig;
     try {
@@ -370,11 +386,22 @@ module.exports.createLab = async (req, res, next) => {
         initialState,
         gradingSpec,
         commandProfile,
-        courseId,
+        courseId: normalizedCourseId,
       });
     } catch (configError) {
       return res.status(400).json({ message: formatCliConfigError(configError) });
     }
+    await assertCourseModule(prisma, normalizedCourseId, normalizedModuleId);
+    assertPublishReady({
+      status: normalizedStatus,
+      labType: cliConfig.labType,
+      objective,
+      guideContent,
+      steps: parsedSteps,
+      fileUrl: null,
+      hasPacketTracerUpload: Boolean(req.files?.filePka?.[0]),
+      gradingSpec: cliConfig.gradingSpec,
+    });
 
     let fileUrl = null;
     let imageUrl = null;
@@ -413,24 +440,26 @@ module.exports.createLab = async (req, res, next) => {
       data: {
         title,
         category: category || null,
-        difficulty: difficulty || 'EASY',
+        difficulty: normalizedDifficulty,
         duration: duration || null,
         guideContent: guideContent ? sanitizeHtml(guideContent) : null,
         objective: objective || null,
-        status: status || 'DRAFT',
-        tools: tools ? (typeof tools === 'string' ? JSON.parse(tools) : tools) : null,
-        steps: steps ? (typeof steps === 'string' ? JSON.parse(steps) : steps) : null,
+        status: normalizedStatus,
+        tools: parsedTools,
+        steps: parsedSteps,
         fileUrl,
         imageUrl,
         topologyImgUrl,
-        courseId: courseId || null,
-        moduleId: moduleId || null,
+        courseId: normalizedCourseId,
+        moduleId: normalizedModuleId,
         ...cliConfig,
       },
     });
 
     res.status(201).json({ message: 'Tạo bài Lab thành công', lab });
   } catch (error) {
+    if (error.status)
+      return res.status(error.status).json({ code: error.code, message: error.message });
     next(error);
   }
 };
@@ -456,13 +485,35 @@ module.exports.updateLab = async (req, res, next) => {
       commandProfile,
     } = req.body;
 
-    const existingLab = await prisma.lab.findUnique({ where: { id: parseInt(id, 10) } });
+    const existingLab = await prisma.lab.findFirst({
+      where: { id: parseInt(id, 10), deletedAt: null },
+    });
     if (!existingLab) return res.status(404).json({ message: 'Không tìm thấy bài Lab' });
 
-    const effectiveCourseId =
-      courseId === undefined || courseId === '' ? existingLab.courseId : courseId;
+    const effectiveCourseId = courseId === undefined ? existingLab.courseId : courseId || null;
     const effectiveModuleId =
-      moduleId === undefined || moduleId === '' ? existingLab.moduleId : moduleId;
+      moduleId === undefined
+        ? courseId !== undefined && effectiveCourseId !== existingLab.courseId
+          ? null
+          : existingLab.moduleId
+        : moduleId || null;
+    const effectiveTitle = title === undefined ? existingLab.title : title;
+    const effectiveStatus = status === undefined ? existingLab.status : status;
+    const effectiveDifficulty = difficulty === undefined ? existingLab.difficulty : difficulty;
+    const effectiveObjective = objective === undefined ? existingLab.objective : objective;
+    const effectiveGuideContent =
+      guideContent === undefined ? existingLab.guideContent : guideContent;
+    const parsedTools =
+      tools === undefined ? existingLab.tools || [] : parseJsonArray(tools, 'tools');
+    const parsedSteps =
+      steps === undefined ? existingLab.steps || [] : parseJsonArray(steps, 'steps');
+    validateLabFields({
+      title: effectiveTitle,
+      status: effectiveStatus,
+      difficulty: effectiveDifficulty,
+      tools: parsedTools,
+      steps: parsedSteps,
+    });
     let cliConfig;
     try {
       cliConfig = parseCliLabConfig({
@@ -475,20 +526,31 @@ module.exports.updateLab = async (req, res, next) => {
     } catch (configError) {
       return res.status(400).json({ message: formatCliConfigError(configError) });
     }
+    await assertCourseModule(prisma, effectiveCourseId, effectiveModuleId);
+    assertPublishReady({
+      status: effectiveStatus,
+      labType: cliConfig.labType,
+      objective: effectiveObjective,
+      guideContent: effectiveGuideContent,
+      steps: parsedSteps,
+      fileUrl: existingLab.fileUrl,
+      hasPacketTracerUpload: Boolean(req.files?.filePka?.[0]),
+      gradingSpec: cliConfig.gradingSpec,
+    });
 
     const dataToUpdate = {
-      title,
+      title: effectiveTitle,
       category,
-      difficulty,
+      difficulty: effectiveDifficulty,
       duration,
-      status,
+      status: effectiveStatus,
       guideContent:
         guideContent === undefined ? undefined : guideContent ? sanitizeHtml(guideContent) : null,
-      objective,
+      objective: effectiveObjective,
       courseId: effectiveCourseId,
       moduleId: effectiveModuleId,
-      tools: tools ? (typeof tools === 'string' ? JSON.parse(tools) : tools) : undefined,
-      steps: steps ? (typeof steps === 'string' ? JSON.parse(steps) : steps) : undefined,
+      tools: parsedTools,
+      steps: parsedSteps,
       ...cliConfig,
     };
 
@@ -528,6 +590,8 @@ module.exports.updateLab = async (req, res, next) => {
 
     res.json({ message: 'Cập nhật bài Lab thành công', lab });
   } catch (error) {
+    if (error.status)
+      return res.status(error.status).json({ code: error.code, message: error.message });
     next(error);
   }
 };
@@ -537,7 +601,7 @@ module.exports.deleteLab = async (req, res, next) => {
     const { id } = req.params;
     await prisma.lab.update({
       where: { id: parseInt(id) },
-      data: { deletedAt: new Date() },
+      data: { deletedAt: new Date(), status: 'DRAFT' },
     });
     res.json({ message: 'Xóa bài Lab thành công' });
   } catch (error) {

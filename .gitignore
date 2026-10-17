@@ -17,6 +17,7 @@
 # production
 /build
 /backups/
+/.tmp/
 
 # misc
 .vercel
@@ -26,10 +27,13 @@
 .env.test.local
 .env.production.local
 
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+/.pnpm-store/
+pnpm-debug.log*
 *.log
+
+# local development notes
+/todo.md
+/lessons.md
 
 /src/generated/prisma
 .playwright-mcp/

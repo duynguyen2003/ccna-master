@@ -162,6 +162,133 @@ const ospfEnabled = (s, e) =>
   s.devices[e.deviceId].ospf?.networks.some(
     (n) => n.area === 0 && wildcardMatch(e.ipAddress, n.network, n.wildcard)
   );
+const classfulMask = (ip) => {
+  const firstOctet = Number(String(ip).split('.')[0]);
+  if (firstOctet <= 126) return '255.0.0.0';
+  if (firstOctet <= 191) return '255.255.0.0';
+  return '255.255.255.0';
+};
+const eigrpEnabled = (s, e) =>
+  Boolean(
+    s.devices[e.deviceId].eigrp?.networks.some((network) =>
+      network.wildcard
+        ? wildcardMatch(e.ipAddress, network.network, network.wildcard)
+        : inSubnet(e.ipAddress, network.network, classfulMask(network.network))
+    )
+  );
+const eigrpInterfaceMetric = (entry) => {
+  const isFastEthernet = entry.interface.startsWith('FastEthernet');
+  const bandwidthKbps = isFastEthernet ? 100000 : 1000000;
+  const delayTensOfMicroseconds = isFastEthernet ? 10 : 1;
+  return 256 * (Math.floor(10000000 / bandwidthKbps) + delayTensOfMicroseconds);
+};
+
+function convergeEigrp(s) {
+  const interfaces = routedInterfaces(s).filter(
+    (entry) => s.devices[entry.deviceId].deviceType === 'ROUTER' && eigrpEnabled(s, entry)
+  );
+  const edges = [];
+  const neighbors = {};
+  for (const a of interfaces) {
+    for (const b of interfaces) {
+      if (
+        a.deviceId === b.deviceId ||
+        a.subnetMask !== b.subnetMask ||
+        !inSubnet(a.ipAddress, b.ipAddress, a.subnetMask) ||
+        !layer2Path(s, a, b, s.stp)
+      )
+        continue;
+      const left = s.devices[a.deviceId].eigrp;
+      const right = s.devices[b.deviceId].eigrp;
+      if (left.asNumber !== right.asNumber) continue;
+      if (
+        left.passiveInterfaces.includes(a.interface) ||
+        right.passiveInterfaces.includes(b.interface)
+      )
+        continue;
+
+      const leftStatic = left.neighbors.filter((entry) => entry.interface === a.interface);
+      const rightStatic = right.neighbors.filter((entry) => entry.interface === b.interface);
+      const staticMode = leftStatic.length > 0 || rightStatic.length > 0;
+      if (
+        staticMode &&
+        (!leftStatic.some((entry) => entry.address === b.ipAddress) ||
+          !rightStatic.some((entry) => entry.address === a.ipAddress))
+      )
+        continue;
+
+      const metric = eigrpInterfaceMetric(a);
+      neighbors[`${endpointKey(a)}>${endpointKey(b)}`] = {
+        deviceId: a.deviceId,
+        neighborId: b.deviceId,
+        interface: a.interface,
+        address: b.ipAddress,
+        asNumber: left.asNumber,
+        state: 'UP',
+        mode: staticMode ? 'STATIC' : 'MULTICAST',
+        metric,
+      };
+      edges.push({
+        from: a.deviceId,
+        to: b.deviceId,
+        interface: a.interface,
+        nextHop: b.ipAddress,
+        cost: metric,
+      });
+    }
+  }
+  s.eigrpNeighbors = neighbors;
+
+  for (const [id, device] of Object.entries(s.devices)) {
+    device.eigrpRoutes = [];
+    if (device.deviceType !== 'ROUTER' || !device.eigrp) continue;
+    const distances = { [id]: 0 };
+    const firstHop = {};
+    const done = new Set();
+    while (true) {
+      const current = Object.keys(distances)
+        .filter((candidate) => !done.has(candidate))
+        .sort((a, b) => distances[a] - distances[b] || a.localeCompare(b))[0];
+      if (!current) break;
+      done.add(current);
+      for (const edge of edges.filter((entry) => entry.from === current)) {
+        const cost = distances[current] + edge.cost;
+        if (cost < (distances[edge.to] ?? Infinity)) {
+          distances[edge.to] = cost;
+          firstHop[edge.to] = current === id ? edge : firstHop[current];
+        }
+      }
+    }
+
+    const bestRoutes = new Map();
+    const localNetworks = new Set(
+      connectedRoutes(s, id).map((route) => `${route.network}/${route.mask}`)
+    );
+    for (const other of Object.keys(distances).filter((candidate) => candidate !== id)) {
+      for (const route of connectedRoutes(s, other)) {
+        const remoteInterface = {
+          deviceId: other,
+          interface: route.interface,
+          ...s.devices[other].interfaces[route.interface],
+        };
+        if (!eigrpEnabled(s, remoteInterface) || !firstHop[other]) continue;
+        const key = `${route.network}/${route.mask}`;
+        if (localNetworks.has(key)) continue;
+        const learned = {
+          ...route,
+          interface: firstHop[other].interface,
+          nextHop: firstHop[other].nextHop,
+          protocol: 'D',
+          distance: 90,
+          cost: distances[other],
+        };
+        const previous = bestRoutes.get(key);
+        if (!previous || learned.cost < previous.cost) bestRoutes.set(key, learned);
+      }
+    }
+    device.eigrpRoutes = [...bestRoutes.values()];
+  }
+}
 
 function converge(s) {
   s.stp = spanningTree(s);
@@ -241,6 +368,7 @@ function converge(s) {
       }
     }
   }
+  convergeEigrp(s);
   return s;
 }
 
@@ -251,7 +379,7 @@ function routeTable(s, id) {
     const out = connected.find((c) => inSubnet(route.nextHop, c.network, c.mask));
     return out ? [{ ...route, interface: out.interface, protocol: 'S', distance: 1, cost: 0 }] : [];
   });
-  return [...connected, ...statics, ...(d.ospfRoutes || [])].sort(
+  return [...connected, ...statics, ...(d.ospfRoutes || []), ...(d.eigrpRoutes || [])].sort(
     (a, b) =>
       prefixLength(b.mask) - prefixLength(a.mask) || a.distance - b.distance || a.cost - b.cost
   );
@@ -269,6 +397,8 @@ module.exports = {
   layer2Path,
   routedInterfaces,
   connectedRoutes,
+  eigrpEnabled,
+  eigrpInterfaceMetric,
   converge,
   routeTable,
 };

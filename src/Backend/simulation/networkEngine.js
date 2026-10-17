@@ -1,6 +1,13 @@
 const single = require('./deviceState');
 const { parseCommand, getCompletions } = require('./cliParser');
-const { converge, routeTable, ipNumber, ipText } = require('./networkProtocols');
+const {
+  converge,
+  routeTable,
+  ipNumber,
+  ipText,
+  linkUp,
+  endpointKey,
+} = require('./networkProtocols');
 const { transmit } = require('./networkPackets');
 const clone = (s) => JSON.parse(JSON.stringify(s));
 const PROFILE = 'ccna-network-v2';
@@ -21,9 +28,13 @@ function initial(definition) {
       ...device,
       deviceType: item.deviceType,
       position: item.position || { x: 100, y: 100 },
-      staticRoutes: [],
+      staticRoutes: item.defaultGateway
+        ? [{ network: '0.0.0.0', mask: '0.0.0.0', nextHop: item.defaultGateway }]
+        : [],
       ospf: null,
       ospfRoutes: [],
+      eigrp: null,
+      eigrpRoutes: [],
       stpPriority: {},
       acls: {},
       natStatic: [],
@@ -40,6 +51,7 @@ function initial(definition) {
     links: clone(definition.links),
     stp: {},
     ospfNeighbors: {},
+    eigrpNeighbors: {},
     lastPacket: null,
   });
 }
@@ -87,12 +99,21 @@ function aclRule(action, text) {
   };
 }
 function configText(d) {
-  const lines = [single.buildRunningConfig(d)];
+  const lines = single.buildRunningConfig(d).split('\n');
+  if (lines.at(-1) === 'end') lines.pop();
   for (const r of d.staticRoutes) lines.push(`ip route ${r.network} ${r.mask} ${r.nextHop}`);
   if (d.ospf) {
     lines.push(`router ospf ${d.ospf.process}`);
     if (d.ospf.routerId) lines.push(` router-id ${d.ospf.routerId}`);
     for (const n of d.ospf.networks) lines.push(` network ${n.network} ${n.wildcard} area 0`);
+  }
+  if (d.eigrp) {
+    lines.push(`router eigrp ${d.eigrp.asNumber}`);
+    for (const network of d.eigrp.networks)
+      lines.push(` network ${network.network}${network.wildcard ? ` ${network.wildcard}` : ''}`);
+    for (const name of d.eigrp.passiveInterfaces) lines.push(` passive-interface ${name}`);
+    for (const neighbor of d.eigrp.neighbors)
+      lines.push(` neighbor ${neighbor.address} ${neighbor.interface}`);
   }
   for (const [vlan, priority] of Object.entries(d.stpPriority))
     lines.push(`spanning-tree vlan ${vlan} priority ${priority}`);
@@ -112,8 +133,41 @@ function configText(d) {
     ].filter(Boolean);
     if (options.length) lines.push(`interface ${name}`, ...options.map((s) => ` ${s}`));
   }
+  lines.push('end');
   return lines.join('\n');
 }
+
+const networkInterfaceUp = (state, deviceId, name, entry) => {
+  if (entry.shutdown) return false;
+  if (name.startsWith('Loopback')) return true;
+  const target = { deviceId, interface: name };
+  return state.links.some(
+    (link) =>
+      linkUp(state, link) &&
+      [link.a, link.b].some((end) => endpointKey(end) === endpointKey(target))
+  );
+};
+const showNetworkInterfaces = (state, deviceId, brief = false) => {
+  const device = state.devices[deviceId];
+  if (brief) {
+    const rows = Object.entries(device.interfaces).map(([name, entry]) => {
+      const admin = entry.shutdown ? 'administratively down' : 'up';
+      const protocol = networkInterfaceUp(state, deviceId, name, entry) ? 'up' : 'down';
+      return `${name.padEnd(28)}${String(entry.ipAddress || 'unassigned').padEnd(18)}${admin.padEnd(24)}${protocol}`;
+    });
+    return [
+      'Interface                   IP-Address        Status                  Protocol',
+      ...rows,
+    ].join('\n');
+  }
+  return Object.entries(device.interfaces)
+    .map(([name, entry]) => {
+      const operational = networkInterfaceUp(state, deviceId, name, entry);
+      const status = entry.shutdown ? 'administratively down' : operational ? 'up' : 'down';
+      return `${name} is ${status}, line protocol is ${operational ? 'up' : 'down'}\n  Internet address is ${entry.ipAddress || 'unassigned'}${entry.subnetMask ? ` ${entry.subnetMask}` : ''}`;
+    })
+    .join('\n');
+};
 
 function execute(s, action) {
   if (!s.devices) {
@@ -184,6 +238,7 @@ function execute(s, action) {
           }
           d.ospf ||= { process: Number(p.process), networks: [] };
           d.mode = 'ROUTER_CONFIG';
+          d.context = { interface: null, vlanId: null, routingProtocol: 'ospf' };
           break;
         case 'ospf_network':
           d.ospf.networks = d.ospf.networks.filter(
@@ -197,6 +252,49 @@ function execute(s, action) {
         case 'router_id':
           d.ospf.routerId = p.routerId;
           break;
+        case 'router_eigrp':
+          if (neg) {
+            d.eigrp = null;
+            break;
+          }
+          if (!d.eigrp || d.eigrp.asNumber !== Number(p.asNumber)) {
+            d.eigrp = {
+              asNumber: Number(p.asNumber),
+              networks: [],
+              passiveInterfaces: [],
+              neighbors: [],
+            };
+          }
+          d.mode = 'ROUTER_CONFIG';
+          d.context = { interface: null, vlanId: null, routingProtocol: 'eigrp' };
+          break;
+        case 'eigrp_network': {
+          const network = { network: p.network, wildcard: p.wildcard || null };
+          d.eigrp.networks = d.eigrp.networks.filter(
+            (entry) => entry.network !== network.network || entry.wildcard !== network.wildcard
+          );
+          if (!neg) {
+            if (d.eigrp.networks.length >= 32) throw new Error('Maximum 32 EIGRP networks');
+            d.eigrp.networks.push(network);
+          }
+          break;
+        }
+        case 'eigrp_passive_interface': {
+          const name = single.normalizeInterfaceName(p.interface);
+          if (!name || !d.interfaces[name]) throw new Error('Unknown interface');
+          d.eigrp.passiveInterfaces = d.eigrp.passiveInterfaces.filter((entry) => entry !== name);
+          if (!neg) d.eigrp.passiveInterfaces.push(name);
+          break;
+        }
+        case 'eigrp_neighbor': {
+          const name = single.normalizeInterfaceName(p.interface);
+          if (!name || !d.interfaces[name]) throw new Error('Unknown interface');
+          d.eigrp.neighbors = d.eigrp.neighbors.filter(
+            (entry) => entry.address !== p.address || entry.interface !== name
+          );
+          if (!neg) d.eigrp.neighbors.push({ address: p.address, interface: name });
+          break;
+        }
         case 'ospf_cost':
           if (Number(p.cost) < 1) throw new Error('Cost must be positive');
           int.ospfCost = Number(p.cost);
@@ -266,6 +364,20 @@ function execute(s, action) {
             2
           );
           break;
+        case 'network_show_eigrp': {
+          const rows = Object.values(state.eigrpNeighbors || {})
+            .filter((neighbor) => neighbor.deviceId === deviceId)
+            .map(
+              (neighbor, index) =>
+                `${String(index).padEnd(3)}${neighbor.address.padEnd(18)}${neighbor.interface.padEnd(28)}${neighbor.mode}`
+            );
+          output = [
+            `EIGRP-IPv4 Neighbors for AS(${d.eigrp?.asNumber || '-'})`,
+            'H  Address           Interface                   Mode',
+            ...(rows.length ? rows : ['No EIGRP neighbors']),
+          ].join('\n');
+          break;
+        }
         case 'network_show_stp':
           output = JSON.stringify(state.stp, null, 2);
           break;
@@ -296,6 +408,12 @@ function execute(s, action) {
         case 'show_running_config':
           output = configText(d);
           break;
+        case 'show_interfaces':
+          output = showNetworkInterfaces(state, deviceId);
+          break;
+        case 'show_ip_interface_brief':
+          output = showNetworkInterfaces(state, deviceId, true);
+          break;
         case 'save_config':
           d.startupConfig = configText(d);
           output = '[OK]';
@@ -303,6 +421,7 @@ function execute(s, action) {
         case 'exit':
           if (['ROUTER_CONFIG', 'ACL_CONFIG'].includes(d.mode)) {
             d.mode = 'GLOBAL_CONFIG';
+            d.context = { interface: null, vlanId: null };
             break;
           } // fall through
         default: {

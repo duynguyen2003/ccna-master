@@ -67,6 +67,7 @@ const interfaceEntrySchema = z.union([interfaceNameSchema, interfaceConfigSchema
 const deviceShape = {
   deviceType: z.enum(['ROUTER', 'SWITCH', 'PC']),
   hostname: hostnameSchema.optional(),
+  defaultGateway: ipv4Schema.optional().nullable(),
   interfaces: z.array(interfaceEntrySchema).min(1).max(24),
 };
 
@@ -77,6 +78,14 @@ const validateDeviceInterfaces = (device, context) => {
       code: 'custom',
       path: ['interfaces'],
       message: `Trùng interface trên ${device.id || 'thiết bị'}`,
+    });
+  }
+
+  if (device.defaultGateway && !['PC', 'SWITCH'].includes(device.deviceType)) {
+    context.addIssue({
+      code: 'custom',
+      path: ['defaultGateway'],
+      message: 'defaultGateway chỉ được dùng cho PC hoặc SWITCH',
     });
   }
 
@@ -249,6 +258,16 @@ const gradingCheckSchema = z.discriminatedUnion('type', [
   makeCheckSchema('reachable', { deviceId: safeId, destination: ipv4Schema }),
   makeCheckSchema('route_exists', { deviceId: safeId, destination: ipv4Schema }),
   makeCheckSchema('ospf_neighbor_full', { deviceId: safeId, neighborId: safeId }),
+  makeCheckSchema('eigrp_as_configured', {
+    deviceId: safeId,
+    asNumber: z.number().int().min(1).max(65535),
+  }),
+  makeCheckSchema('eigrp_neighbor_up', { deviceId: safeId, neighborId: safeId }),
+  makeCheckSchema('eigrp_static_neighbor', {
+    deviceId: safeId,
+    interface: interfaceNameSchema,
+    neighborIp: ipv4Schema,
+  }),
   makeCheckSchema('stp_root', { deviceId: safeId, vlanId: vlanIdSchema }),
   makeCheckSchema('acl_exists', { deviceId: safeId, name: safeId }),
   makeCheckSchema('nat_static_exists', {
@@ -310,6 +329,9 @@ const networkOnlyChecks = new Set([
   'reachable',
   'route_exists',
   'ospf_neighbor_full',
+  'eigrp_as_configured',
+  'eigrp_neighbor_up',
+  'eigrp_static_neighbor',
   'stp_root',
   'acl_exists',
   'nat_static_exists',
@@ -321,6 +343,7 @@ const interfaceChecks = new Set([
   'interface_description_equals',
   'switchport_mode_equals',
   'switchport_access_vlan_equals',
+  'eigrp_static_neighbor',
 ]);
 const switchChecks = new Set([
   'vlan_exists',
@@ -416,7 +439,7 @@ const parseCliLabConfig = ({ labType, initialState, gradingSpec, commandProfile,
     if (switchChecks.has(check.type) && device.deviceType !== 'SWITCH') {
       throw new Error(`Check ${check.id} (${check.type}) yêu cầu device SWITCH`);
     }
-    if (check.type === 'ospf_neighbor_full') {
+    if (['ospf_neighbor_full', 'eigrp_neighbor_up'].includes(check.type)) {
       if (device.deviceType !== 'ROUTER')
         throw new Error(`Check ${check.id} yêu cầu device ROUTER`);
       if (check.neighborId === check.deviceId)
@@ -425,6 +448,12 @@ const parseCliLabConfig = ({ labType, initialState, gradingSpec, commandProfile,
       if (!neighbor) throw new Error(`Unknown neighbor in ${check.id}: ${check.neighborId}`);
       if (neighbor.deviceType !== 'ROUTER')
         throw new Error(`Neighbor của ${check.id} phải là ROUTER`);
+    }
+    if (
+      ['eigrp_as_configured', 'eigrp_static_neighbor'].includes(check.type) &&
+      device.deviceType !== 'ROUTER'
+    ) {
+      throw new Error(`Check ${check.id} (${check.type}) yêu cầu device ROUTER`);
     }
     if (check.type === 'nat_static_exists' && device.deviceType !== 'ROUTER') {
       throw new Error(`Check ${check.id} (nat_static_exists) yêu cầu device ROUTER`);

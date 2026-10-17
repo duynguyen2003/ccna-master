@@ -54,7 +54,7 @@ test('shared schema rejects unknown JSON fields instead of silently stripping th
   assert.equal(state.editorOnly, true);
 });
 
-test('all sixteen supported check types have typed fields and unsupported examples stay rejected', () => {
+test('all nineteen supported check types have typed fields and unsupported examples stay rejected', () => {
   const gradingSpec = {
     checks: [
       { id: 'h', type: 'hostname_equals', deviceId: 'R1', expected: 'R1', points: 1 },
@@ -118,6 +118,16 @@ test('all sixteen supported check types have typed fields and unsupported exampl
       { id: 'reach', type: 'reachable', deviceId: 'R1', destination: '10.0.0.2', points: 1 },
       { id: 'route', type: 'route_exists', deviceId: 'R1', destination: '10.0.0.2', points: 1 },
       { id: 'ospf', type: 'ospf_neighbor_full', deviceId: 'R1', neighborId: 'R2', points: 1 },
+      { id: 'eas', type: 'eigrp_as_configured', deviceId: 'R1', asNumber: 1, points: 1 },
+      { id: 'en', type: 'eigrp_neighbor_up', deviceId: 'R1', neighborId: 'R2', points: 1 },
+      {
+        id: 'es',
+        type: 'eigrp_static_neighbor',
+        deviceId: 'R1',
+        interface: 'GigabitEthernet0/0',
+        neighborIp: '10.0.0.2',
+        points: 1,
+      },
       { id: 'stp', type: 'stp_root', deviceId: 'S1', vlanId: 10, points: 1 },
       { id: 'acl', type: 'acl_exists', deviceId: 'R1', name: 'EDGE', points: 1 },
       {
@@ -137,7 +147,7 @@ test('all sixteen supported check types have typed fields and unsupported exampl
     initialState: topologyState,
     gradingSpec,
   });
-  assert.equal(parsed.gradingSpec.checks.length, 16);
+  assert.equal(parsed.gradingSpec.checks.length, 19);
   assert.equal(parsed.commandProfile, 'ccna-network-v2');
   assert.equal(
     gradingSpecSchema.safeParse({ checks: [{ id: 'bad', type: 'config_match', points: 1 }] })

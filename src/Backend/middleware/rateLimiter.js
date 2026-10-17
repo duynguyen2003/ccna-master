@@ -33,6 +33,7 @@ const forgotPasswordLimiter = rateLimit({
  * Ngăn chặn gửi dữ liệu rác liên tục
  */
 const examSubmitLimiter = rateLimit({
+  keyGenerator: (req) => String(req.user.id),
   windowMs: 5 * 60 * 1000, // 5 phút
   max: 5, // Tối đa 5 lần nộp mỗi IP (đề phòng lỗi mạng nộp lại)
   message: {
@@ -43,6 +44,7 @@ const examSubmitLimiter = rateLimit({
 });
 
 const cliCommandLimiter = rateLimit({
+  keyGenerator: (req) => String(req.user.id),
   windowMs: 60 * 1000,
   max: 120,
   message: {

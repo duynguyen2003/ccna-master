@@ -461,6 +461,8 @@ export const Labs = () => {
 
   const [labs, setLabs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  const [reloadKey, setReloadKey] = useState(0);
   const [filter, setFilter] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedLab, setSelectedLab] = useState(null);
@@ -505,6 +507,7 @@ export const Labs = () => {
     const loadData = async () => {
       try {
         setLoading(true);
+        setLoadError('');
 
         // Luôn tải danh sách lab (hỗ trợ cả tài khoản guest)
         const labsData = await api.getLabs(token);
@@ -522,13 +525,14 @@ export const Labs = () => {
         setCompletedLabs(done);
       } catch (err) {
         console.error('Failed to load labs data', err);
+        setLoadError(err.message || 'Không thể tải danh sách Lab.');
       } finally {
         setLoading(false);
       }
     };
 
     loadData();
-  }, [token]);
+  }, [token, reloadKey]);
 
   const allCategories = React.useMemo(() => {
     const list = ['All', 'Switching', 'Routing', 'Security', 'Services', 'Automation'];
@@ -605,6 +609,14 @@ export const Labs = () => {
         <div className="labs-loading">
           <Loader2 className="labs-spinner" size={32} />
           <p>Đang tải danh sách lab...</p>
+        </div>
+      ) : loadError ? (
+        <div className="labs-empty" role="alert">
+          <Terminal size={40} />
+          <p>{loadError}</p>
+          <button type="button" className="lab-btn-primary" onClick={() => setReloadKey((key) => key + 1)}>
+            Thử tải lại
+          </button>
         </div>
       ) : filteredLabs.length === 0 ? (
         <div className="labs-empty">

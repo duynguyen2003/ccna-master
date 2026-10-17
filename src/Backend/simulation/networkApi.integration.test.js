@@ -57,13 +57,22 @@ test(
             email: `lab-test-${randomUUID()}@example.invalid`,
             passwordHash: 'unusable-integration-test-hash',
             fullName: 'Temporary CLI integration test',
+            role: i === 0 ? 'ADMIN' : 'STUDENT',
           },
         });
         userIds.push(user.id);
         tokens.push(
-          jwt.sign({ id: user.id, role: i === 0 ? 'ADMIN' : 'STUDENT' }, process.env.JWT_SECRET, {
-            expiresIn: '5m',
-          })
+          jwt.sign(
+            {
+              id: user.id,
+              sessionVersion: user.sessionVersion,
+              role: i === 0 ? 'ADMIN' : 'STUDENT',
+            },
+            process.env.JWT_SECRET,
+            {
+              expiresIn: '5m',
+            }
+          )
         );
       }
       const course = await prisma.course.create({
@@ -99,6 +108,9 @@ test(
           labType: 'CLI_SIMULATION',
           initialState,
           gradingSpec,
+          objective: 'Configure the target hostname.',
+          guideContent: '<p>Open R1 and set the hostname.</p>',
+          steps: [{ title: 'Configure R1', commands: ['hostname Target'], note: '' }],
           status: 'PUBLISHED',
         });
         assert.equal(result.status, 201, JSON.stringify(result.body));

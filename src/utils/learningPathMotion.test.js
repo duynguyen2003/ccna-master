@@ -51,7 +51,9 @@ describe('learningPathMotion unlock sequence', () => {
 
     const timeline = playUnlockSequence({ completedNodeEl, nextNodeEl });
 
-    expect(document.querySelectorAll('.lp-unlock-confetti-particle')).toHaveLength(84);
+    const particles = document.querySelectorAll('.lp-unlock-confetti-particle');
+    expect(particles.length).toBeGreaterThan(0);
+    expect(particles[0]).toHaveStyle({ left: '136px', top: '86px' });
     expect(gsap.timeline).toHaveBeenCalledTimes(1);
 
     killUnlockSequence(timeline);

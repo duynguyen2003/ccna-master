@@ -2,6 +2,11 @@
   "name": "ccna-master",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@10.33.4",
+  "engines": {
+    "node": "^22.12.0 || >=24.0.0",
+    "pnpm": "10.33.4"
+  },
   "dependencies": {
     "@gsap/react": "^2.1.2",
     "@prisma/adapter-pg": "^7.6.0",
@@ -44,19 +49,22 @@
     "web-vitals": "^2.1.4",
     "zod": "^4.3.6"
   },
-  "overrides": {
-    "qs": "^6.16.0"
-  },
   "scripts": {
+    "preinstall": "node scripts/require-pnpm.cjs",
     "start": "react-scripts start",
     "server": "node src/Backend/Server.js",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "test:cli": "node --test src/Backend/simulation/*.test.js",
     "test:learning": "node --test src/Backend/learningPath/*.test.js",
+    "test:core": "node --test src/Backend/exams/*.test.js src/Backend/security/*.test.js",
+    "db:deploy": "prisma migrate deploy",
+    "backup": "node scripts/backup.cjs",
+    "restore": "node scripts/restore.cjs",
     "bench:cli": "node src/Backend/simulation/benchmark.js",
+    "import:lab:eigrp01": "node scripts/import-eigrp01.cjs",
     "prisma:generate": "prisma generate",
-    "format": "npx prettier --write \"src/**/*.{js,jsx,css,json}\" \"scripts/**/*.{js,cjs}\"",
+    "format": "prettier --write \"src/**/*.{js,jsx,css,json}\" \"scripts/**/*.{js,cjs}\"",
     "ui:review:build": "node ../lab-ui-review/build.cjs",
     "ui:review:serve": "node ../lab-ui-review/serve.cjs",
     "postinstall": "node scripts/prisma-postinstall.cjs",
@@ -83,7 +91,9 @@
   "devDependencies": {
     "@types/node": "^25.5.2",
     "autoprefixer": "^10.4.22",
+    "eslint": "^8.57.1",
     "postcss": "^8.5.6",
+    "prettier": "^3.6.2",
     "prisma": "^7.6.0",
     "react-scripts": "^5.0.1",
     "tailwindcss": "^4.1.17"

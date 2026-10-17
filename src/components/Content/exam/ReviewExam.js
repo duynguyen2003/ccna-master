@@ -1,32 +1,47 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import '../../../css/ExamFlow.css';
-
-// ─── Mock Questions (giống TakeExam) ──────────────────────────
-// Gỡ bỏ MOCK_QUESTIONS và sử dụng dữ liệu truyền vào từ state
+import { useAuth } from '../../../context/AuthContext';
+import { api } from '../../../services/Api';
 
 // ─── Component ────────────────────────────────────────────────
-const ReviewExam = () => {
+const ReviewExamSession = () => {
   const navigate = useNavigate();
   const { examId } = useParams();
-  const { state } = useLocation();
-
-  const result = state || {
-    score: 850,
-    correct: 2,
-    wrong: 1,
-    total: 3,
-    pass: true,
-    timeUsed: '45:12',
-    userAnswers: {},
-    questions: [],
-  };
-
-  // Nếu state có userAnswers thật thì dùng, fallback thì dùng demo
-  const userAnswers =
-    result.userAnswers && Object.keys(result.userAnswers).length
-      ? result.userAnswers
-      : { 1: 'A', 2: 'C', 3: 'B' };
+  const { search } = useLocation();
+  const { token } = useAuth();
+  const resultId = new URLSearchParams(search).get('resultId');
+  const [storedResult, setStoredResult] = useState(null);
+  const [error, setError] = useState('');
+  useEffect(() => {
+    let cancelled = false;
+    setStoredResult(null);
+    setError('');
+    if (!token || !resultId) {
+      setError('Vui lòng mở phần xem lại từ kết quả thi của bạn.');
+      return;
+    }
+    api
+      .getExamResult(token, resultId)
+      .then((data) => {
+        if (!cancelled)
+          setStoredResult({
+            score: data.score,
+            pass: data.isPassed,
+            userAnswers: data.answers,
+            questions: data.exam?.questions || [],
+            resultId,
+          });
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err.message);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [token, resultId]);
+  const result = storedResult || {};
+  const userAnswers = result.userAnswers || {};
 
   const questions = result.questions || [];
   const [currentQ, setCurrentQ] = useState(0);
@@ -37,7 +52,9 @@ const ReviewExam = () => {
     : [question?.correctAnswer];
 
   const isCorrect =
-    userAns.length === correctAns.length && userAns.every((val) => correctAns.includes(val));
+    new Set(userAns).size === userAns.length &&
+    userAns.length === correctAns.length &&
+    userAns.every((val) => correctAns.includes(val));
 
   // Xác định class cho mỗi option
   const getOptionClass = (idx) => {
@@ -53,10 +70,21 @@ const ReviewExam = () => {
   const answeredCorrect = questions.filter((q) => {
     const ua = Array.isArray(userAnswers[q.id]) ? userAnswers[q.id] : [];
     const ca = Array.isArray(q.correctAnswer) ? q.correctAnswer : [q.correctAnswer];
-    return ua.length === ca.length && ua.every((val) => ca.includes(val));
+    return (
+      new Set(ua).size === ua.length &&
+      ua.length === ca.length &&
+      ua.every((val) => ca.includes(val))
+    );
   }).length;
   const reviewPct =
     questions.length > 0 ? Math.round(((currentQ + 1) / questions.length) * 100) : 0;
+
+  if (!storedResult)
+    return (
+      <div className="review-exam-page">
+        <p role="status">{error || 'Đang tải bài thi để xem lại...'}</p>
+      </div>
+    );
 
   return (
     <div className="review-exam-page">
@@ -357,4 +385,9 @@ const ReviewExam = () => {
   );
 };
 
+const ReviewExam = () => {
+  const { token } = useAuth();
+  const { search } = useLocation();
+  return <ReviewExamSession key={String(token) + ':' + search} />;
+};
 export default ReviewExam;

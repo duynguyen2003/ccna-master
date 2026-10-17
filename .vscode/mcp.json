@@ -2,18 +2,18 @@
   "servers": {
     "chrome-devtools": {
       "type": "stdio",
-      "command": "npx",
+      "command": "pnpm",
       "args": [
-        "-y",
+        "dlx",
         "chrome-devtools-mcp@latest",
         "--isolated"
       ]
     },
     "playwright": {
       "type": "stdio",
-      "command": "npx",
+      "command": "pnpm",
       "args": [
-        "-y",
+        "dlx",
         "@playwright/mcp@latest",
         "--browser=chrome",
         "--isolated",

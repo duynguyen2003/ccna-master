@@ -107,5 +107,5 @@ Ngân hàng kịch bản phức tạp phục vụ hệ thống AI Chatbot và ph
 ## BẢNG HỆ THỐNG DO PRISMA TẠO (1 Bảng)
 
 ### 19. Bảng `_prisma_migrations`
-- Đây là bảng **Quản lý lịch sử cơ sở dữ liệu** do ORM Prisma tự sinh ra lúc ta gõ dòng lệnh `npx prisma db push` hoặc `npx prisma migrate`.
+- Đây là bảng **Quản lý lịch sử cơ sở dữ liệu** do ORM Prisma tự sinh ra lúc ta gõ dòng lệnh `pnpm exec prisma db push` hoặc `pnpm exec prisma migrate`.
 - Prisma dựa vào bảng này để truy dấu và biết các bảng lúc trước có hình thù như thế nào để nếu ta đánh lệnh roll-back, nó sẽ cho mọi thứ quay ngược thời gian. Tuyệt đối không xóa hay sửa tay bảng này trên SQL!

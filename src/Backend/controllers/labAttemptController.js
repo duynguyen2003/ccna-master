@@ -32,6 +32,7 @@ const dto = (a, userId, deviceId) => {
       id: a.labId,
       title: a.lab.title,
       objective: a.lab.objective,
+      passingScore: definition.gradingSpec?.passingScore ?? 70,
       tasks: buildLabTasks(definition.gradingSpec),
     },
   };

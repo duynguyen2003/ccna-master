@@ -6,11 +6,20 @@
  */
 
 const jwt = require('jsonwebtoken');
+const { getPrisma } = require('../config/database');
+const { isAccountActive } = require('../security/session');
 
 /**
  * @desc    Verify JWT from Authorization header
  */
-module.exports.verifyToken = (req, res, next) => {
+const authenticate = (optional) => async (req, res, next) => {
+  const reject = () => {
+    req.user = null;
+    return optional
+      ? next()
+      : res.status(401).json({ message: 'Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.' });
+  };
+  let decoded;
   try {
     const authHeader = req.headers.authorization;
     let token = '';
@@ -22,49 +31,41 @@ module.exports.verifyToken = (req, res, next) => {
     }
 
     if (!token) {
-      return res.status(401).json({ message: 'Không có quyền truy cập (Missing token)' });
+      return reject();
     }
 
     // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    // Attach user to request
-    req.user = decoded;
-    next();
+    decoded = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ['HS256'] });
   } catch (error) {
-    console.error('Auth middleware error:', error.message);
-    return res.status(401).json({ message: 'Token không hợp lệ hoặc đã hết hạn' });
+    return reject();
+  }
+  if (!Number.isSafeInteger(decoded.id) || !Number.isSafeInteger(decoded.sessionVersion))
+    return reject();
+  try {
+    const user = await getPrisma().user.findUnique({
+      where: { id: decoded.id },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        isActive: true,
+        deletedAt: true,
+        sessionVersion: true,
+      },
+    });
+    if (!isAccountActive(user) || user.sessionVersion !== decoded.sessionVersion) return reject();
+    req.user = user;
+    return next();
+  } catch (error) {
+    return next(error);
   }
 };
 
 /**
  * @desc    Verify JWT optionally (Guest access)
  */
-module.exports.optionalAuth = (req, res, next) => {
-  try {
-    const authHeader = req.headers.authorization;
-    let token = '';
-
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      token = authHeader.split(' ')[1];
-    } else if (req.query.token) {
-      token = req.query.token;
-    }
-
-    if (!token) {
-      req.user = null;
-      return next();
-    }
-
-    // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
-    next();
-  } catch (error) {
-    req.user = null; // Ignore invalid tokens for optional routes
-    next();
-  }
-};
+module.exports.verifyToken = authenticate(false);
+module.exports.optionalAuth = authenticate(true);
 
 /**
  * @desc    Check user role

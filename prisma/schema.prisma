@@ -56,6 +56,7 @@ model User {
   streak         Int       @default(0)
   totalStudyTime Int       @default(0) @map("total_study_time") // Phút
   isActive       Boolean   @default(true) @map("is_active")
+  sessionVersion Int       @default(0) @map("session_version")
   lastLogin      DateTime? @map("last_login")
   createdAt      DateTime  @default(now()) @map("created_at")
   updatedAt      DateTime  @updatedAt @map("updated_at")
@@ -66,6 +67,7 @@ model User {
   passwordResetTokens   PasswordResetToken[]
   progress              UserProgress[]
   examResults           ExamResult[]
+  examAttempts          ExamAttempt[]
   notes                 UserNote[]
   activities            UserActivity[]
   badges                UserBadge[]
@@ -277,6 +279,7 @@ model Exam {
   module    Module?        @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   questions ExamQuestion[]
   results   ExamResult[]
+  attempts  ExamAttempt[]
 
   @@map("exams")
 }
@@ -296,10 +299,29 @@ model ExamQuestion {
   @@map("exam_questions")
 }
 
+model ExamAttempt {
+  id           String    @id @default(uuid()) @db.Uuid
+  userId       Int       @map("user_id")
+  examId       Int       @map("exam_id")
+  examSnapshot Json      @map("exam_snapshot")
+  startedAt    DateTime  @default(now()) @map("started_at")
+  expiresAt    DateTime  @map("expires_at")
+  submittedAt  DateTime? @map("submitted_at")
+
+  user   User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exam   Exam        @relation(fields: [examId], references: [id], onDelete: Cascade)
+  result ExamResult?
+
+  @@index([userId, examId, submittedAt])
+  @@map("exam_attempts")
+}
+
 model ExamResult {
   id             Int      @id @default(autoincrement())
   userId         Int      @map("user_id")
   examId         Int      @map("exam_id")
+  attemptId      String?  @unique @map("attempt_id") @db.Uuid
+  examSnapshot   Json?    @map("exam_snapshot")
   score          Int
   totalQuestions Int      @map("total_questions")
   percentage     Decimal  @db.Decimal(5, 2)
@@ -308,8 +330,9 @@ model ExamResult {
   timeSpent      Int      @map("time_spent") // Tính bằng giây
   takenAt        DateTime @default(now()) @map("taken_at")
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  exam Exam @relation(fields: [examId], references: [id], onDelete: Cascade)
+  user    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exam    Exam         @relation(fields: [examId], references: [id], onDelete: Cascade)
+  attempt ExamAttempt? @relation(fields: [attemptId], references: [id], onDelete: SetNull)
 
   @@map("exam_results")
 }

@@ -221,6 +221,8 @@ export const createDefaultCheck = (type = 'hostname_equals', index = 0) => {
   if (definition.fields.includes('expectedMask')) check.expectedMask = '';
   if (definition.fields.includes('destination')) check.destination = '';
   if (definition.fields.includes('vlanId')) check.vlanId = 1;
+  if (definition.fields.includes('asNumber')) check.asNumber = 1;
+  if (definition.fields.includes('neighborIp')) check.neighborIp = '';
   if (definition.fields.includes('name')) check.name = 'ACL1';
   return check;
 };
@@ -236,7 +238,7 @@ export const checkField = (check, field, value) =>
   updateOptionalField(
     check,
     field,
-    ['points', 'vlanId'].includes(field) ? (value === '' ? '' : Number(value)) : value
+    ['points', 'vlanId', 'asNumber'].includes(field) ? (value === '' ? '' : Number(value)) : value
   );
 
 export { INTERFACE_PATTERN, SAFE_ID_PATTERN, validIpv4, validMask };

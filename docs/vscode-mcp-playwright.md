@@ -9,12 +9,12 @@ Cấu hình mặc định dùng Chrome profile cô lập (`--isolated`). Mỗi s
 
 ## Cài và khởi động trên Windows
 
-1. Cài Node.js 20 trở lên và Chrome Stable.
+1. Cài Node.js 22.12+ (nhánh 22) hoặc 24+, pnpm 10.33.4 và Chrome Stable; bật pnpm bằng `corepack enable pnpm`.
 2. Mở thư mục `ccna-master` bằng VS Code bản có hỗ trợ MCP.
 3. Mở `Ctrl+Shift+P` → `MCP: List Servers`, chọn `chrome-devtools` và `playwright`, rồi chọn `Start`/`Trust` khi VS Code hỏi.
 4. Mở Chat/Agent, bấm `Configure Tools` để bật các tool cần dùng. Khi sửa `mcp.json`, chạy `MCP: Restart Server` hoặc reload VS Code để server được khám phá lại.
 
-Có thể xem log bằng `MCP: List Servers` → server → `Show Output`. Lần chạy đầu có thể mất thời gian vì `npx` tải package vào npm cache; không có dependency MCP nào được ghi vào `package.json` của ứng dụng.
+Có thể xem log bằng `MCP: List Servers` → server → `Show Output`. Lần chạy đầu có thể mất thời gian vì `pnpm dlx` tải package vào pnpm store/cache; không có dependency MCP nào được ghi vào `package.json` của ứng dụng.
 
 Prompt kiểm tra nhanh:
 
@@ -38,22 +38,23 @@ $debugProfile = Join-Path $env:TEMP 'ccna-chrome-mcp'
 
 Trong một bản sao cấu hình MCP cá nhân (không ghi credential vào repo), đổi server Chrome DevTools thành:
 
+```json
 {
   "type": "stdio",
-  "command": "npx",
+  "command": "pnpm",
   "args": [
-    "-y",
+    "dlx",
     "chrome-devtools-mcp@latest",
     "--browser-url=http://127.0.0.1:9222"
   ]
 }
 ```
 
-Để Playwright gắn vào tab Chrome hiện tại, cài Playwright MCP browser extension theo tài liệu chính thức và đổi args server Playwright thành `@playwright/mcp@latest`, `--extension`. Khi mở remote debugging, port 9222 cho phép chương trình trên máy điều khiển browser; chỉ mở profile test riêng và không truy cập website chứa dữ liệu nhạy cảm.
+Để Playwright gắn vào tab Chrome hiện tại, cài Playwright MCP browser extension theo tài liệu chính thức và đổi args server Playwright thành `dlx`, `@playwright/mcp@latest`, `--extension`. Khi mở remote debugging, port 9222 cho phép chương trình trên máy điều khiển browser; chỉ mở profile test riêng và không truy cập website chứa dữ liệu nhạy cảm.
 
 ## Troubleshooting
 
-- Server không khởi động: kiểm tra Node 20+, chạy `npx.cmd --version`, mở `MCP: Show Output` và xem lỗi package/network.
+- Server không khởi động: kiểm tra Node 22.12+ (nhánh 22) hoặc 24+, chạy `pnpm.cmd --version`, mở `MCP: Show Output` và xem lỗi package/network.
 - Không thấy tool: chạy `MCP: Restart Server`, bật server trong `MCP: List Servers` và kiểm tra `Configure Tools` trong Chat.
 - Chrome debug không kết nối: đóng Chrome đang mở, dùng `--user-data-dir` khác profile mặc định và kiểm tra `http://127.0.0.1:9222/json/version`.
 - VS Code Remote/Dev Container: đặt MCP ở môi trường remote nơi server cần chạy; `.vscode/mcp.json` được VS Code chuyển cho Agent Host, còn `.mcp.json` phù hợp khi cần cấu hình portable cho client khác.

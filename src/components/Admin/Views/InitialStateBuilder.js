@@ -61,6 +61,21 @@ const DeviceForm = ({
   readOnlyId = false,
 }) => {
   const update = (patch) => onChange({ ...device, ...patch });
+  const changeDeviceType = (deviceType) => {
+    const interfaces = (device.interfaces || []).map((port, index) => {
+      const normalized = toInterfaceObject(port, deviceType);
+      return {
+        ...normalized,
+        switchportMode: deviceType === 'SWITCH' ? normalized.switchportMode || 'access' : null,
+        accessVlan: deviceType === 'SWITCH' ? normalized.accessVlan || 1 : null,
+      };
+    });
+    update({
+      deviceType,
+      interfaces,
+      defaultGateway: ['PC', 'SWITCH'].includes(deviceType) ? device.defaultGateway || null : null,
+    });
+  };
   const updatePort = (index, patch) => {
     const ports = (device.interfaces || []).map((port, portIndex) =>
       portIndex === index ? { ...readPort(device, index), ...patch } : port
@@ -104,7 +119,7 @@ const DeviceForm = ({
             aria-label="Loại thiết bị"
             className="acm-input cli-editor-native-select"
             value={device.deviceType || 'ROUTER'}
-            onChange={(event) => update({ deviceType: event.target.value })}
+            onChange={(event) => changeDeviceType(event.target.value)}
           >
             {DEVICE_TYPES.map((type) => (
               <option key={type} value={type}>
@@ -121,6 +136,17 @@ const DeviceForm = ({
             onChange={(event) => update({ hostname: event.target.value })}
           />
         </Field>
+        {['PC', 'SWITCH'].includes(device.deviceType) ? (
+          <Field label="Default gateway">
+            <input
+              aria-label="Default gateway"
+              className="acm-input"
+              placeholder="192.168.1.1"
+              value={device.defaultGateway || ''}
+              onChange={(event) => update({ defaultGateway: event.target.value || null })}
+            />
+          </Field>
+        ) : null}
       </div>
 
       <div className="cli-editor-ports-heading">

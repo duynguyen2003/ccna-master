@@ -2,19 +2,24 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 require('dotenv').config();
+const { validateRuntime, trustProxy } = require('./config/runtime');
+validateRuntime();
 
 const {
   initializeDatabase,
   disconnectDatabase,
   checkDatabaseHealth,
 } = require('./config/database');
-const { requestLogger, adminActionLogger } = require('./middleware/logging');
+const { requestLogger } = require('./middleware/logging');
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
 const routes = require('./routes');
 
 // Initialize Express app
 const app = express();
-const PORT = process.env.PORT || 5000;
+app.set('trust proxy', trustProxy(process.env.TRUST_PROXY));
+// Keep the local React and Express ports independent. Docker can continue
+// providing PORT=5000 when BACKEND_PORT is not configured.
+const PORT = process.env.BACKEND_PORT || process.env.PORT || 5000;
 const allowedOrigins = new Set(
   [
     'http://localhost:3000',
@@ -65,6 +70,10 @@ app.use(requestLogger);
 
 // Debug route
 app.get('/api/debug-ping', (req, res) => res.json({ message: 'pong' }));
+app.get('/api/health/ready', async (req, res) => {
+  const healthy = await checkDatabaseHealth();
+  res.status(healthy ? 200 : 503).json({ status: healthy ? 'ok' : 'unavailable' });
+});
 
 // Mount API routes
 app.use('/api', routes);

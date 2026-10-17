@@ -2,6 +2,8 @@ const { getPrisma } = require('../config/database');
 const { uploadBufferToCloudinary } = require('../config/cloudinary');
 const { ValidationError } = require('../errors/validation-error');
 const { adminActionLogger } = require('../middleware/logging');
+const { validSelection } = require('../exams/grading');
+const { startAttempt, submitAttempt, presentAttempt } = require('../exams/attempts');
 
 const prisma = getPrisma();
 
@@ -9,8 +11,8 @@ const prisma = getPrisma();
 
 // [OPT-05] Tránh lặp parseInt + isNaN ở mọi controller
 const parseId = (raw, label = 'ID') => {
-  const id = parseInt(raw, 10);
-  if (Number.isNaN(id)) {
+  const id = Number(raw);
+  if (!Number.isSafeInteger(id) || id <= 0) {
     throw Object.assign(new Error(`${label} không hợp lệ`), { status: 400 });
   }
   return id;
@@ -28,20 +30,13 @@ const sanitizeQuestionsInput = (questions) => {
 
   return questions.map((questionItem, index) => {
     const rawOptions = Array.isArray(questionItem.options) ? questionItem.options : [];
-    const normalizedOptions = rawOptions
-      .map((opt) => `${opt || ''}`.trim())
-      .filter((opt) => opt !== '');
+    const normalizedOptions = rawOptions.map((opt) => `${opt || ''}`.trim());
     const questionText = `${questionItem.question || ''}`.trim();
 
     // Hỗ trợ chọn nhiều đáp án (lưu dạng mảng index)
     let correctAnswers = questionItem.correctAnswer;
     if (!Array.isArray(correctAnswers)) {
-      const single = parseInt(correctAnswers, 10);
-      correctAnswers = Number.isNaN(single) ? [] : [single];
-    } else {
-      correctAnswers = correctAnswers
-        .map((ans) => parseInt(ans, 10))
-        .filter((ans) => !Number.isNaN(ans));
+      correctAnswers = Number.isInteger(correctAnswers) ? [correctAnswers] : [];
     }
 
     const imageUrl = `${questionItem.imageUrl || ''}`.trim() || null;
@@ -49,13 +44,13 @@ const sanitizeQuestionsInput = (questions) => {
     if (!questionText) {
       throw new ValidationError(`Câu hỏi ${index + 1} không được để trống`);
     }
-    if (normalizedOptions.length < 2) {
+    if (normalizedOptions.length < 2 || normalizedOptions.some((option) => !option)) {
       throw new ValidationError(`Câu hỏi ${index + 1} cần ít nhất 2 đáp án`);
     }
     if (correctAnswers.length === 0) {
       throw new ValidationError(`Câu hỏi ${index + 1} chưa chọn đáp án đúng`);
     }
-    if (correctAnswers.some((ans) => ans < 0 || ans >= normalizedOptions.length)) {
+    if (!validSelection(correctAnswers, normalizedOptions.length)) {
       throw new ValidationError(`Câu hỏi ${index + 1} có đáp án đúng không hợp lệ`);
     }
 
@@ -68,6 +63,25 @@ const sanitizeQuestionsInput = (questions) => {
       orderIndex: index + 1,
     };
   });
+};
+
+const validateSettings = ({ durationMinutes, passingScore }) => {
+  if (
+    durationMinutes !== undefined &&
+    (!Number.isInteger(Number(durationMinutes)) ||
+      Number(durationMinutes) < 1 ||
+      Number(durationMinutes) > 600)
+  ) {
+    throw new ValidationError('Thời gian thi phải từ 1 đến 600 phút');
+  }
+  if (
+    passingScore !== undefined &&
+    (!Number.isInteger(Number(passingScore)) ||
+      Number(passingScore) < 0 ||
+      Number(passingScore) > 100)
+  ) {
+    throw new ValidationError('Điểm đạt phải từ 0 đến 100 phần trăm');
+  }
 };
 
 // ─── Controllers ─────────────────────────────────────────────────────────────
@@ -125,6 +139,7 @@ module.exports.createExam = async (req, res, next) => {
       return res.status(400).json({ message: 'Vui lòng nhập đầy đủ: Tên và Thời gian thi' });
     }
 
+    validateSettings({ durationMinutes, passingScore });
     const sanitizedQuestions = sanitizeQuestionsInput(questions || []);
 
     const exam = await prisma.exam.create({
@@ -133,7 +148,7 @@ module.exports.createExam = async (req, res, next) => {
         examCode: examCode || null,
         totalQuestions: sanitizedQuestions.length,
         durationMinutes: parseInt(durationMinutes, 10),
-        passingScore: parseInt(passingScore, 10) || 70,
+        passingScore: passingScore === undefined ? 70 : Number(passingScore),
         difficulty: difficulty || null,
         courseId: courseId || null,
         moduleId: moduleId || null,
@@ -226,6 +241,7 @@ module.exports.updateExam = async (req, res, next) => {
       questions,
     } = req.body;
 
+    validateSettings({ durationMinutes, passingScore });
     const sanitizedQuestions = questions !== undefined ? sanitizeQuestionsInput(questions) : null;
 
     const exam = await prisma.exam.update({
@@ -326,91 +342,38 @@ module.exports.uploadQuestionImage = async (req, res, next) => {
 
 // ─── Submit Exam ─────────────────────────────────────────────────────────────
 
+module.exports.startAttempt = async (req, res, next) => {
+  try {
+    const attempt = await startAttempt(prisma, req.user.id, parseId(req.params.id));
+    res.json({ attempt });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports.getAttempt = async (req, res, next) => {
+  try {
+    const attempt = await prisma.examAttempt.findFirst({
+      where: { id: req.params.attemptId, userId: req.user.id, examId: parseId(req.params.id) },
+      include: { result: true },
+    });
+    if (!attempt) return res.status(404).json({ message: 'Không tìm thấy phiên thi' });
+    res.json({ attempt: presentAttempt(attempt) });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports.submitExam = async (req, res, next) => {
   try {
-    let examId;
-    try {
-      examId = parseId(req.params.id, 'ID bài thi');
-    } catch (e) {
-      return res.status(400).json({ message: e.message });
-    }
-
-    const userId = req.user.id;
-    const { answers, timeSpent } = req.body;
-
-    // [OPT-03] Validate answers trước khi xử lý
-    if (!answers || typeof answers !== 'object' || Array.isArray(answers)) {
-      return res.status(400).json({ message: 'Dữ liệu đáp án không hợp lệ' });
-    }
-
-    // Validate timeSpent
-    const safeTimeSpent = Math.max(0, parseInt(timeSpent, 10) || 0);
-
-    console.log('>>> [BACKEND] submitExam called:', {
-      examId,
-      userId,
-      answersCount: Object.keys(answers).length,
-      timeSpent: safeTimeSpent,
-    });
-
-    // [BUG-02] Idempotency — tăng window lên 5 phút để tránh duplicate do timeout mạng
-    // TODO: Nâng cấp lên attemptToken (UUID) để chính xác hơn
-    const recentAttempt = await prisma.examResult.findFirst({
-      where: {
-        examId,
-        userId,
-        takenAt: { gte: new Date(Date.now() - 5 * 60 * 1000) },
-      },
-    });
-    if (recentAttempt) {
-      return res.json({ message: 'Nộp bài thành công', resultId: recentAttempt.id });
-    }
-
-    const exam = await prisma.exam.findFirst({
-      where: { id: examId, deletedAt: null },
-      include: { questions: true },
-    });
-    if (!exam) {
-      return res.status(404).json({ message: 'Không tìm thấy bài thi' });
-    }
-
-    // Chấm điểm server-side
-    let correctCount = 0;
-    const totalQuestions = exam.questions.length;
-
-    exam.questions.forEach((q) => {
-      // [BUG-01] Explicit String() — JSON key luôn là string, q.id từ Prisma là number
-      const userAns = answers[String(q.id)] ?? [];
-      const correctAns = q.correctAnswer || [];
-
-      // [OPT-06] Bỏ kiểm tra 2 chiều thừa — length + every một chiều là đủ
-      if (userAns.length === correctAns.length && userAns.every((v) => correctAns.includes(v))) {
-        correctCount++;
-      }
-    });
-
-    const score = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 1000) : 0;
-    const percentage =
-      totalQuestions > 0 ? parseFloat(((correctCount / totalQuestions) * 100).toFixed(2)) : 0;
-
-    // passingScore lưu dưới dạng % (ví dụ: 70 = 70%)
-    const passingScorePercent = exam.passingScore || 70;
-    const isPassed = percentage >= passingScorePercent;
-
-    const result = await prisma.examResult.create({
-      data: {
-        userId,
-        examId,
-        score,
-        totalQuestions,
-        percentage,
-        isPassed,
-        answers,
-        timeSpent: safeTimeSpent,
-      },
-    });
-
-    res.json({ message: 'Nộp bài thành công', resultId: result.id });
+    const resultId = await submitAttempt(
+      prisma,
+      req.user.id,
+      parseId(req.params.id),
+      req.body.attemptId,
+      req.body.answers
+    );
+    res.json({ message: 'Nộp bài thành công', resultId });
   } catch (error) {
     next(error);
   }
@@ -431,18 +394,24 @@ module.exports.getExamResultById = async (req, res, next) => {
 
     const result = await prisma.examResult.findFirst({
       where: { id: resultId, userId },
-      include: {
-        exam: {
-          include: { questions: { orderBy: { orderIndex: 'asc' } } },
-        },
-      },
     });
 
     if (!result) {
       return res.status(404).json({ message: 'Không tìm thấy kết quả bài thi' });
     }
 
-    res.json({ data: result });
+    const { examSnapshot, ...data } = result;
+    res.json({
+      data: {
+        ...data,
+        exam: examSnapshot || {
+          id: result.examId,
+          title: 'Đề thi cũ',
+          questions: [],
+          legacyUnavailable: true,
+        },
+      },
+    });
   } catch (error) {
     next(error);
   }
@@ -480,7 +449,19 @@ module.exports.getMyExamHistory = async (req, res, next) => {
     ]);
 
     res.json({
-      data: history,
+      data: history.map(({ examSnapshot, ...item }) => ({
+        ...item,
+        exam: examSnapshot
+          ? {
+              id: examSnapshot.id,
+              title: examSnapshot.title,
+              examCode: examSnapshot.examCode,
+              passingScore: examSnapshot.passingScore,
+              durationMinutes: examSnapshot.durationMinutes,
+              legacyBackfill: examSnapshot.legacyBackfill,
+            }
+          : { ...item.exam, legacyUnavailable: true },
+      })),
       pagination: { total, page, limit, totalPages: Math.ceil(total / limit) },
     });
   } catch (error) {

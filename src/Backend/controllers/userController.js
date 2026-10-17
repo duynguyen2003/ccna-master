@@ -368,7 +368,14 @@ module.exports.createUser = async (req, res, next) => {
     if (existingUser?.deletedAt) {
       const restoredUser = await prisma.user.update({
         where: { email },
-        data: { fullName, passwordHash, role: assignedRole, deletedAt: null, isActive: true },
+        data: {
+          fullName,
+          passwordHash,
+          role: assignedRole,
+          deletedAt: null,
+          isActive: true,
+          sessionVersion: { increment: 1 },
+        },
         select: { id: true, fullName: true, email: true, role: true, isActive: true },
       });
       return res.status(201).json({ message: 'Tạo tài khoản thành công', user: restoredUser });
@@ -405,7 +412,7 @@ module.exports.updateRole = async (req, res, next) => {
 
     const updatedUser = await prisma.user.update({
       where: { id: parseInt(id) },
-      data: { role },
+      data: { role, sessionVersion: { increment: 1 } },
       select: { id: true, fullName: true, email: true, role: true },
     });
 
@@ -433,7 +440,7 @@ module.exports.toggleActive = async (req, res, next) => {
 
     const updatedUser = await prisma.user.update({
       where: { id: parseInt(id) },
-      data: { isActive: !user.isActive },
+      data: { isActive: !user.isActive, sessionVersion: { increment: 1 } },
       select: { id: true, fullName: true, email: true, isActive: true },
     });
 
@@ -461,7 +468,7 @@ module.exports.deleteUser = async (req, res, next) => {
     const { id } = req.params;
     const deletedUser = await prisma.user.update({
       where: { id: parseInt(id) },
-      data: { deletedAt: new Date(), isActive: false },
+      data: { deletedAt: new Date(), isActive: false, sessionVersion: { increment: 1 } },
     });
 
     // Log action

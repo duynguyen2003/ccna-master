@@ -683,11 +683,11 @@ Test component/hook bằng Jest/Testing Library có sẵn: loading/error/empty/g
 ## 14. Kiểm thử backend và cách chạy lại
 
 ```powershell
-# Từ thư mục ccna-master. Trên Windows dùng npm.cmd/npx.cmd nếu npm.ps1 bị chặn.
-npm.cmd run test:learning
-npm.cmd run test:cli
-npx.cmd prisma validate
-npm.cmd run build
+# Từ thư mục ccna-master. Trên Windows dùng pnpm.cmd nếu pnpm.ps1 bị chặn.
+pnpm.cmd run test:learning
+pnpm.cmd run test:cli
+pnpm.cmd exec prisma validate
+pnpm.cmd run build
 ```
 
 Integration dùng PostgreSQL trống có tên kết thúc `_test`, không dùng DATABASE_URL của production. Ví dụ database tạm đã được dùng trong lượt này:
@@ -696,11 +696,11 @@ Integration dùng PostgreSQL trống có tên kết thúc `_test`, không dùng 
 docker run --rm --detach --name ccna-learningpath-test --publish 127.0.0.1:55432:5432 --env POSTGRES_USER=learning_test --env POSTGRES_PASSWORD=learning_test --env POSTGRES_DB=learning_path_test --tmpfs /var/lib/postgresql/data postgres:16-alpine
 $env:DATABASE_URL = 'postgresql://learning_test:learning_test@127.0.0.1:55432/learning_path_test'
 $env:JWT_SECRET = 'temporary-local-integration-secret'
-npx.cmd prisma db push
+pnpm.cmd exec prisma db push
 $env:LEARNING_PATH_INTEGRATION = '1'
-npm.cmd run test:learning
+pnpm.cmd run test:learning
 $env:LAB_INTEGRATION = '1'
-npm.cmd run test:cli
+pnpm.cmd run test:cli
 docker stop ccna-learningpath-test
 ```
 
@@ -742,7 +742,7 @@ CI hiện có đã được bổ sung `test:learning` ở quality gate và Postg
 | 15. Accessibility | Kế hoạch button/dialog/focus/live feedback/reduced motion; không tuyên bố FE đã đạt |
 | 16. Tests | 34/34 Learning Path (domain + HTTP/PostgreSQL), 53/53 CLI/simulation (có HTTP/PostgreSQL), 10/10 component NetworkLab đạt |
 | 17. Lint/typecheck | ESLint trên các file backend/test thay đổi đạt; repo dùng JS, không thêm một script typecheck TypeScript giả |
-| 18. Build | CRA `npm.cmd run build` đạt với BUILD_PATH riêng; Prisma validate, CI YAML, code fence/JSON contract, git diff --check đạt |
+| 18. Build | CRA `pnpm.cmd run build` đạt với BUILD_PATH riêng; Prisma validate, CI YAML, code fence/JSON contract, git diff --check đạt |
 | 19. Giới hạn | Mục 15, đặc biệt XP/streak, telemetry và deployment |
 
 Build có cảnh báo bundle hiện hữu lớn và deprecation `fs.F_OK` trên Node 24; Prisma có warning preview flag `driverAdapters` và integration có warning từ pg/adapter. Không có lỗi test/lint/build. Database/container kiểm thử và thư mục build tạm đã được dọn, không thay dữ liệu DB dự án hoặc deploy. Báo cáo chi tiết lệnh và xử lý ExecutionPolicy Windows nằm ở đầu `todo.md`.
