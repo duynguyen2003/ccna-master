@@ -1,0 +1,20 @@
+# Keep the flat dependency layout expected by Create React App 5.
+nodeLinker: hoisted
+# Preserve the existing peer resolution without adding optional peers automatically.
+autoInstallPeers: false
+strictPeerDependencies: false
+
+fetchRetries: 5
+fetchRetryMintimeout: 20000
+fetchRetryMaxtimeout: 120000
+
+overrides:
+  qs: ^6.16.0
+
+allowBuilds:
+  '@prisma/engines': true
+  bcrypt: true
+  prisma: true
+  core-js: false
+  core-js-pure: false
+  fsevents: true

@@ -17,11 +17,16 @@ const initializeDatabase = () => {
   }
 
   try {
+    if (process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL) {
+      throw new Error('DATABASE_URL is required in production');
+    }
     const pool = new Pool({
       connectionString:
         process.env.DATABASE_URL || 'postgresql://postgres:123456@localhost:5432/netmastery_db',
+      connectionTimeoutMillis: 5000,
+      query_timeout: 5000,
     });
-    const adapter = new PrismaPg(pool);
+    const adapter = new PrismaPg(pool, { disposeExternalPool: true });
     prismaInstance = new PrismaClient({ adapter, log: ['error'] });
 
     console.log('✅ Database connected successfully');

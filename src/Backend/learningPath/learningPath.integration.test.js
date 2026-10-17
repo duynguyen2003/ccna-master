@@ -56,7 +56,11 @@ test(
         });
         userIds.push(user.id);
         tokens.push(
-          jwt.sign({ id: user.id, role: 'STUDENT' }, process.env.JWT_SECRET, { expiresIn: '5m' })
+          jwt.sign(
+            { id: user.id, sessionVersion: user.sessionVersion, role: 'STUDENT' },
+            process.env.JWT_SECRET,
+            { expiresIn: '5m' }
+          )
         );
       }
       await prisma.course.createMany({
@@ -262,8 +266,8 @@ test(
 
       await t.test('inactive account is rejected even with a valid JWT', async () => {
         await prisma.user.update({ where: { id: userIds[1] }, data: { isActive: false } });
-        assertStatus(await request('/learning/learning-path', { user: 1 }), 403);
-        assertStatus(await finishLesson(0, 1), 403);
+        assertStatus(await request('/learning/learning-path', { user: 1 }), 401);
+        assertStatus(await finishLesson(0, 1), 401);
         await prisma.user.update({ where: { id: userIds[1] }, data: { isActive: true } });
       });
 
@@ -312,9 +316,17 @@ test(
       await t.test(
         'admin dashboard distinguishes module summaries from course enrollment and progress',
         async () => {
-          const token = jwt.sign({ id: userIds[0], role: 'ADMIN' }, process.env.JWT_SECRET, {
-            expiresIn: '5m',
+          const admin = await prisma.user.create({
+            data: { email: 'lp-admin@example.invalid', passwordHash: 'unused', role: 'ADMIN' },
           });
+          userIds.push(admin.id);
+          const token = jwt.sign(
+            { id: admin.id, sessionVersion: admin.sessionVersion },
+            process.env.JWT_SECRET,
+            {
+              expiresIn: '5m',
+            }
+          );
           await prisma.userProgress.updateMany({
             where: { userId: userIds[0], moduleId: 'lp-m1', lessonId: null },
             data: { progressPercent: 50 },
@@ -453,7 +465,10 @@ test(
             lastPosition: 595,
             capturedAt: new Date().toISOString(),
           };
-          assertStatus(await request('/users/progress/video', { method: 'POST', body: oversized }), 200);
+          assertStatus(
+            await request('/users/progress/video', { method: 'POST', body: oversized }),
+            200
+          );
           assertStatus(
             await request('/users/progress/video', {
               method: 'POST',
@@ -462,9 +477,11 @@ test(
             200
           );
           assert.equal(
-            (await prisma.videoProgress.findUnique({
-              where: { userId_lessonId: { userId: userIds[0], lessonId: lessons[2].id } },
-            })).watchedSeconds,
+            (
+              await prisma.videoProgress.findUnique({
+                where: { userId_lessonId: { userId: userIds[0], lessonId: lessons[2].id } },
+              })
+            ).watchedSeconds,
             317
           );
           assert.equal(
@@ -480,7 +497,10 @@ test(
             lastPosition: 100,
             capturedAt: delayedStart.toISOString(),
           };
-          assertStatus(await request('/users/progress/video', { method: 'POST', body: delayed }), 200);
+          assertStatus(
+            await request('/users/progress/video', { method: 'POST', body: delayed }),
+            200
+          );
           assertStatus(
             await request('/users/progress/video', {
               method: 'POST',
@@ -495,9 +515,11 @@ test(
             200
           );
           assert.equal(
-            (await prisma.videoProgress.findUnique({
-              where: { userId_lessonId: { userId: userIds[0], lessonId: lessons[2].id } },
-            })).watchedSeconds,
+            (
+              await prisma.videoProgress.findUnique({
+                where: { userId_lessonId: { userId: userIds[0], lessonId: lessons[2].id } },
+              })
+            ).watchedSeconds,
             922
           );
           const offlineStart = new Date(Date.now() - 10 * 60 * 1000);
@@ -514,9 +536,11 @@ test(
             200
           );
           assert.equal(
-            (await prisma.videoProgress.findUnique({
-              where: { userId_lessonId: { userId: userIds[0], lessonId: lessons[2].id } },
-            })).watchedSeconds,
+            (
+              await prisma.videoProgress.findUnique({
+                where: { userId_lessonId: { userId: userIds[0], lessonId: lessons[2].id } },
+              })
+            ).watchedSeconds,
             1522
           );
           assertStatus(

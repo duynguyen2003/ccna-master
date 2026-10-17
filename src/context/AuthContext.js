@@ -71,6 +71,10 @@ export const AuthProvider = ({ children }) => {
 
   // Hàm đăng xuất: xóa mọi thứ
   const logout = useCallback(async () => {
+    setUser(null);
+    setToken(null);
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('userData');
     try {
       // Gọi API logout (tùy chọn, để Backend hủy refresh token)
       if (token) {
@@ -78,12 +82,6 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (error) {
       console.error('Lỗi gọi API logout:', error);
-    } finally {
-      // Dù API lỗi vẫn dọn sạch frontend
-      setUser(null);
-      setToken(null);
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('userData');
     }
   }, [token]);
 
@@ -99,13 +97,16 @@ export const AuthProvider = ({ children }) => {
   // Lắng nghe sự kiện token hết hạn từ Api.js
   useEffect(() => {
     const handleUnauthorized = () => {
-      logout();
+      setUser(null);
+      setToken(null);
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('userData');
       // Tuỳ chọn: show toast (phụ thuộc vào implementation Toast ở UI)
     };
 
     window.addEventListener('unauthorized', handleUnauthorized);
     return () => window.removeEventListener('unauthorized', handleUnauthorized);
-  }, [logout]);
+  }, []);
 
   const value = {
     user,

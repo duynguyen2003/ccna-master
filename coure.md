@@ -2492,7 +2492,7 @@ Do project sử dụng CRA:
 phải verify:
 
 ```bash
-npm run build
+pnpm run build
 ```
 
 hoặc script tương đương trong `package.json`.
@@ -2589,8 +2589,8 @@ Không install lại nếu đã tồn tại.
 Nếu cần confetti và project chưa có:
 
 ```bash
-npm install canvas-confetti
-npm install -D @types/canvas-confetti
+pnpm add canvas-confetti
+pnpm add -D @types/canvas-confetti
 ```
 
 Không upgrade dependency không liên quan.
@@ -2634,7 +2634,7 @@ Feature được xem là hoàn thành khi:
 ✓ Zod validation hoạt động
 ✓ Prisma query hoạt động
 ✓ PostgreSQL state chính xác
-✓ npm run build thành công
+✓ pnpm run build thành công
 ✓ GitHub Actions không fail
 ✓ Vercel frontend hoạt động
 ✓ Render API hoạt động

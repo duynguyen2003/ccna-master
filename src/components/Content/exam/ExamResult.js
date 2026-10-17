@@ -4,7 +4,7 @@ import { useAuth } from '../../../context/AuthContext';
 import { api } from '../../../services/Api';
 import '../../../css/ExamFlow.css';
 
-const ExamResult = () => {
+const ExamResultSession = () => {
   const navigate = useNavigate();
   const { resultId } = useParams();
   const { token } = useAuth();
@@ -13,21 +13,25 @@ const ExamResult = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
     const fetchResult = async () => {
       try {
         const data = await api.getExamResult(token, resultId);
-        if (data) {
+        if (data && !cancelled) {
           setResultData(data);
         }
       } catch (err) {
         console.error('Lỗi khi lấy kết quả thi:', err);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
     if (resultId && token) {
       fetchResult();
-    }
+    } else setLoading(false);
+    return () => {
+      cancelled = true;
+    };
   }, [resultId, token]);
 
   if (loading) {
@@ -74,7 +78,7 @@ const ExamResult = () => {
   const elapsedSec = timeSpent % 60;
   const timeUsedStr = `${String(elapsedMin).padStart(2, '0')}:${String(elapsedSec).padStart(2, '0')}`;
 
-  const targetScore = exam?.passingScore ? exam.passingScore * 10 : 700;
+  const targetScore = (exam?.passingScore ?? 70) * 10;
   const durationStr = exam?.durationMinutes ? `${exam.durationMinutes}:00` : '90:00';
 
   const today = new Date(resultData.takenAt || Date.now()).toLocaleDateString('vi-VN', {
@@ -101,6 +105,11 @@ const ExamResult = () => {
   return (
     <div className="exam-result-page">
       <div className="exam-result-container">
+        {(exam?.legacyUnavailable || exam?.legacyBackfill) && (
+          <p role="status">
+            Kết quả cũ chưa có bản chụp đề tại thời điểm thi; không thể xác minh lại câu hỏi gốc.
+          </p>
+        )}
         {/* ── Hero Section ── */}
         <div className="er-hero">
           {/* Score Ring */}
@@ -179,7 +188,9 @@ const ExamResult = () => {
         >
           <button
             className="er-btn-primary"
-            onClick={() => navigate(`/exam/review/${examId}`, { state: reviewState })}
+            onClick={() =>
+              navigate(`/exam/review/${examId}?resultId=${resultId}`, { state: reviewState })
+            }
           >
             ☰ Xem lại đáp án
           </button>
@@ -192,4 +203,9 @@ const ExamResult = () => {
   );
 };
 
+const ExamResult = () => {
+  const { token } = useAuth();
+  const { resultId } = useParams();
+  return <ExamResultSession key={String(token) + ':' + resultId} />;
+};
 export default ExamResult;

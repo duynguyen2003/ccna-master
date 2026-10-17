@@ -14,7 +14,7 @@ Dự án được xây dựng theo mô hình **Client-Server** đầy đủ (Ful
 
 ## 2. Các file cấu hình tại thư mục gốc (`ccna-master/`)
 *   **[.env](file:///d:/ĐỒ ÁN TỐT NGHIỆP/ccna-master/.env)** & **[.env.example](file:///d:/ĐỒ ÁN TỐT NGHIỆP/ccna-master/.env.example)**: Chứa các biến môi trường cấu hình cho hệ thống (như cổng Server, chuỗi kết nối Database `DATABASE_URL` tới PostgreSQL, mã bí mật `JWT_SECRET`, thông số gửi mail của Nodemailer, Client ID của Google OAuth và các tham số của Cloudinary để tải ảnh).
-*   **[package.json](file:///d:/ĐỒ ÁN TỐT NGHIỆP/ccna-master/package.json)**: File quan trọng nhất của Node.js, khai báo tất cả các thư viện dependency đã cài đặt (cho cả React & Express) và các kịch bản chạy (scripts) như `npm start`, `npm run dev`, `build`...
+*   **[package.json](file:///d:/ĐỒ ÁN TỐT NGHIỆP/ccna-master/package.json)**: File quan trọng nhất của Node.js, khai báo tất cả các thư viện dependency đã cài đặt (cho cả React & Express) và các kịch bản chạy (scripts) như `pnpm start`, `pnpm run dev`, `build`...
 *   **[prisma.config.ts](file:///d:/ĐỒ ÁN TỐT NGHIỆP/ccna-master/prisma.config.ts)**: Cấu hình bổ sung cho Prisma ORM khi thực hiện biên dịch và kết nối.
 *   **[db_schema_dump.prisma](file:///d:/ĐỒ ÁN TỐT NGHIỆP/ccna-master/db_schema_dump.prisma)**: File sao lưu cấu trúc database dưới dạng ngôn ngữ schema của Prisma.
 *   **[README.md](file:///d:/ĐỒ ÁN TỐT NGHIỆP/ccna-master/README.md)**: Tài liệu hướng dẫn cài đặt, cấu hình môi trường ban đầu và các câu lệnh để vận hành dự án.

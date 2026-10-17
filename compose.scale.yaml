@@ -1,4 +1,4 @@
-# Apply schema once with the normal stack before enabling replicas.
+# The migrate service completes once before backend replicas start.
 services:
   backend:
     # Replicas are reached through Nginx; a fixed host port cannot be shared.

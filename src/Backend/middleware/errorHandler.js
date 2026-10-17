@@ -10,11 +10,14 @@ const notFoundHandler = (req, res, next) => {
 };
 
 const errorHandler = (err, req, res, next) => {
-  const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
+  const statusCode = res.statusCode >= 400 ? res.statusCode : err.status || err.statusCode || 500;
   res.status(statusCode);
 
   const errorResponse = {
-    message: err.message || 'Internal Server Error',
+    message:
+      statusCode >= 500 && process.env.NODE_ENV === 'production'
+        ? 'Internal Server Error'
+        : err.message || 'Internal Server Error',
     status: statusCode,
   };
 

@@ -46,20 +46,33 @@
 ## 🚀 Hướng dẫn cài đặt
 
 ### 1. Yêu cầu hệ thống
-- **Node.js** (Phiên bản 18 trở lên)
+- **Node.js** 22.12+ (nhánh 22) hoặc 24+.
+- **pnpm** 10.33.4 (được khóa trong `package.json`).
 - **PostgreSQL** (Đang chạy trên máy hoặc qua Docker)
 
 ### 2. Cài đặt Dependencies
 Mở terminal tại thư mục gốc của dự án và chạy:
 ```bash
-npm install --legacy-peer-deps
+corepack enable pnpm
+pnpm install --frozen-lockfile
 ```
+
+Nếu chưa bật được lệnh `pnpm`, dùng `corepack pnpm install --frozen-lockfile`.
+Trên Windows, có thể dùng `pnpm.cmd` nếu PowerShell chặn script `.ps1`.
+Commit `pnpm-lock.yaml` khi thay đổi dependency; CI, Docker và Vercel đều dùng `--frozen-lockfile`.
+Vercel gọi `corepack pnpm` để dùng đúng phiên bản đã khóa trong `package.json`.
+Cấu hình trong `pnpm-workspace.yaml` giữ layout phẳng tương thích Create React App 5,
+không tự thêm peer dependency và giữ override `qs` hiện có.
+
+Thêm thư viện bằng `pnpm add <package>`, thêm công cụ phát triển bằng `pnpm add -D <package>`.
+Chạy kiểm tra bằng `pnpm run test:cli`, `pnpm run test:learning`, `pnpm run test:core`,
+`pnpm test --watchAll=false --runInBand --testPathIgnorePatterns=src/Backend/` và `pnpm run build`.
 
 ### 3. Cấu hình biến môi trường
 Tạo file `.env` tại thư mục gốc (dựa trên mẫu `.env.example`) và điền các thông tin sau:
 ```env
 DATABASE_URL="postgresql://user:password@localhost:5432/db_name"
-JWT_SECRET="your_secret_key"
+JWT_SECRET="<secret ngẫu nhiên riêng, ít nhất 32 ký tự>"
 GOOGLE_CLIENT_ID="your_google_id"
 CLOUDINARY_CLOUD_NAME="your_cloud_name"
 EMAIL_USER="your-email@gmail.com"
@@ -67,16 +80,21 @@ EMAIL_PASS="your-app-password"
 ```
 
 ### 4. Khởi tạo Database
-Chạy các lệnh sau để đồng bộ Schema và tạo Database:
+Với database mới, chạy các migration đã lưu trong Git:
 ```bash
-npx prisma generate
-npx prisma db push
+pnpm exec prisma generate
+pnpm run db:deploy
 ```
+
+Database đang có dữ liệu từ `db push` cần đối chiếu schema và baseline trước khi deploy.
+Xem [hướng dẫn vận hành, backup/restore và rollout](docs/operations.md).
+Docker Compose chạy migration trong service `migrate` riêng; backend khởi động bằng Node.
+`developer` triển khai Vercel preview, `main` triển khai production với secrets riêng theo GitHub Environment.
 
 ### 5. Chạy ứng dụng
 Mở hai terminal song song:
-- **Terminal 1 (Backend)**: `node src/Backend/Server.js`
-- **Terminal 2 (Frontend)**: `npm start`
+- **Terminal 1 (Backend)**: `pnpm run server`
+- **Terminal 2 (Frontend)**: `pnpm start`
 
 ---
 

@@ -2,15 +2,18 @@ FROM node:22-bookworm-slim AS dependencies
 
 WORKDIR /app
 
+RUN corepack enable pnpm
+
 RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates openssl \
     && rm -rf /var/lib/apt/lists/*
 
-COPY package.json package-lock.json ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY prisma ./prisma
 COPY prisma.config.ts ./prisma.config.ts
 COPY scripts/prisma-postinstall.cjs ./scripts/prisma-postinstall.cjs
-RUN npm ci --legacy-peer-deps
+COPY scripts/require-pnpm.cjs ./scripts/require-pnpm.cjs
+RUN pnpm install --frozen-lockfile
 
 
 FROM dependencies AS frontend-build
@@ -26,7 +29,7 @@ ENV GENERATE_SOURCEMAP=false
 
 COPY public ./public
 COPY src ./src
-RUN npm run build
+RUN pnpm run build
 
 
 FROM nginx:1.27-alpine AS frontend
@@ -51,11 +54,11 @@ COPY src/Backend ./src/Backend
 COPY src/shared ./src/shared
 COPY src/uploads ./src/uploads
 
-RUN npx prisma generate
+RUN NODE_ENV=development pnpm exec prisma generate
 
 EXPOSE 5000
 
 HEALTHCHECK --interval=10s --timeout=3s --start-period=15s --retries=5 \
-  CMD node -e "fetch('http://127.0.0.1:5000/api/debug-ping').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"
+  CMD node -e "fetch('http://127.0.0.1:5000/api/health/ready').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"
 
-CMD ["sh", "-c", "npx prisma db push && exec node src/Backend/Server.js"]
+CMD ["node", "src/Backend/Server.js"]

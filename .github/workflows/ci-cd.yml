@@ -11,6 +11,9 @@ on:
       - developer
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   test-and-build:
     name: 🧪 Test & Build (Quality Gate)
@@ -20,37 +23,41 @@ jobs:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
       - name: ⚙️ Setup Node.js 22
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: 📦 Install dependencies
-        run: |
-          npm config set fetch-retries 5
-          npm config set fetch-retry-mintimeout 20000
-          npm config set fetch-retry-maxtimeout 120000
-          npm ci --legacy-peer-deps
+        run: pnpm install --frozen-lockfile
 
       - name: 🗄️ Generate Prisma Client
-        run: npx prisma generate
+        run: pnpm exec prisma generate
 
       - name: 🧪 Run CLI simulator tests
-        run: npm run test:cli
+        run: pnpm run test:cli
         env:
           LAB_INTEGRATION: '0'
 
       - name: 🧪 Run frontend component tests
-        run: npm test -- --watchAll=false --runInBand --runTestsByPath src/components/Content/NetworkLab.test.js
+        run: pnpm test --watchAll=false --runInBand --testPathIgnorePatterns=src/Backend/
+
+      - name: Run account, exam and runtime tests
+        run: pnpm run test:core
 
       - name: 🧪 Run learning path domain tests
-        run: npm run test:learning
+        run: pnpm run test:learning
         env:
           LEARNING_PATH_INTEGRATION: '0'
 
       - name: 🔍 Lint check
         run: >-
-          npx eslint
+          pnpm exec eslint
           src/components/Content/Lesson.js
           src/components/Content/Profile.js
           src/components/Content/Roadmap.js
@@ -62,6 +69,26 @@ jobs:
           src/Backend/controllers/labAttemptController.js
           src/Backend/controllers/learningPathController.js
           src/Backend/controllers/adminController.js
+          src/Backend/controllers/authController.js
+          src/Backend/controllers/userController.js
+          src/Backend/controllers/examController.js
+          src/Backend/exams/*.js
+          src/Backend/security/*.js
+          src/Backend/config/runtime.js
+          src/Backend/config/database.js
+          src/Backend/Server.js
+          src/Backend/middleware/auth.js
+          src/Backend/middleware/errorHandler.js
+          src/Backend/middleware/rateLimiter.js
+          src/Backend/middleware/validate.js
+          src/Backend/validation/examSchema.js
+          src/Backend/routes/exams.js
+          src/components/Content/exam/*.js
+          src/context/AuthContext.js
+          src/services/Api.js
+          scripts/backup-lib.cjs
+          scripts/backup.cjs
+          scripts/restore.cjs
           src/Backend/domain/learningPath.js
           src/Backend/services/learningPathService.js
           src/Backend/validation/learningPathSchema.js
@@ -71,7 +98,7 @@ jobs:
           src/shared/sanitizeHtml.js
 
       - name: 🏗️ Build production bundle
-        run: npm run build
+        run: pnpm run build
         env:
           CI: false
 
@@ -104,38 +131,65 @@ jobs:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
       - name: ⚙️ Setup Node.js 22
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: 📦 Install dependencies
-        run: npm ci --legacy-peer-deps
+        run: pnpm install --frozen-lockfile
 
       - name: 🗄️ Apply test schema
-        run: npx prisma db push
+        run: pnpm exec prisma migrate deploy
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/netmastery_test
 
       - name: 🧪 Run PostgreSQL/HTTP integration
-        run: npm run test:cli
+        run: pnpm run test:cli
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/netmastery_test
           JWT_SECRET: ci-integration-secret
           LAB_INTEGRATION: '1'
 
       - name: 🧪 Run learning path PostgreSQL/HTTP integration
-        run: npm run test:learning
+        run: pnpm run test:learning
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/netmastery_test
           JWT_SECRET: ci-integration-secret
           LEARNING_PATH_INTEGRATION: '1'
+
+      - name: Run account and exam PostgreSQL/HTTP integration
+        run: pnpm run test:core
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/netmastery_test
+          JWT_SECRET: ci-integration-secret
+          CORE_INTEGRATION: '1'
+
+      - name: Install PostgreSQL backup tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Verify migration upgrade and backup restore
+        run: pnpm run test:core
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/netmastery_test
+          OPERATIONS_INTEGRATION: '1'
 
   deploy-vercel:
     name: 🚀 Deploy to Vercel
     needs: [test-and-build, integration]
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/developer')
+    environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'preview' }}
+    concurrency:
+      group: vercel-${{ github.ref }}
+      cancel-in-progress: false
     env:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
@@ -155,37 +209,42 @@ jobs:
           [[ -z "$VERCEL_PROJECT_ID" ]] && missing+=(VERCEL_PROJECT_ID)
 
           if (( ${#missing[@]} > 0 )); then
-            echo "configured=false" >> "$GITHUB_OUTPUT"
-            echo "Vercel deploy skipped; missing secrets: ${missing[*]}"
+            echo "Missing deployment secrets: ${missing[*]}" >&2
+            exit 1
           else
             echo "configured=true" >> "$GITHUB_OUTPUT"
             echo "All Vercel deployment secrets are configured."
           fi
 
-      - name: 📦 Install Vercel CLI
+      - name: Setup pnpm
         if: steps.vercel-config.outputs.configured == 'true'
-        run: npm install --global vercel@latest
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js 22
+        if: steps.vercel-config.outputs.configured == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
 
       - name: 🔗 Pull Vercel project settings
         if: steps.vercel-config.outputs.configured == 'true'
-        run: vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+        run: |
+          if [[ "$GITHUB_REF" == "refs/heads/main" ]]; then
+            pnpm dlx vercel@latest pull --yes --environment=production --token="$VERCEL_TOKEN"
+          else
+            pnpm dlx vercel@latest pull --yes --environment=preview --git-branch=developer --token="$VERCEL_TOKEN"
+          fi
 
       - name: 🏗️ Build Vercel artifacts
         if: steps.vercel-config.outputs.configured == 'true'
-        run: vercel build --prod --token="$VERCEL_TOKEN"
+        run: |
+          flags=()
+          [[ "$GITHUB_REF" == "refs/heads/main" ]] && flags+=(--prod)
+          pnpm dlx vercel@latest build "${flags[@]}" --token="$VERCEL_TOKEN"
 
       - name: 🚀 Deploy prebuilt Vercel artifacts
         if: steps.vercel-config.outputs.configured == 'true'
-        run: vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN"
-
-      - name: ℹ️ Vercel Integration Notice
-        if: steps.vercel-config.outputs.configured != 'true'
         run: |
-          echo "=========================================================="
-          echo "✅ CI Build & Tests passed successfully!"
-          echo "ℹ️  Vercel deployment was skipped because required secrets are missing."
-          echo "👉 Add these GitHub Actions secrets to enable CLI deployment:"
-          echo "   - VERCEL_TOKEN"
-          echo "   - VERCEL_ORG_ID"
-          echo "   - VERCEL_PROJECT_ID"
-          echo "=========================================================="
+          flags=()
+          [[ "$GITHUB_REF" == "refs/heads/main" ]] && flags+=(--prod)
+          pnpm dlx vercel@latest deploy --prebuilt "${flags[@]}" --token="$VERCEL_TOKEN"

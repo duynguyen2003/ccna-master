@@ -6,6 +6,7 @@ const upload = require('../middleware/upload');
 const validate = require('../middleware/validate');
 const { examSubmitLimiter } = require('../middleware/rateLimiter');
 const { submitExamSchema } = require('../validation/examSchema');
+const { z } = require('zod');
 
 // Public (Optional Login)
 router.get('/', optionalAuth, examController.getExams);
@@ -14,6 +15,13 @@ router.get('/detail/:id', optionalAuth, examController.getExamById);
 // Requires Login
 router.get('/history/me', verifyToken, examController.getMyExamHistory);
 router.get('/result/:resultId', verifyToken, examController.getExamResultById);
+router.post('/:id/attempts', verifyToken, examController.startAttempt);
+router.get(
+  '/:id/attempts/:attemptId',
+  verifyToken,
+  validate(z.object({ attemptId: z.uuid() }), 'params'),
+  examController.getAttempt
+);
 
 // Cho phép cả STUDENT và ADMIN nộp bài thi
 router.post(

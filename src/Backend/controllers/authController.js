@@ -7,12 +7,9 @@
 
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
-const jwt = require('jsonwebtoken');
-const { OAuth2Client } = require('google-auth-library');
+const { isAccountActive, createAccessToken } = require('../security/session');
 const { getPrisma } = require('../config/database');
 const { sendResetPasswordEmail } = require('../config/email');
-
-const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const prisma = getPrisma();
 const RESET_TOKEN_TTL_MINUTES = 30;
@@ -118,7 +115,7 @@ module.exports.login = async (req, res, next) => {
       },
     });
 
-    if (!user) {
+    if (!isAccountActive(user)) {
       return res.status(401).json({ message: 'Email hoặc mật khẩu không chính xác' });
     }
 
@@ -129,11 +126,7 @@ module.exports.login = async (req, res, next) => {
     }
 
     // 4. Generate JWT
-    const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
-    );
+    const token = createAccessToken(user);
 
     // 5. Update last login (optional but good)
     await prisma.user.update({
@@ -177,7 +170,7 @@ module.exports.forgotPassword = async (req, res, next) => {
       },
     });
 
-    if (!user || !user.isActive) {
+    if (!isAccountActive(user)) {
       return res.json({ message: genericForgotPasswordMessage });
     }
 
@@ -236,9 +229,15 @@ module.exports.validateResetPasswordToken = async (req, res, next) => {
 
     const resetToken = await prisma.passwordResetToken.findUnique({
       where: { tokenHash: hashResetToken(token) },
+      include: { user: true },
     });
 
-    if (!resetToken || resetToken.usedAt || resetToken.expiresAt < new Date()) {
+    if (
+      !resetToken ||
+      !isAccountActive(resetToken.user) ||
+      resetToken.usedAt ||
+      resetToken.expiresAt <= new Date()
+    ) {
       return res
         .status(400)
         .json({ message: 'Liên kết đặt lại mật khẩu đã hết hạn hoặc không hợp lệ.' });
@@ -277,7 +276,12 @@ module.exports.resetPassword = async (req, res, next) => {
       include: { user: true },
     });
 
-    if (!resetToken || resetToken.usedAt || resetToken.expiresAt < new Date()) {
+    if (
+      !resetToken ||
+      !isAccountActive(resetToken.user) ||
+      resetToken.usedAt ||
+      resetToken.expiresAt <= new Date()
+    ) {
       return res
         .status(400)
         .json({ message: 'Liên kết đặt lại mật khẩu đã hết hạn hoặc không hợp lệ.' });
@@ -286,25 +290,36 @@ module.exports.resetPassword = async (req, res, next) => {
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
 
-    await prisma.$transaction([
-      prisma.user.update({
-        where: { id: resetToken.userId },
-        data: { passwordHash },
-      }),
-      prisma.passwordResetToken.update({
-        where: { id: resetToken.id },
+    const changed = await prisma.$transaction(async (tx) => {
+      const claimed = await tx.passwordResetToken.updateMany({
+        where: {
+          id: resetToken.id,
+          usedAt: null,
+          expiresAt: { gt: new Date() },
+          user: { isActive: true, deletedAt: null },
+        },
         data: { usedAt: new Date() },
-      }),
-      prisma.passwordResetToken.deleteMany({
+      });
+      if (claimed.count !== 1) return false;
+      await tx.user.update({
+        where: { id: resetToken.userId },
+        data: { passwordHash, sessionVersion: { increment: 1 } },
+      });
+      await tx.passwordResetToken.deleteMany({
         where: {
           userId: resetToken.userId,
           id: { not: resetToken.id },
         },
-      }),
-      prisma.refreshToken.deleteMany({
+      });
+      await tx.refreshToken.deleteMany({
         where: { userId: resetToken.userId },
-      }),
-    ]);
+      });
+      return true;
+    });
+    if (!changed)
+      return res
+        .status(400)
+        .json({ message: 'Liên kết đặt lại mật khẩu đã hết hạn hoặc không hợp lệ.' });
 
     return res.json({
       message: 'Đặt lại mật khẩu thành công. Vui lòng đăng nhập lại.',
@@ -351,9 +366,13 @@ module.exports.logout = async (req, res, next) => {
   try {
     // If using refresh tokens in DB, delete them here:
     if (req.user && req.user.id) {
-      await prisma.refreshToken.deleteMany({
-        where: { userId: req.user.id },
-      });
+      await prisma.$transaction([
+        prisma.user.update({
+          where: { id: req.user.id },
+          data: { sessionVersion: { increment: 1 } },
+        }),
+        prisma.refreshToken.deleteMany({ where: { userId: req.user.id } }),
+      ]);
     }
 
     res.json({ message: 'Đăng xuất thành công' });
@@ -419,6 +438,9 @@ module.exports.googleLogin = async (req, res, next) => {
         },
       });
     } else {
+      if (!isAccountActive(user)) {
+        return res.status(403).json({ message: 'Tài khoản của bạn đã bị khóa hoặc xóa' });
+      }
       // Update last login and avatar if missing
       user = await prisma.user.update({
         where: { id: user.id },
@@ -430,16 +452,12 @@ module.exports.googleLogin = async (req, res, next) => {
     }
 
     // Check if user is active
-    if (!user.isActive) {
+    if (!isAccountActive(user)) {
       return res.status(403).json({ message: 'Tài khoản của bạn đã bị khóa' });
     }
 
     // Generate our system JWT
-    const accessToken = jwt.sign(
-      { id: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
-    );
+    const accessToken = createAccessToken(user);
 
     const { passwordHash: _, ...userWithoutPassword } = user;
 

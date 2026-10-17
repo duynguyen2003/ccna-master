@@ -12,7 +12,7 @@ Hiện tại project có cấu trúc Admin **skeleton** — tất cả component
 > Admin Dashboard sẽ được đặt tại route **`/admin/*`** — tách biệt hoàn toàn với Layout chính (không có Navbar/Footer của user). Chỉ user có `role: 'ADMIN'` mới được truy cập.
 
 > [!WARNING]
-> Cần đảm bảo Backend server (`npm run server` hoặc `node src/Backend/Server.js`) đang chạy ở `http://localhost:5000` trước khi test trang Admin. Database PostgreSQL phải có dữ liệu seed.
+> Cần đảm bảo Backend server (`pnpm run server` hoặc `node src/Backend/Server.js`) đang chạy ở `http://localhost:5000` trước khi test trang Admin. Database PostgreSQL phải có dữ liệu seed.
 
 > [!CAUTION]
 > `services/Api.js` hiện dùng Mock Data cho `getCourses`, `getLabs`, `getUserProfile`. Kế hoạch này sẽ thêm các hàm API mới vào `services/api/adminApi.js` để không phá vỡ code cũ đang hoạt động.

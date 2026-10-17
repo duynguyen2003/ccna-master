@@ -413,10 +413,18 @@ export const api = {
   },
 
   // Bắt buộc có kết quả → throw nếu lỗi
-  submitExam: (token, examId, answers, timeSpent) =>
+  startExamAttempt: async (token, examId) => {
+    const json = await apiFetch(`/exams/${examId}/attempts`, token, { method: 'POST' });
+    return json.attempt;
+  },
+  getExamAttempt: async (token, examId, attemptId) => {
+    const json = await apiFetch(`/exams/${examId}/attempts/${attemptId}`, token);
+    return json.attempt;
+  },
+  submitExam: (token, examId, attemptId, answers) =>
     apiFetch(`/exams/${examId}/submit`, token, {
       method: 'POST',
-      body: JSON.stringify({ answers, timeSpent }),
+      body: JSON.stringify({ attemptId, answers }),
     }),
 
   // Bắt buộc có kết quả → throw nếu lỗi
