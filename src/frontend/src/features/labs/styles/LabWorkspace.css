@@ -512,7 +512,7 @@
 }
 .cli-lab-advanced button,
 .cli-lab-probe-form input,
-.cli-lab-probe-form select {
+.cli-lab-probe-form .app-select__trigger {
   padding: 7px 11px;
   border: 1px solid var(--lab-border-strong);
   border-radius: 6px;
@@ -524,7 +524,7 @@
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 .cli-lab-probe-form input:focus,
-.cli-lab-probe-form select:focus {
+.cli-lab-probe-form .app-select__trigger:focus-visible {
   border-color: var(--lab-accent);
   box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.2);
 }
@@ -1009,7 +1009,7 @@
 
 .cli-lab-theme button:focus-visible,
 .cli-lab-theme input:focus-visible,
-.cli-lab-theme select:focus-visible,
+.cli-lab-theme .app-select__trigger:focus-visible,
 .cli-lab-theme summary:focus-visible,
 .cli-lab-theme [role='button']:focus-visible {
   outline: 2px solid var(--lab-accent-strong);

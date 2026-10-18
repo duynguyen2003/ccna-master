@@ -3,6 +3,7 @@ import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import '../styles/ExamFlow.css';
 import { useAuth } from '../../../context/AuthContext';
 import { api } from '../../../services/Api';
+import HeartbeatLoader from '../../../components/ui/HeartbeatLoader';
 
 // ─── Component ────────────────────────────────────────────────
 const ReviewExamSession = () => {
@@ -82,7 +83,11 @@ const ReviewExamSession = () => {
   if (!storedResult)
     return (
       <div className="review-exam-page">
-        <p role="status">{error || 'Đang tải bài thi để xem lại...'}</p>
+        {error ? (
+          <p role="status">{error}</p>
+        ) : (
+          <HeartbeatLoader label="Đang tải bài thi để xem lại..." />
+        )}
       </div>
     );
 

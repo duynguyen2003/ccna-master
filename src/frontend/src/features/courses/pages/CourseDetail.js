@@ -3,6 +3,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Play, CheckCircle, Lock, ChevronRight, Map, ArrowLeft } from 'lucide-react';
 import { api } from '../../../services/Api';
 import { useAuth } from '../../../context/AuthContext';
+import HeartbeatLoader from '../../../components/ui/HeartbeatLoader';
 import errorIllustration from '../../../assets/images/fix1.png';
 import '../styles/CourseDetail.css';
 
@@ -56,14 +57,7 @@ const CourseDetail = () => {
   }, [courseId, token]);
 
   if (loading) {
-    return (
-      <div className="cdp-loading-container">
-        <div className="cdp-loading-card">
-          <div className="cdp-spinner" />
-          <p>Đang chuẩn bị nội dung khóa học...</p>
-        </div>
-      </div>
-    );
+    return <HeartbeatLoader label="Đang chuẩn bị nội dung khóa học..." />;
   }
 
   if (error || !course) {

@@ -1,9 +1,11 @@
+import { appAlert, appConfirm } from '../../../utils/appDialog';
 import React, { useState, useEffect, useContext } from 'react';
 import { Plus, Trash2, ToggleLeft, ToggleRight, Wrench } from 'lucide-react';
 import { adminApi } from '../../../services/api/adminApi';
 import { AuthContext } from '../../../context/AuthContext';
 import AdminModal from '../components/AdminModal';
 import DeleteButton from '../../../components/ui/delete-button';
+import HeartbeatLoader from '../../../components/ui/HeartbeatLoader';
 import '../styles/AdminViews.css';
 
 const Tools = () => {
@@ -54,17 +56,17 @@ const Tools = () => {
       await adminApi.toggleTool(token, id);
       fetchTools();
     } catch (err) {
-      alert(err.message);
+      appAlert(err.message);
     }
   };
 
   const handleDelete = async (id, confirmed = false) => {
-    if (confirmed || window.confirm('Xóa công cụ này?')) {
+    if (confirmed || (await appConfirm('Xóa công cụ này?'))) {
       try {
         await adminApi.deleteTool(token, id);
         fetchTools();
       } catch (err) {
-        alert(err.message);
+        appAlert(err.message);
       }
     }
   };
@@ -100,8 +102,8 @@ const Tools = () => {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan="7" style={{ textAlign: 'center' }}>
-                  Đang tải...
+                <td colSpan="7">
+                  <HeartbeatLoader compact label="Đang tải danh sách công cụ..." />
                 </td>
               </tr>
             ) : tools.length > 0 ? (

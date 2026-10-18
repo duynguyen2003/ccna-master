@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import DropdownSelect from '../../../components/ui/DropdownSelect';
 
 const PortLookup = () => {
   const [portsData, setPortsData] = useState([]);
@@ -10,7 +11,7 @@ const PortLookup = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 50;
 
-  // Load data dynamically from src/json
+  // Load lookup data from frontend/src/data.
   useEffect(() => {
     import('../../../data/ports.json')
       .then((module) => {
@@ -241,7 +242,8 @@ const PortLookup = () => {
         </div>
 
         <div className="port-filter-wrapper">
-          <select
+          <DropdownSelect
+            aria-label="Lọc giao thức"
             className="port-filter-select"
             value={transportFilter}
             onChange={(e) => setTransportFilter(e.target.value)}
@@ -249,7 +251,7 @@ const PortLookup = () => {
             <option value="All">Tất cả</option>
             <option value="TCP">TCP</option>
             <option value="UDP">UDP</option>
-          </select>
+          </DropdownSelect>
         </div>
 
         <div className="port-toggle-wrapper">

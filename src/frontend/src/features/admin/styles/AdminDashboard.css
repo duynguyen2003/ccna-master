@@ -1,4 +1,4 @@
-/* src/css/Admin/AdminDashboard.css */
+/* frontend/src/features/admin/styles/AdminDashboard.css */
 
 .dashboard-wrapper,
 .users-wrapper {
@@ -30,6 +30,13 @@
   }
   100% {
     background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+    background-position: 100% 0;
   }
 }
 

@@ -1,4 +1,4 @@
-// src/components/Admin/Components/StatsCard.js
+// src/frontend/src/features/admin/components/StatsCard.js
 import React, { useMemo, useRef } from 'react';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import MiniSparkline from '../charts/MiniSparkline';

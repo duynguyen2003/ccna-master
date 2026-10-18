@@ -1,4 +1,4 @@
-// src/components/Admin/Charts/CoursePieChart.jsx
+// src/frontend/src/features/admin/charts/CoursePieChart.jsx
 import React from 'react';
 import { PieChart as PieIcon } from 'lucide-react';
 import { PieChart, Pie, Cell, Tooltip } from 'recharts';

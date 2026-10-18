@@ -14,7 +14,7 @@ import { normalizeCourse } from '../utils/learningPathAdapter';
 import LearningStats from '../components/learningPath/LearningStats';
 import LearningPathMap from '../components/learningPath/LearningPathMap';
 import CourseDetailModal from '../components/learningPath/CourseDetailModal';
-import LearningPathSkeleton from '../components/learningPath/LearningPathSkeleton';
+import HeartbeatLoader from '../../../components/ui/HeartbeatLoader';
 
 import errorIllustration from '../../../assets/images/fix1.png';
 import '../styles/Roadmap.css';
@@ -415,8 +415,7 @@ export const Roadmap = () => {
             </div>
           )}
 
-          {/* Skeleton Match Geometry */}
-          <LearningPathSkeleton isDesktop={isDesktop} />
+          <HeartbeatLoader label="Đang tải lộ trình học tập..." />
         </div>
       </div>
     );

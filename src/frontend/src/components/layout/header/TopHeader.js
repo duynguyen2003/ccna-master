@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
 import api, { API_URL } from '../../../services/Api';
+import GuestSectionTabs from './GuestSectionTabs';
 
 const NOTCH_NAV_ITEMS = [
   { id: 'home-how-it-works', label: 'Cách học' },
@@ -19,10 +20,12 @@ const TopHeader = () => {
   const [isScrolledPastHero, setIsScrolledPastHero] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const pendingSectionRef = useRef(null);
 
   // Chỉ hiển thị trên trang chủ và khi đã cuộn qua banner hero
   useEffect(() => {
     if (location.pathname !== '/') {
+      pendingSectionRef.current = null;
       setIsScrolledPastHero(false);
       setActiveSection('');
       return;
@@ -58,27 +61,51 @@ const TopHeader = () => {
           }
         }
       }
+      const pending = pendingSectionRef.current;
+      if (pending) {
+        if (current === pending.id || Date.now() >= pending.expiresAt) {
+          pendingSectionRef.current = null;
+        } else {
+          return;
+        }
+      }
       setActiveSection(current);
     };
 
+    const releaseSelectedSection = () => {
+      pendingSectionRef.current = null;
+    };
+
     window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('wheel', releaseSelectedSection, { passive: true });
+    window.addEventListener('touchstart', releaseSelectedSection, { passive: true });
+    window.addEventListener('keydown', releaseSelectedSection);
     handleScroll();
-    return () => window.removeEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('wheel', releaseSelectedSection);
+      window.removeEventListener('touchstart', releaseSelectedSection);
+      window.removeEventListener('keydown', releaseSelectedSection);
+    };
   }, [location.pathname]);
 
   const handleNotchNavClick = (e, sectionId) => {
     e.preventDefault();
     setActiveSection(sectionId);
+    const behavior = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+      ? 'auto'
+      : 'smooth';
     if (location.pathname === '/') {
       const el = document.getElementById(sectionId);
       if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        pendingSectionRef.current = { id: sectionId, expiresAt: Date.now() + 2000 };
+        el.scrollIntoView({ behavior, block: 'start' });
         window.history.replaceState(null, '', `#${sectionId}`);
       }
     } else {
       navigate(`/#${sectionId}`);
       setTimeout(() => {
-        document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        document.getElementById(sectionId)?.scrollIntoView({ behavior, block: 'start' });
       }, 150);
     }
   };
@@ -525,29 +552,11 @@ const TopHeader = () => {
           >
             {/* .row: Chứa menu điều hướng + nút kính lúp (mờ dần và ẩn khi mở tìm kiếm) */}
             <div className="row" ref={rowRef}>
-              <div className="notch-nav-links">
-                {NOTCH_NAV_ITEMS.map((item) => {
-                  const isCurrent = activeSection === item.id;
-                  return (
-                    <a
-                      key={item.id}
-                      href={`#${item.id}`}
-                      className={`header-notch-link${isCurrent ? ' active' : ''}`}
-                      aria-current={isCurrent ? 'page' : undefined}
-                      onClick={(e) => handleNotchNavClick(e, item.id)}
-                    >
-                      {item.shortLabel ? (
-                        <>
-                          <span className="notch-text-full">{item.label}</span>
-                          <span className="notch-text-short">{item.shortLabel}</span>
-                        </>
-                      ) : (
-                        item.label
-                      )}
-                    </a>
-                  );
-                })}
-              </div>
+              <GuestSectionTabs
+                items={NOTCH_NAV_ITEMS}
+                activeSection={activeSection}
+                onSelect={handleNotchNavClick}
+              />
 
               <span className="notch-divider" aria-hidden="true" />
 

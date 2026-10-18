@@ -1,13 +1,10 @@
 import React, { useMemo, useState } from 'react';
 import { Plus, Trash2, Unplug } from 'lucide-react';
+import AnimatedCheckbox from '../../../../components/ui/AnimatedCheckbox';
+import DropdownSelect from '../../../../components/ui/DropdownSelect';
 import NetworkTopology from '../../../labs/components/NetworkTopology';
 import { networkLabTemplates } from '../../../labs/data/networkLabTemplates';
-import {
-  getDevices,
-  interfaceName,
-  toInterfaceObject,
-  isTopology,
-} from '../../utils/adminLabConfig';
+import { getDevices, interfaceName, toInterfaceObject, isTopology } from '../../utils/adminLabConfig';
 
 const DEVICE_TYPES = ['ROUTER', 'SWITCH', 'PC'];
 
@@ -115,7 +112,7 @@ const DeviceForm = ({
           />
         </Field>
         <Field label="Loại thiết bị">
-          <select
+          <DropdownSelect
             aria-label="Loại thiết bị"
             className="acm-input cli-editor-native-select"
             value={device.deviceType || 'ROUTER'}
@@ -126,7 +123,7 @@ const DeviceForm = ({
                 {type}
               </option>
             ))}
-          </select>
+          </DropdownSelect>
         </Field>
         <Field label="Hostname">
           <input
@@ -215,8 +212,7 @@ const DeviceForm = ({
                 </Field>
                 <Field label="Admin state">
                   <label className="cli-editor-checkbox-row">
-                    <input
-                      type="checkbox"
+                    <AnimatedCheckbox
                       checked={!normalized.shutdown}
                       onChange={(event) => updatePort(index, { shutdown: !event.target.checked })}
                     />{' '}
@@ -236,36 +232,37 @@ const DeviceForm = ({
                 </Field>
                 {device.deviceType === 'SWITCH' ? (
                   <>
-                <Field label="Switchport mode">
-                  <select
-                    aria-label={`Switchport mode ${index + 1}`}
-                    className="acm-input cli-editor-native-select"
-                    value={normalized.switchportMode ?? ''}
-                    onChange={(event) =>
-                      updatePort(index, { switchportMode: event.target.value || null })
-                    }
-                  >
-                    <option value="">-- Không đặt --</option>
-                    <option value="access">Access</option>
-                    <option value="trunk">Trunk</option>
-                  </select>
-                </Field>
-                <Field label="Access VLAN">
-                  <input
-                    aria-label={`Access VLAN ${index + 1}`}
-                    className="acm-input"
-                    type="number"
-                    min="1"
-                    max="4094"
-                    value={normalized.accessVlan ?? ''}
-                    placeholder="10"
-                    onChange={(event) =>
-                      updatePort(index, {
-                        accessVlan: event.target.value === '' ? null : Number(event.target.value),
-                      })
-                    }
-                  />
-                </Field>
+                    <Field label="Switchport mode">
+                      <DropdownSelect
+                        aria-label={`Switchport mode ${index + 1}`}
+                        className="acm-input cli-editor-native-select"
+                        value={normalized.switchportMode ?? ''}
+                        onChange={(event) =>
+                          updatePort(index, { switchportMode: event.target.value || null })
+                        }
+                      >
+                        <option value="">-- Không đặt --</option>
+                        <option value="access">Access</option>
+                        <option value="trunk">Trunk</option>
+                      </DropdownSelect>
+                    </Field>
+                    <Field label="Access VLAN">
+                      <input
+                        aria-label={`Access VLAN ${index + 1}`}
+                        className="acm-input"
+                        type="number"
+                        min="1"
+                        max="4094"
+                        value={normalized.accessVlan ?? ''}
+                        placeholder="10"
+                        onChange={(event) =>
+                          updatePort(index, {
+                            accessVlan:
+                              event.target.value === '' ? null : Number(event.target.value),
+                          })
+                        }
+                      />
+                    </Field>
                   </>
                 ) : null}
               </div>
@@ -349,7 +346,8 @@ export default function InitialStateBuilder({
       (link) => link.a.deviceId === selectedDevice.id || link.b.deviceId === selectedDevice.id
     );
     const relatedChecks = (gradingSpec?.checks || []).filter(
-      (check) => check && (check.deviceId === selectedDevice.id || check.neighborId === selectedDevice.id)
+      (check) =>
+        check && (check.deviceId === selectedDevice.id || check.neighborId === selectedDevice.id)
     );
     if (relatedLinks.length || relatedChecks.length) {
       report(
@@ -472,13 +470,13 @@ export default function InitialStateBuilder({
         <div>
           <span className="cli-editor-eyebrow">INITIAL STATE</span>
           <h3>Trạng thái ban đầu</h3>
-                    <p>
+          <p>
             Nhập hostname, cổng, IP/mask và trạng thái bật/tắt theo từng thiết bị. Để trống IP/mask
             cho các cổng chưa cấu hình.
           </p>
         </div>
         <div className="cli-editor-template-actions">
-          <select
+          <DropdownSelect
             aria-label="Template lab mạng"
             className="acm-input cli-editor-native-select"
             value={templateId}
@@ -491,7 +489,7 @@ export default function InitialStateBuilder({
                 {template.title}
               </option>
             ))}
-          </select>
+          </DropdownSelect>
           <button
             type="button"
             className="acm-secondary-btn"
@@ -503,7 +501,7 @@ export default function InitialStateBuilder({
         </div>
         {topology ? (
           <div className="cli-editor-add-device">
-            <select
+            <DropdownSelect
               aria-label="Loại thiết bị mới"
               className="acm-input cli-editor-native-select"
               value={newType}
@@ -513,7 +511,7 @@ export default function InitialStateBuilder({
               {DEVICE_TYPES.map((type) => (
                 <option key={type}>{type}</option>
               ))}
-            </select>
+            </DropdownSelect>
             <button
               type="button"
               className="acm-secondary-btn"
@@ -547,7 +545,7 @@ export default function InitialStateBuilder({
             <div className="cli-editor-device-picker">
               <label className="cli-editor-field">
                 <span>Thiết bị đang sửa</span>
-                <select
+                <DropdownSelect
                   aria-label="Thiết bị đang sửa"
                   className="acm-input cli-editor-native-select"
                   value={selectedDevice.id}
@@ -559,7 +557,7 @@ export default function InitialStateBuilder({
                       {device.id} · {device.hostname || device.deviceType}
                     </option>
                   ))}
-                </select>
+                </DropdownSelect>
               </label>
               <p className="cli-editor-field-hint">
                 Bấm node trên sơ đồ hoặc chọn trong danh sách để đồng bộ phần cấu hình bên dưới.
@@ -594,7 +592,7 @@ export default function InitialStateBuilder({
               </div>
             </div>
             <div className="cli-editor-link-controls">
-              <select
+              <DropdownSelect
                 aria-label="Cổng đầu"
                 className="acm-input cli-editor-native-select"
                 value={from}
@@ -607,8 +605,8 @@ export default function InitialStateBuilder({
                     {endpoint.label}
                   </option>
                 ))}
-              </select>
-              <select
+              </DropdownSelect>
+              <DropdownSelect
                 aria-label="Cổng cuối"
                 className="acm-input cli-editor-native-select"
                 value={to}
@@ -621,7 +619,7 @@ export default function InitialStateBuilder({
                     {endpoint.label}
                   </option>
                 ))}
-              </select>
+              </DropdownSelect>
               <button
                 type="button"
                 className="acm-secondary-btn"

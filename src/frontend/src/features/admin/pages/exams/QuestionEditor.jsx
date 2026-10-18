@@ -1,18 +1,9 @@
-import React, { useRef } from 'react';
-import {
-  X,
-  Upload,
-  CheckCircle2,
-  FileText,
-  PencilLine,
-  Trash2,
-  Image as ImageIcon,
-  Download,
-  Type,
-} from 'lucide-react';
+import React from 'react';
+import { X, CheckCircle2, FileText, PencilLine, Trash2, Download, Type } from 'lucide-react';
 import { OPTION_LABELS } from './constants';
 import SimpleRTE from './SimpleRTE';
 import DeleteButton from '../../../../components/ui/delete-button';
+import FileUploadField from '../../../../components/ui/FileUploadField';
 
 // ─── QuestionDrawer ───────────────────────────────────────────────────────────
 
@@ -60,20 +51,14 @@ export const QuestionDrawer = ({
           {/* Network Diagram Image */}
           <div className="efb-field">
             {!draft.imageUrl ? (
-              <label className="efb-dnd-zone">
-                <ImageIcon size={28} color="#6366f1" />
-                <div>
-                  <p style={{ color: '#6366f1', fontWeight: 600 }}>Tải ảnh sơ đồ mạng</p>
-                  <span>Định dạng JPG, PNG, tối đa 5MB</span>
-                </div>
-                <input
-                  type="file"
-                  accept="image/*"
-                  disabled={uploadingImage}
-                  onChange={onImageUpload}
-                  hidden
-                />
-              </label>
+              <FileUploadField
+                accept="image/*"
+                label="Tải ảnh sơ đồ mạng"
+                description="Định dạng JPG hoặc PNG"
+                disabled={uploadingImage}
+                busy={uploadingImage}
+                onFileSelect={(file) => onImageUpload({ target: { files: [file], value: '' } })}
+              />
             ) : (
               <div
                 className="efb-image-preview"
@@ -219,8 +204,6 @@ export const ImportModal = ({
   onFileChange,
   importMessage,
 }) => {
-  const fileInputRef = useRef(null);
-
   if (!isOpen) return null;
 
   return (
@@ -263,23 +246,15 @@ export const ImportModal = ({
             </button>
           </div>
 
-          <label className="efb-dnd-zone" style={{ padding: '40px 20px' }}>
-            <Upload size={32} color="#6366f1" />
-            <div>
-              <p style={{ color: '#0f172a', fontWeight: 600 }}>Kéo thả hoặc nhấp để chọn file</p>
-              <span>Chỉ hỗ trợ file .csv</span>
-            </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".csv,text/csv"
-              onChange={(e) => {
-                onFileChange(e);
-                onClose(); // Auto close after file selection
-              }}
-              hidden
-            />
-          </label>
+          <FileUploadField
+            accept=".csv,text/csv"
+            label="Kéo thả hoặc nhấp để chọn file CSV"
+            description="Chỉ hỗ trợ tệp .csv"
+            onFileSelect={(file) => {
+              onFileChange({ target: { files: [file] } });
+              onClose();
+            }}
+          />
         </div>
       </div>
     </div>
@@ -425,11 +400,7 @@ export const QuestionList = ({ questions, onEdit, onDelete }) => {
               <button type="button" className="efb-icon-btn" onClick={() => onEdit(idx)}>
                 <PencilLine size={14} />
               </button>
-              <DeleteButton
-                size="sm"
-                title="Xóa câu hỏi"
-                onConfirm={() => onDelete(idx)}
-              />
+              <DeleteButton size="sm" title="Xóa câu hỏi" onConfirm={() => onDelete(idx)} />
             </div>
           </div>
 

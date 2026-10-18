@@ -1,4 +1,4 @@
-// src/components/Admin/Charts/ActivityBarChart.jsx
+// src/frontend/src/features/admin/charts/ActivityBarChart.jsx
 import React from 'react';
 import { BarChart2 } from 'lucide-react';
 import {

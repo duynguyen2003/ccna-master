@@ -1,4 +1,4 @@
-// src/components/Admin/Charts/RegistrationLineChart.jsx
+// src/frontend/src/features/admin/charts/RegistrationLineChart.jsx
 import React from 'react';
 import {
   ResponsiveContainer,

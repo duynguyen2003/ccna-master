@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+import DropdownSelect from '../../../components/ui/DropdownSelect';
 
 /* ════════════════════════════════════════════════════
    IP UTILITY FUNCTIONS  –  thuần JavaScript
@@ -366,7 +367,8 @@ const VLSMCalculator = () => {
 
           <div className="vlsm-field">
             <label className="vlsm-label">PREFIX GỐC</label>
-            <select
+            <DropdownSelect
+              aria-label="Prefix gốc"
               className="vlsm-select"
               value={majorPrefix}
               onChange={(e) => setMajorPrefix(Number(e.target.value))}
@@ -376,7 +378,7 @@ const VLSMCalculator = () => {
                   {opt.label}
                 </option>
               ))}
-            </select>
+            </DropdownSelect>
           </div>
 
           <div className="vlsm-major-info">

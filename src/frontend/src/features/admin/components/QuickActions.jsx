@@ -1,4 +1,4 @@
-// src/components/Admin/Components/QuickActions.jsx
+// src/frontend/src/features/admin/components/QuickActions.jsx
 import React from 'react';
 import { PlusCircle, UserPlus, FileText, Settings, Send } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';

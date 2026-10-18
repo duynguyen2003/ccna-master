@@ -1,4 +1,4 @@
-// src/components/Admin/Charts/MiniSparkline.jsx
+// src/frontend/src/features/admin/charts/MiniSparkline.jsx
 import React from 'react';
 import { ResponsiveContainer, AreaChart, Area } from 'recharts';
 

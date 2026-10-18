@@ -2,10 +2,10 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import loginBackground from '../../../assets/images/login1.png';
 
-const AuthLayout = ({ children, toast }) => {
+const AuthLayout = ({ children, toast, className = '' }) => {
   const navigate = useNavigate();
   return (
-    <div className="auth-page">
+    <div className={`auth-page${className ? ` ${className}` : ''}`}>
       {toast}
       <div className="auth-container">
         <button

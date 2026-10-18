@@ -5,6 +5,7 @@ import { useAuth } from '../../../context/AuthContext';
 import { useToast } from '../../../components/ui/Toast';
 import AuthLayout from '../components/AuthLayout';
 import { useGoogleLogin } from '@react-oauth/google';
+import { AlertCircle, Eye, EyeOff, Lock, Mail } from 'lucide-react';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -122,13 +123,13 @@ const Login = () => {
         </div>
       )}
 
-      <form className="auth-form" onSubmit={handleSubmit} noValidate>
+      <form className="auth-form auth-motion-form login-form" onSubmit={handleSubmit} noValidate>
         {/* Email */}
-        <div className="form-group">
+        <div className="form-group auth-field-group">
           <label className="form-label" htmlFor="login-email">
             Địa chỉ Email
           </label>
-          <div className="form-input-wrapper">
+          <div className={`form-input-wrapper auth-input-field${errors.email ? ' is-error' : ''}`}>
             <input
               id="login-email"
               className={`form-input ${errors.email ? 'input-error' : ''}`}
@@ -138,25 +139,33 @@ const Login = () => {
               value={formData.email}
               onChange={handleChange}
               autoComplete="email"
+              aria-invalid={Boolean(errors.email)}
+              aria-describedby={errors.email ? 'login-email-error' : undefined}
             />
-            <span className="form-input-icon material-icons-round">mail</span>
+            <span className="form-input-icon auth-input-icon" aria-hidden="true">
+              <Mail size={17} strokeWidth={1.8} />
+            </span>
           </div>
-          {errors.email && (
-            <div className="form-error">
-              <span className="material-icons-round">error</span>
-              {errors.email}
-            </div>
-          )}
+          <div className="auth-field-message" aria-live="polite">
+            {errors.email && (
+              <div id="login-email-error" className="form-error auth-field-error">
+                <AlertCircle size={13} aria-hidden="true" />
+                {errors.email}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Password */}
-        <div className="form-group">
+        <div className="form-group auth-field-group">
           <div className="form-label-row">
             <label className="form-label" htmlFor="login-password">
               Mật khẩu
             </label>
           </div>
-          <div className="form-input-wrapper">
+          <div
+            className={`form-input-wrapper auth-input-field${errors.password ? ' is-error' : ''}`}
+          >
             <input
               id="login-password"
               className={`form-input ${errors.password ? 'input-error' : ''}`}
@@ -166,25 +175,42 @@ const Login = () => {
               value={formData.password}
               onChange={handleChange}
               autoComplete="current-password"
+              aria-invalid={Boolean(errors.password)}
+              aria-describedby={errors.password ? 'login-password-error' : undefined}
             />
-            <span className="form-input-icon material-icons-round">lock</span>
+            <span className="form-input-icon auth-input-icon" aria-hidden="true">
+              <Lock size={17} strokeWidth={1.8} />
+            </span>
             <button
               type="button"
-              className="password-toggle"
+              className="password-toggle auth-password-toggle"
               onClick={() => setShowPassword(!showPassword)}
-              tabIndex={-1}
+              aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+              aria-pressed={showPassword}
+              aria-controls="login-password"
             >
-              <span className="material-icons-round">
-                {showPassword ? 'visibility_off' : 'visibility'}
+              <span
+                className={`auth-visibility-icon${showPassword ? ' is-hidden' : ''}`}
+                aria-hidden="true"
+              >
+                <Eye size={17} strokeWidth={1.8} />
+              </span>
+              <span
+                className={`auth-visibility-icon${showPassword ? '' : ' is-hidden'}`}
+                aria-hidden="true"
+              >
+                <EyeOff size={17} strokeWidth={1.8} />
               </span>
             </button>
           </div>
-          {errors.password && (
-            <div className="form-error">
-              <span className="material-icons-round">error</span>
-              {errors.password}
-            </div>
-          )}
+          <div className="auth-field-message" aria-live="polite">
+            {errors.password && (
+              <div id="login-password-error" className="form-error auth-field-error">
+                <AlertCircle size={13} aria-hidden="true" />
+                {errors.password}
+              </div>
+            )}
+          </div>
         </div>
 
         <button type="submit" className="auth-submit" disabled={isLoading}>

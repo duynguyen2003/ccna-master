@@ -1,3 +1,4 @@
+import { appConfirm } from '../../../utils/appDialog';
 import React, { useState, useEffect, useContext, useMemo, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -11,7 +12,6 @@ import {
   Tag,
   X,
   Check,
-  CheckCircle2,
   Loader2,
   AlertTriangle,
   Link,
@@ -35,10 +35,12 @@ import {
 import { adminApi } from '../../../services/api/adminApi';
 import { AuthContext } from '../../../context/AuthContext';
 import AdminModal from '../components/AdminModal';
+import Toast from '../../../components/ui/Toast';
 import DeleteButton from '../../../components/ui/delete-button';
 import '../styles/AdminViews.css';
 import '../../lessons/styles/Lesson.css';
 import MarkdownRenderer from '../../../components/common/MarkdownRenderer';
+import HeartbeatLoader from '../../../components/ui/HeartbeatLoader';
 import { formatLessonMarkdown } from '../utils/lessonMarkdown';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -108,23 +110,6 @@ function Stepper({ current, total }) {
           </div>
         );
       })}
-    </div>
-  );
-}
-
-function Toast({ message, onClose }) {
-  useEffect(() => {
-    const timer = window.setTimeout(onClose, 2800);
-    return () => window.clearTimeout(timer);
-  }, [onClose]);
-
-  return (
-    <div className="acm-toast" role="status">
-      <CheckCircle2 size={16} />
-      <span>{message}</span>
-      <button type="button" onClick={onClose}>
-        <X size={14} />
-      </button>
     </div>
   );
 }
@@ -475,7 +460,7 @@ const CourseDetail = () => {
     async (moduleId, confirmed = false) => {
       if (
         !confirmed &&
-        !window.confirm('Bạn có chắc muốn xóa chương này và toàn bộ bài học bên trong?')
+        !(await appConfirm('Bạn có chắc muốn xóa chương này và toàn bộ bài học bên trong?'))
       )
         return;
       try {
@@ -496,7 +481,7 @@ const CourseDetail = () => {
 
   const handleDeleteLesson = useCallback(
     async (lessonId, confirmed = false) => {
-      if (!confirmed && !window.confirm('Bạn có chắc muốn xóa bài học này?')) return;
+      if (!confirmed && !(await appConfirm('Bạn có chắc muốn xóa bài học này?'))) return;
       try {
         await adminApi.deleteLesson(token, lessonId);
         setToast('Đã xóa bài học.');
@@ -528,7 +513,7 @@ const CourseDetail = () => {
 
   const handleDeleteTopic = useCallback(
     async (topicId) => {
-      if (!window.confirm('Xóa kỹ năng trọng tâm này?')) return;
+      if (!(await appConfirm('Xóa kỹ năng trọng tâm này?'))) return;
       try {
         await adminApi.deleteTopic(token, topicId);
         await fetchData(true);
@@ -612,7 +597,7 @@ const CourseDetail = () => {
   if (loading) {
     return (
       <div className="users-wrapper acm-loading-page">
-        <Loader2 size={20} className="acm-spin" /> Đang tải dữ liệu...
+        <HeartbeatLoader label="Đang tải dữ liệu..." />
       </div>
     );
   }
@@ -1024,7 +1009,14 @@ const CourseDetail = () => {
         </div>
       </AdminModal>
 
-      {toast ? <Toast message={toast} onClose={handleCloseToast} /> : null}
+      {toast ? (
+        <Toast
+          message={toast}
+          type="success"
+          duration={2800}
+          onClose={handleCloseToast}
+        />
+      ) : null}
     </div>
   );
 };

@@ -17,14 +17,26 @@ import labPreview from '../../../assets/images/landing-lab.png';
 import roadmapPreview from '../../../assets/images/landing-roadmap.png';
 import examPreview from '../../../assets/images/landing-exam.png';
 import { useAuth } from '../../../context/AuthContext';
-import api from '../../../services/Api';
+import api, { BACKEND_URL } from '../../../services/Api';
 import { gsap, useGSAP, ScrollTrigger, prefersReducedMotion } from '../utils/homeMotion';
 
 /* ===============================
    STATIC DATA
 ================================= */
 
-const courseBackgrounds = [course1, course2, course3];
+const COURSE_BACKGROUNDS = {
+  ITN: course1,
+  SRW: course2,
+  SRWE: course2,
+  ENA: course3,
+  ENSA: course3,
+};
+
+const getCourseBackground = ({ code, thumbnailUrl }) => {
+  if (!thumbnailUrl) return COURSE_BACKGROUNDS[code] || course3;
+  if (/^https?:\/\//i.test(thumbnailUrl)) return thumbnailUrl;
+  return `${BACKEND_URL}/${thumbnailUrl.replace(/^\/+/, '')}`;
+};
 
 // Icon mapping theo code khóa học
 const COURSE_ICONS = {
@@ -135,7 +147,7 @@ export const Home = () => {
       if (prefixText.length < HERO_PREFIX.length) {
         const timeout = setTimeout(() => {
           setPrefixText(HERO_PREFIX.slice(0, prefixText.length + 1));
-        }, 36);
+        }, 55);
         return () => clearTimeout(timeout);
       } else {
         const timeout = setTimeout(() => {
@@ -152,20 +164,20 @@ export const Home = () => {
       if (highlightText.length < currentFullPhrase.length) {
         const timeout = setTimeout(() => {
           setHighlightText(currentFullPhrase.slice(0, highlightText.length + 1));
-        }, 46);
+        }, 55);
         return () => clearTimeout(timeout);
       } else {
-        // Dừng 2.4s để người dùng đọc câu trọn vẹn
+        // Dừng khoảng 1.1 giây để người dùng đọc câu trọn vẹn.
         const timeout = setTimeout(() => {
           setIsDeleting(true);
-        }, 2400);
+        }, 1100);
         return () => clearTimeout(timeout);
       }
     } else {
       if (highlightText.length > 0) {
         const timeout = setTimeout(() => {
           setHighlightText(highlightText.slice(0, -1));
-        }, 22);
+        }, 30);
         return () => clearTimeout(timeout);
       } else {
         const timeout = setTimeout(() => {
@@ -205,7 +217,7 @@ export const Home = () => {
       try {
         const data = await api.getCourseSummaries(token);
         if (!isMounted) return;
-        const mapped = data.map((c, idx) => {
+        const mapped = data.map((c) => {
           const progress = c.progress ?? 0;
 
           return {
@@ -215,8 +227,7 @@ export const Home = () => {
             title: c.title,
             desc: c.description,
             progress: progress,
-            backgroundImage:
-              courseBackgrounds[idx] || courseBackgrounds[courseBackgrounds.length - 1],
+            backgroundImage: getCourseBackground(c),
             nextLessonTitle: c.nextLessonTitle || 'Bài học tiếp theo: Tiếp tục lộ trình hiện tại',
           };
         });
@@ -621,11 +632,11 @@ export const Home = () => {
                     style={{
                       textDecoration: 'none',
                       color: 'inherit',
-                      backgroundImage: `linear-gradient(180deg, rgba(15, 23, 42, 0.42), rgba(15, 23, 42, 0.74)), url(${course.backgroundImage})`,
+                      backgroundImage: `linear-gradient(180deg, rgba(15, 23, 42, 0.42), rgba(15, 23, 42, 0.74)), url(${JSON.stringify(course.backgroundImage)})`,
                       backgroundSize: 'cover',
                       backgroundPosition: 'center',
                       backgroundRepeat: 'no-repeat',
-                      '--course-bg-image': `url(${course.backgroundImage})`,
+                      '--course-bg-image': `url(${JSON.stringify(course.backgroundImage)})`,
                     }}
                     id={`home-course-card-${course.courseId}`}
                   >

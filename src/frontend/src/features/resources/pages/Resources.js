@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../../context/AuthContext';
+import HeartbeatLoader from '../../../components/ui/HeartbeatLoader';
 import api, { API_URL } from '../../../services/Api';
 import {
   FileText,
@@ -10,7 +11,6 @@ import {
   Monitor,
   Cpu,
   Sparkles,
-  Loader,
 } from 'lucide-react';
 export const Resources = () => {
   const [resources, setResources] = useState([]);
@@ -106,12 +106,7 @@ export const Resources = () => {
   const pinnedResources = filteredResources.slice(0, 2);
 
   if (loading) {
-    return (
-      <div className="doc-loading">
-        <Loader className="spinner" size={40} />
-        <p>Đang tải tài liệu...</p>
-      </div>
-    );
+    return <HeartbeatLoader label="Đang tải tài liệu..." />;
   }
 
   return (

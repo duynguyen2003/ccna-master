@@ -665,6 +665,13 @@
    ========================================= */
 
 :root {
+  --tabs-dur: 400ms;
+  --tabs-ease: cubic-bezier(0.65, 0, 0.35, 1);
+  --tabs-text-muted: rgba(15, 15, 15, 0.8);
+  --tabs-text-active: #0f0f0f;
+  --tabs-bar-bg: #f1f1f1;
+  --tabs-pill-bg: #ffffff;
+  --tabs-label-fade: 180ms;
   --notch-bg: #ffffff;
   --notch-border: #94a3b8;
   --notch-text: #475569;
@@ -791,6 +798,87 @@
   display: flex;
   align-items: center;
   gap: 2px;
+}
+
+/* Sliding tabs: the guest menu uses measured left/width per the motion contract. */
+.t-tabs {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px;
+  border-radius: 48px;
+  background: var(--tabs-bar-bg);
+}
+
+.t-tab {
+  position: relative;
+  appearance: none;
+  border: 0;
+  background: transparent;
+  height: 30px;
+  padding: 4px 12px;
+  color: var(--tabs-text-muted);
+  cursor: pointer;
+  border-radius: 48px;
+  z-index: 1;
+  transition: color var(--tabs-dur) var(--tabs-ease);
+}
+
+.t-tab:not([aria-selected='true']):hover,
+.t-tab[aria-selected='true'] {
+  color: var(--tabs-text-active);
+}
+
+.t-tabs-pill {
+  position: absolute;
+  top: 3px;
+  left: 0;
+  height: 30px;
+  width: 0;
+  background: var(--tabs-pill-bg);
+  border-radius: 48px;
+  transition:
+    left var(--tabs-dur) var(--tabs-ease),
+    width var(--tabs-dur) var(--tabs-ease);
+  will-change: left, width;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.notch-nav-links.t-tabs {
+  --tabs-text-muted: var(--notch-text);
+  --tabs-text-active: var(--notch-active-text);
+  --tabs-pill-bg: var(--notch-active-bg);
+  --tabs-bar-bg: transparent;
+  isolation: isolate;
+}
+
+.notch-nav-links.t-tabs[data-active='false'] .t-tabs-pill {
+  opacity: 0;
+}
+
+.notch-nav-links.t-tabs .t-tab {
+  color: var(--tabs-text-muted);
+  font-weight: 500;
+  background: transparent;
+  transition: color var(--tabs-label-fade) var(--tabs-ease);
+}
+
+.notch-nav-links.t-tabs .t-tab:hover {
+  color: var(--notch-hover-text);
+}
+
+.notch-nav-links.t-tabs .t-tab[aria-current='page'] {
+  color: var(--tabs-text-active);
+  transition-delay: calc(var(--tabs-dur) - var(--tabs-label-fade));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .t-tabs-pill,
+  .t-tab {
+    transition: none !important;
+  }
 }
 
 .header-notch-link {
@@ -1097,6 +1185,11 @@
 
   .notch-nav-links {
     gap: 1px;
+  }
+
+  .notch-nav-links.t-tabs .t-tab,
+  .notch-nav-links.t-tabs .t-tabs-pill {
+    height: 24px;
   }
 
   .header-notch-link {

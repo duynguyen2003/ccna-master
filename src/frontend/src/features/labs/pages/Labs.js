@@ -5,7 +5,6 @@ import {
   Clock,
   Terminal,
   Search,
-  Loader2,
   X,
   ChevronLeft,
   ChevronRight,
@@ -20,6 +19,7 @@ import {
 } from 'lucide-react';
 import { api, BACKEND_URL } from '../../../services/Api.js';
 import { useAuth } from '../../../context/AuthContext';
+import HeartbeatLoader from '../../../components/ui/HeartbeatLoader';
 import { useToast } from '../../../components/ui/Toast';
 import CliLabWorkspace from '../components/CliLabWorkspace';
 import { prefersReducedMotion } from '../utils/labMotion';
@@ -606,10 +606,7 @@ export const Labs = () => {
       </div>
 
       {loading ? (
-        <div className="labs-loading">
-          <Loader2 className="labs-spinner" size={32} />
-          <p>Đang tải danh sách lab...</p>
-        </div>
+        <HeartbeatLoader label="Đang tải danh sách lab..." />
       ) : loadError ? (
         <div className="labs-empty" role="alert">
           <Terminal size={40} />

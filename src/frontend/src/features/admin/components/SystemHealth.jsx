@@ -1,4 +1,4 @@
-// src/components/Admin/Components/SystemHealth.jsx
+// src/frontend/src/features/admin/components/SystemHealth.jsx
 import React from 'react';
 import { Server, Database, Shield, Zap } from 'lucide-react';
 

@@ -4,6 +4,7 @@ import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 
 // Import CSS toàn cục
 import './App.css';
+import './components/ui/styles/UiControls.css';
 // Import các CSS trang chi tiết
 import './components/layout/styles/Navbar.css';
 import './components/layout/styles/TopHeader.css';
@@ -58,6 +59,7 @@ import ProtectedRoute from './features/auth/components/ProtectedRoute.js';
 // Import global Toast
 import Toast from './components/ui/Toast.js';
 import { useAuth } from './context/AuthContext.js';
+import HeartbeatLoader from './components/ui/HeartbeatLoader';
 
 // Import Tools Pages
 import SubnetCalculator from './features/tools/pages/SubnetCalculator.js';
@@ -121,32 +123,7 @@ function App() {
   const { loading } = useAuth();
 
   if (loading) {
-    return (
-      <div
-        style={{
-          height: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexDirection: 'column',
-          gap: '1rem',
-          color: '#64748b',
-          fontFamily: 'sans-serif',
-        }}
-      >
-        <div
-          className="acm-spin"
-          style={{
-            width: '40px',
-            height: '40px',
-            border: '3px solid #e2e8f0',
-            borderTopColor: '#2563eb',
-            borderRadius: '50%',
-          }}
-        ></div>
-        <p>Đang chuẩn bị dữ liệu...</p>
-      </div>
-    );
+    return <HeartbeatLoader fullScreen label="Đang chuẩn bị dữ liệu..." />;
   }
 
   return (

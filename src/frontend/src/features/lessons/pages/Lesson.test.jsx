@@ -1,19 +1,21 @@
 import React from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import Lesson from './Lesson';
 import api from '../../../services/Api';
 
 let mockVideoProps;
+let mockAuth;
+let mockSearchParams;
+const mockNavigate = jest.fn();
 
-jest.mock('react-router-dom', () => {
-  const params = new URLSearchParams('course=1&lesson=11');
-  const navigate = jest.fn();
-  return { useNavigate: () => navigate, useSearchParams: () => [params] };
-});
+jest.mock('react-router-dom', () => ({
+  useNavigate: () => mockNavigate,
+  useSearchParams: () => [mockSearchParams],
+}));
 
 jest.mock('../../../context/AuthContext', () => ({
-  useAuth: () => ({ token: 'token', user: { id: 1, role: 'STUDENT' } }),
+  useAuth: () => mockAuth,
 }));
 jest.mock('../../../components/ui/Toast', () => ({
   useToast: () => ({ showToast: jest.fn(), ToastComponent: null }),
@@ -61,6 +63,24 @@ jest.mock('../../../services/Api', () => ({
     updateUserProgress: jest.fn(),
   },
 }));
+
+beforeEach(() => {
+  jest.resetAllMocks();
+  mockVideoProps = null;
+  mockAuth = { token: 'token', user: { id: 1, role: 'STUDENT' } };
+  mockSearchParams = new URLSearchParams('course=1&lesson=11');
+  api.getCourses.mockResolvedValue([{ id: '1', code: 'CCNA' }]);
+  api.getUserProgress.mockResolvedValue({ _raw: [] });
+  api.getUserNote.mockResolvedValue('');
+});
+
+const deferred = () => {
+  let resolve;
+  const promise = new Promise((finish) => {
+    resolve = finish;
+  });
+  return { promise, resolve };
+};
 
 test('text-only lesson waits for server confirmation before enabling the next lesson', async () => {
   let confirmCompletion;
@@ -170,4 +190,105 @@ test('video lesson normalizes the learning UI and timestamp notes seek the playe
   fireEvent.click(screen.getByRole('button', { name: 'Gắn mốc 1:35' }));
   await waitFor(() => expect(note).toHaveValue('[1:30] show ip route\n[1:35] '));
   expect(screen.getByText('28 / 10.000 ký tự')).toBeInTheDocument();
+});
+
+test('opens embedded lesson content while catalog and progress are still pending', async () => {
+  const catalog = deferred();
+  const progress = deferred();
+  api.getCourses.mockReturnValue(catalog.promise);
+  api.getUserProgress.mockReturnValue(progress.promise);
+  api.getModulesByCourse.mockResolvedValue([
+    {
+      id: 2,
+      title: 'Chương 1',
+      lessons: [{ id: 11, title: 'Nội dung sẵn có', contentHtml: 'Bài đọc', videoUrl: '' }],
+    },
+  ]);
+
+  render(<Lesson />);
+
+  expect(screen.getByRole('status')).toHaveTextContent('Đang tải nội dung bài học...');
+  expect(api.getModulesByCourse).toHaveBeenCalledWith('token', '1');
+  expect(api.getUserProgress).toHaveBeenCalledWith('token');
+  expect(await screen.findByRole('heading', { level: 1, name: 'Nội dung sẵn có' })).toBeInTheDocument();
+  expect(api.getLessonsByModule).not.toHaveBeenCalled();
+  expect(screen.queryByText('Đang tải nội dung bài học...')).not.toBeInTheDocument();
+});
+
+test('late aggregate progress cannot remove completion already confirmed by the player', async () => {
+  const progress = deferred();
+  api.getUserProgress.mockReturnValue(progress.promise);
+  api.getModulesByCourse.mockResolvedValue([
+    {
+      id: 2,
+      title: 'Chương 1',
+      lessons: [
+        { id: 11, title: 'Video', contentHtml: '', videoUrl: 'https://youtu.be/example' },
+        { id: 12, title: 'Bài tiếp theo', contentHtml: '', videoUrl: '' },
+      ],
+    },
+  ]);
+  render(<Lesson />);
+  await screen.findByTestId('video-player');
+  const next = screen.getByRole('button', { name: /Tiếp theo/ });
+  expect(next).toBeDisabled();
+
+  act(() => mockVideoProps.onMetricsChange(11, { serverCompleted: true }));
+  expect(next).toBeEnabled();
+  await act(async () => {
+    progress.resolve({ _raw: [{ lessonId: 11, status: 'ACTIVE', progressPercent: 10 }] });
+  });
+
+  expect(next).toBeEnabled();
+  expect(screen.getByText('1/2 bài')).toBeInTheDocument();
+});
+
+test('late responses from the previous account and course cannot replace the current lesson', async () => {
+  const oldCatalog = deferred();
+  const oldModules = deferred();
+  const oldProgress = deferred();
+  api.getCourses.mockReturnValueOnce(oldCatalog.promise);
+  api.getModulesByCourse.mockReturnValueOnce(oldModules.promise);
+  api.getUserProgress.mockReturnValueOnce(oldProgress.promise);
+  const view = render(<Lesson />);
+
+  mockAuth = { token: 'token-b', user: { id: 2, role: 'STUDENT' } };
+  mockSearchParams = new URLSearchParams('course=2&lesson=21');
+  api.getCourses.mockResolvedValue([{ id: '2', code: 'NEW', title: 'Khóa học mới' }]);
+  api.getModulesByCourse.mockResolvedValue([
+    { id: 3, title: 'Chương mới', lessons: [{ id: 21, title: 'Bài mới', contentHtml: '', videoUrl: '' }] },
+  ]);
+  view.rerender(<Lesson />);
+  await screen.findByRole('heading', { level: 1, name: 'Bài mới' });
+
+  await act(async () => {
+    oldCatalog.resolve([{ id: '1', code: 'OLD', title: 'Khóa học cũ' }]);
+    oldModules.resolve([
+      { id: 2, title: 'Chương cũ', lessons: [{ id: 11, title: 'Bài cũ', contentHtml: '', videoUrl: '' }] },
+    ]);
+    oldProgress.resolve({ _raw: [{ lessonId: 21, status: 'COMPLETED', progressPercent: 100 }] });
+  });
+
+  expect(screen.getByRole('heading', { level: 1, name: 'Bài mới' })).toBeInTheDocument();
+  expect(screen.queryByText('Bài cũ')).not.toBeInTheDocument();
+  expect(screen.queryByText('Khóa học cũ')).not.toBeInTheDocument();
+  expect(screen.getByText('0/1 bài')).toBeInTheDocument();
+  expect(api.getModulesByCourse).toHaveBeenLastCalledWith('token-b', '2');
+});
+
+test('a URL without a course still selects the first available course', async () => {
+  const catalog = deferred();
+  mockSearchParams = new URLSearchParams();
+  api.getCourses.mockReturnValue(catalog.promise);
+  api.getModulesByCourse.mockResolvedValue([
+    { id: 2, title: 'Chương 1', lessons: [{ id: 11, title: 'Bài đầu tiên', contentHtml: '', videoUrl: '' }] },
+  ]);
+  render(<Lesson />);
+  expect(api.getModulesByCourse).not.toHaveBeenCalled();
+
+  await act(async () => catalog.resolve([{ id: '1', code: 'CCNA' }]));
+
+  expect(await screen.findByRole('heading', { level: 1, name: 'Bài đầu tiên' })).toBeInTheDocument();
+  expect(api.getModulesByCourse).toHaveBeenCalledWith('token', '1');
+  expect(api.getLessonsByModule).not.toHaveBeenCalled();
 });

@@ -165,7 +165,6 @@
     box-shadow 0.2s;
   outline: none;
   cursor: pointer;
-  appearance: auto;
 }
 
 .subnet-select:focus {

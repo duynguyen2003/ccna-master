@@ -1,4 +1,4 @@
-/* src/css/Admin/AdminExamBuilder.css */
+/* frontend/src/features/admin/styles/AdminExamBuilder.css */
 
 .exam-builder-shell {
   display: flex;
@@ -183,7 +183,7 @@
 }
 
 .exam-builder-field input,
-.exam-builder-field select,
+.exam-builder-field .app-select__trigger,
 .exam-builder-field textarea {
   width: 100%;
   box-sizing: border-box;

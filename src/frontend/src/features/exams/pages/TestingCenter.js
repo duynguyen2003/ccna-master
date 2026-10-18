@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
 import { useToast } from '../../../components/ui/Toast';
 import { api } from '../../../services/Api';
+import HeartbeatLoader from '../../../components/ui/HeartbeatLoader';
 import '../styles/ExamFlow.css';
 
 // ─── Component ────────────────────────────────────────────────
@@ -163,17 +164,19 @@ const TestingCenter = () => {
       };
     });
 
+  if (loading) {
+    return (
+      <div className="tc-page">
+        {ToastComponent}
+        <HeartbeatLoader label="Đang tải danh sách kỳ thi..." />
+      </div>
+    );
+  }
+
   return (
     <div className="tc-page">
       {ToastComponent}
       <div className="tc-container">
-        {loading && (
-          <div className="tc-loading-overlay">
-            <div className="tc-spinner"></div>
-            <p>Đang tải danh sách kỳ thi...</p>
-          </div>
-        )}
-
         {/* Hero */}
         <div className="tc-hero">
           <div>

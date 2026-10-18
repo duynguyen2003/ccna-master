@@ -15,6 +15,7 @@ import {
 import { useAuth } from '../../../context/AuthContext';
 import api from '../../../services/Api';
 import MarkdownRenderer from '../../../components/common/MarkdownRenderer';
+import HeartbeatLoader from '../../../components/ui/HeartbeatLoader';
 import errorIllustration from '../../../assets/images/fix1.png';
 import VideoProgressPlayer, { formatVideoTime } from '../components/VideoProgressPlayer';
 import { storeTransitionEvent } from '../../courses/hooks/useLearningProgress';
@@ -41,6 +42,18 @@ const timestampToSeconds = (value) => {
   if (parts.length === 2) return parts[0] * 60 + parts[1];
   if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
   return null;
+};
+
+const loadModuleLessons = (module, token) => {
+  const embedded = module.lessons;
+  const hasContent =
+    Array.isArray(embedded) &&
+    embedded.every(
+      (lesson) =>
+        typeof lesson.title === 'string' &&
+        (Object.hasOwn(lesson, 'videoUrl') || Object.hasOwn(lesson, 'contentHtml'))
+    );
+  return hasContent ? Promise.resolve(embedded) : api.getLessonsByModule(token, module.id);
 };
 
 const Lesson = () => {
@@ -104,54 +117,85 @@ const Lesson = () => {
   }, [isCompact]);
 
   useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setCourse(null);
+    setModules([]);
+    setActiveModule(null);
+    setLessons([]);
+    setSelectedLessonId(null);
+    setLessonProgress({});
+    setVideoMetrics({});
+    setLessonSaveStatus({});
+    lastSyncRef.current = {};
+    Object.values(progressRetryTimersRef.current).forEach(clearTimeout);
+    Object.keys(progressRetryTimersRef.current).forEach((key) => {
+      delete progressRetryTimersRef.current[key];
+    });
+
+    // Course metadata and personal progress must not delay the requested lesson.
+    const catalog = api
+      .getCourses(token)
+      .then((courses) => {
+        if (!cancelled) {
+          setCourse(courseId ? courses?.find((item) => item.id === courseId) : courses?.[0]);
+        }
+        return courses;
+      })
+      .catch((error) => {
+        if (!cancelled) console.error('Could not fetch course metadata:', error);
+        return [];
+      });
+
+    if (token) {
+      api
+        .getUserProgress(token)
+        .then((progress) => {
+          if (cancelled) return;
+          const initialProgress = {};
+          (progress?._raw || []).forEach((item) => {
+            if (!item.lessonId) return;
+            initialProgress[item.lessonId] = {
+              played: (item.progressPercent || 0) / 100,
+              playedSeconds: 0,
+              completed: item.status === 'COMPLETED',
+            };
+            const current = lastSyncRef.current[item.lessonId];
+            lastSyncRef.current[item.lessonId] = {
+              time: 0,
+              inFlight: false,
+              pending: null,
+              retries: 0,
+              nextRetryAt: 0,
+              ...current,
+              percent: Math.max(current?.percent || 0, item.progressPercent || 0),
+              completed: Boolean(current?.completed || item.status === 'COMPLETED'),
+            };
+          });
+          setLessonProgress((current) => {
+            const merged = { ...current };
+            Object.entries(initialProgress).forEach(([id, saved]) => {
+              merged[id] = {
+                ...saved,
+                ...current[id],
+                played: Math.max(saved.played, current[id]?.played || 0),
+                completed: Boolean(saved.completed || current[id]?.completed),
+              };
+            });
+            return merged;
+          });
+        })
+        .catch((error) => {
+          if (!cancelled) console.warn('Could not fetch user progress:', error);
+        });
+    }
+
     const initLesson = async () => {
       try {
-        setLoading(true);
-        // 1. Fetch Course & Modules
-        const courses = await api.getCourses(token);
-        const effectiveCourseId =
-          courseId || (Array.isArray(courses) && courses.length > 0 ? courses[0].id : null);
-
-        if (!effectiveCourseId) {
-          setLoading(false);
-          return;
-        }
-
-        const currentCourse = courses?.find((c) => c.id === effectiveCourseId);
-        setCourse(currentCourse);
-
+        const effectiveCourseId = courseId || (await catalog)?.[0]?.id;
+        if (!effectiveCourseId || cancelled) return;
         const courseModules = await api.getModulesByCourse(token, effectiveCourseId);
-        setModules(courseModules || []);
-
-        // 2. Fetch User Progress for this course (nếu đã đăng nhập)
-        const initialProgress = {};
-        if (token) {
-          try {
-            const progress = await api.getUserProgress(token);
-            (progress?._raw || []).forEach((p) => {
-              if (p.lessonId) {
-                initialProgress[p.lessonId] = {
-                  played: (p.progressPercent || 0) / 100,
-                  playedSeconds: 0,
-                  completed: p.status === 'COMPLETED',
-                };
-                lastSyncRef.current[p.lessonId] = {
-                  percent: p.progressPercent || 0,
-                  completed: p.status === 'COMPLETED',
-                  time: 0,
-                  inFlight: false,
-                  pending: null,
-                  retries: 0,
-                  nextRetryAt: 0,
-                };
-              }
-            });
-          } catch (err) {
-            console.warn('Could not fetch user progress:', err);
-          }
-        }
-        setLessonProgress(initialProgress);
-
+        if (cancelled) return;
         if (Array.isArray(courseModules) && courseModules.length > 0) {
           // Check if a specific lesson is requested in URL
           const targetLessonParam = searchParams.get('lesson');
@@ -170,10 +214,10 @@ const Lesson = () => {
             }
           }
 
+          const moduleLessons = await loadModuleLessons(targetModule, token);
+          if (cancelled) return;
+          setModules(courseModules);
           setActiveModule(targetModule);
-
-          // 3. Fetch Lessons for the target module
-          const moduleLessons = await api.getLessonsByModule(token, targetModule.id);
           setLessons(moduleLessons || []);
 
           if (targetLessonId) {
@@ -183,12 +227,15 @@ const Lesson = () => {
           }
         }
       } catch (error) {
-        console.error('Error initializing lesson view:', error);
+        if (!cancelled) console.error('Error initializing lesson view:', error);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
     initLesson();
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courseId, token]);
 
@@ -201,6 +248,7 @@ const Lesson = () => {
 
   // Lắng nghe sự thay đổi của tham số URL ?lesson để chuyển bài học (khi click từ ô tìm kiếm)
   useEffect(() => {
+    let cancelled = false;
     const lessonParam = searchParams.get('lesson');
     if (!lessonParam || modules.length === 0) return;
 
@@ -213,21 +261,29 @@ const Lesson = () => {
     );
 
     if (foundModule) {
+      if (foundModule.id === activeModule?.id && lessons.some((item) => item.id === parsedLessonId)) {
+        setSelectedLessonId(parsedLessonId);
+        return;
+      }
       const selectTargetLesson = async () => {
         try {
           setLoading(true);
+          const moduleLessons = await loadModuleLessons(foundModule, token);
+          if (cancelled) return;
           setActiveModule(foundModule);
-          const moduleLessons = await api.getLessonsByModule(token, foundModule.id);
           setLessons(moduleLessons);
           setSelectedLessonId(parsedLessonId);
         } catch (err) {
-          console.error('Error shifting to target lesson:', err);
+          if (!cancelled) console.error('Error shifting to target lesson:', err);
         } finally {
-          setLoading(false);
+          if (!cancelled) setLoading(false);
         }
       };
       selectTargetLesson();
     }
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, modules, token]);
 
@@ -588,7 +644,7 @@ const Lesson = () => {
   };
 
   if (loading) {
-    return <div className="lesson-loading">Đang tải nội dung bài học...</div>;
+    return <HeartbeatLoader label="Đang tải nội dung bài học..." />;
   }
 
   if (!selectedLesson) {

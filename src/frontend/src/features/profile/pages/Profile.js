@@ -28,6 +28,7 @@ import {
 } from 'recharts';
 import { api, API_URL } from '../../../services/Api.js';
 import { useAuth } from '../../../context/AuthContext';
+import HeartbeatLoader from '../../../components/ui/HeartbeatLoader';
 
 export default function Profile() {
   const { token } = useAuth();
@@ -69,19 +70,7 @@ export default function Profile() {
   }, [token, studyPeriod]);
 
   if (loading) {
-    return (
-      <div
-        className="profile-loading"
-        style={{
-          minHeight: '80vh',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}
-      >
-        <Loader2 className="spin" size={32} color="#2563eb" />
-      </div>
-    );
+    return <HeartbeatLoader label="Đang tải hồ sơ học tập..." />;
   }
 
   if (!profile) return null;

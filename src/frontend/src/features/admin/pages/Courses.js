@@ -1,3 +1,4 @@
+import { appConfirm } from '../../../utils/appDialog';
 import React, { useState, useEffect, useContext, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -6,11 +7,9 @@ import {
   Image,
   BookOpen,
   Search,
-  Loader2,
   GraduationCap,
   ListChecks,
   Pencil,
-  ImagePlus,
 } from 'lucide-react';
 import { adminApi } from '../../../services/api/adminApi';
 import { AuthContext } from '../../../context/AuthContext';
@@ -19,6 +18,8 @@ import AdminModal from '../components/AdminModal';
 import CustomSelect from '../components/CustomSelect';
 import AdminPagination from '../components/AdminPagination';
 import DeleteButton from '../../../components/ui/delete-button';
+import FileUploadField from '../../../components/ui/FileUploadField';
+import HeartbeatLoader from '../../../components/ui/HeartbeatLoader';
 import '../styles/AdminViews.css';
 
 const initialCourseForm = {
@@ -167,7 +168,7 @@ const Courses = () => {
   };
 
   const handleDelete = async (id, confirmed = false) => {
-    if (!confirmed && !window.confirm('Bạn có chắc muốn xóa khóa học này?')) return;
+    if (!confirmed && !(await appConfirm('Bạn có chắc muốn xóa khóa học này?'))) return;
 
     try {
       setDeletingId(id);
@@ -229,7 +230,7 @@ const Courses = () => {
 
         {loading ? (
           <div className="acm-loading-state">
-            <Loader2 size={18} className="acm-spin" /> Đang tải dữ liệu...
+            <HeartbeatLoader compact label="Đang tải danh sách khóa học..." />
           </div>
         ) : filteredCourses.length === 0 ? (
           <div className="acm-empty-state">
@@ -419,34 +420,22 @@ const Courses = () => {
 
             <div className="acm-thumbnail-upload">
               <span className="acm-upload-label">THUMBNAIL</span>
-              <div
-                className="acm-upload-dropzone"
-                onClick={() => document.getElementById('acm-file-input').click()}
-              >
-                {previewUrl ? (
-                  <img src={previewUrl} alt="Preview" className="acm-upload-preview" />
-                ) : (
-                  <>
-                    <ImagePlus size={40} className="acm-upload-icon" />
-                    <div className="acm-upload-text">
-                      <strong>Tải ảnh lên</strong>
-                      <p>Kéo và thả hoặc click để chọn tệp (PNG, JPG, max 5MB)</p>
-                    </div>
-                  </>
-                )}
-                <input
-                  id="acm-file-input"
-                  type="file"
-                  style={{ display: 'none' }}
-                  onChange={(e) => {
-                    const file = e.target.files[0];
-                    if (file) {
-                      setFormData({ ...formData, thumbnail: file });
-                      setPreviewUrl(URL.createObjectURL(file));
-                    }
-                  }}
-                />
-              </div>
+              <FileUploadField
+                className="file-upload--compact"
+                accept="image/*"
+                label="Tải ảnh thumbnail"
+                description="Kéo thả hoặc nhấn để chọn ảnh PNG, JPG"
+                value={formData.thumbnail}
+                preview={previewUrl}
+                onFileSelect={(file) => {
+                  setFormData((prev) => ({ ...prev, thumbnail: file }));
+                  setPreviewUrl(URL.createObjectURL(file));
+                }}
+                onClear={() => {
+                  setFormData((prev) => ({ ...prev, thumbnail: null }));
+                  setPreviewUrl(editingCourse ? resolveMediaUrl(editingCourse.thumbnailUrl) : '');
+                }}
+              />
             </div>
           </div>
 

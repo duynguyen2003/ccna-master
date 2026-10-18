@@ -20,6 +20,7 @@ import {
   X,
 } from 'lucide-react';
 import { api } from '../../../services/Api';
+import DropdownSelect from '../../../components/ui/DropdownSelect';
 import { useAuth } from '../../../context/AuthContext';
 import '../styles/LabWorkspace.css';
 import { gsap, prefersReducedMotion } from '../utils/labMotion';
@@ -901,7 +902,7 @@ export default function CliLabWorkspace({
                             value={destination}
                             onChange={(event) => setDestination(event.target.value)}
                           />
-                          <select
+                          <DropdownSelect
                             aria-label="Giao thức probe"
                             value={protocol}
                             onChange={(event) => setProtocol(event.target.value)}
@@ -909,7 +910,7 @@ export default function CliLabWorkspace({
                             {['icmp', 'tcp', 'udp'].map((value) => (
                               <option key={value}>{value}</option>
                             ))}
-                          </select>
+                          </DropdownSelect>
                           {protocol !== 'icmp' && (
                             <input
                               aria-label="Cổng đích"

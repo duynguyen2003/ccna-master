@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Code2, Eye, Moon, Sun } from 'lucide-react';
+import AnimatedCheckbox from '../../../../components/ui/AnimatedCheckbox';
+import DropdownSelect from '../../../../components/ui/DropdownSelect';
 import GradingSpecBuilder from './GradingSpecBuilder';
 import InitialStateBuilder from './InitialStateBuilder';
 import {
@@ -25,8 +27,7 @@ const JsonError = ({ error }) =>
   ) : null;
 
 const isRenderablePort = (port) =>
-  typeof port === 'string' ||
-  (port && typeof port === 'object' && typeof port.name === 'string');
+  typeof port === 'string' || (port && typeof port === 'object' && typeof port.name === 'string');
 
 const isRenderableDevice = (device) =>
   device &&
@@ -60,7 +61,11 @@ const isRenderableInitialState = (state) => {
       )
     );
   }
-  return Array.isArray(state.interfaces) && state.interfaces.length > 0 && state.interfaces.every(isRenderablePort);
+  return (
+    Array.isArray(state.interfaces) &&
+    state.interfaces.length > 0 &&
+    state.interfaces.every(isRenderablePort)
+  );
 };
 
 const isRenderableGradingSpec = (spec) =>
@@ -114,8 +119,7 @@ export default function CliLabConfigEditor({
     () => validateCliLabConfig({ initialStateText, gradingSpecText, commandProfile }),
     [initialStateText, gradingSpecText, commandProfile]
   );
-  const initialSchemaInvalid =
-    !initialResult.ok || !isRenderableInitialState(initialResult.value);
+  const initialSchemaInvalid = !initialResult.ok || !isRenderableInitialState(initialResult.value);
   const gradingSchemaInvalid = !gradingResult.ok || !isRenderableGradingSpec(gradingResult.value);
   const showAdvancedInitial = advancedInitial || initialSchemaInvalid;
   const showAdvancedGrading = advancedGrading || gradingSchemaInvalid || initialSchemaInvalid;
@@ -173,7 +177,7 @@ export default function CliLabConfigEditor({
         <div className="cli-editor-profile">
           <label className="cli-editor-field">
             <span>Command profile</span>
-            <select
+            <DropdownSelect
               aria-label="Command profile"
               className="acm-input cli-editor-native-select"
               value={commandProfile || ''}
@@ -186,7 +190,7 @@ export default function CliLabConfigEditor({
                   {option.label}
                 </option>
               ))}
-            </select>
+            </DropdownSelect>
           </label>
           <p className="cli-editor-profile-description">
             {profile?.description || 'Chọn profile được backend hỗ trợ.'}
@@ -292,8 +296,7 @@ export default function CliLabConfigEditor({
           />
           <div className="cli-editor-advanced-toggle">
             <label>
-              <input
-                type="checkbox"
+              <AnimatedCheckbox
                 checked={showAdvancedInitial}
                 onChange={(event) =>
                   event.target.checked ? setAdvancedInitial(true) : disableAdvanced('initial')
@@ -345,8 +348,7 @@ export default function CliLabConfigEditor({
           />
           <div className="cli-editor-advanced-toggle">
             <label>
-              <input
-                type="checkbox"
+              <AnimatedCheckbox
                 checked={showAdvancedGrading}
                 onChange={(event) =>
                   event.target.checked ? setAdvancedGrading(true) : disableAdvanced('grading')

@@ -1,6 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import NetworkTopology from '../../../labs/components/NetworkTopology';
+import DropdownSelect from '../../../../components/ui/DropdownSelect';
 import { networkTemplate, networkGradingTemplate } from '../../../labs/data/networkLabTemplates';
+import '../../styles/TopologyEditor.css';
 
 /* Compatibility editor kept for callers that still use the topology-only tab.
  * Device deletion deliberately refuses to remove linked endpoints. */
@@ -41,7 +43,7 @@ export default function TopologyEditor({ value, onChange, onTemplate, onError })
     return (
       <div className="network-editor-error" role="alert">
         <p>{parsed.error}</p>
-        <button type="button" className="acm-btn" onClick={fresh}>
+        <button type="button" className="topology-editor-button" onClick={fresh}>
           Dùng mẫu mạng 2 Router + 2 PC
         </button>
       </div>
@@ -126,7 +128,8 @@ export default function TopologyEditor({ value, onChange, onTemplate, onError })
         nhật cùng sơ đồ.
       </p>
       <div className="network-controls">
-        <select
+        <DropdownSelect
+          className="topology-editor-select"
           aria-label="Loại thiết bị"
           value={type}
           onChange={(event) => setType(event.target.value)}
@@ -134,11 +137,21 @@ export default function TopologyEditor({ value, onChange, onTemplate, onError })
           {['ROUTER', 'SWITCH', 'PC'].map((item) => (
             <option key={item}>{item}</option>
           ))}
-        </select>
-        <button type="button" onClick={addNode} disabled={topology.devices.length >= 24}>
+        </DropdownSelect>
+        <button
+          type="button"
+          className="topology-editor-button"
+          onClick={addNode}
+          disabled={topology.devices.length >= 24}
+        >
           Thêm thiết bị
         </button>
-        <button type="button" disabled={!selected} onClick={deleteSelected}>
+        <button
+          type="button"
+          className="topology-editor-button topology-editor-button--danger"
+          disabled={!selected}
+          onClick={deleteSelected}
+        >
           Xóa thiết bị đã chọn
         </button>
       </div>
@@ -157,7 +170,8 @@ export default function TopologyEditor({ value, onChange, onTemplate, onError })
         }
       />
       <div className="network-controls">
-        <select
+        <DropdownSelect
+          className="topology-editor-select"
           aria-label="Cổng đầu"
           value={from}
           onChange={(event) => setFrom(event.target.value)}
@@ -166,14 +180,19 @@ export default function TopologyEditor({ value, onChange, onTemplate, onError })
           {available.map((port) => (
             <option key={port}>{port}</option>
           ))}
-        </select>
-        <select aria-label="Cổng cuối" value={to} onChange={(event) => setTo(event.target.value)}>
+        </DropdownSelect>
+        <DropdownSelect
+          className="topology-editor-select"
+          aria-label="Cổng cuối"
+          value={to}
+          onChange={(event) => setTo(event.target.value)}
+        >
           <option value="">Cổng cuối</option>
           {available.map((port) => (
             <option key={port}>{port}</option>
           ))}
-        </select>
-        <button type="button" onClick={connect}>
+        </DropdownSelect>
+        <button type="button" className="topology-editor-button" onClick={connect}>
           Nối cổng
         </button>
       </div>
@@ -182,6 +201,7 @@ export default function TopologyEditor({ value, onChange, onTemplate, onError })
           {link.id}: {link.a.deviceId}:{link.a.interface} ↔ {link.b.deviceId}:{link.b.interface}
           <button
             type="button"
+            className="topology-editor-button topology-editor-button--danger"
             onClick={() =>
               save({ ...topology, links: topology.links.filter((item) => item.id !== link.id) })
             }

@@ -1,44 +1,49 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import StatusAlert from './StatusAlert';
+
+const TOAST_EXIT_DURATION = 180;
 
 // Toast Component - Hiển thị thông báo tự động ẩn
 const Toast = ({ message, type = 'success', duration = 3000, onClose }) => {
-  const [isVisible, setIsVisible] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
+  const isClosing = useRef(false);
+  const exitTimer = useRef(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   const handleClose = useCallback(() => {
+    if (isClosing.current) return;
+    isClosing.current = true;
     setIsLeaving(true);
-    setTimeout(() => {
-      setIsVisible(false);
-      if (onClose) onClose();
-    }, 300);
-  }, [onClose]);
+    exitTimer.current = window.setTimeout(
+      () => onCloseRef.current?.(),
+      TOAST_EXIT_DURATION
+    );
+  }, []);
 
   useEffect(() => {
-    // Slide in
-    requestAnimationFrame(() => setIsVisible(true));
-
-    // Auto close
-    const timer = setTimeout(handleClose, duration);
-    return () => clearTimeout(timer);
+    const timer = duration > 0 ? window.setTimeout(handleClose, duration) : null;
+    return () => {
+      if (timer) window.clearTimeout(timer);
+    };
   }, [duration, handleClose]);
 
-  const icons = {
-    success: 'check_circle',
-    error: 'error',
-    info: 'info',
-  };
+  useEffect(
+    () => () => {
+      if (exitTimer.current) window.clearTimeout(exitTimer.current);
+    },
+    []
+  );
 
   return (
-    <div
-      className={`toast-container ${isVisible && !isLeaving ? 'toast-visible' : ''} ${isLeaving ? 'toast-leaving' : ''}`}
-    >
-      <div className={`toast toast-${type}`}>
-        <span className="material-icons-round toast-icon">{icons[type]}</span>
-        <span className="toast-message">{message}</span>
-        <button className="toast-close" onClick={handleClose}>
-          <span className="material-icons-round">close</span>
-        </button>
-      </div>
+    <div className="app-toast-viewport">
+      <StatusAlert
+        variant={type}
+        message={message}
+        onClose={handleClose}
+        leaving={isLeaving}
+        className="app-status-alert--toast"
+      />
     </div>
   );
 };

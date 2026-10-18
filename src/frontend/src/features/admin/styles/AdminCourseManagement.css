@@ -1,4 +1,4 @@
-/* src/css/Admin/AdminCourseManagement.css */
+/* frontend/src/features/admin/styles/AdminCourseManagement.css */
 
 .acm-page,
 .acm-detail-page {
@@ -1342,32 +1342,6 @@
   gap: 4px;
 }
 
-.acm-toast {
-  position: fixed;
-  right: 24px;
-  bottom: 24px;
-  z-index: 1200;
-  background-color: #059669;
-  color: #fff;
-  border-radius: 6px;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 9px 12px;
-  box-shadow: 0 12px 24px rgba(5, 150, 105, 0.25);
-  animation: acmSlideUp 0.22s ease;
-}
-
-.acm-toast button {
-  border: none;
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  padding: 0;
-}
-
 .acm-spin {
   animation: acmSpin 1s linear infinite;
 }
@@ -1382,18 +1356,6 @@
   from {
     opacity: 0;
     transform: translateY(4px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes acmSlideUp {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
   }
 
   to {
@@ -1443,12 +1405,6 @@
 }
 
 @media (max-width: 640px) {
-  .acm-toast {
-    left: 14px;
-    right: 14px;
-    bottom: 14px;
-  }
-
   .acm-topic-input-row {
     grid-template-columns: 1fr;
   }

@@ -92,20 +92,15 @@
   margin: 7px 0 0;
 }
 
-.cli-lab-editor select.cli-editor-native-select,
+.cli-lab-editor .app-select__trigger.cli-editor-native-select,
 .cli-lab-editor input.acm-input,
-.cli-lab-editor select.acm-input,
+.cli-lab-editor .app-select__trigger.acm-input,
 .cli-lab-editor textarea.acm-textarea {
   /* Legacy AdminCourseManagement input rules are !important; override only
    * their colors inside the CLI editor so its theme remains independent. */
   background-color: var(--cli-surface-raised) !important;
   border-color: var(--cli-border) !important;
   color: var(--cli-text) !important;
-}
-
-.cli-lab-editor .cli-editor-native-select option {
-  color: var(--text-primary);
-  background: var(--surface-secondary);
 }
 
 .cli-editor-toolbar-actions,
@@ -264,11 +259,16 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+  max-height: min(56vh, 520px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  padding-right: 4px;
 }
 
 .cli-editor-port-card,
 .cli-editor-check-card {
-  padding: 12px;
+  padding: 10px;
 }
 
 .cli-editor-port-card-header,
@@ -320,7 +320,7 @@
   font-size: 11px;
 }
 
-.cli-editor-check-type > label select {
+.cli-editor-check-type > label .app-select__trigger {
   min-width: min(420px, 100%);
 }
 
@@ -359,10 +359,35 @@
 }
 
 .cli-editor-feedback-details summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   cursor: pointer;
+  list-style: none;
   color: var(--cli-accent);
   font-size: 11px;
   font-weight: 700;
+  transition: color 160ms ease;
+}
+
+.cli-editor-feedback-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.cli-editor-feedback-details summary::after {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 7px;
+  margin-left: auto;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  content: '';
+  transform: rotate(45deg);
+  transition: transform 180ms ease;
+}
+
+.cli-editor-feedback-details[open] > summary::after {
+  transform: rotate(225deg);
 }
 
 .cli-editor-feedback-grid {
@@ -651,6 +676,11 @@
 }
 
 @media (max-width: 560px) {
+  .cli-editor-port-list,
+  .cli-editor-check-list {
+    max-height: min(48vh, 380px);
+  }
+
   .cli-editor-device-meta,
   .cli-editor-check-meta,
   .cli-editor-check-fields,
@@ -670,7 +700,7 @@
     gap: 5px;
   }
 
-  .cli-editor-check-type > label select {
+  .cli-editor-check-type > label .app-select__trigger {
     min-width: 0;
   }
 

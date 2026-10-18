@@ -1,3 +1,4 @@
+import { appConfirm, appAlert } from '../../../utils/appDialog';
 import React, { useState, useEffect, useContext } from 'react';
 import { Plus, Trash2, FileDown, File } from 'lucide-react';
 import { adminApi } from '../../../services/api/adminApi';
@@ -6,6 +7,9 @@ import { BACKEND_URL } from '../../../services/Api.js';
 import AdminModal from '../components/AdminModal';
 import AdminPagination from '../components/AdminPagination';
 import DeleteButton from '../../../components/ui/delete-button';
+import FileUploadField from '../../../components/ui/FileUploadField';
+import DropdownSelect from '../../../components/ui/DropdownSelect';
+import HeartbeatLoader from '../../../components/ui/HeartbeatLoader';
 import '../styles/AdminViews.css';
 
 const Resources = () => {
@@ -75,12 +79,12 @@ const Resources = () => {
   };
 
   const handleDelete = async (id, confirmed = false) => {
-    if (confirmed || window.confirm('Xóa tài liệu này?')) {
+    if (confirmed || (await appConfirm('Xóa tài liệu này?'))) {
       try {
         await adminApi.deleteResource(token, id);
         fetchResources();
       } catch (err) {
-        alert(err.message);
+        appAlert(err.message);
       }
     }
   };
@@ -124,8 +128,8 @@ const Resources = () => {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan="5" style={{ textAlign: 'center' }}>
-                  Đang tải...
+                <td colSpan="5">
+                  <HeartbeatLoader compact label="Đang tải danh sách tài liệu..." />
                 </td>
               </tr>
             ) : resources.length > 0 ? (
@@ -240,7 +244,8 @@ const Resources = () => {
             >
               Loại file
             </label>
-            <select
+            <DropdownSelect
+              aria-label="Loại file"
               className="admin-search-input"
               style={{ width: '100%', boxSizing: 'border-box' }}
               value={formData.type}
@@ -253,7 +258,7 @@ const Resources = () => {
               <option value="Video">Video (.mp4)</option>
               <option value="doc">Word (.doc, .docx)</option>
               <option value="xlsx">Excel (.xlsx)</option>
-            </select>
+            </DropdownSelect>
           </div>
           <div>
             <label
@@ -265,11 +270,12 @@ const Resources = () => {
             >
               Chọn file *
             </label>
-            <input
-              type="file"
-              className="admin-search-input"
-              style={{ width: '100%', boxSizing: 'border-box' }}
-              onChange={(e) => setFormData({ ...formData, file: e.target.files[0] })}
+            <FileUploadField
+              label="Kéo thả hoặc nhấn để chọn tài liệu"
+              description="PDF, tài liệu học tập, video hoặc tệp Packet Tracer"
+              value={formData.file}
+              onFileSelect={(file) => setFormData((prev) => ({ ...prev, file }))}
+              onClear={() => setFormData((prev) => ({ ...prev, file: null }))}
             />
           </div>
         </div>

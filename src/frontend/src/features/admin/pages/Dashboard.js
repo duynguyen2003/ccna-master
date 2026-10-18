@@ -1,4 +1,4 @@
-// src/components/Admin/Views/Dashboard.js
+// src/frontend/src/features/admin/pages/Dashboard.js
 import React, { useState, useEffect, useCallback, useContext, useRef } from 'react';
 import { Users, BookOpen, Award, TrendingUp, AlertCircle } from 'lucide-react';
 import { adminApi } from '../../../services/api/adminApi';

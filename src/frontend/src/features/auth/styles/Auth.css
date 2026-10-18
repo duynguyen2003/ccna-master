@@ -59,7 +59,7 @@
 .auth-container {
   position: relative;
   display: flex;
-  width: 90vw;
+  width: min(90vw, 100%);
   max-width: 760px;
   min-height: 550px;
   background-color: #fff;
@@ -305,6 +305,222 @@
   background: rgba(0, 0, 0, 0.05);
 }
 
+/* Hiệu ứng input dùng chung cho đăng nhập và đăng ký. */
+.auth-motion-form .auth-field-group {
+  gap: 6px;
+}
+
+.auth-motion-form .form-label {
+  padding: 0 4px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.auth-motion-form .auth-input-field {
+  border: 1px solid #d8dee8;
+  border-radius: 999px;
+  background: #ffffff;
+  transition:
+    border-color 200ms ease-out,
+    box-shadow 200ms ease-out;
+}
+
+.auth-motion-form .auth-input-field:focus-within {
+  border-color: #94a3b8;
+  box-shadow: 0 0 0 3px rgba(100, 116, 139, 0.14);
+}
+
+.auth-motion-form .auth-input-field .form-input {
+  display: block;
+  height: 44px;
+  padding: 10px 44px 10px 40px;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  box-shadow: none;
+  font-size: 16px;
+  line-height: 24px;
+  caret-color: var(--auth-text-dark);
+  transition: color 200ms ease-out;
+}
+
+.auth-motion-form .form-input::placeholder {
+  color: #a1aab8;
+  opacity: 1;
+}
+
+.auth-motion-form .auth-input-icon {
+  display: flex;
+  align-items: center;
+  left: 13px;
+  color: #8490a2;
+  pointer-events: none;
+  transition: color 200ms ease-out;
+}
+
+.auth-motion-form .auth-input-field:focus-within .auth-input-icon {
+  color: #475569;
+}
+
+.auth-motion-form .auth-input-field.is-error {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.14);
+  animation: auth-field-shake 450ms ease-out;
+}
+
+.auth-motion-form .auth-input-field.is-error .auth-input-icon {
+  color: #dc2626;
+}
+
+.auth-motion-form .auth-field-message {
+  min-height: 16px;
+  padding: 0 4px;
+}
+
+.auth-motion-form .auth-field-error {
+  margin: 0;
+  gap: 5px;
+  line-height: 16px;
+  animation: auth-message-in 180ms ease-out;
+}
+
+.auth-motion-form .auth-field-error svg {
+  flex-shrink: 0;
+}
+
+.auth-motion-form .auth-password-toggle {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  right: 6px;
+  padding: 6px;
+  border-radius: 999px;
+  color: #8490a2;
+  transition:
+    color 180ms ease-out,
+    background-color 180ms ease-out;
+}
+
+.auth-motion-form .auth-password-toggle:hover {
+  color: var(--auth-text-dark);
+  background-color: #f1f5f9;
+}
+
+.auth-motion-form .auth-password-toggle:focus-visible {
+  outline: 2px solid #94a3b8;
+  outline-offset: 1px;
+}
+
+.auth-motion-form .auth-visibility-icon {
+  display: flex;
+  grid-area: 1 / 1;
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: none;
+  transition:
+    opacity 150ms ease-out,
+    transform 150ms ease-out;
+}
+
+.auth-motion-form .auth-visibility-icon.is-hidden {
+  opacity: 0;
+  transform: scale(0.8);
+}
+
+@keyframes auth-field-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  15% {
+    transform: translateX(-6px);
+  }
+  30% {
+    transform: translateX(6px);
+  }
+  45% {
+    transform: translateX(-4px);
+  }
+  60% {
+    transform: translateX(4px);
+  }
+  75% {
+    transform: translateX(-2px);
+  }
+}
+
+@keyframes auth-message-in {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-motion-form .auth-input-field,
+  .auth-motion-form .form-input,
+  .auth-motion-form .auth-input-icon,
+  .auth-motion-form .auth-password-toggle,
+  .auth-motion-form .auth-visibility-icon,
+  .auth-motion-form .auth-field-error {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* Thu gọn riêng đăng ký, giữ chiều cao input và chỗ cho lỗi. */
+.auth-page--register {
+  padding: 20px;
+}
+
+.auth-page--register .auth-container {
+  min-height: 0;
+  max-height: calc(100vh - 40px);
+  max-height: calc(100dvh - 40px);
+}
+
+.auth-page--register .auth-right-panel {
+  min-height: 0;
+  padding: 18px 24px;
+  align-items: flex-start;
+  overflow-y: auto;
+}
+
+.auth-page--register .auth-header {
+  margin-bottom: 12px;
+}
+
+.register-form {
+  gap: 6px;
+}
+
+.register-form .auth-field-group {
+  gap: 4px;
+}
+
+.register-form .auth-submit,
+.register-form .google-btn {
+  min-height: 44px;
+  padding: 10px 14px;
+}
+
+.register-form .auth-submit {
+  margin-top: 0;
+}
+
+.register-form .auth-divider {
+  margin: 2px 0;
+}
+
+.auth-page--register .auth-footer {
+  margin-top: 12px;
+}
+
 /* Submit Button */
 .auth-submit {
   width: 100%;
@@ -482,105 +698,6 @@
   }
 }
 
-/* --- Toast Notifications --- */
-.toast-container {
-  position: fixed;
-  top: 24px;
-  right: 24px;
-  z-index: 10000;
-  pointer-events: none;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.toast {
-  pointer-events: auto;
-  min-width: 300px;
-  max-width: 450px;
-  background: white;
-  border-radius: 6px;
-  padding: 16px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  box-shadow:
-    0 10px 25px -5px rgba(0, 0, 0, 0.1),
-    0 8px 10px -6px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e2e8f0;
-  transform: translateX(120%);
-  transition:
-    transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275),
-    opacity 0.3s;
-  opacity: 0;
-}
-
-.toast-visible .toast {
-  transform: translateX(0);
-  opacity: 1;
-}
-
-.toast-leaving .toast {
-  transform: translateX(120%);
-  opacity: 0;
-}
-
-.toast-success {
-  border-left: 4px solid #10b981;
-}
-
-.toast-error {
-  border-left: 4px solid #ef4444;
-}
-
-.toast-info {
-  border-left: 4px solid #3b82f6;
-}
-
-.toast-icon {
-  font-size: 24px;
-}
-
-.toast-success .toast-icon {
-  color: #10b981;
-}
-
-.toast-error .toast-icon {
-  color: #ef4444;
-}
-
-.toast-info .toast-icon {
-  color: #3b82f6;
-}
-
-.toast-message {
-  flex: 1;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--auth-text-dark);
-  line-height: 1.5;
-  font-family: var(--system-ui);
-}
-
-.toast-close {
-  background: none;
-  border: none;
-  color: #94a3b8;
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 50%;
-  display: flex;
-  transition: all 0.2s;
-}
-
-.toast-close:hover {
-  background: #f1f5f9;
-  color: var(--auth-text-dark);
-}
-
-.toast-close .material-icons-round {
-  font-size: 18px;
-}
 
 /* --- Responsive --- */
 @media (max-width: 1024px) {
@@ -605,6 +722,10 @@
 }
 
 @media (max-width: 480px) {
+  .auth-page--register .auth-right-panel {
+    padding: 18px;
+  }
+
   .auth-right-panel {
     padding: 30px 15px;
   }

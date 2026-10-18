@@ -5,6 +5,7 @@ import { useAuth } from '../../../context/AuthContext';
 import { useToast } from '../../../components/ui/Toast';
 
 import { api } from '../../../services/Api';
+import HeartbeatLoader from '../../../components/ui/HeartbeatLoader';
 
 // ─── Timer Hook ────────────────────────────────────────────────
 const useTimer = (deadline, clockOffset) => {
@@ -252,7 +253,7 @@ const TakeExamSession = () => {
         className="take-exam-page"
         style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
       >
-        <p>Đang tải bài thi...</p>
+        <HeartbeatLoader label="Đang tải bài thi..." />
       </div>
     );
   }

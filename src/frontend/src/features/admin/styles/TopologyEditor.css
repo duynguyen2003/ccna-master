@@ -1,0 +1,124 @@
+.network-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  color: #334155;
+}
+
+.network-editor > p {
+  margin: 0;
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.network-editor .network-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.network-editor-select,
+.topology-editor-button {
+  min-height: 36px;
+  border: 1px solid #dbe3ed;
+  border-radius: 8px;
+  font: 500 13px/1.35 var(--system-ui, sans-serif);
+  transition:
+    color 160ms ease,
+    background-color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.network-editor-select {
+  min-width: 128px;
+  padding: 7px 10px;
+  color: #1e293b;
+  background: #fff;
+}
+
+.network-editor-select:focus-visible,
+.topology-editor-button:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+.topology-editor-button {
+  padding: 7px 12px;
+  color: #fff;
+  background: #2563eb;
+  border-color: #2563eb;
+  cursor: pointer;
+}
+
+.topology-editor-button:hover:not(:disabled) {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+.topology-editor-button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.topology-editor-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.56;
+}
+
+.topology-editor-button--danger {
+  color: #b91c1c;
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.topology-editor-button--danger:hover:not(:disabled) {
+  color: #fff;
+  background: #dc2626;
+  border-color: #dc2626;
+}
+
+.network-editor-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 14px;
+  color: #991b1b;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+}
+
+.network-editor-error p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.network-editor .cli-editor-link-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 12px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .network-editor-select,
+  .topology-editor-button {
+    transition: none;
+  }
+
+  .topology-editor-button:hover:not(:disabled),
+  .topology-editor-button:active:not(:disabled) {
+    transform: none;
+  }
+}

@@ -1,4 +1,5 @@
 import React from 'react';
+import './styles/Markdown.css';
 import { marked } from 'marked';
 import { sanitizeHtml } from '@ccna/shared/sanitizeHtml';
 

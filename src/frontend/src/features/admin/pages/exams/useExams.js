@@ -1,3 +1,4 @@
+import { appConfirm, appAlert } from '../../../../utils/appDialog';
 import { useState, useEffect, useMemo, useCallback, useContext } from 'react';
 import { AuthContext } from '../../../../context/AuthContext';
 import { adminApi } from '../../../../services/api/adminApi';
@@ -78,12 +79,12 @@ export const useExams = () => {
 
   const deleteExam = useCallback(
     async (id, confirmed = false) => {
-      if (!confirmed && !window.confirm('Bạn có chắc muốn xóa bài thi này?')) return;
+      if (!confirmed && !(await appConfirm('Bạn có chắc muốn xóa bài thi này?'))) return;
       try {
         await adminApi.deleteExam(token, id);
         fetchExams();
       } catch (err) {
-        alert(err.message);
+        appAlert(err.message);
       }
     },
     [token, fetchExams]

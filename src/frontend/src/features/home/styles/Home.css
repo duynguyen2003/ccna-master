@@ -1138,7 +1138,7 @@
   background: linear-gradient(180deg, #93c5fd, #38bdf8);
   border-radius: 2px;
   box-shadow: 0 0 12px rgba(56, 189, 248, 0.85);
-  animation: hero-cursor-blink 0.85s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  animation: hero-cursor-blink 0.85s steps(1, end) infinite;
 }
 
 .hero-typewriter-cursor--prefix {
@@ -1603,6 +1603,10 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .hero-typewriter-cursor {
+    animation: none;
+  }
+
   .landing-button,
   .landing-hero__journey,
   .landing-step-card {

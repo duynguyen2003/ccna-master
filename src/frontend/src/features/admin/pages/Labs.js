@@ -1,3 +1,4 @@
+import { appPrompt, appConfirm, appAlert } from '../../../utils/appDialog';
 import React, { useState, useEffect, useContext, useRef, useCallback, useMemo } from 'react';
 import CliLabConfigEditor from '../components/labs/CliLabConfigEditor';
 import {
@@ -13,8 +14,7 @@ import {
   List,
   ListOrdered,
   Link2,
-  ImageIcon,
-  FileUp,
+  Loader2,
 } from 'lucide-react';
 import { adminApi } from '../../../services/api/adminApi';
 import { AuthContext } from '../../../context/AuthContext';
@@ -22,6 +22,8 @@ import AdminModal from '../components/AdminModal';
 import AdminPagination from '../components/AdminPagination';
 import CustomSelect from '../components/CustomSelect';
 import DeleteButton from '../../../components/ui/delete-button';
+import FileUploadField from '../../../components/ui/FileUploadField';
+import HeartbeatLoader from '../../../components/ui/HeartbeatLoader';
 import '../styles/AdminViews.css';
 import CliLabWorkspace from '../../labs/components/CliLabWorkspace';
 import { validateCliLabConfig } from '../utils/adminLabConfig';
@@ -201,9 +203,17 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
     onChange(editorRef.current.innerHTML);
   };
 
-  const handleLink = () => {
-    const url = window.prompt('Nhập URL liên kết');
+  const handleLink = async () => {
+    const selection = window.getSelection();
+    const range = selection?.rangeCount ? selection.getRangeAt(0).cloneRange() : null;
+    const url = await appPrompt('Nhập URL liên kết');
     if (!url) return;
+    if (!editorRef.current?.isConnected) return;
+    if (range && editorRef.current.contains(range.commonAncestorContainer)) {
+      editorRef.current.focus();
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
     runCommand('createLink', url);
   };
 
@@ -575,12 +585,12 @@ const Labs = () => {
   };
 
   const handleDelete = async (id, confirmed = false) => {
-    if (!confirmed && !window.confirm('Bạn có chắc muốn xóa bài Lab này?')) return;
+    if (!confirmed && !(await appConfirm('Bạn có chắc muốn xóa bài Lab này?'))) return;
     try {
       await adminApi.deleteLab(token, id);
       fetchLabs(currentPage);
     } catch (deleteError) {
-      alert(deleteError.message);
+      appAlert(deleteError.message);
     }
   };
 
@@ -588,9 +598,7 @@ const Labs = () => {
     return (
       <div className="labm-editor-page">
         {isPreviewOpen ? (
-          <div
-            className="cli-admin-preview-layer"
-          >
+          <div className="cli-admin-preview-layer">
             <CliLabWorkspace
               lab={{ title: formData.title || 'Lab xem trước', objective: formData.objective }}
               preview={isPreviewOpen}
@@ -709,7 +717,14 @@ const Labs = () => {
                   </div>
 
                   <div className={`acm-field ${!formData.courseId ? 'labm-field-muted' : ''}`}>
-                    <span>Module {loadingModules ? <small>(Đang tải...)</small> : null}</span>
+                  <span>
+                    Module{' '}
+                    {loadingModules ? (
+                      <small className="admin-inline-loading">
+                        <Loader2 size={12} className="acm-spin" aria-hidden="true" /> Đang tải...
+                      </small>
+                    ) : null}
+                  </span>
                     <div className={!formData.courseId ? 'labm-select-disabled' : ''}>
                       <CustomSelect
                         value={formData.moduleId}
@@ -835,70 +850,64 @@ const Labs = () => {
             {activeTab === 'media' ? (
               <div className="labm-tab-panel">
                 <div className="labm-upload-grid">
-                  <div
-                    className="labm-upload-card"
-                    onClick={() => document.getElementById('lab-thumb').click()}
-                  >
-                    <div className="labm-upload-card-title">
-                      <ImageIcon size={15} /> imageUrl (Thumbnail)
-                    </div>
-                    {previews.thumbnail ? (
-                      <img
-                        src={previews.thumbnail}
-                        alt="Thumbnail preview"
-                        className="labm-upload-preview"
-                      />
-                    ) : (
-                      <p>Bấm để tải ảnh lên</p>
-                    )}
-                    <input
-                      id="lab-thumb"
-                      type="file"
-                      hidden
-                      accept="image/*"
-                      onChange={(event) => handleFileChange(event, 'thumbnailImg')}
-                    />
-                  </div>
+                  <FileUploadField
+                    className="file-upload--compact"
+                    accept="image/*"
+                    label="Ảnh thumbnail bài Lab"
+                    description="Kéo thả hoặc nhấn để chọn ảnh"
+                    value={formData.thumbnailImg}
+                    preview={previews.thumbnail}
+                    onFileSelect={(file) =>
+                      handleFileChange({ target: { files: [file], value: '' } }, 'thumbnailImg')
+                    }
+                    onClear={() => {
+                      setFormData((prev) => ({ ...prev, thumbnailImg: null }));
+                      setPreviews((prev) => ({
+                        ...prev,
+                        thumbnail:
+                          editorMode === 'edit'
+                            ? labs.find((lab) => lab.id === editingLabId)?.imageUrl || null
+                            : null,
+                      }));
+                    }}
+                  />
 
-                  <div
-                    className="labm-upload-card"
-                    onClick={() => document.getElementById('lab-topology').click()}
-                  >
-                    <div className="labm-upload-card-title">
-                      <ImageIcon size={15} /> topologyImgUrl
-                    </div>
-                    {previews.topology ? (
-                      <img
-                        src={previews.topology}
-                        alt="Topology preview"
-                        className="labm-upload-preview"
-                      />
-                    ) : (
-                      <p>Bấm để tải ảnh topology</p>
-                    )}
-                    <input
-                      id="lab-topology"
-                      type="file"
-                      hidden
-                      accept="image/*"
-                      onChange={(event) => handleFileChange(event, 'topologyImg')}
-                    />
-                  </div>
+                  <FileUploadField
+                    className="file-upload--compact"
+                    accept="image/*"
+                    label="Ảnh sơ đồ topology"
+                    description="Kéo thả hoặc nhấn để chọn ảnh"
+                    value={formData.topologyImg}
+                    preview={previews.topology}
+                    onFileSelect={(file) =>
+                      handleFileChange({ target: { files: [file], value: '' } }, 'topologyImg')
+                    }
+                    onClear={() => {
+                      setFormData((prev) => ({ ...prev, topologyImg: null }));
+                      setPreviews((prev) => ({
+                        ...prev,
+                        topology:
+                          editorMode === 'edit'
+                            ? labs.find((lab) => lab.id === editingLabId)?.topologyImgUrl || null
+                            : null,
+                      }));
+                    }}
+                  />
                 </div>
 
                 <div className="acm-field">
                   <span>fileUrl (.pkt / .pka)</span>
-                  <label className="labm-file-input">
-                    <FileUp size={16} />
-                    <span>
-                      {formData.filePka ? formData.filePka.name : 'Chon file Packet Tracer'}
-                    </span>
-                    <input
-                      type="file"
-                      accept=".pkt,.pka"
-                      onChange={(event) => handleFileChange(event, 'filePka')}
-                    />
-                  </label>
+                  <FileUploadField
+                    className="file-upload--compact"
+                    accept=".pkt,.pka"
+                    label="Chọn file Packet Tracer"
+                    description="Hỗ trợ tệp .pkt hoặc .pka"
+                    value={formData.filePka}
+                    onFileSelect={(file) =>
+                      handleFileChange({ target: { files: [file], value: '' } }, 'filePka')
+                    }
+                    onClear={() => setFormData((prev) => ({ ...prev, filePka: null }))}
+                  />
                 </div>
 
                 <div className="acm-field">
@@ -993,8 +1002,8 @@ const Labs = () => {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan="8" style={{ textAlign: 'center' }}>
-                  Đang tải...
+                <td colSpan="8">
+                  <HeartbeatLoader compact label="Đang tải danh sách bài Lab..." />
                 </td>
               </tr>
             ) : labs.length > 0 ? (
@@ -1052,8 +1061,8 @@ const Labs = () => {
                       </span>
                     </td>
                     <td className="text-center">{lab.duration || '-'}</td>
-                    <td className="labm-course-title" title={lab.course?.title || '-'}>
-                      {lab.course?.title || '-'}
+                    <td className="labm-course-title">
+                      <span title={lab.course?.title || '-'}>{lab.course?.title || '-'}</span>
                     </td>
                     <td className="text-center">
                       <div

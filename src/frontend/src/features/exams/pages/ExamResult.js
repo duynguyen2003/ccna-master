@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
 import { api } from '../../../services/Api';
+import HeartbeatLoader from '../../../components/ui/HeartbeatLoader';
 import '../styles/ExamFlow.css';
 
 const ExamResultSession = () => {
@@ -40,7 +41,7 @@ const ExamResultSession = () => {
         className="exam-result-page"
         style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
       >
-        <p>Đang tải kết quả...</p>
+        <HeartbeatLoader label="Đang tải kết quả..." />
       </div>
     );
   }

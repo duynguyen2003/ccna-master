@@ -220,6 +220,12 @@
   min-width: 120px;
 }
 
+.app-select__trigger.port-filter-select:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+  border-color: #3b82f6;
+}
+
 .port-toggle-wrapper {
   display: flex;
   align-items: center;

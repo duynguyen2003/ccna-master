@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+import DropdownSelect from '../../../components/ui/DropdownSelect';
 
 /* ═══════════════════════════════════════════
    UTILITY FUNCTIONS  –  pure subnet math
@@ -211,7 +212,7 @@ const SubnetCalculator = () => {
             <label className="subnet-label" htmlFor="subnet-prefix">
               SUBNET MASK / PREFIX
             </label>
-            <select
+            <DropdownSelect
               id="subnet-prefix"
               className="subnet-select"
               value={prefix}
@@ -226,7 +227,7 @@ const SubnetCalculator = () => {
                   {opt.label}
                 </option>
               ))}
-            </select>
+            </DropdownSelect>
           </div>
 
           {/* Sub-prefix Select (subdivision) */}
@@ -234,7 +235,7 @@ const SubnetCalculator = () => {
             <label className="subnet-label" htmlFor="subnet-sub-prefix">
               CHIA NHỎ THÀNH
             </label>
-            <select
+            <DropdownSelect
               id="subnet-sub-prefix"
               className="subnet-select"
               value={subPrefix}
@@ -245,7 +246,7 @@ const SubnetCalculator = () => {
                   {opt.label}
                 </option>
               ))}
-            </select>
+            </DropdownSelect>
           </div>
 
           {/* Calculate Button */}

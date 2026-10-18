@@ -1,4 +1,4 @@
-// src/config/dashboardConfig.js
+// src/frontend/src/features/admin/config/dashboardConfig.js
 
 export const FREE_PLAN = {
   max_students: 5,

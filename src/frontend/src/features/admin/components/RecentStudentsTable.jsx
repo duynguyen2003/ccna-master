@@ -1,4 +1,4 @@
-// src/components/Admin/Components/RecentStudentsTable.jsx
+// src/frontend/src/features/admin/components/RecentStudentsTable.jsx
 import React from 'react';
 import { Users } from 'lucide-react';
 

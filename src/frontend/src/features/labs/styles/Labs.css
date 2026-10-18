@@ -1353,7 +1353,7 @@
   border-bottom: 1px solid #1c2b3d;
 }
 .network-controls input,
-.network-controls select,
+.network-controls .app-select__trigger,
 .network-controls button,
 .network-editor button,
 .network-workspace aside button,
@@ -1369,7 +1369,7 @@
     background-color 0.2s;
 }
 .network-controls input:focus,
-.network-controls select:focus {
+.network-controls .app-select__trigger:focus-visible {
   border-color: #38bdf8;
   outline: none;
 }
@@ -1419,7 +1419,7 @@
 }
 .network-workspace button:focus-visible,
 .network-workspace input:focus-visible,
-.network-workspace select:focus-visible {
+.network-workspace .app-select__trigger:focus-visible {
   outline: 2px solid #67e8f9;
   outline-offset: 2px;
 }

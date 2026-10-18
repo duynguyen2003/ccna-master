@@ -1,5 +1,6 @@
 import React from 'react';
 import { Plus, Trash2 } from 'lucide-react';
+import DropdownSelect from '../../../../components/ui/DropdownSelect';
 import {
   CHECK_TYPE_MAP,
   SUPPORTED_CHECK_TYPES,
@@ -39,7 +40,7 @@ const textInput = (label, value, onChange, options = {}) => (
 
 const selectInput = (label, value, options, onChange, disabled = false) => (
   <Field label={label}>
-    <select
+    <DropdownSelect
       aria-label={label}
       className="acm-input cli-editor-native-select"
       value={inputValue(value)}
@@ -52,7 +53,7 @@ const selectInput = (label, value, options, onChange, disabled = false) => (
           {option.label}
         </option>
       ))}
-    </select>
+    </DropdownSelect>
   </Field>
 );
 
@@ -304,7 +305,7 @@ export default function GradingSpecBuilder({ value, initialState, onChange, disa
                 <div className="cli-editor-check-type">
                   <label>
                     <span>Loại kiểm tra</span>
-                    <select
+                    <DropdownSelect
                       aria-label={`Loại kiểm tra ${index + 1}`}
                       className="acm-input cli-editor-native-select"
                       value={check.type || ''}
@@ -316,7 +317,7 @@ export default function GradingSpecBuilder({ value, initialState, onChange, disa
                           {option.label}
                         </option>
                       ))}
-                    </select>
+                    </DropdownSelect>
                   </label>
                   <small>{definition.description}</small>
                 </div>

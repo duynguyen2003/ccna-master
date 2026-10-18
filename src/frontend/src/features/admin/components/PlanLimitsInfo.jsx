@@ -1,4 +1,4 @@
-// src/components/Admin/Components/PlanLimitsInfo.jsx
+// src/frontend/src/features/admin/components/PlanLimitsInfo.jsx
 import React from 'react';
 import { FREE_PLAN } from '../config/dashboardConfig';
 

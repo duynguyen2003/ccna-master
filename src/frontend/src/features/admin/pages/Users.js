@@ -1,3 +1,4 @@
+import { appAlert, appConfirm } from '../../../utils/appDialog';
 import React, { useState, useEffect, useContext, useMemo, useRef } from 'react';
 import {
   Search,
@@ -19,6 +20,9 @@ import { AuthContext } from '../../../context/AuthContext';
 import AdminModal from '../components/AdminModal';
 import UserProfileModal from '../components/UserProfileModal';
 import DeleteButton from '../../../components/ui/delete-button';
+import AnimatedCheckbox from '../../../components/ui/AnimatedCheckbox';
+import DropdownSelect from '../../../components/ui/DropdownSelect';
+import HeartbeatLoader from '../../../components/ui/HeartbeatLoader';
 import '../styles/AdminViews.css';
 import '../styles/AdminUsers.css';
 
@@ -160,19 +164,19 @@ const Users = () => {
       setSelectedUserProfile(userDetail);
       setIsProfileModalOpen(true);
     } catch (err) {
-      alert(err.message);
+      appAlert(err.message);
     }
   };
 
   const handleToggleRole = async (user) => {
     try {
       const newRole = user.role === 'ADMIN' ? 'STUDENT' : 'ADMIN';
-      if (window.confirm(`Bạn có chắc muốn đổi quyền của ${user.fullName} thành ${newRole}?`)) {
+      if (await appConfirm(`Bạn có chắc muốn đổi quyền của ${user.fullName} thành ${newRole}?`)) {
         await adminApi.updateUserRole(token, user.id, newRole);
         fetchUsers();
       }
     } catch (toggleError) {
-      alert(toggleError.message);
+      appAlert(toggleError.message);
     }
   };
 
@@ -181,18 +185,21 @@ const Users = () => {
       await adminApi.toggleUserActive(token, user.id);
       fetchUsers();
     } catch (toggleError) {
-      alert(toggleError.message);
+      appAlert(toggleError.message);
     }
   };
 
   const handleDelete = async (id, confirmed = false) => {
     try {
-      if (confirmed || window.confirm('Bạn có chắc muốn xóa tài khoản này? Hành động này không thể hoàn tác.')) {
+      if (
+        confirmed ||
+        (await appConfirm('Bạn có chắc muốn xóa tài khoản này? Hành động này không thể hoàn tác.'))
+      ) {
         await adminApi.deleteUser(token, id);
         fetchUsers();
       }
     } catch (deleteError) {
-      alert(deleteError.message);
+      appAlert(deleteError.message);
     }
   };
 
@@ -203,11 +210,11 @@ const Users = () => {
     const activeUsers = selectedUsers.filter((user) => user.isActive);
 
     if (!activeUsers.length) {
-      alert('Các tài khoản đã chọn đều đang ở trạng thái đã khóa.');
+      appAlert('Các tài khoản đã chọn đều đang ở trạng thái đã khóa.');
       return;
     }
 
-    if (!window.confirm(`Khóa ${activeUsers.length} tài khoản đã chọn?`)) {
+    if (!(await appConfirm(`Khóa ${activeUsers.length} tài khoản đã chọn?`))) {
       return;
     }
 
@@ -215,7 +222,7 @@ const Users = () => {
       await Promise.all(activeUsers.map((user) => adminApi.toggleUserActive(token, user.id)));
       fetchUsers();
     } catch (bulkError) {
-      alert(bulkError.message);
+      appAlert(bulkError.message);
     }
   };
 
@@ -223,9 +230,9 @@ const Users = () => {
     if (!selectedIds.length) return;
 
     if (
-      !window.confirm(
+      !(await appConfirm(
         `Xóa ${selectedIds.length} tài khoản đã chọn? Hành động này không thể hoàn tác.`
-      )
+      ))
     ) {
       return;
     }
@@ -234,7 +241,7 @@ const Users = () => {
       await Promise.all(selectedIds.map((id) => adminApi.deleteUser(token, id)));
       fetchUsers();
     } catch (bulkError) {
-      alert(bulkError.message);
+      appAlert(bulkError.message);
     }
   };
 
@@ -408,9 +415,11 @@ const Users = () => {
           <thead>
             <tr>
               <th className="admin-users-col-checkbox">
-                <input
-                  type="checkbox"
+                <AnimatedCheckbox
                   checked={allSelectedInPage}
+                  indeterminate={
+                    users.some((user) => selectedIds.includes(user.id)) && !allSelectedInPage
+                  }
                   onChange={toggleSelectAllCurrentPage}
                   aria-label="Chọn tất cả người dùng trang hiện tại"
                 />
@@ -426,16 +435,15 @@ const Users = () => {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan="6" style={{ textAlign: 'center' }}>
-                  Đang tải...
+                <td colSpan="6">
+                  <HeartbeatLoader compact label="Đang tải danh sách người dùng..." />
                 </td>
               </tr>
             ) : users.length > 0 ? (
               users.map((user) => (
                 <tr key={user.id}>
                   <td className="admin-users-col-checkbox">
-                    <input
-                      type="checkbox"
+                    <AnimatedCheckbox
                       checked={selectedIds.includes(user.id)}
                       onChange={() => toggleUserSelection(user.id)}
                       aria-label={`Chọn tài khoản ${user.fullName}`}
@@ -642,7 +650,8 @@ const Users = () => {
             >
               Vai trò
             </label>
-            <select
+            <DropdownSelect
+              aria-label="Vai trò"
               className="admin-search-input"
               style={{ width: '100%', boxSizing: 'border-box' }}
               value={formData.role}
@@ -650,7 +659,7 @@ const Users = () => {
             >
               <option value="STUDENT">Học viên</option>
               <option value="ADMIN">Quản trị viên</option>
-            </select>
+            </DropdownSelect>
           </div>
         </div>
       </AdminModal>
@@ -659,7 +668,7 @@ const Users = () => {
         onClose={() => setIsProfileModalOpen(false)}
         user={selectedUserProfile}
         onArchive={handleToggleActive}
-        onEdit={(u) => alert('Chức năng chỉnh sửa thông tin đang được cập nhật')}
+        onEdit={(u) => appAlert('Chức năng chỉnh sửa thông tin đang được cập nhật')}
       />
     </div>
   );

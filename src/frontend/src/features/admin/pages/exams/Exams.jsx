@@ -10,6 +10,7 @@ import ExamToolbar from './ExamToolbar';
 import { ExamGrid, ExamListShell } from './ExamViews';
 import ExamEditor from './ExamEditor';
 import AdminPagination from '../../components/AdminPagination';
+import HeartbeatLoader from '../../../../components/ui/HeartbeatLoader';
 import '../../styles/AdminViews.css';
 import '../../styles/AdminExamBuilder.css';
 
@@ -141,7 +142,7 @@ const Exams = () => {
           />
 
           {loading ? (
-            <div className="exam-hub-empty">Đang tải danh sách đề thi...</div>
+            <HeartbeatLoader compact label="Đang tải danh sách đề thi..." />
           ) : filteredExams.length === 0 ? (
             <div className="exam-hub-empty">Không có đề thi phù hợp bộ lọc.</div>
           ) : viewMode === 'grid' ? (
