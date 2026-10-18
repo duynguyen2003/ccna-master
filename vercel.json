@@ -1,7 +1,7 @@
 {
   "installCommand": "corepack pnpm install --frozen-lockfile",
   "buildCommand": "CI=false corepack pnpm run build",
-  "outputDirectory": "build",
+  "outputDirectory": "src/frontend/build",
   "rewrites": [
     {
       "source": "/(.*)",

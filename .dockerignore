@@ -10,3 +10,11 @@ coverage
 pnpm-debug.log*
 Markdown
 README.md
+
+**/node_modules
+**/build
+**/coverage
+**/.env
+**/.env.*
+.tmp
+backups

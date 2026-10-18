@@ -3,7 +3,7 @@ services:
   backend:
     # Replicas are reached through Nginx; a fixed host port cannot be shared.
     ports: !reset []
-    command: ["node", "src/Backend/Server.js"]
+    command: ["node", "src/backend/src/Server.js"]
     deploy:
       replicas: 2
   frontend:

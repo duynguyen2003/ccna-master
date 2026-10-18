@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+**/node_modules/
 .env
 .env.local
 .env.development.local
@@ -13,9 +14,11 @@
 
 # testing
 /coverage
+**/coverage/
 
 # production
 /build
+/src/frontend/build/
 /backups/
 /.tmp/
 
@@ -35,5 +38,5 @@ pnpm-debug.log*
 /todo.md
 /lessons.md
 
-/src/generated/prisma
+/src/backend/src/generated/prisma
 .playwright-mcp/

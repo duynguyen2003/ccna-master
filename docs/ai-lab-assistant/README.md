@@ -38,18 +38,18 @@
 
 | Thành phần hiện có | Bằng chứng code | Tác động đến kế hoạch |
 |---|---|---|
-| Lab có `definition`, `deviceState`, `simulatorVersion`, members | [schema.prisma](../../prisma/schema.prisma), [labAttemptController.js](../../src/Backend/controllers/labAttemptController.js) | Tái sử dụng snapshot `initialState/gradingSpec`; bổ sung ngữ cảnh AI đã lọc, không sao chép cả definition vào prompt |
+| Lab có `definition`, `deviceState`, `simulatorVersion`, members | [schema.prisma](../../src/backend/prisma/schema.prisma), [labAttemptController.js](../../src/backend/src/controllers/labAttemptController.js) | Tái sử dụng snapshot `initialState/gradingSpec`; bổ sung ngữ cảnh AI đã lọc, không sao chép cả definition vào prompt |
 | Snapshot definition chưa chứa đầy đủ title/objective công khai | `startAttempt` lưu initialState và gradingSpec; DTO đọc title/objective từ Lab | Lưu public metadata/version dùng cho AI; đánh dấu provenance cho attempt cũ, không dựng lịch sử giả |
-| Có revision và khóa attempt khi ghi | [attemptAccess.js](../../src/Backend/simulation/attemptAccess.js), `executeAttemptCommand` | Chụp snapshot trong transaction ngắn; gọi AI sau khi thả khóa |
+| Có revision và khóa attempt khi ghi | [attemptAccess.js](../../src/backend/src/simulation/attemptAccess.js), `executeAttemptCommand` | Chụp snapshot trong transaction ngắn; gọi AI sau khi thả khóa |
 | Có lab nhóm và replay | Routes/controller/workspace | Mỗi lần đọc AI vẫn kiểm quyền hiện tại; replay không được gửi nhầm trạng thái live |
-| Progress đã loại `expected/actual` | [labProgress.js](../../src/Backend/simulation/labProgress.js) | Dùng DTO này làm cơ sở, thêm allowlist và kiểm thử độc lập |
-| Chấm điểm và truyền gói thuộc Node | [gradingEngine.js](../../src/Backend/simulation/gradingEngine.js), [networkEngine.js](../../src/Backend/simulation/networkEngine.js) | AI không sửa điểm; mô phỏng đọc phải chạy trên bản sao |
-| AI `/explain` có gọi provider trực tiếp | [labFeedback.js](../../src/Backend/simulation/labFeedback.js) | Cần đóng đường gọi tốn phí bỏ qua quota mới; giữ fallback tương thích trong quá trình chuyển |
-| CLI UI dùng `busy`, có preview/replay | [CliLabWorkspace.js](../../src/components/Content/CliLabWorkspace.js) | AI có state riêng; không khóa terminal khi chờ |
-| Xác thực đọc trạng thái tài khoản và session version | [auth.js](../../src/Backend/middleware/auth.js) | Tái kiểm ở lúc nhận, trước dispatch và lúc đọc kết quả; job không chỉ tin JWT cũ |
+| Progress đã loại `expected/actual` | [labProgress.js](../../src/backend/src/simulation/labProgress.js) | Dùng DTO này làm cơ sở, thêm allowlist và kiểm thử độc lập |
+| Chấm điểm và truyền gói thuộc Node | [gradingEngine.js](../../src/shared/simulation/gradingEngine.js), [networkEngine.js](../../src/shared/simulation/networkEngine.js) | AI không sửa điểm; mô phỏng đọc phải chạy trên bản sao |
+| AI `/explain` có gọi provider trực tiếp | [labFeedback.js](../../src/backend/src/simulation/labFeedback.js) | Cần đóng đường gọi tốn phí bỏ qua quota mới; giữ fallback tương thích trong quá trình chuyển |
+| CLI UI dùng `busy`, có preview/replay | [CliLabWorkspace.js](../../src/frontend/src/features/labs/components/CliLabWorkspace.js) | AI có state riêng; không khóa terminal khi chờ |
+| Xác thực đọc trạng thái tài khoản và session version | [auth.js](../../src/backend/src/middleware/auth.js) | Tái kiểm ở lúc nhận, trước dispatch và lúc đọc kết quả; job không chỉ tin JWT cũ |
 | Local đã có migration + migrate service + restore script | [compose.yaml](../../compose.yaml), [operations.md](../operations.md) | Mở rộng migration/backup hiện hữu; xác minh rollout nền tảng trước pilot |
 | CI local đã tách preview/production Vercel | [ci-cd.yml](../../.github/workflows/ci-cd.yml) | Còn phải có pipeline container cho Node worker/Python và smoke test cả stack |
-| Backend CLI limit theo user, store mặc định trong process | [rateLimiter.js](../../src/Backend/middleware/rateLimiter.js) | Quota AI phải dùng store chung; không coi limiter RAM là hạn mức toàn cụm |
+| Backend CLI limit theo user, store mặc định trong process | [rateLimiter.js](../../src/backend/src/middleware/rateLimiter.js) | Quota AI phải dùng store chung; không coi limiter RAM là hạn mức toàn cụm |
 | Nginx scale giới hạn `/api/lab-attempts/` 4 request/s/IP, burst 24 | [nginx.scale.conf](../../docker/nginx.scale.conf) | Polling AI tăng tải chung NAT. Kiểm thử và quyết định chính sách edge là điều kiện trước pilot lớp học |
 | Chưa có service Python, bảng hội thoại AI, durable request/quota | Đối chiếu file và schema hiện tại | Phải xây mới, không đánh dấu hoàn thành vì đã có AI feedback |
 

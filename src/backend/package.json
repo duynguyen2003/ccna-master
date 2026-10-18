@@ -1,0 +1,33 @@
+{
+  "name": "@ccna/backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "start": "node src/Server.js",
+    "test:cli": "node --test src/simulation/*.test.js",
+    "test:learning": "node --test src/learningPath/*.test.js",
+    "test:core": "node --test src/exams/*.test.js src/security/*.test.js",
+    "db:deploy": "prisma --config ../../prisma.config.ts migrate deploy",
+    "prisma:generate": "prisma --config ../../prisma.config.ts generate"
+  },
+  "dependencies": {
+    "@ccna/shared": "workspace:*",
+    "@prisma/adapter-pg": "^7.6.0",
+    "@prisma/client": "^7.6.0",
+    "bcrypt": "^6.0.0",
+    "cloudinary": "^2.10.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.7.0",
+    "google-auth-library": "^10.6.2",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.3",
+    "multer": "^2.3.0",
+    "nodemailer": "^10.0.1",
+    "pg": "^8.20.0",
+    "uuid": "^14.0.0",
+    "zod": "^4.3.6"
+  }
+}

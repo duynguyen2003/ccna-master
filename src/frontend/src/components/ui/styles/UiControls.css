@@ -1,0 +1,238 @@
+.ui-button,
+.btn-xem-lo-trinh,
+.btn-quay-lai,
+.network-editor-error .acm-btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 10px 18px;
+  border: 1px solid #2563eb;
+  border-radius: 10px;
+  background: #2563eb;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+}
+.ui-button--secondary,
+.btn-quay-lai {
+  background: #fff;
+  color: #1d4ed8;
+  border-color: #cbd5e1;
+}
+.ui-button:hover,
+.btn-xem-lo-trinh:hover {
+  background: #1d4ed8;
+}
+.ui-button--secondary:hover,
+.btn-quay-lai:hover {
+  background: #eff6ff;
+}
+.ui-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+:where(button, a, input, select, textarea, summary):focus-visible {
+  outline: 3px solid #60a5fa;
+  outline-offset: 3px;
+}
+.take-exam-page.ui-error-state {
+  padding: 32px;
+  text-align: center;
+}
+.ui-error-state > p {
+  margin-bottom: 20px;
+  color: #b91c1c;
+}
+
+/* Fallback styling for native single-select controls rendered outside the app dropdown. */
+body select:not([multiple]):not([size]) {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='m4 6 4 4 4-4' fill='none' stroke='%2364748b' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+}
+input[type='checkbox'],
+input[type='radio'] {
+  accent-color: #2563eb;
+  cursor: pointer;
+}
+.animated-checkbox {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  vertical-align: middle;
+  border: 1.5px solid #94a3b8;
+  border-radius: 5px;
+  background: #fff;
+  color: #fff;
+  transition:
+    background-color 150ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 150ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 150ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.animated-checkbox:has(.animated-checkbox__input:checked),
+.animated-checkbox:has(.animated-checkbox__input:indeterminate) {
+  border-color: #2563eb;
+  background: #2563eb;
+}
+.animated-checkbox:active {
+  transform: scale(0.92);
+}
+.animated-checkbox__input {
+  appearance: none !important;
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.animated-checkbox__input:disabled {
+  cursor: not-allowed;
+}
+.animated-checkbox:has(.animated-checkbox__input:disabled) {
+  opacity: 0.55;
+}
+.animated-checkbox:has(.animated-checkbox__input:focus-visible) {
+  outline: 3px solid #60a5fa;
+  outline-offset: 3px;
+}
+.animated-checkbox__icon {
+  width: 15px;
+  height: 15px;
+  pointer-events: none;
+}
+.animated-checkbox__icon path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: var(--animated-check-length, 20);
+  stroke-dashoffset: var(--animated-check-length, 20);
+  transition: stroke-dashoffset 150ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.animated-checkbox:has(.animated-checkbox__input:checked) .animated-checkbox__icon path,
+.animated-checkbox:has(.animated-checkbox__input:indeterminate) .animated-checkbox__icon path {
+  stroke-dashoffset: 0;
+  transition-duration: 350ms;
+}
+.animated-checkbox:has(.animated-checkbox__input:indeterminate) {
+  --animated-check-length: 12;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animated-checkbox,
+  .animated-checkbox__icon path {
+    transition: none !important;
+  }
+}
+.admin-users-table input[type='checkbox'],
+.admin-table input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  vertical-align: middle;
+}
+input[type='file']::file-selector-button {
+  appearance: none;
+  margin-right: 12px;
+  padding: 8px 12px;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font: inherit;
+  cursor: pointer;
+}
+input[type='file']::file-selector-button:hover {
+  background: #dbeafe;
+}
+.landing-faq summary,
+.cli-editor-feedback-details > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  list-style: none;
+  cursor: pointer;
+}
+.landing-faq summary::-webkit-details-marker,
+.cli-editor-feedback-details > summary::-webkit-details-marker {
+  display: none;
+}
+.landing-faq summary::after,
+.cli-editor-feedback-details > summary::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg);
+}
+.landing-faq details[open] > summary::after,
+.cli-editor-feedback-details[open] > summary::after {
+  transform: rotate(225deg);
+}
+html,
+.auth-page,
+.auth-right-panel {
+  scrollbar-width: thin;
+  scrollbar-color: #94a3b8 #f1f5f9;
+}
+
+.app-dialog {
+  box-sizing: border-box;
+  width: min(440px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  margin: auto;
+  padding: 24px;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  background: #fff;
+  color: #172033;
+  box-shadow: 0 24px 80px #0f172a33;
+}
+.app-dialog::backdrop {
+  background: #0f172a80;
+}
+.app-dialog h2 {
+  font-size: 22px;
+  margin-bottom: 12px;
+}
+.app-dialog p {
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+  margin-bottom: 20px;
+}
+.app-dialog input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  margin-bottom: 20px;
+}
+.app-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+@media (forced-colors: active) {
+  body select:not([multiple]):not([size]) {
+    appearance: auto;
+    background-image: none;
+  }
+}

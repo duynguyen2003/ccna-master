@@ -1,17 +1,21 @@
 # Vận hành MVP CCNA
 
+## Đường dẫn workspace
+
+API nằm trong `src/backend/src`, Prisma trong `src/backend/prisma`, dữ liệu upload trong `src/storage/uploads`; frontend build ra `src/frontend/build`. Giữ root directory của Vercel/Render ở repository root và các lệnh root hiện có (`pnpm build`, `pnpm server`, `pnpm db:deploy`). Root `.env` hiện tại vẫn được đọc; frontend cũng hỗ trợ `src/frontend/.env*`, backend hỗ trợ `src/backend/.env`. Chi tiết tại [project-structure.md](project-structure.md). Việc di chuyển source không cần chạy migration trên DB.
+
 ## Thay đổi khi nâng cấp
 
 Backend kiểm tra trạng thái, quyền và `sessionVersion` ở mỗi request có token. Khóa/xóa/khôi phục tài khoản, đổi quyền, reset mật khẩu và logout tăng phiên bản phiên; token cũ bị từ chối. Logout thu hồi toàn bộ phiên của tài khoản. Token trước nâng cấp không có `sessionVersion` cũng bị thu hồi: người dùng cần đăng nhập lại. Nếu thay đổi mật khẩu/quyền trực tiếp qua SQL, đồng thời tăng `session_version`; ưu tiên API quản trị.
 
-Thi dùng `POST /api/exams/:id/attempts` để bắt đầu hoặc tiếp tục lượt đang mở; `GET /api/exams/:id/attempts/:attemptId` để khôi phục. `POST /api/exams/:id/submit` bắt buộc `{ attemptId, answers }`. Client cũ thiếu attemptId nhận 400, vì vậy triển khai frontend/backend cùng cửa sổ bảo trì. Một lượt có một kết quả, retry trả cùng resultId, làm lại tạo lượt mới. Thời gian bắt đầu/hạn nộp/thời gian sử dụng do server quyết định. Quá hạn nhận 409; frontend khóa chọn đáp án và thử gửi khi còn một giây. Mất mạng qua hạn nộp không gia hạn lượt.
+Thi dùng `POST /api/exams/:id/attempts` để bắt đầu hoặc tiếp tục lượt đang mở; `GET /api/exams/:id/attempts/:attemptId` để khôi phục. `POST /api/exams/:id/submit` bắt buộc `{ attemptId, answers }`. Client cũ thiếu attemptId nhận 400, vì vậy triển khai src/frontend/backend cùng cửa sổ bảo trì. Một lượt có một kết quả, retry trả cùng resultId, làm lại tạo lượt mới. Thời gian bắt đầu/hạn nộp/thời gian sử dụng do server quyết định. Quá hạn nhận 409; frontend khóa chọn đáp án và thử gửi khi còn một giây. Mất mạng qua hạn nộp không gia hạn lượt.
 
 Đề, đáp án, giải thích và ngưỡng đạt được chụp lúc bắt đầu. API attempt loại đáp án đúng và giải thích; chỉ chủ kết quả đọc được bản chụp đầy đủ. Kết quả trước nâng cấp giữ điểm/đáp án đã lưu nhưng không thể phục dựng đề gốc bị sửa; API trả `legacyUnavailable: true` và không trả câu hỏi hiện tại thay cho đề cũ.
 
 ## Cấu hình và triển khai
 
 1. Tạo GitHub Environments `preview` và `production`, mỗi môi trường có `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`. Thiếu secrets làm deploy thất bại. Có thể dùng hai project Vercel riêng; bật protection cho production theo quy trình nhóm.
-2. Đặt `REACT_APP_API_URL` preview trỏ backend thử nghiệm và production trỏ backend production. Hai backend dùng database/uploads/secrets riêng. Workflow chỉ triển khai frontend; cấp phát backend/database và cấu hình secrets trên dịch vụ vẫn cần thực hiện ở hạ tầng.
+2. Đặt `REACT_APP_API_URL` preview trỏ backend thử nghiệm và production trỏ backend production. Hai backend dùng database/uploads/secrets riêng. Workflow chỉ triển khai frontend; cấp phát src/backend/database và cấu hình secrets trên dịch vụ vẫn cần thực hiện ở hạ tầng.
 3. Backend production bắt buộc `DATABASE_URL`, `JWT_SECRET` ngẫu nhiên riêng ít nhất 32 ký tự, `FRONTEND_URL`, `CORS_ORIGIN`. Compose còn bắt buộc `POSTGRES_PASSWORD`. URL encode password khi ghép DATABASE_URL. Cấu hình email/Cloudinary/OAuth trước khi bật chức năng tương ứng.
 4. Thử staging, dừng ghi và backup trước migration. DB mới: `pnpm exec prisma generate`, `pnpm run db:deploy`, `pnpm run server`. Compose: `docker compose --env-file <environment-file> up --build -d`; service `migrate` hoàn tất trước backend. Không chạy `db push` trên DB có dữ liệu thật.
 5. Kiểm readiness, đăng nhập/quyền, ghi chú/tiến độ và một lượt thi trước khi mở ghi. Lưu image/commit trước rollout. Rollback code bằng image tương thích schema; lỗi dữ liệu thì restore sang đích mới rồi chuyển kết nối, không tự đảo migration.
@@ -25,7 +29,7 @@ Ba migration: `20260901000000_baseline`, `20260922190000_add_video_progress_sess
 - Backup và thử restore trên bản sao. Kiểm `_prisma_migrations`, schema thật, enum/index/FK. Không chạy baseline CREATE TABLE vào DB đã có bảng.
 - Nếu DB cũ đúng baseline và chưa có lịch sử, đối chiếu trên bản sao rồi chạy `pnpm exec prisma migrate resolve --applied 20260901000000_baseline`, sau đó `pnpm run db:deploy`. Migration video idempotent có thể áp dụng khi bảng/column đã tồn tại nhưng vẫn cần kiểm định nghĩa.
 - Nếu migration video đã được ghi nhận, giữ nguyên file/bản ghi; đối chiếu rồi resolve baseline. Drift khác cần migration hòa giải được xem xét, không đánh dấu schema chưa có.
-- Đối chiếu bằng `pnpm exec prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --script`. Trước nâng cấp chỉ có thay đổi dự kiến; sau nâng cấp diff phải rỗng. Kiểm riêng lịch sử migration và dữ liệu.
+- Đối chiếu bằng `pnpm exec prisma migrate diff --from-config-datasource --to-schema src/backend/prisma/schema.prisma --script`. Trước nâng cấp chỉ có thay đổi dự kiến; sau nâng cấp diff phải rỗng. Kiểm riêng lịch sử migration và dữ liệu.
 - Migration mới chỉ thêm column/table/index/FK; kết quả cũ không bị xóa/chấm lại. Test vận hành tạo baseline có kết quả cũ, resolve/deploy và xác minh dữ liệu còn nguyên.
 
 ## Backup và restore

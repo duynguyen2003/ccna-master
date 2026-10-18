@@ -1,0 +1,101 @@
+.heartbeat-loader {
+  --heartbeat-accent: var(--blue-primary, #2563eb);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 60vh;
+  padding: 32px 12px;
+  color: var(--text-muted, #64748b);
+  text-align: center;
+  font-family: var(--system-ui, sans-serif);
+  font-size: 14px;
+}
+
+.heartbeat-loader--fullscreen {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--bg-color, #fff);
+}
+
+.heartbeat-loader--compact {
+  min-height: 168px;
+  gap: 12px;
+  padding: 20px 10px;
+}
+
+.heartbeat-loader--dark {
+  --heartbeat-accent: #60a5fa;
+  color: #cbd5e1;
+  background: #0b0b0c;
+}
+
+/* Keep SVG units equal to CSS pixels so the dot stays on the same trace. */
+.heartbeat-loader__trace {
+  position: relative;
+  display: block;
+  width: 208px;
+  height: 48px;
+  flex-shrink: 0;
+}
+
+.heartbeat-loader__trace svg {
+  display: block;
+  overflow: visible;
+}
+
+.heartbeat-loader__trace path {
+  stroke: var(--heartbeat-accent);
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.3;
+}
+
+.heartbeat-loader__dot {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--heartbeat-accent);
+  box-shadow:
+    0 0 6px var(--heartbeat-accent),
+    0 0 16px var(--heartbeat-accent);
+  offset-anchor: 50% 50%;
+  offset-rotate: 0deg;
+  offset-distance: 0%;
+  animation: heartbeat-loader-sweep 2.4s linear infinite;
+}
+
+.heartbeat-loader__label {
+  max-width: 100%;
+  line-height: 1.5;
+}
+
+@media (max-width: 480px) {
+  .heartbeat-loader__trace {
+    transform: scale(0.8);
+    margin-inline: -21px;
+  }
+}
+
+@keyframes heartbeat-loader-sweep {
+  from {
+    offset-distance: 0%;
+  }
+  to {
+    offset-distance: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .heartbeat-loader__dot {
+    animation: none;
+    offset-distance: 0%;
+  }
+}

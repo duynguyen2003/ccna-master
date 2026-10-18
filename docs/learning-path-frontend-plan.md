@@ -15,20 +15,20 @@ Backend đã xử lý nghiệp vụ. Frontend chỉ gửi thao tác hợp lệ v
 | Phần | Hiện trạng và điểm tích hợp |
 | --- | --- |
 | Frontend | React 18, JavaScript/JSX, CRA/react-scripts; không có yêu cầu chuyển TypeScript hay Vite |
-| Router | `src/App.js`, HashRouter, `/roadmap`, `/course/:courseId`, `/lesson?course=...&lesson=...`, `/labs?labId=...` |
-| Layout | `src/components/Content/Layout.js`; giữ Navbar, header, footer và bố cục trang hiện tại |
-| Authentication | `src/context/AuthContext.js`: `user`, `token`, `loading`, `isAuthenticated`, `login`, `logout`, `updateUser` |
-| API client đang được dùng | `src/services/Api.js`: `API_URL`, `apiFetch`, object `api`, Bearer token và sự kiện `unauthorized` |
+| Router | `src/frontend/src/App.js`, HashRouter, `/roadmap`, `/course/:courseId`, `/lesson?course=...&lesson=...`, `/labs?labId=...` |
+| Layout | `src/frontend/src/components/layout/Layout.js`; giữ Navbar, header, footer và bố cục trang hiện tại |
+| Authentication | `src/frontend/src/context/AuthContext.js`: `user`, `token`, `loading`, `isAuthenticated`, `login`, `logout`, `updateUser` |
+| API client đang được dùng | `src/frontend/src/services/Api.js`: `API_URL`, `apiFetch`, object `api`, Bearer token và sự kiện `unauthorized` |
 | Điểm khác đặc tả ban đầu | Client học viên thực tế dùng **fetch wrapper**; Axios có trong dependency nhưng không có Axios instance chung cho flow này. Mở rộng `apiFetch`, không tạo transport thứ hai chỉ để khớp ví dụ Axios |
-| Module API cũ chưa dùng | `src/services/api/contentApi.js` là placeholder; `src/services/api/index.js` còn export `examApi` không tồn tại. Không nối tính năng mới qua barrel này |
-| Server state | `src/index.js` đã tạo một `QueryClient` trong `QueryClientProvider`; Roadmap cũ vẫn dùng useEffect, cần chuyển riêng flow này sang React Query v5 |
-| UI tokens | `src/App.css`: `--blue-primary`, `--blue-hover`, `--slate-*`, `--border-color`, `--text-muted`, `--system-ui` |
-| Styling | CSS theo trang trong `src/css/`; không giả định utility Tailwind đã được cấu hình đầy đủ chỉ vì dependency tồn tại |
-| Animation | GSAP + `@gsap/react`; `src/utils/labMotion.js` có `gsap`, `useGSAP`, `prefersReducedMotion`; Motion hiện nằm trong các UI khác |
-| Toast | `src/components/Toast.js` có component và hook; `GlobalToastRenderer` trong App dùng AuthContext. Không thêm một toast provider toàn ứng dụng trùng chức năng |
+| Module API cũ chưa dùng | `src/frontend/src/services/api/contentApi.js` là placeholder; `src/frontend/src/services/api/index.js` còn export `examApi` không tồn tại. Không nối tính năng mới qua barrel này |
+| Server state | `src/frontend/src/index.js` đã tạo một `QueryClient` trong `QueryClientProvider`; Roadmap cũ vẫn dùng useEffect, cần chuyển riêng flow này sang React Query v5 |
+| UI tokens | `src/frontend/src/App.css`: `--blue-primary`, `--blue-hover`, `--slate-*`, `--border-color`, `--text-muted`, `--system-ui` |
+| Styling | CSS nằm trong `styles` của từng feature hoặc nhóm UI/layout; không giả định utility Tailwind đã được cấu hình đầy đủ chỉ vì dependency tồn tại |
+| Animation | GSAP + `@gsap/react`; `src/frontend/src/features/labs/utils/labMotion.js` có `gsap`, `useGSAP`, `prefersReducedMotion`; Motion hiện nằm trong các UI khác |
+| Toast | `src/frontend/src/components/ui/Toast.js` có component và hook; `GlobalToastRenderer` trong App dùng AuthContext. Không thêm một toast provider toàn ứng dụng trùng chức năng |
 | Modal | `AdminModal` có style/animation dành riêng admin, Escape và dialog semantics, chưa có focus trap hoàn chỉnh. Không import toàn bộ admin CSS vào trang học viên; dùng `<dialog>` hoặc trích primitive chung nếu thật sự cần |
-| Backend | Express 5/CommonJS trong `src/Backend/`; router được mount dưới `/api` |
-| Database | Prisma 7 + adapter-pg singleton ở `src/Backend/config/database.js`, PostgreSQL/Supabase; trình duyệt không kết nối DB |
+| Backend | Express 5/CommonJS trong `src/backend/src/`; router được mount dưới `/api` |
+| Database | Prisma 7 + adapter-pg singleton ở `src/backend/src/config/database.js`, PostgreSQL/Supabase; trình duyệt không kết nối DB |
 | Environment | `process.env.REACT_APP_API_URL`, mặc định `http://localhost:5000/api`; production dùng URL Render trong cấu hình triển khai, không hardcode localhost |
 
 Không sửa các component Admin/Navbar/Lab mà người dùng đang thiết kế nếu không cần cho điểm nối progress. Không thay HashRouter, AuthContext, hệ thống đăng nhập hay stack build.
@@ -39,17 +39,17 @@ Không sửa các component Admin/Navbar/Lab mà người dùng đang thiết k�
 
 | File | Trách nhiệm |
 | --- | --- |
-| `src/Backend/domain/learningPath.js` | Pure functions: sắp thứ tự, prerequisite, trạng thái, progress từ task, DTO, XP |
-| `src/Backend/services/learningPathService.js` | Đọc Prisma, xác thực tài khoản, kiểm tra liên kết/nội dung/khóa, transaction, summary, badge, activity, telemetry video |
-| `src/Backend/validation/learningPathSchema.js` | Zod cho ID, progress, module completion và video heartbeat |
-| `src/Backend/controllers/learningPathController.js` | Response contract và lỗi an toàn cho frontend |
-| `src/Backend/routes/learning.js` | GET Learning Path, PATCH module progress; đăng ký trước middleware admin |
-| `src/Backend/routes/users.js` | Giữ các URL progress/video cũ, thêm limiter cho thao tác ghi |
-| `src/Backend/controllers/userController.js` | Delegate việc ghi progress/video sang controller chung |
-| `src/Backend/controllers/learningController.js` | GET courses dùng cùng phép tính với Learning Path, giữ envelope và field cũ |
-| `src/Backend/controllers/adminController.js` | Các số liệu course chỉ lọc course summary, tránh tính nhầm module summary mới thành enrollment/course progress |
-| `src/Backend/controllers/labAttemptController.js` | CLI Lab kiểm tra mở khóa lúc bắt đầu; khi chấm đạt, cập nhật tiến độ/badge trong cùng transaction với kết quả Lab |
-| `src/Backend/middleware/rateLimiter.js` | Limiter progress 120 request/phút/user, dùng chung cho module/lesson/video |
+| `src/backend/src/domain/learningPath.js` | Pure functions: sắp thứ tự, prerequisite, trạng thái, progress từ task, DTO, XP |
+| `src/backend/src/services/learningPathService.js` | Đọc Prisma, xác thực tài khoản, kiểm tra liên kết/nội dung/khóa, transaction, summary, badge, activity, telemetry video |
+| `src/backend/src/validation/learningPathSchema.js` | Zod cho ID, progress, module completion và video heartbeat |
+| `src/backend/src/controllers/learningPathController.js` | Response contract và lỗi an toàn cho frontend |
+| `src/backend/src/routes/learning.js` | GET Learning Path, PATCH module progress; đăng ký trước middleware admin |
+| `src/backend/src/routes/users.js` | Giữ các URL progress/video cũ, thêm limiter cho thao tác ghi |
+| `src/backend/src/controllers/userController.js` | Delegate việc ghi progress/video sang controller chung |
+| `src/backend/src/controllers/learningController.js` | GET courses dùng cùng phép tính với Learning Path, giữ envelope và field cũ |
+| `src/backend/src/controllers/adminController.js` | Các số liệu course chỉ lọc course summary, tránh tính nhầm module summary mới thành enrollment/course progress |
+| `src/backend/src/controllers/labAttemptController.js` | CLI Lab kiểm tra mở khóa lúc bắt đầu; khi chấm đạt, cập nhật tiến độ/badge trong cùng transaction với kết quả Lab |
+| `src/backend/src/middleware/rateLimiter.js` | Limiter progress 120 request/phút/user, dùng chung cho module/lesson/video |
 
 ### 3.2. Quy tắc nghiệp vụ chính thức
 
@@ -422,7 +422,7 @@ Các điểm nối cần sửa có giới hạn: `CourseDetail.js` để xử l�
 
 ### 7.1. Mở rộng transport hiện có
 
-Thêm vào object `api` trong `src/services/Api.js`:
+Thêm vào object `api` trong `src/frontend/src/services/Api.js`:
 
 ```js
 getLearningPath: async (token, options = {}) => {
@@ -741,7 +741,7 @@ CI hiện có đã được bổ sung `test:learning` ở quality gate và Postg
 | 14. Responsive | Kế hoạch desktop ngang/mobile dọc, guard 320px và label dài |
 | 15. Accessibility | Kế hoạch button/dialog/focus/live feedback/reduced motion; không tuyên bố FE đã đạt |
 | 16. Tests | 34/34 Learning Path (domain + HTTP/PostgreSQL), 53/53 CLI/simulation (có HTTP/PostgreSQL), 10/10 component NetworkLab đạt |
-| 17. Lint/typecheck | ESLint trên các file backend/test thay đổi đạt; repo dùng JS, không thêm một script typecheck TypeScript giả |
+| 17. Lint/typecheck | ESLint trên các file src/backend/test thay đổi đạt; repo dùng JS, không thêm một script typecheck TypeScript giả |
 | 18. Build | CRA `pnpm.cmd run build` đạt với BUILD_PATH riêng; Prisma validate, CI YAML, code fence/JSON contract, git diff --check đạt |
 | 19. Giới hạn | Mục 15, đặc biệt XP/streak, telemetry và deployment |
 

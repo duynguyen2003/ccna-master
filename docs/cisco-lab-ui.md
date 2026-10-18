@@ -18,7 +18,7 @@ Tài liệu cho `prompt-thiet-ke-lai-ui-lab-cisco.md`. Checklist triển khai, b
 
 Sau một action hợp lệ, client nhận state/revision và `progress` cùng phản hồi. Refresh phiên và replay cũng nhận progress tính theo đúng snapshot. Progress không tự ghi điểm, hoàn thành khóa học hay thành tích; các quyền này vẫn thuộc endpoint submit của chủ phiên.
 
-`src/css/CliLabTokens.css` định nghĩa chung `--surface-*`, `--text-*`, `--border-*`, `--bg-accent`, spacing và radius. `LabWorkspace.css` và `Admin/CliLabEditor.css` dùng alias theo component; cả sơ đồ admin lẫn preview đổi màu theo cùng palette. Theme chỉ áp dụng trong hai vùng lab, không đổi giao diện các trang khác.
+`src/frontend/src/features/labs/styles/CliLabTokens.css` định nghĩa chung `--surface-*`, `--text-*`, `--border-*`, `--bg-accent`, spacing và radius. `LabWorkspace.css` và `Admin/CliLabEditor.css` dùng alias theo component; cả sơ đồ admin lẫn preview đổi màu theo cùng palette. Theme chỉ áp dụng trong hai vùng lab, không đổi giao diện các trang khác.
 
 ## Hợp đồng TypeScript minh họa
 

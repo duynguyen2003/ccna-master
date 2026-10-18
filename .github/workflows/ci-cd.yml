@@ -44,8 +44,14 @@ jobs:
         env:
           LAB_INTEGRATION: '0'
 
+      - name: Verify browser icon exports
+        run: pnpm check:icons
+
+      - name: Verify source boundaries and imports
+        run: pnpm check:boundaries
+
       - name: 🧪 Run frontend component tests
-        run: pnpm test --watchAll=false --runInBand --testPathIgnorePatterns=src/Backend/
+        run: pnpm test --watchAll=false --runInBand
 
       - name: Run account, exam and runtime tests
         run: pnpm run test:core
@@ -58,43 +64,43 @@ jobs:
       - name: 🔍 Lint check
         run: >-
           pnpm exec eslint
-          src/components/Content/Lesson.js
-          src/components/Content/Profile.js
-          src/components/Content/Roadmap.js
-          src/components/Admin/Charts/RegistrationLineChart.jsx
-          src/components/Admin/Views/TopologyEditor.js
-          src/components/Content/Labs.js
-          src/components/Content/CliLabWorkspace.js
-          src/Backend/controllers/learningController.js
-          src/Backend/controllers/labAttemptController.js
-          src/Backend/controllers/learningPathController.js
-          src/Backend/controllers/adminController.js
-          src/Backend/controllers/authController.js
-          src/Backend/controllers/userController.js
-          src/Backend/controllers/examController.js
-          src/Backend/exams/*.js
-          src/Backend/security/*.js
-          src/Backend/config/runtime.js
-          src/Backend/config/database.js
-          src/Backend/Server.js
-          src/Backend/middleware/auth.js
-          src/Backend/middleware/errorHandler.js
-          src/Backend/middleware/rateLimiter.js
-          src/Backend/middleware/validate.js
-          src/Backend/validation/examSchema.js
-          src/Backend/routes/exams.js
-          src/components/Content/exam/*.js
-          src/context/AuthContext.js
-          src/services/Api.js
-          scripts/backup-lib.cjs
-          scripts/backup.cjs
-          scripts/restore.cjs
-          src/Backend/domain/learningPath.js
-          src/Backend/services/learningPathService.js
-          src/Backend/validation/learningPathSchema.js
-          src/Backend/learningPath/*.test.js
-          src/Backend/simulation/networkPackets.js
-          src/Backend/simulation/networkApi.integration.test.js
+          src/frontend/src/features/lessons/pages/Lesson.js
+          src/frontend/src/features/profile/pages/Profile.js
+          src/frontend/src/features/courses/pages/Roadmap.js
+          src/frontend/src/features/admin/charts/RegistrationLineChart.jsx
+          src/frontend/src/features/admin/components/labs/TopologyEditor.js
+          src/frontend/src/features/labs/pages/Labs.js
+          src/frontend/src/features/labs/components/CliLabWorkspace.js
+          src/backend/src/controllers/learningController.js
+          src/backend/src/controllers/labAttemptController.js
+          src/backend/src/controllers/learningPathController.js
+          src/backend/src/controllers/adminController.js
+          src/backend/src/controllers/authController.js
+          src/backend/src/controllers/userController.js
+          src/backend/src/controllers/examController.js
+          src/backend/src/exams/*.js
+          src/backend/src/security/*.js
+          src/backend/src/config/runtime.js
+          src/backend/src/config/database.js
+          src/backend/src/Server.js
+          src/backend/src/middleware/auth.js
+          src/backend/src/middleware/errorHandler.js
+          src/backend/src/middleware/rateLimiter.js
+          src/backend/src/middleware/validate.js
+          src/backend/src/validation/examSchema.js
+          src/backend/src/routes/exams.js
+          src/frontend/src/features/exams/pages/*.js
+          src/frontend/src/context/AuthContext.js
+          src/frontend/src/services/Api.js
+          src/scripts/backup-lib.cjs
+          src/scripts/backup.cjs
+          src/scripts/restore.cjs
+          src/backend/src/domain/learningPath.js
+          src/backend/src/services/learningPathService.js
+          src/backend/src/validation/learningPathSchema.js
+          src/backend/src/learningPath/*.test.js
+          src/shared/simulation/networkPackets.js
+          src/backend/src/simulation/networkApi.integration.test.js
           src/shared/sanitizeHtml.js
 
       - name: 🏗️ Build production bundle
@@ -106,7 +112,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: production-build
-          path: build/
+          path: src/frontend/build/
           retention-days: 7
 
   integration:

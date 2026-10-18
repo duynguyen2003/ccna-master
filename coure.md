@@ -147,7 +147,7 @@ Region: Singapore
 Backend source hiện nằm trong:
 
 ```text
-src/Backend/
+src/backend/src/
 ```
 
 ---
@@ -1516,7 +1516,7 @@ Response:
 Route phải nằm trong backend architecture hiện tại:
 
 ```text
-src/Backend/
+src/backend/src/
 ```
 
 ---
@@ -2335,7 +2335,7 @@ thì Learning Path cũng phải follow pattern này.
 Ví dụ conceptual:
 
 ```text
-src/Backend/
+src/backend/src/
 ├── routes/
 │   └── learningPath.routes
 ├── controllers/
@@ -2751,7 +2751,7 @@ Inspect:
 ```text
 package.json
 src/
-src/Backend/
+src/backend/src/
 Prisma schema
 Roadmap page
 routing
