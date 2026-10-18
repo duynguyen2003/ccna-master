@@ -12,16 +12,16 @@ LLM là tùy chọn: cấu hình `LAB_AI_URL`, `LAB_AI_KEY`, `LAB_AI_MODEL` tron
 Chạy test tích hợp với các hàng dữ liệu tạm được tạo và dọn riêng:
 
 ```bash
-docker compose exec -T -e LAB_INTEGRATION=1 backend node --test src/Backend/simulation/networkApi.integration.test.js
+docker compose exec -T -e LAB_INTEGRATION=1 backend node --test src/backend/src/simulation/networkApi.integration.test.js
 ```
 
 ## Hai backend replica trên một máy
 
-Đầu tiên chạy stack thường để `prisma db push` đồng bộ schema một lần. Sau đó:
+Đầu tiên chạy stack thường để service `migrate` áp dụng migration đã commit. Sau đó:
 
 ```bash
 docker compose -f compose.yaml -f compose.scale.yaml up -d --scale backend=2 --force-recreate
-docker compose -f compose.yaml -f compose.scale.yaml exec -T -e LAB_INTEGRATION=1 -e LAB_REPLICAS=1 backend node --test src/Backend/simulation/networkApi.integration.test.js
+docker compose -f compose.yaml -f compose.scale.yaml exec -T -e LAB_INTEGRATION=1 -e LAB_REPLICAS=1 backend node --test src/backend/src/simulation/networkApi.integration.test.js
 ```
 
 Test replica gửi luân phiên đến các backend khác nhau, cùng dùng PostgreSQL. Nginx có giới hạn request chung cho lab. Sau khi tăng/giảm số replica, recreate frontend để refresh DNS upstream. Về một backend:

@@ -113,13 +113,13 @@ Tuần tham chiếu có thể dịch trong dải 17–25 tuần. Không đặt n
 
 ### BE-01 · Schema, migrations và indices · 8–12 giờ
 
-- **Vai trò:** SE. **Phụ thuộc:** ADR-01. **File:** `prisma/schema.prisma`, migration mới, Node integration fixtures.
+- **Vai trò:** SE. **Phụ thuộc:** ADR-01. **File:** `src/backend/prisma/schema.prisma`, migration mới, Node integration fixtures.
 - **Thực hiện:** conversation/request/message/provider call/quota/reservation/adjustment/execution slots/runtime policy/feedback/outbox; indexes và partial unique active request; migration metadata lab nullable.
 - **Nghiệm thu:** DB mới migrate deploy được; upgrade DB có dữ liệu giữ nguyên rows; constraints chặn duplicate; verify schema diff; rollback code cũ vẫn chạy. AC-05/06/12.
 
 ### BE-02 · Quyền và snapshot attempt · 8–12 giờ
 
-- **Vai trò:** SE. **Phụ thuộc:** BE-01, DISC-03. **File:** `src/Backend/ai/access.js`, `snapshot.js`, integration với `attemptAccess.js` và controller.
+- **Vai trò:** SE. **Phụ thuộc:** BE-01, DISC-03. **File:** `src/backend/src/ai/access.js`, `snapshot.js`, integration với `attemptAccess.js` và controller.
 - **Thực hiện:** Bearer header riêng cho AI, active user/sessionVersion, membership, cohort, conversation owner/epoch; chụp metadata/state/progress an toàn và provenance cho legacy; xử lý tương thích envelope lỗi auth hiện có.
 - **Nghiệm thu:** outsider/removed member bị 404; account locked bị 401; owner lab không đọc chat member; snapshot không đổi khi lab/state thay đổi; transaction ngắn. AC-04/06.
 
@@ -167,7 +167,7 @@ Tuần tham chiếu có thể dịch trong dải 17–25 tuần. Không đặt n
 
 ### FE-01 · Panel và components · 8–12 giờ
 
-- **Vai trò:** SE. **Phụ thuộc:** UX-01. **File:** `src/components/Content/ai-lab/`, CSS theo lab tokens.
+- **Vai trò:** SE. **Phụ thuộc:** UX-01. **File:** `src/frontend/src/features/ai-lab/`, CSS theo lab tokens.
 - **Thực hiện:** panel lazy-load, message/evidence, hint card, code copy, feedback; semantic HTML, focus handling.
 - **Nghiệm thu:** render bằng fake responses; Markdown không chạy HTML/script; bật panel không phá terminal sizing; loading riêng; không auto-scroll khi đọc lịch sử. AC-08/13.
 
@@ -193,7 +193,7 @@ Tuần tham chiếu có thể dịch trong dải 17–25 tuần. Không đặt n
 
 - **Vai trò:** SE/SO. **Phụ thuộc:** BE-04, PY-01, QA-01. **File:** CI workflow, compose AI additions, worker command, environment example.
 - **Thực hiện:** tests Node/Python/contracts, image build, startup dependencies, private service networking, giới hạn CPU/RAM/DB pool, migration job một lần.
-- **Nghiệm thu:** dựng clean stack staging/local; restart worker/Python không mất request; frontend/Node build hiện tại vẫn pass; runtime không chứa provider key trong bundle/image layer.
+- **Nghiệm thu:** dựng clean stack staging/local; restart worker/Python không mất request; src/frontend/Node build hiện tại vẫn pass; runtime không chứa provider key trong bundle/image layer.
 
 ### GATE-01 · Demo alpha và rà thiết kế · 4–6 giờ
 
@@ -243,12 +243,12 @@ Tuần tham chiếu có thể dịch trong dải 17–25 tuần. Không đặt n
 
 - **Vai trò:** SE/PM. **Phụ thuộc:** FE-03, BE-07, BE-08, OPS-02. **File:** Playwright E2E và test fixtures mới khi triển khai.
 - **Thực hiện:** đăng ký/login → mở khóa học/lab → AI → tự sửa → submit → review → reload → logout/account switch; group/revoke và offline.
-- **Nghiệm thu:** chạy với backend/PostgreSQL và fake Python/provider thật qua HTTP; network fixtures không thay toàn backend; test dữ liệu user A không hiện cho B. AC-01…AC-12 trọng yếu.
+- **Nghiệm thu:** chạy với src/backend/PostgreSQL và fake Python/provider thật qua HTTP; network fixtures không thay toàn backend; test dữ liệu user A không hiện cho B. AC-01…AC-12 trọng yếu.
 
 ### OPS-04 · Load test, shared IP và capacity policy · 12–18 giờ
 
 - **Vai trò:** SO/SE. **Phụ thuộc:** QA-02, OPS-01, OPS-02. **File:** load scripts, Nginx/rate-limit policy đề xuất, capacity report.
-- **Thực hiện:** 20/50/100 learners với shared/different IP; hai backend/worker; CLI + poll + AI; đo edge429/app429, queue, DB locks, provider concurrency. Chạy trước pilot để lỗi NAT không chặn học viên thật; xác nhận lại phần bị ảnh hưởng trước R1 nếu code/hạ tầng đổi.
+- **Thực hiện:** 20/50/100 learners với src/shared/different IP; hai src/backend/worker; CLI + poll + AI; đo edge429/app429, queue, DB locks, provider concurrency. Chạy trước pilot để lỗi NAT không chặn học viên thật; xác nhận lại phần bị ảnh hưởng trước R1 nếu code/hạ tầng đổi.
 - **Nghiệm thu:** tải công bố đạt SLO; cùng user qua replica không nhân quota; proxy không gom lớp như một người. Thay policy edge là thay đổi bảo vệ có review/benchmark, không chỉ xóa giới hạn. AC-15.
 
 ### OPS-03 · Staging, backup và rehearsals trước pilot · 6–10 giờ

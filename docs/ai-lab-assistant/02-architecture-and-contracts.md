@@ -428,7 +428,7 @@ Cross-attempt memory chưa nằm trong R2 mặc định. Chỉ lưu tóm tắt k
 
 ## 10. Tích hợp frontend và luồng cũ
 
-File đề xuất: `src/components/Content/ai-lab/{AiLabPanel,AiMessage,AiHintCard,AiContextBadge}.jsx`, `src/hooks/useAiLabAssistant.js`, stylesheet theo tokens lab hiện có và API methods trong `src/services/Api.js`.
+File đề xuất: `src/frontend/src/features/ai-lab/{AiLabPanel,AiMessage,AiHintCard,AiContextBadge}.jsx`, `src/frontend/src/hooks/useAiLabAssistant.js`, stylesheet theo tokens lab hiện có và API methods trong `src/frontend/src/services/Api.js`.
 
 - Lazy-load panel để hạn chế tăng bundle ban đầu; đo bundle delta trước/after.
 - `aiLoading`/request state riêng, không thêm vào `busyRef` của terminal.
@@ -443,21 +443,21 @@ Luồng `/explain` cũ cần xử lý trước pilot: giữ response tương th�
 
 ```text
 contracts/ai-lab/v1/             schema và fixtures hợp lệ/bất hợp lệ
-src/Backend/ai/                 request, quota, policy, snapshot, receipts, diagnostics
-src/Backend/controllers/aiLabController.js
-src/Backend/routes/aiLab.js
-src/Backend/routes/aiInternal.js
-src/Backend/workers/aiWorker.js
-src/Backend/ai/*.test.js         node:test + PostgreSQL integration
-src/components/Content/ai-lab/  UI và component tests
-src/hooks/useAiLabAssistant.js
+src/backend/src/ai/                 request, quota, policy, snapshot, receipts, diagnostics
+src/backend/src/controllers/aiLabController.js
+src/backend/src/routes/aiLab.js
+src/backend/src/routes/aiInternal.js
+src/backend/src/workers/aiWorker.js
+src/backend/src/ai/*.test.js         node:test + PostgreSQL integration
+src/frontend/src/features/ai-lab/  UI và component tests
+src/frontend/src/hooks/useAiLabAssistant.js
 ai-service/app/                 FastAPI, schemas, adapters, prompts, policy
 ai-service/tests/               pytest, contract và fake-provider tests
 ai-service/evals/               fixtures, rubric, runner; không chứa dữ liệu production
 ai-service/pyproject.toml       dependencies + dev tooling
 ai-service/uv.lock              một lockfile Python; chốt công cụ ở task PY-01
 ai-service/Dockerfile
-scripts/ai-*/                   load, reconcile, retention và hỗ trợ vận hành
+src/scripts/ai-*/                   load, reconcile, retention và hỗ trợ vận hành
 docs/ai-lab-assistant/          bộ kế hoạch và ADR/eval reports khi triển khai
 ```
 

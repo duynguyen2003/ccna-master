@@ -2,6 +2,8 @@
 
 **CCNA Master** là một ứng dụng web toàn diện được thiết kế để hỗ trợ sinh viên và kỹ sư mạng trong quá trình chinh phục chứng chỉ CCNA (Cisco Certified Network Associate). Hệ thống tích hợp lộ trình học tập bài bản, ngân hàng câu hỏi trắc nghiệm thông minh, và các công cụ thực hành Lab hiện đại.
 
+Mã nguồn được chia thành pnpm workspace: `src/frontend/src` chứa React theo chức năng, `src/backend/src` chứa API, `src/backend/prisma` chứa schema/migration, `src/shared` chứa hợp đồng và engine mô phỏng dùng chung, `src/storage/uploads` chứa tệp tải lên. Các lệnh `pnpm start`, `pnpm server`, `pnpm build`, `pnpm test` tiếp tục chạy tại root; build frontend nằm ở `src/frontend/build`. Xem [cấu trúc và quy tắc import](docs/project-structure.md).
+
 ---
 
 ## ✨ Tính năng nổi bật
@@ -66,7 +68,7 @@ không tự thêm peer dependency và giữ override `qs` hiện có.
 
 Thêm thư viện bằng `pnpm add <package>`, thêm công cụ phát triển bằng `pnpm add -D <package>`.
 Chạy kiểm tra bằng `pnpm run test:cli`, `pnpm run test:learning`, `pnpm run test:core`,
-`pnpm test --watchAll=false --runInBand --testPathIgnorePatterns=src/Backend/` và `pnpm run build`.
+`pnpm test --watchAll=false --runInBand` và `pnpm run build`.
 
 ### 3. Cấu hình biến môi trường
 Tạo file `.env` tại thư mục gốc (dựa trên mẫu `.env.example`) và điền các thông tin sau:
@@ -95,6 +97,13 @@ Docker Compose chạy migration trong service `migrate` riêng; backend khởi �
 Mở hai terminal song song:
 - **Terminal 1 (Backend)**: `pnpm run server`
 - **Terminal 2 (Frontend)**: `pnpm start`
+
+Giữ dev server chạy trong lúc chỉnh sửa và giữ `node_modules/.cache` để tận dụng cache biên dịch.
+Bản web ánh xạ `lucide-react` qua trường `browser` trong `package.json` đến
+`src/frontend/src/utils/icons.js`, chỉ đọc các icon đang dùng thay vì duyệt toàn bộ thư viện.
+Khi thêm icon mới, bổ sung export tương ứng vào file này theo đường dẫn của
+`node_modules/lucide-react/dist/esm/lucide-react.js`, rồi chạy `pnpm check:icons`.
+Lệnh kiểm tra đối chiếu icon và alias với thư viện gốc; Node và Jest vẫn dùng entry mặc định.
 
 ---
 
