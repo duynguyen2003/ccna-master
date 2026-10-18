@@ -1,4 +1,4 @@
-const { packageManager } = require('../package.json');
+const { packageManager } = require('../../package.json');
 const expectedVersion = packageManager.split('@')[1];
 const userAgent = process.env.npm_config_user_agent || '';
 

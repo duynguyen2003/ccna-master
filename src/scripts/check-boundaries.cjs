@@ -111,10 +111,10 @@ const visitDirectory = (directory) => {
     if (['node_modules', 'build', 'coverage', '.git'].includes(entry.name)) continue;
     const filename = path.join(directory, entry.name);
     if (entry.isDirectory()) visitDirectory(filename);
-    else if (/\.(js|jsx|mjs|css)$/.test(filename)) {
+    else if (/\.(js|jsx|mjs|cjs|css)$/.test(filename)) {
       checkedFiles += 1;
       const source = fs.readFileSync(filename, 'utf8');
-      if (/\.(js|jsx|mjs)$/.test(filename)) inspectJs(filename, source);
+      if (/\.(js|jsx|mjs|cjs)$/.test(filename)) inspectJs(filename, source);
       else {
         for (const match of source.matchAll(
           /@import\s+['"]([^'"]+)['"]|url\(\s*['"]?([^)'"\s]+)['"]?\s*\)/g
@@ -127,7 +127,13 @@ const visitDirectory = (directory) => {
   }
 };
 
-for (const directory of ['src/frontend/src', 'src/backend/src', 'src/shared']) {
+for (const directory of [
+  'src/frontend/src',
+  'src/backend/src',
+  'src/shared',
+  'src/scripts',
+  'src/frontend/scripts',
+]) {
   visitDirectory(path.join(root, directory));
 }
 if (errors.length) {
