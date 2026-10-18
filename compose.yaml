@@ -44,7 +44,7 @@ services:
       EMAIL_USER: ${EMAIL_USER:-}
       EMAIL_PASS: ${EMAIL_PASS:-}
     volumes:
-      - uploads_data:/app/src/uploads
+      - uploads_data:/app/src/storage/uploads
     depends_on:
       db:
         condition: service_healthy
