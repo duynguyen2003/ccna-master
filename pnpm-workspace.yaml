@@ -1,3 +1,8 @@
+packages:
+  - src/frontend
+  - src/backend
+  - src/shared
+
 # Keep the flat dependency layout expected by Create React App 5.
 nodeLinker: hoisted
 # Preserve the existing peer resolution without adding optional peers automatically.

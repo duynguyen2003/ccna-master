@@ -1,0 +1,17 @@
+{
+  "name": "@ccna/shared",
+  "version": "0.1.0",
+  "private": true,
+  "type": "commonjs",
+  "exports": {
+    "./package.json": "./package.json",
+    "./cliLabCatalog": "./cliLabCatalog.js",
+    "./cliLabSchema": "./cliLabSchema.js",
+    "./sanitizeHtml": "./sanitizeHtml.js",
+    "./simulation/*": "./simulation/*.js",
+    "./labs/*": "./labs/*.js"
+  },
+  "dependencies": {
+    "zod": "^4.3.6"
+  }
+}

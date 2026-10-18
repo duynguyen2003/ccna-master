@@ -2,7 +2,9 @@ node_modules
 build
 backups
 .vercel
-src/generated
+src/backend/src/generated
 pnpm-lock.yaml
 *.min.js
 *.min.css
+
+src/frontend/build

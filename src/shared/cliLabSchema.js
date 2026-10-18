@@ -1,5 +1,5 @@
 const zodModule =
-  typeof window !== 'undefined' ? require('./zodBrowser') : require('zod');
+  typeof window !== 'undefined' ? require('./zodBrowser.mjs') : require('zod');
 const { z } = zodModule;
 const { CLI_PROFILE_CATALOG, SUPPORTED_CLI_PROFILE_IDS } = require('./cliLabCatalog');
 
