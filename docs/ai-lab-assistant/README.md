@@ -1,10 +1,15 @@
 # AI Lab Assistant — Kế hoạch triển khai sản phẩm dài hạn
 
-**Ngày lập:** 16/10/2026 · **Phiên bản tài liệu:** 1.0 · **Trạng thái:** kế hoạch đề xuất, chưa triển khai tính năng.
+**Ngày lập:** 16/10/2026 · **Phiên bản tài liệu:** 1.0 · **Trạng thái:** đang triển khai, SIM-01 đã nghiệm thu kỹ thuật local/fake; chưa mở pilot.
 
 **Nguồn lực đã xác nhận:** một người phát triển, có AI hỗ trợ. Kế hoạch không giả định ba lập trình viên làm đồng thời. Các vai trò PM, SO và SE dưới đây là ba trách nhiệm do cùng một người đảm nhiệm; trong tài liệu này, **SO được hiểu là Solution Owner**, chịu trách nhiệm chất lượng giải pháp, chi phí và khả năng vận hành.
 
 **Kết quả cần tạo:** trợ lý học lab hiểu trạng thái simulator, giúp học viên tự tìm và sửa lỗi, có lịch sử, bằng chứng, hạn mức chi phí và khả năng vận hành lâu dài. Bước tiếp theo là agent lựa chọn công cụ chẩn đoán chỉ đọc, khi đã chứng minh được giá trị so với luồng trợ lý cố định.
+
+**Vị trí code từ 26/10/2026:** toàn bộ triển khai task AI/agent nằm trong
+[`src/agent`](../../src/agent/README.md), cùng cấp với backend/frontend. BE-01…05,
+SIM-01, worker, routes, contracts, công cụ và evals đã được chuyển về đây; các task
+PY tiếp theo triển khai trong `src/agent/python`. Báo cáo task vẫn ở bộ tài liệu này.
 
 ## 1. Cách sử dụng bộ kế hoạch
 
@@ -17,7 +22,23 @@
 
 Đọc theo thứ tự 01 → 02 → 03 → 04. Khi bắt đầu một task, cập nhật `todo.md` theo [Agent.md](../../Agent.md), chọn đúng issue trong backlog, ghi bằng chứng nghiệm thu và cập nhật quyết định nếu khác kế hoạch. Những file, endpoint, biến môi trường mới được nhắc trong bộ tài liệu đều là **đề xuất sẽ tạo**, trừ khi ghi rõ “hiện có”.
 
+**Tiến độ 22/10/2026:** DISC-01 hoàn thành kiểm kê; DISC-02 bỏ qua theo yêu cầu; DISC-03 hoàn thành [chứng nhận kỹ thuật local](labs/DISC-03-certified-labs.md). ADR-01 đã chốt bảy ADR và [contract v1.0.0](../../src/agent/contracts/ai-lab/v1/README.md), có kiểm frontend/Node/Python và gate CI. [OPS-00](ops/OPS-00-local-fake.md) hoàn thành nhánh local/fake theo lựa chọn **0 USD**, có DB thử riêng được kiểm restart/ghi/rollback; Gemini là ứng viên tương lai, chưa có quota tài khoản hoặc quyền gọi thật. [ADR-008](adr/ADR-008-local-fake-deployment.md) cho phép tiếp tục **BE-01** bằng fake; G0 đầy đủ, staging ứng dụng, AI runtime và pilot chưa nghiệm thu.
+
+**Tiến độ 23/10/2026:** [BE-01 hoàn thành local](baseline/BE-01-storage.md): 11 model AI, metadata nullable, migration mới/nâng cấp giữ nguyên dữ liệu 25 bảng cũ; 34 kiểm thử DB đạt và client cũ đọc/ghi được. Đã thêm gate CI, chưa áp migration DB ứng dụng/production. **Task tiếp theo: BE-02 — quyền và snapshot attempt.**
+
 ## 2. Các quyết định định hướng
+
+**Tiến độ mới nhất 26/10/2026:** [SIM-01 hoàn thành bộ chẩn đoán ba lab local/fake](baseline/SIM-01-diagnostics.md). Dùng simulator thật trên bản sao để kiểm cổng/link, subnet, route đi/về và VLAN. Kết luận mạnh phải đúng mẫu và bằng chứng nguồn–đích Node đã tính. SIM-01 36/36; tổng unit/contract 158/158, storage 34/34 và HTTP/DB 36/36 đạt. Tiếp theo **PY-01/PY-02**; model thật của luồng mới, UI hội thoại và production chưa bật.
+
+**Mốc BE-05 cùng ngày:** [đã hoàn thành lọc dữ liệu và kiểm câu trả lời local/fake](baseline/BE-05-context-output.md). Worker dùng bản chụp lab đã lọc, lịch sử đúng chủ/epoch, bằng chứng quan sát và catalog lệnh đọc. Đầu ra sai không được giữ text, chi phí vẫn được theo dõi. Kết quả tại mốc này: 121 unit/contract, 34 storage và 35 HTTP/DB đạt; SIM-01 bổ sung sau theo cập nhật ở trên.
+
+**Tiến độ 23/10/2026:** [BE-04 hoàn thành worker local/fake](baseline/BE-04-worker.md), có lease/fence/reaper, service-authenticated permit/receipt, shared slots, settlement/reconcile và cancel. Kiểm crash/race/CLI bằng hai process cùng PostgreSQL riêng. BE-05 được bổ sung sau theo cập nhật ở trên.
+
+**Tiến độ BE-03 23/10/2026:** [Admission local](baseline/BE-03-admission.md) có request/status/capabilities/quota API và kiểm đồng thời qua hai Node process.
+
+**Tiến độ mới 23/10/2026:** [BE-02 hoàn thành nền local](baseline/BE-02-access-snapshot.md), có guard và snapshot/provenance, kiểm HTTP/DB trên ba lab mẫu. Tiếp theo **BE-03**. Endpoint giải thích hiện có đã qua HTTP test deterministic; UI hội thoại R1 chưa nối API.
+
+**Yêu cầu mới 22/10/2026:** đã cấu hình và gọi thử **Gemini thật** cho nút Giải thích kết quả local theo [ADR-009](adr/ADR-009-local-live-gemini.md), có cap ngày/tháng/toàn ledger và 20 lần thử. Quyết định này thay fake-only cho chức năng đó; chưa triển khai trợ lý hội thoại async hoặc mở production/pilot. Key chỉ ở server env bị ignore. Tiến độ task nền xem cập nhật BE-01 ngày 23/10 ở trên.
 
 | ID | Quyết định | Lý do / điều kiện xem lại |
 |---|---|---|
@@ -33,6 +54,8 @@
 | D10 | Hạ tầng bảo mật, dữ liệu và quota nằm trong luồng đầu tiên | Tính năng pilot dùng lại nền tảng production, tránh phải thay toàn bộ sau pilot |
 
 ## 3. Hiện trạng đã đối chiếu trong workspace
+
+**Cập nhật 19/10/2026 — DISC-01 đã hoàn thành kiểm kê:** xem [baseline local/main/staging/production](baseline/DISC-01-platform-baseline.md), [sổ issue nền tảng](baseline/DISC-01-blockers.md) và [ADR-000](adr/ADR-000-platform-baseline.md). PR #9 đã merge; source main có cùng tree với local HEAD. Frontend production và API readiness đã được kiểm tra, còn revision backend, staging cách ly và một số bằng chứng vận hành chưa xác minh. Đây chưa phải nghiệm thu pilot AI. Bảng dưới giữ nguyên bối cảnh khảo sát ngày 16/10; dùng baseline mới khi bắt đầu task tiếp theo.
 
 Đây là kết quả đọc **working tree local ngày 16/10/2026**. Nhiều thay đổi còn chưa commit; tài liệu này không khẳng định chúng đã merge, chạy trên GitHub hay triển khai production. Phiên soạn kế hoạch không truy cập dữ liệu người học production.
 

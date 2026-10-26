@@ -43,6 +43,8 @@ Người mới học mạng thường biết một vài lệnh nhưng chưa có 
 
 Ba lab R1 nên bao phủ: **IPv4 + trạng thái interface**, **static/default route**, **VLAN access/trunk** theo capability simulator đã kiểm chứng. Chọn ID lab thực tế ở G0. Nếu một loại lệnh chưa hỗ trợ đúng, sửa nội dung/engine trong issue riêng rồi chứng nhận lại; không để AI giả định simulator là toàn bộ Cisco IOS.
 
+**Kết quả DISC-03 ngày 19/10/2026:** đã tạo ba fixture lab mới `AI-IPV4-01`, `AI-ROUTE-01`, `AI-VLAN-01`, chuyển thể theo đúng ba nhóm trên từ PDF người dùng cung cấp. Golden actions, hai cấu hình đúng và sáu lỗi/lab đã được chứng nhận bằng engine/grader local; xem [hồ sơ lab và giới hạn](labs/DISC-03-certified-labs.md). Đây chưa phải lab đã publish trong database, human review hay bằng chứng hiệu quả học tập. DISC-02 được bỏ qua theo yêu cầu; các giả thuyết sản phẩm dưới đây vẫn chưa được xác nhận qua phỏng vấn.
+
 ### 2.1. Chức năng bắt buộc trước pilot
 
 - Hỏi theo attempt, task, thiết bị; server tự lấy context, không tin state do trình duyệt gửi.
