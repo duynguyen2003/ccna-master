@@ -14,6 +14,7 @@ jest.mock('../../../services/Api', () => ({
     cliAchievements: jest.fn(),
     cliReplay: jest.fn(),
     cliAction: jest.fn(),
+    cliExplain: jest.fn(),
     getCliLabAttempt: jest.fn(),
     getCliLabCompletions: jest.fn(),
   },
@@ -51,6 +52,44 @@ beforeEach(() => {
   api.startCliLabAttempt.mockResolvedValue(example());
   api.cliAchievements.mockResolvedValue({ points: 0, completed: 0, badges: [], streak: 0 });
 });
+
+test('feedback explains with Gemini provenance and renders model text without HTML', async () => {
+  api.startCliLabAttempt.mockResolvedValue({
+    ...example(),
+    score: 0,
+    feedback: { checks: [{ passed: false, message: 'Missing route' }] },
+  });
+  const explanation = '<img src=x alt="model-injected" onerror=alert(1)> Kiểm tra đường về.';
+  api.cliExplain.mockResolvedValue({
+    explanation,
+    provider: 'gemini',
+    model: 'gemini-3.5-flash-lite',
+  });
+  render(<CliLabWorkspace lab={{ id: 1 }} />);
+  fireEvent.click(await screen.findByText('Giải thích kết quả'));
+  expect(await screen.findByText('Gemini · gemini-3.5-flash-lite')).toBeInTheDocument();
+  expect(screen.getByText(explanation)).toBeInTheDocument();
+  expect(screen.queryByRole('img', { name: 'model-injected' })).not.toBeInTheDocument();
+  expect(api.cliExplain).toHaveBeenCalledWith('test', 'test-attempt');
+});
+
+test('feedback fallback remains visibly different from a Gemini response', async () => {
+  api.startCliLabAttempt.mockResolvedValue({
+    ...example(),
+    score: 0,
+    feedback: { checks: [{ passed: false, message: 'Missing route' }] },
+  });
+  api.cliExplain.mockResolvedValue({
+    explanation: 'Kiểm tra bảng định tuyến.',
+    provider: 'deterministic',
+    unavailable: true,
+    reason: 'LOCAL_BUDGET_EXHAUSTED',
+  });
+  render(<CliLabWorkspace lab={{ id: 1 }} />);
+  fireEvent.click(await screen.findByText('Giải thích kết quả'));
+  expect(await screen.findByText(/AI chưa khả dụng, đang dùng gợi ý có sẵn/)).toBeInTheDocument();
+  expect(screen.queryByText('Gemini · gemini-3.5-flash-lite')).not.toBeInTheDocument();
+});
 test('admin topology editor adds/removes nodes and synchronizes JSON', () => {
   let current;
   function Editor() {
@@ -79,12 +118,7 @@ test('topology supports keyboard device selection and shows disabled link', () =
   const onSelect = jest.fn();
   const links = networkTemplate.links.map((l) => ({ ...l, enabled: false }));
   render(
-    <NetworkTopology
-      devices={networkTemplate.devices}
-      links={links}
-      onSelect={onSelect}
-      disabled
-    />
+    <NetworkTopology devices={networkTemplate.devices} links={links} onSelect={onSelect} disabled />
   );
   const node = screen.getByRole('button', { name: 'Chọn R1' });
   expect(node).toBeEnabled();

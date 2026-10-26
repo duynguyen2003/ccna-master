@@ -115,6 +115,13 @@ export default function CliLabWorkspace({
   const [joinId, setJoinId] = useState('');
   const [memberId, setMemberId] = useState('');
   const [explanation, setExplanation] = useState('');
+  const [explanationDetails, setExplanationDetails] = useState(null);
+  const explanationOwner = useRef(null);
+  explanationOwner.current = { token, attemptId: attempt?.id };
+  useEffect(() => {
+    setExplanation('');
+    setExplanationDetails(null);
+  }, [token, attempt?.id]);
   const [achievements, setAchievements] = useState(null);
   const [destination, setDestination] = useState('');
   const [protocol, setProtocol] = useState('icmp');
@@ -847,7 +854,8 @@ export default function CliLabWorkspace({
                             disabled={!editable}
                             onClick={toggleSelectedLink}
                           >
-                            {displayed.links?.find((link) => link.id === selectedLink)?.enabled === false
+                            {displayed.links?.find((link) => link.id === selectedLink)?.enabled ===
+                            false
                               ? 'Nối lại dây'
                               : 'Ngắt dây đã chọn'}
                           </button>
@@ -940,8 +948,8 @@ export default function CliLabWorkspace({
                           className="cli-lab-term-tip"
                           title="Probe mô phỏng đường đi của gói tin qua từng hop trong topology"
                         >
-                          Chọn một dây trên topology rồi dùng nút Ngắt/Nối để mô phỏng sự cố; marker gói tin sẽ đi qua
-                          các hop thực tế khi có kết quả.
+                          Chọn một dây trên topology rồi dùng nút Ngắt/Nối để mô phỏng sự cố; marker
+                          gói tin sẽ đi qua các hop thực tế khi có kết quả.
                         </p>
                       </div>
                     </details>
@@ -1120,14 +1128,34 @@ export default function CliLabWorkspace({
                         disabled={busy || isPreview}
                         onClick={() =>
                           perform(async () => {
+                            const owner = explanationOwner.current;
                             const result = await api.cliExplain(token, attempt.id);
+                            if (
+                              explanationOwner.current.token !== owner.token ||
+                              explanationOwner.current.attemptId !== owner.attemptId
+                            )
+                              return;
                             setExplanation(result.explanation);
+                            setExplanationDetails(result);
                           })
                         }
                       >
                         Giải thích kết quả
                       </button>
-                      {explanation && <p className="network-explanation">{explanation}</p>}
+                      {explanation && (
+                        <div aria-live="polite">
+                          <small>
+                            {explanationDetails?.explanation === explanation &&
+                            explanationDetails.provider === 'gemini'
+                              ? `Gemini · ${explanationDetails.model}`
+                              : 'Giải thích theo kết quả chấm'}
+                            {explanationDetails?.explanation === explanation &&
+                              explanationDetails.unavailable &&
+                              ' · AI chưa khả dụng, đang dùng gợi ý có sẵn'}
+                          </small>
+                          <p className="network-explanation">{explanation}</p>
+                        </div>
+                      )}
                     </section>
                   )}
 
