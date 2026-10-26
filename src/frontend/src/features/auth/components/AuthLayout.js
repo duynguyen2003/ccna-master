@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import loginBackground from '../../../assets/images/login1.png';
+import BrandLogo from '../../../components/branding/BrandLogo';
 
 const AuthLayout = ({ children, toast, className = '' }) => {
   const navigate = useNavigate();
@@ -29,12 +30,7 @@ const AuthLayout = ({ children, toast, className = '' }) => {
 
           {/* Glassmorphism Portal Card */}
           <div className="auth-portal-card">
-            <div className="portal-logo-wrapper">
-              <div className="portal-logo">
-                <span className="material-icons-round">router</span>
-              </div>
-            </div>
-            <h1 className="portal-title">NetMastery</h1>
+            <BrandLogo className="portal-brand" inverse />
             <p className="portal-subtitle">Hệ thống Đào tạo Quản trị mạng Toàn cầu</p>
           </div>
         </div>

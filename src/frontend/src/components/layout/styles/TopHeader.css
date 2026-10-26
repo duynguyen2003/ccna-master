@@ -22,36 +22,8 @@
   flex: 0 1 auto;
 }
 
-.logo-icon {
-  width: 36px;
-  height: 36px;
-  background-color: var(--primary-color);
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  box-shadow: 0 4px 6px -1px rgba(0, 122, 255, 0.2);
-}
-
-.logo-text {
-  display: flex;
-  flex-direction: column;
-}
-
-.logo-title {
-  font-weight: 700;
-  font-size: 18px;
-  line-height: 1.2;
-  color: var(--admin-primary);
-}
-
-.logo-subtitle {
-  font-size: 9px;
-  font-weight: 700;
-  color: var(--text-muted);
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+.header-brand {
+  --brand-logo-width: 210px;
 }
 
 /* Search */
@@ -530,7 +502,6 @@
     padding: 0 20px;
   }
 
-  .logo-subtitle,
   .nav-link {
     display: none;
   }
@@ -554,18 +525,16 @@
     gap: 6px;
   }
 
-  .logo-icon {
-    width: 32px;
-    height: 32px;
-    border-radius: 6px;
+  .header-brand {
+    --brand-logo-width: 38px;
+    aspect-ratio: 1.1;
   }
 
-  .logo-icon .material-icons-round {
-    font-size: 20px;
+  .header-brand .brand-logo__mark {
+    width: 100%;
   }
 
-  .logo-text,
-  .logo-subtitle {
+  .header-brand .brand-logo__wordmark {
     display: none;
   }
 

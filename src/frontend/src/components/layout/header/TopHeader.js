@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
 import api, { API_URL } from '../../../services/Api';
 import GuestSectionTabs from './GuestSectionTabs';
+import BrandLogo from '../../branding/BrandLogo';
 
 const NOTCH_NAV_ITEMS = [
   { id: 'home-how-it-works', label: 'Cách học' },
@@ -343,13 +344,7 @@ const TopHeader = () => {
   return (
     <header className="header">
       <Link to="/" className="header-left" style={{ textDecoration: 'none', color: 'inherit' }}>
-        <div className="logo-icon">
-          <span className="material-icons-round">router</span>
-        </div>
-        <div className="logo-text">
-          <span className="logo-title">NetMastery</span>
-          <span className="logo-subtitle">HỌC MẠNG ĐỂ ĐI LÀM</span>
-        </div>
+        <BrandLogo className="header-brand" />
       </Link>
 
       <div

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import BrandLogo from '../../branding/BrandLogo';
 import '../styles/Footer.css';
 
 const COL_COURSES = [
@@ -43,10 +44,7 @@ const Footer = () => {
         <div className="footer__grid">
           <div className="footer__col">
             <Link to="/" className="footer__brand-logo" aria-label="NetMastery - Trang chủ">
-              <div className="footer__brand-icon">
-                <span className="material-icons-round">router</span>
-              </div>
-              <span className="footer__brand-name">NetMastery</span>
+              <BrandLogo className="footer__brand" inverse />
             </Link>
             <p className="footer__brand-slogan">
               Nền tảng học và luyện thi CCNA thực chiến. Từ nền tảng đến kỹ sư mạng chuyên nghiệp.

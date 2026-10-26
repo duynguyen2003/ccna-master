@@ -11,7 +11,6 @@
   --footer-text-subtle: #5a6370;
   --footer-link-hover: #1d9bf0;
   /* Cisco Blue */
-  --footer-logo-bg: #2563eb;
   --footer-divider: #2a2a38;
 }
 
@@ -55,27 +54,8 @@
   text-decoration: none;
 }
 
-.footer__brand-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  background-color: var(--footer-logo-bg);
-  border-radius: 8px;
-  flex-shrink: 0;
-}
-
-.footer__brand-icon .material-icons-round {
-  font-size: 20px !important;
-  color: #ffffff;
-}
-
-.footer__brand-name {
-  font-size: 20px;
-  font-weight: 800;
-  color: var(--footer-text-primary);
-  letter-spacing: -0.3px;
+.footer__brand {
+  --brand-logo-width: 240px;
 }
 
 .footer__brand-slogan {

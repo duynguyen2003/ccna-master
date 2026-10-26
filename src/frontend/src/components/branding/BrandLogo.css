@@ -1,0 +1,30 @@
+.brand-logo {
+  display: inline-flex;
+  align-items: center;
+  width: var(--brand-logo-width, 220px);
+  max-width: 100%;
+  aspect-ratio: 575 / 153;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
+.brand-logo__mark,
+.brand-logo__wordmark {
+  display: block;
+  height: auto;
+  min-width: 0;
+}
+
+.brand-logo__mark {
+  width: 20%;
+}
+
+.brand-logo__wordmark {
+  width: 65%;
+}
+
+.brand-logo--inverse .brand-logo__wordmark,
+[data-theme='dark'] .brand-logo__wordmark,
+.dark .brand-logo__wordmark {
+  filter: brightness(0) invert(1);
+}
