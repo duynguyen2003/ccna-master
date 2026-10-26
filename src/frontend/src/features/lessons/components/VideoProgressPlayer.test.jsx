@@ -44,11 +44,19 @@ beforeEach(() => {
   );
 });
 
+afterEach(() => {
+  jest.useRealTimers();
+  jest.restoreAllMocks();
+  delete document.visibilityState;
+});
+
 test('waits for saved bookmark before mounting player, then resumes the correct lesson', async () => {
   let resolveProgress;
-  api.getVideoProgress.mockReturnValue(new Promise((resolve) => {
-    resolveProgress = resolve;
-  }));
+  api.getVideoProgress.mockReturnValue(
+    new Promise((resolve) => {
+      resolveProgress = resolve;
+    })
+  );
   render(
     <VideoProgressPlayer
       url="https://www.youtube.com/watch?v=abc123"
@@ -124,9 +132,12 @@ test('does not overwrite the bookmark while the resume seek is still pending', a
     mockYoutubeProps.onStateChange({ data: 1, target: player });
     mockYoutubeProps.onStateChange({ data: 2, target: player });
   });
-  expect(api.updateVideoProgress).toHaveBeenCalledWith('token', expect.objectContaining({
-    lastPosition: 42,
-  }));
+  expect(api.updateVideoProgress).toHaveBeenCalledWith(
+    'token',
+    expect.objectContaining({
+      lastPosition: 42,
+    })
+  );
 });
 
 test('flushes short playback on pause and counts real elapsed time at 2x speed', async () => {
@@ -158,24 +169,30 @@ test('flushes short playback on pause and counts real elapsed time at 2x speed',
   act(() => mockYoutubeProps.onStateChange({ data: 2, target: player }));
   await act(async () => Promise.resolve());
   const payloads = api.updateVideoProgress.mock.calls.map((call) => call[1]);
-  expect(payloads.some((payload) =>
-    payload.lastPosition === 8 && payload.sessionWatchedSeconds === 4
-  )).toBe(true);
-  expect(payloads.every((payload) => payload.sessionStartedAt && payload.sessionStartedAt <= payload.capturedAt))
-    .toBe(true);
-  expect(onProgressChange).toHaveBeenCalledWith(expect.objectContaining({
-    playedSeconds: 8,
-    eligibleCompletion: false,
-  }));
+  expect(
+    payloads.some((payload) => payload.lastPosition === 8 && payload.sessionWatchedSeconds === 4)
+  ).toBe(true);
+  expect(
+    payloads.every(
+      (payload) => payload.sessionStartedAt && payload.sessionStartedAt <= payload.capturedAt
+    )
+  ).toBe(true);
+  expect(onProgressChange).toHaveBeenCalledWith(
+    expect.objectContaining({
+      playedSeconds: 8,
+      eligibleCompletion: false,
+    })
+  );
   jest.useRealTimers();
 });
 
 test('ignores a late bookmark response after switching lessons', async () => {
   const resolvers = {};
-  api.getVideoProgress.mockImplementation((token, lessonId) =>
-    new Promise((resolve) => {
-      resolvers[lessonId] = resolve;
-    })
+  api.getVideoProgress.mockImplementation(
+    (token, lessonId) =>
+      new Promise((resolve) => {
+        resolvers[lessonId] = resolve;
+      })
   );
   const metrics = jest.fn();
   const props = {
@@ -195,4 +212,142 @@ test('ignores a late bookmark response after switching lessons', async () => {
   act(() => mockYoutubeProps.onReady({ target: player }));
   expect(player.seekTo).toHaveBeenCalledWith(12, true);
   expect(metrics).not.toHaveBeenCalledWith(1, expect.objectContaining({ lastPosition: 80 }));
+});
+
+const openPlayingVideo = async () => {
+  api.getVideoProgress.mockResolvedValue({ data: { lastPosition: 0, watchedSeconds: 0 } });
+  const view = render(
+    <VideoProgressPlayer
+      url="https://www.youtube.com/watch?v=abc123"
+      lessonId={12}
+      token="token"
+      user={{ role: 'ADMIN' }}
+      onProgressChange={jest.fn()}
+      onMetricsChange={jest.fn()}
+    />
+  );
+  await act(async () => Promise.resolve());
+  const player = makePlayer();
+  act(() => {
+    mockYoutubeProps.onReady({ target: player });
+    mockYoutubeProps.onStateChange({ data: 1, target: player });
+  });
+  return { ...view, player };
+};
+
+test('batches regular playback for at least 30 seconds and flushes a short tail on pause', async () => {
+  jest.useFakeTimers();
+  jest.spyOn(Math, 'random').mockReturnValue(0.4);
+  const { player } = await openPlayingVideo();
+  for (let second = 1; second <= 31; second += 1) {
+    player.setPosition(second);
+    await act(async () => jest.advanceTimersByTime(1000));
+  }
+  expect(api.updateVideoProgress).not.toHaveBeenCalled();
+  player.setPosition(32);
+  await act(async () => jest.advanceTimersByTime(1000));
+  expect(api.updateVideoProgress).toHaveBeenCalledTimes(1);
+  expect(api.updateVideoProgress.mock.calls[0][1]).toMatchObject({
+    lastPosition: 32,
+    sessionWatchedSeconds: 32,
+    sequence: 1,
+  });
+  player.setPosition(33);
+  await act(async () => jest.advanceTimersByTime(1000));
+  await act(async () => mockYoutubeProps.onStateChange({ data: 2, target: player }));
+  expect(api.updateVideoProgress).toHaveBeenCalledTimes(2);
+  expect(api.updateVideoProgress.mock.calls[1][1]).toMatchObject({
+    lastPosition: 33,
+    sessionWatchedSeconds: 33,
+    sequence: 2,
+  });
+});
+
+test('hiding the page sends one keepalive snapshot and stops accumulating hidden watch time', async () => {
+  jest.useFakeTimers();
+  const { player } = await openPlayingVideo();
+  player.setPosition(4);
+  await act(async () => jest.advanceTimersByTime(4000));
+  Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'hidden' });
+  await act(async () => document.dispatchEvent(new Event('visibilitychange')));
+  expect(api.updateVideoProgress).toHaveBeenCalledTimes(1);
+  expect(api.updateVideoProgress.mock.calls[0]).toEqual([
+    'token',
+    expect.objectContaining({ lastPosition: 4, sessionWatchedSeconds: 4 }),
+    { keepalive: true },
+  ]);
+  player.setPosition(24);
+  await act(async () => jest.advanceTimersByTime(20000));
+  expect(api.updateVideoProgress).toHaveBeenCalledTimes(1);
+  Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'visible' });
+  await act(async () => document.dispatchEvent(new Event('visibilitychange')));
+  player.setPosition(25);
+  await act(async () => jest.advanceTimersByTime(1000));
+  await act(async () => mockYoutubeProps.onStateChange({ data: 2, target: player }));
+  expect(api.updateVideoProgress.mock.calls.at(-1)[1].sessionWatchedSeconds).toBe(5);
+});
+
+test('retries an unacknowledged batch with the same identity and later saves cumulative time', async () => {
+  jest.useFakeTimers();
+  jest.spyOn(Math, 'random').mockReturnValue(0);
+  jest.spyOn(console, 'error').mockImplementation(() => {});
+  api.updateVideoProgress.mockRejectedValueOnce(new Error('offline'));
+  const { player } = await openPlayingVideo();
+  for (let second = 1; second <= 30; second += 1) {
+    player.setPosition(second);
+    await act(async () => jest.advanceTimersByTime(1000));
+  }
+  expect(api.updateVideoProgress).toHaveBeenCalledTimes(1);
+  const first = api.updateVideoProgress.mock.calls[0][1];
+  await act(async () => jest.advanceTimersByTime(2500));
+  expect(api.updateVideoProgress).toHaveBeenCalledTimes(2);
+  expect(api.updateVideoProgress.mock.calls[1][1]).toEqual(first);
+  player.setPosition(34);
+  await act(async () => mockYoutubeProps.onStateChange({ data: 2, target: player }));
+  const tail = api.updateVideoProgress.mock.calls.at(-1)[1];
+  expect(tail.sessionId).toBe(first.sessionId);
+  expect(tail.sequence).toBeGreaterThan(first.sequence);
+  expect(tail.sessionWatchedSeconds).toBeGreaterThan(first.sessionWatchedSeconds);
+});
+
+test('leaving the lesson before its first scheduled save persists the current position', async () => {
+  jest.useFakeTimers();
+  const { player, unmount } = await openPlayingVideo();
+  player.setPosition(8);
+  await act(async () => jest.advanceTimersByTime(4000));
+  await act(async () => unmount());
+  expect(api.updateVideoProgress).toHaveBeenCalledTimes(1);
+  expect(api.updateVideoProgress.mock.calls[0]).toEqual([
+    'token',
+    expect.objectContaining({ lastPosition: 8, sessionWatchedSeconds: 4 }),
+    { keepalive: true },
+  ]);
+});
+
+test('keeps backoff when a newer cumulative snapshot replaces an offline batch', async () => {
+  jest.useFakeTimers();
+  jest.spyOn(Math, 'random').mockReturnValue(0);
+  jest.spyOn(console, 'error').mockImplementation(() => {});
+  api.updateVideoProgress
+    .mockRejectedValueOnce(new Error('offline'))
+    .mockRejectedValueOnce(new Error('offline'));
+  const { player } = await openPlayingVideo();
+  for (let second = 1; second <= 30; second += 1) {
+    player.setPosition(second);
+    await act(async () => jest.advanceTimersByTime(1000));
+  }
+  await act(async () => jest.advanceTimersByTime(2500));
+  expect(api.updateVideoProgress).toHaveBeenCalledTimes(2);
+  const original = api.updateVideoProgress.mock.calls[0][1];
+  player.setPosition(33);
+  await act(async () => jest.advanceTimersByTime(500));
+  await act(async () => mockYoutubeProps.onStateChange({ data: 2, target: player }));
+  expect(api.updateVideoProgress).toHaveBeenCalledTimes(2);
+  await act(async () => jest.advanceTimersByTime(4500));
+  expect(api.updateVideoProgress).toHaveBeenCalledTimes(3);
+  const saved = api.updateVideoProgress.mock.calls[2][1];
+  expect(saved.sessionId).toBe(original.sessionId);
+  expect(saved.sequence).toBeGreaterThan(original.sequence);
+  expect(saved.sessionWatchedSeconds).toBe(33);
+  expect(saved.lastPosition).toBe(33);
 });

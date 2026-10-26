@@ -100,7 +100,6 @@ module.exports.getById = async (req, res, next) => {
         lastLogin: true,
         level: true,
         streak: true,
-        totalStudyTime: true,
         progress: {
           where: { moduleId: null, lessonId: null, labId: null },
           select: {
@@ -121,7 +120,11 @@ module.exports.getById = async (req, res, next) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    res.json(user);
+    const totals = await prisma.studyLog.aggregate({
+      where: { userId: user.id },
+      _sum: { duration: true },
+    });
+    res.json({ ...user, totalStudyTime: Math.floor((totals._sum.duration || 0) / 60) });
   } catch (error) {
     next(error);
   }
@@ -135,7 +138,7 @@ module.exports.getProfileMe = async (req, res, next) => {
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
-    const [user, completedLabs, totalLabsCount] = await Promise.all([
+    const [user, completedLabs, totalLabsCount, studyTotals] = await Promise.all([
       prisma.user.findUnique({
         where: { id: userId },
         select: {
@@ -148,7 +151,6 @@ module.exports.getProfileMe = async (req, res, next) => {
           createdAt: true,
           level: true,
           streak: true,
-          totalStudyTime: true,
           // ... (rest of the fields)
           progress: {
             where: { moduleId: null, lessonId: null, labId: null, progressPercent: { gt: 0 } },
@@ -188,6 +190,7 @@ module.exports.getProfileMe = async (req, res, next) => {
         where: { userId, labId: { not: null }, status: 'COMPLETED' },
       }),
       prisma.lab.count({ where: { deletedAt: null } }),
+      prisma.studyLog.aggregate({ where: { userId }, _sum: { duration: true } }),
     ]);
 
     if (!user) {
@@ -247,10 +250,12 @@ module.exports.getProfileMe = async (req, res, next) => {
 
     // [FIX] Destructure studyLogs ra khỏi baseUser để không bị lộ raw data
     const { examResults, progress, activities, studyLogs, ...baseUser } = user;
+    const totalStudyTime = Math.floor((studyTotals._sum.duration || 0) / 60);
 
     return res.json({
       data: {
         ...baseUser,
+        totalStudyTime,
         progress: courseProgress,
         totalProgress,
         weeklyScores,
@@ -258,7 +263,7 @@ module.exports.getProfileMe = async (req, res, next) => {
         activities: activities,
         badges: user.badges,
         stats: {
-          totalStudyTime: user.totalStudyTime, // unit: minutes
+          totalStudyTime, // unit: minutes; floor after summing seconds across all days
           avgScore: averageScore,
           examCount: examResults.length,
           labsDone: completedLabs,

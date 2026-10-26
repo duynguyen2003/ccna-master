@@ -19,7 +19,9 @@ const getYoutubeVideoId = (url) => {
     const host = parsed.hostname.toLowerCase();
     if (host === 'youtu.be' || host === 'www.youtu.be') return parsed.pathname.slice(1);
     if (host === 'youtube.com' || host === 'www.youtube.com' || host === 'm.youtube.com') {
-      return parsed.searchParams.get('v') || parsed.pathname.match(/^\/(?:embed|shorts)\/([^/]+)/)?.[1];
+      return (
+        parsed.searchParams.get('v') || parsed.pathname.match(/^\/(?:embed|shorts)\/([^/]+)/)?.[1]
+      );
     }
   } catch {
     return null;
@@ -36,6 +38,7 @@ const newSessionId = () =>
       });
 
 const initialBookmark = { lastPosition: 0, watchedSeconds: 0, isCompleted: false };
+const nextSyncDelay = () => 30000 + Math.floor(Math.random() * 5000);
 
 const VideoProgressPlayer = ({
   url,
@@ -68,7 +71,8 @@ const VideoProgressPlayer = ({
   if (!sessionStartedAtRef.current) sessionStartedAtRef.current = new Date().toISOString();
   const sequenceRef = useRef(0);
   const lastQueuedRef = useRef(null);
-  const lastQueuedAtRef = useRef(0);
+  const nextSyncAtRef = useRef(null);
+  const retryCountRef = useRef(0);
   const pendingRef = useRef(null);
   const inFlightRef = useRef(false);
   const mountedRef = useRef(true);
@@ -121,7 +125,7 @@ const VideoProgressPlayer = ({
   }, [lessonId, token, bookmarkAttempt]);
 
   const pump = () => {
-    if (!token || inFlightRef.current || !pendingRef.current) return;
+    if (!token || inFlightRef.current || retryTimerRef.current || !pendingRef.current) return;
     const payload = pendingRef.current;
     pendingRef.current = null;
     inFlightRef.current = true;
@@ -129,6 +133,7 @@ const VideoProgressPlayer = ({
     api
       .updateVideoProgress(token, payload)
       .then((response) => {
+        retryCountRef.current = 0;
         if (mountedRef.current) {
           emitMetrics({
             lastPosition: response.data?.lastPosition ?? payload.lastPosition,
@@ -144,10 +149,13 @@ const VideoProgressPlayer = ({
         }
         if (mountedRef.current) emitMetrics({ saveStatus: 'error' });
         if (!retryTimerRef.current && mountedRef.current) {
+          const retryDelay =
+            Math.min(30000, 2500 * 2 ** Math.min(retryCountRef.current++, 4)) +
+            Math.floor(Math.random() * 1000);
           retryTimerRef.current = window.setTimeout(() => {
             retryTimerRef.current = null;
             pump();
-          }, 2500);
+          }, retryDelay);
         }
       })
       .finally(() => {
@@ -161,6 +169,7 @@ const VideoProgressPlayer = ({
     const currentPosition = Math.max(0, Math.floor(playerRef.current.getCurrentTime() || 0));
     const sessionWatchedSeconds = Math.floor(watchedMsRef.current / 1000);
     const previous = lastQueuedRef.current;
+    if (!previous && currentPosition === 0 && sessionWatchedSeconds === 0) return;
     if (
       previous &&
       previous.lastPosition === currentPosition &&
@@ -169,7 +178,7 @@ const VideoProgressPlayer = ({
       if (keepalive) api.updateVideoProgress(token, previous, { keepalive: true }).catch(() => {});
       return;
     }
-    if (!force && Date.now() - lastQueuedAtRef.current < 10000) return;
+    if (!force && (nextSyncAtRef.current === null || Date.now() < nextSyncAtRef.current)) return;
     const payload = {
       lessonId,
       sessionId: sessionIdRef.current,
@@ -180,7 +189,7 @@ const VideoProgressPlayer = ({
       capturedAt: new Date().toISOString(),
     };
     lastQueuedRef.current = payload;
-    lastQueuedAtRef.current = Date.now();
+    nextSyncAtRef.current = Date.now() + nextSyncDelay();
     if (keepalive) {
       api.updateVideoProgress(token, payload, { keepalive: true }).catch(() => {});
     } else {
@@ -189,7 +198,7 @@ const VideoProgressPlayer = ({
     }
   };
 
-  const sample = (player, force = false) => {
+  const sample = (player, force = false, keepalive = false) => {
     if (!player) return;
     const currentTime = Math.max(0, Number(player.getCurrentTime()) || 0);
     const duration = Math.max(0, Number(player.getDuration()) || 0);
@@ -205,9 +214,10 @@ const VideoProgressPlayer = ({
         resumeTargetRef.current = 0;
       }
     }
-    const expectedAdvance = lastTickRef.current !== null
-      ? ((now - lastTickRef.current) / 1000) * (player.getPlaybackRate?.() || 1)
-      : 0;
+    const expectedAdvance =
+      lastTickRef.current !== null
+        ? ((now - lastTickRef.current) / 1000) * (player.getPlaybackRate?.() || 1)
+        : 0;
     const seekTolerance = Math.max(3, Math.ceil(expectedAdvance) + 2);
     if (token && user?.role !== 'ADMIN' && position > maxViewedTimeRef.current + seekTolerance) {
       player.seekTo(maxViewedTimeRef.current, true);
@@ -215,7 +225,11 @@ const VideoProgressPlayer = ({
       return;
     }
     maxViewedTimeRef.current = Math.max(maxViewedTimeRef.current, position);
-    if (isPlayingRef.current && lastTickRef.current !== null && document.visibilityState !== 'hidden') {
+    if (
+      isPlayingRef.current &&
+      lastTickRef.current !== null &&
+      (document.visibilityState !== 'hidden' || force)
+    ) {
       watchedMsRef.current += Math.min(2000, Math.max(0, now - lastTickRef.current));
     }
     lastTickRef.current = now;
@@ -233,7 +247,7 @@ const VideoProgressPlayer = ({
       watchedSeconds: baseWatchedSecondsRef.current + Math.floor(watchedMsRef.current / 1000),
       durationSeconds: duration,
     });
-    queueSnapshot(force);
+    queueSnapshot(force, keepalive);
   };
 
   const stopTracking = (player, flush = true) => {
@@ -251,6 +265,7 @@ const VideoProgressPlayer = ({
     if (intervalRef.current) clearInterval(intervalRef.current);
     playerRef.current = player;
     isPlayingRef.current = true;
+    nextSyncAtRef.current = Date.now() + nextSyncDelay();
     lastTickRef.current = performance.now();
     intervalRef.current = setInterval(() => sample(player), 1000);
   };
@@ -290,11 +305,11 @@ const VideoProgressPlayer = ({
   };
 
   useEffect(() => {
+    mountedRef.current = true;
     const handlePageHide = () => {
       const player = playerRef.current;
       if (player) {
-        sample(player, true);
-        queueSnapshot(true, true);
+        sample(player, true, true);
       }
     };
     const handleVisibility = () => {
@@ -305,6 +320,7 @@ const VideoProgressPlayer = ({
         lastTickRef.current = null;
       } else if (isPlayingRef.current && playerRef.current && !intervalRef.current) {
         lastTickRef.current = performance.now();
+        nextSyncAtRef.current = Date.now() + nextSyncDelay();
         intervalRef.current = setInterval(() => sample(playerRef.current), 1000);
       }
     };
@@ -373,6 +389,7 @@ const VideoProgressPlayer = ({
         const player = {
           getCurrentTime: () => video.currentTime,
           getDuration: () => video.duration,
+          getPlaybackRate: () => video.playbackRate,
           seekTo: (seconds) => {
             video.currentTime = seconds;
           },
