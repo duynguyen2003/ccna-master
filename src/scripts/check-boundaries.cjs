@@ -14,6 +14,8 @@ const layer = (filename) => {
   const relative = path.relative(root, filename).split(path.sep).join('/');
   if (relative.startsWith('src/frontend/src/')) return 'frontend';
   if (relative.startsWith('src/backend/src/')) return 'backend';
+  if (relative.startsWith('src/agent/contracts/')) return 'agent-contracts';
+  if (relative.startsWith('src/agent/')) return 'agent';
   if (relative.startsWith('src/shared/')) return 'shared';
   return 'tooling';
 };
@@ -44,7 +46,7 @@ const checkImport = (filename, request) => {
     const builtin = request.startsWith('node:') || nativeModules.has(request);
     if (builtin) {
       assert.ok(
-        issuerLayer !== 'frontend' && issuerLayer !== 'shared',
+        !['frontend', 'shared', 'agent-contracts'].includes(issuerLayer),
         `${issuerLayer} must not depend on Node built-ins: ${request}`
       );
       return;
@@ -54,16 +56,22 @@ const checkImport = (filename, request) => {
       : createRequire(filename).resolve(request);
     const targetLayer = layer(target);
     if (issuerLayer === 'frontend') {
-      assert.ok(targetLayer !== 'backend', 'Frontend must not import backend code');
+      assert.ok(
+        !['backend', 'agent'].includes(targetLayer),
+        'Frontend must not import backend or agent server code'
+      );
     }
-    if (issuerLayer === 'backend') {
+    if (issuerLayer === 'backend' || issuerLayer === 'agent') {
       assert.ok(targetLayer !== 'frontend', 'Backend must not import frontend code');
     }
-    if (issuerLayer === 'shared') {
+    if (issuerLayer === 'shared' || issuerLayer === 'agent-contracts') {
       assert.ok(
-        targetLayer !== 'frontend' && targetLayer !== 'backend',
-        'Shared code must not import either application'
+        !['frontend', 'backend', 'agent'].includes(targetLayer),
+        'Shared code and agent contracts must remain browser safe'
       );
+    }
+    if (targetLayer === 'agent' && issuerLayer === 'backend') {
+      assert.ok(request.startsWith('@ccna/agent/'), 'Import agent through @ccna/agent subpaths');
     }
     if (targetLayer === 'shared' && issuerLayer !== 'shared') {
       assert.ok(request.startsWith('@ccna/shared/'), 'Import shared through @ccna/shared subpaths');
@@ -130,6 +138,7 @@ const visitDirectory = (directory) => {
 for (const directory of [
   'src/frontend/src',
   'src/backend/src',
+  'src/agent',
   'src/shared',
   'src/scripts',
   'src/frontend/scripts',
@@ -141,6 +150,6 @@ if (errors.length) {
   process.exitCode = 1;
 } else {
   console.log(
-    `Verified ${checkedImports} imports/assets across ${checkedFiles} source files; frontend/backend/shared boundaries are intact.`
+    `Verified ${checkedImports} imports/assets across ${checkedFiles} source files; frontend/backend/agent/shared boundaries are intact.`
   );
 }

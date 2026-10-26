@@ -1,0 +1,51 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "contractVersion": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "helpful": {
+      "type": "boolean"
+    },
+    "reasonCode": {
+      "anyOf": [
+        {
+          "type": "string",
+          "enum": [
+            "WRONG_FACT",
+            "WRONG_DEVICE",
+            "UNSUPPORTED_COMMAND",
+            "TOO_MUCH_SOLUTION",
+            "TOO_VAGUE",
+            "STALE",
+            "SLOW",
+            "OTHER"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "comment": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^[\\s\\S]{1,1000}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "contractVersion",
+    "helpful",
+    "reasonCode"
+  ],
+  "additionalProperties": false,
+  "$id": "urn:ccna:ai-lab:v1:FeedbackRequest"
+}

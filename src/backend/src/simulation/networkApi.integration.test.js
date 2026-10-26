@@ -317,15 +317,15 @@ test(
         assert.equal(r.body.data.points, 100);
         assert.equal(r.body.data.completed, 1);
         // No live provider calls from this integration test.
-        const saved = process.env.LAB_AI_URL;
-        delete process.env.LAB_AI_URL;
+        const saved = process.env.LAB_AI_MODE;
+        delete process.env.LAB_AI_MODE;
         try {
           assert.equal(
             (await request(path() + '/explain', 0, 'POST')).body.data.provider,
             'deterministic'
           );
         } finally {
-          if (saved) process.env.LAB_AI_URL = saved;
+          if (saved) process.env.LAB_AI_MODE = saved;
         }
       });
       await t.test('40 concurrent authenticated reads complete without errors', async () => {

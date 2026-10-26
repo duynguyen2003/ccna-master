@@ -7,11 +7,13 @@
     "./package.json": "./package.json",
     "./cliLabCatalog": "./cliLabCatalog.js",
     "./cliLabSchema": "./cliLabSchema.js",
+    "./aiLabContract": "./aiLabContract.js",
     "./sanitizeHtml": "./sanitizeHtml.js",
     "./simulation/*": "./simulation/*.js",
     "./labs/*": "./labs/*.js"
   },
   "dependencies": {
+    "@ccna/agent-contracts": "workspace:*",
     "zod": "^4.3.6"
   }
 }

@@ -4,8 +4,23 @@ const { cliCommandLimiter } = require('../middleware/rateLimiter');
 const controller = require('../controllers/labAttemptController');
 
 const router = express.Router();
+const { aiAccessMiddleware } = require('@ccna/agent/node/middleware');
+const { getPrisma } = require('../config/database');
+
+router.use(
+  '/:attemptId/ai',
+  aiAccessMiddleware(getPrisma(), process.env.AI_ENVIRONMENT || 'local', process.env.JWT_SECRET)
+);
 
 router.use(verifyToken);
+router.use(
+  '/:attemptId/ai',
+  require('@ccna/agent/routes/aiLab')(getPrisma(), {
+    environment: process.env.AI_ENVIRONMENT || 'local',
+    recoveryEpoch: process.env.AI_RECOVERY_EPOCH,
+    ownerSecret: process.env.AI_OWNER_SECRET,
+  })
+);
 router.get('/achievements', controller.achievements);
 router.post('/:attemptId/actions', cliCommandLimiter, controller.executeAttemptCommand);
 router.get('/:attemptId/replay', cliCommandLimiter, controller.replayAttempt);

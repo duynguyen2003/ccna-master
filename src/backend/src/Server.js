@@ -9,6 +9,7 @@ const {
   initializeDatabase,
   disconnectDatabase,
   checkDatabaseHealth,
+  getPrisma,
 } = require('./config/database');
 const { requestLogger } = require('./middleware/logging');
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
@@ -51,6 +52,14 @@ app.use(
     },
     credentials: true,
   })
+);
+// Separate service authentication and a bounded parser for private AI callbacks.
+app.use(
+  '/internal/v1/ai',
+  require('@ccna/agent/routes/aiInternal')(
+    getPrisma(),
+    require('@ccna/agent/node/workerConfig').runtimeConfig()
+  )
 );
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

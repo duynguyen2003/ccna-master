@@ -1,0 +1,1400 @@
+{
+  "fixtureVersion": "disc03-v1",
+  "lab": {
+    "id": "AI-ROUTE-01",
+    "title": "Static và default route hai chiều",
+    "objective": "Connect PC1 (192.0.2.10/24) and PC2 (198.51.100.10/24) across R1-R2 (203.0.113.0/30). Specific static routes or default routes are acceptable when both request and reply succeed. Do not change the given IP addresses.",
+    "commandProfile": "ccna-network-v2",
+    "simulatorVersion": "2.1.0",
+    "limitations": [
+      "Static/default routing subset; no floating AD, RIP, source-specific ping, or failover certification."
+    ]
+  },
+  "cases": [
+    {
+      "id": "route-01",
+      "request": {
+        "intent": "DIAGNOSE",
+        "sourceId": "PC1",
+        "destination": "198.51.100.10",
+        "question": "Kiểm tra kết nối này: đã đủ bằng chứng kết luận lỗi chưa và nên kiểm tra gì tiếp theo?"
+      },
+      "context": {
+        "revision": 10,
+        "tick": 0,
+        "devices": {
+          "PC1": {
+            "hostname": "PC1",
+            "deviceType": "PC",
+            "interfaces": {
+              "GigabitEthernet0/0": {
+                "ipAddress": "192.0.2.10",
+                "subnetMask": "255.255.255.0",
+                "shutdown": false,
+                "switchportMode": null,
+                "accessVlan": null
+              }
+            },
+            "vlans": {
+              "1": {
+                "name": "default"
+              }
+            },
+            "staticRoutes": [
+              {
+                "network": "0.0.0.0",
+                "mask": "0.0.0.0",
+                "nextHop": "192.0.2.1"
+              }
+            ]
+          },
+          "R1": {
+            "hostname": "R1",
+            "deviceType": "ROUTER",
+            "interfaces": {
+              "GigabitEthernet0/0": {
+                "ipAddress": "192.0.2.1",
+                "subnetMask": "255.255.255.0",
+                "shutdown": false,
+                "switchportMode": null,
+                "accessVlan": null
+              },
+              "GigabitEthernet0/1": {
+                "ipAddress": "203.0.113.1",
+                "subnetMask": "255.255.255.252",
+                "shutdown": false,
+                "switchportMode": null,
+                "accessVlan": null
+              },
+              "GigabitEthernet0/3": {
+                "ipAddress": null,
+                "subnetMask": null,
+                "shutdown": true,
+                "switchportMode": null,
+                "accessVlan": null
+              }
+            },
+            "vlans": {
+              "1": {
+                "name": "default"
+              }
+            },
+            "staticRoutes": [
+              {
+                "network": "198.51.100.0",
+                "mask": "255.255.255.0",
+                "nextHop": "203.0.113.2"
+              }
+            ]
+          },
+          "R2": {
+            "hostname": "R2",
+            "deviceType": "ROUTER",
+            "interfaces": {
+              "GigabitEthernet0/0": {
+                "ipAddress": "203.0.113.2",
+                "subnetMask": "255.255.255.252",
+                "shutdown": false,
+                "switchportMode": null,
+                "accessVlan": null
+              },
+              "GigabitEthernet0/1": {
+                "ipAddress": "198.51.100.1",
+                "subnetMask": "255.255.255.0",
+                "shutdown": false,
+                "switchportMode": null,
+                "accessVlan": null
+              }
+            },
+            "vlans": {
+              "1": {
+                "name": "default"
+              }
+            },
+            "staticRoutes": [
+              {
+                "network": "192.0.2.0",
+                "mask": "255.255.255.0",
+                "nextHop": "203.0.113.1"
+              }
+            ]
+          },
+          "PC2": {
+            "hostname": "PC2",
+            "deviceType": "PC",
+            "interfaces": {
+              "GigabitEthernet0/0": {
+                "ipAddress": "198.51.100.10",
+                "subnetMask": "255.255.255.0",
+                "shutdown": false,
+                "switchportMode": null,
+                "accessVlan": null
+              }
+            },
+            "vlans": {
+              "1": {
+                "name": "default"
+              }
+            },
+            "staticRoutes": [
+              {
+                "network": "0.0.0.0",
+                "mask": "0.0.0.0",
+                "nextHop": "198.51.100.1"
+              }
+            ]
+          }
+        },
+        "links": [
+          {
+            "id": "L1",
+            "a": {
+              "deviceId": "PC1",
+              "interface": "GigabitEthernet0/0"
+            },
+            "b": {
+              "deviceId": "R1",
+              "interface": "GigabitEthernet0/0"
+            },
+            "enabled": true
+          },
+          {
+            "id": "L2",
+            "a": {
+              "deviceId": "R1",
+              "interface": "GigabitEthernet0/1"
+            },
+            "b": {
+              "deviceId": "R2",
+              "interface": "GigabitEthernet0/0"
+            },
+            "enabled": true
+          },
+          {
+            "id": "L3",
+            "a": {
+              "deviceId": "R2",
+              "interface": "GigabitEthernet0/1"
+            },
+            "b": {
+              "deviceId": "PC2",
+              "interface": "GigabitEthernet0/0"
+            },
+            "enabled": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "route-02",
+      "request": {
+        "intent": "DIAGNOSE",
+        "sourceId": "PC1",
+        "destination": "198.51.100.10",
+        "question": "Kiểm tra kết nối này: đã đủ bằng chứng kết luận lỗi chưa và nên kiểm tra gì tiếp theo?"
+      },
+      "context": {
+        "revision": 22,
+        "tick": 0,
+        "devices": {
+          "PC1": {
+            "hostname": "PC1",
+            "deviceType": "PC",
+            "interfaces": {
+              "GigabitEthernet0/0": {
+                "ipAddress": "192.0.2.10",
+                "subnetMask": "255.255.255.0",
+                "shutdown": false,
+                "switchportMode": null,
+                "accessVlan": null
+              }
+            },
+            "vlans": {
+              "1": {
+                "name": "default"
+              }
+            },
+            "staticRoutes": [
+              {
+                "network": "0.0.0.0",
+                "mask": "0.0.0.0",
+                "nextHop": "192.0.2.1"
+              }
+            ]
+          },
+          "R1": {
+            "hostname": "R1",
+            "deviceType": "ROUTER",
+            "interfaces": {
+              "GigabitEthernet0/0": {
+                "ipAddress": "192.0.2.1",
+                "subnetMask": "255.255.255.0",
+                "shutdown": false,
+                "switchportMode": null,
+                "accessVlan": null
+              },
+              "GigabitEthernet0/1": {
+                "ipAddress": "203.0.113.1",
+                "subnetMask": "255.255.255.252",
+                "shutdown": false,
+                "switchportMode": null,
+                "accessVlan": null
+              },
+              "GigabitEthernet0/3": {
+                "ipAddress": null,
+                "subnetMask": null,
+                "shutdown": true,
+                "switchportMode": null,
+                "accessVlan": null
+              }
+            },
+            "vlans": {
+              "1": {
+                "name": "default"
+              }
+            },
+            "staticRoutes": [
+              {
+                "network": "0.0.0.0",
+                "mask": "0.0.0.0",
+                "nextHop": "203.0.113.2"
+              }
+            ]
+          },
+          "R2": {
+            "hostname": "R2",
+            "deviceType": "ROUTER",
+            "interfaces": {
+              "GigabitEthernet0/0": {
+                "ipAddress": "203.0.113.2",
+                "subnetMask": "255.255.255.252",
+                "shutdown": false,
+                "switchportMode": null,
+                "accessVlan": null
+              },
+              "GigabitEthernet0/1": {
+                "ipAddress": "198.51.100.1",
+                "subnetMask": "255.255.255.0",
+                "shutdown": false,
+                "switchportMode": null,
+                "accessVlan": null
+              }
+            },
+            "vlans": {
+              "1": {
+                "name": "default"
+              }
+            },
+            "staticRoutes": [
+              {
+                "network": "0.0.0.0",
+                "mask": "0.0.0.0",
+                "nextHop": "203.0.113.1"
+              }
+            ]
+          },
+          "PC2": {
+            "hostname": "PC2",
+            "deviceType": "PC",
+            "interfaces": {
+              "GigabitEthernet0/0": {
+                "ipAddress": "198.51.100.10",
+                "subnetMask": "255.255.255.0",
+                "shutdown": false,
+                "switchportMode": null,
+                "accessVlan": null
+              }
+            },
+            "vlans": {
+              "1": {
+                "name": "default"
+              }
+            },
+            "staticRoutes": [
+              {
+                "network": "0.0.0.0",
+                "mask": "0.0.0.0",
+                "nextHop": "198.51.100.1"
+              }
+            ]
+          }
+        },
+        "links": [
+          {
+            "id": "L1",
+            "a": {
+              "deviceId": "PC1",
+              "interface": "GigabitEthernet0/0"
+            },
+            "b": {
+              "deviceId": "R1",
+              "interface": "GigabitEthernet0/0"
+            },
+            "enabled": true
+          },
+          {
+            "id": "L2",
+            "a": {
+              "deviceId": "R1",
+              "interface": "GigabitEthernet0/1"
+            },
+            "b": {
+              "deviceId": "R2",
+              "interface": "GigabitEthernet0/0"
+            },
+            "enabled": true
+          },
+          {
+            "id": "L3",
+            "a": {
+              "deviceId": "R2",
+              "interface": "GigabitEthernet0/1"
+            },
+            "b": {
+              "deviceId": "PC2",
+              "interface": "GigabitEthernet0/0"
+            },
+            "enabled": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "route-03",
+      "request": {
+        "intent": "DIAGNOSE",
+        "sourceId": "PC1",
+        "destination": "198.51.100.10",
+        "question": "Kiểm tra kết nối này: đã đủ bằng chứng kết luận lỗi chưa và nên kiểm tra gì tiếp theo?"
+      },
+      "context": {
+        "revision": 15,
+        "tick": 0,
+        "devices": {
+          "PC1": {
+            "hostname": "PC1",
+            "deviceType": "PC",
+            "interfaces": {
+              "GigabitEthernet0/0": {
+                "ipAddress": "192.0.2.10",
+                "subnetMask": "255.255.255.0",
+                "shutdown": false,
+                "switchportMode": null,
+                "accessVlan": null
+              }
+            },
+            "vlans": {
+              "1": {
+                "name": "default"
+              }
+            },
+            "staticRoutes": [
+              {
+                "network": "0.0.0.0",
+                "mask": "0.0.0.0",
+                "nextHop": "192.0.2.1"
+              }
+            ]
+          },
+          "R1": {
+            "hostname": "R1",
+            "deviceType": "ROUTER",
+            "interfaces": {
+              "GigabitEthernet0/0": {
+                "ipAddress": "192.0.2.1",
+                "subnetMask": "255.255.255.0",
+                "shutdown": false,
+                "switchportMode": null,
+                "accessVlan": null
+              },
+              "GigabitEthernet0/1": {
+                "ipAddress": "203.0.113.1",
+                "subnetMask": "255.255.255.252",
+                "shutdown": false,
+                "switchportMode": null,
+                "accessVlan": null
+              },
+              "GigabitEthernet0/3": {
+                "ipAddress": null,
+                "subnetMask": null,
+                "shutdown": true,
+                "switchportMode": null,
+                "accessVlan": null
+              }
+            },
+            "vlans": {
+              "1": {
+                "name": "default"
+              }
+            },
+            "staticRoutes": []
+          },
+          "R2": {
+            "hostname": "R2",
+            "deviceType": "ROUTER",
+            "interfaces": {
+              "GigabitEthernet0/0": {
+                "ipAddress": "203.0.113.2",
+                "subnetMask": "255.255.255.252",
+                "shutdown": false,
+                "switchportMode": null,
+                "accessVlan": null
+              },
+              "GigabitEthernet0/1": {
+                "ipAddress": "198.51.100.1",
+                "subnetMask": "255.255.255.0",
+                "shutdown": false,
+                "switchportMode": null,
+                "accessVlan": null
+              }
+            },
+            "vlans": {
+              "1": {
+                "name": "default"
+              }
+            },
+            "staticRoutes": [
+              {
+                "network": "192.0.2.0",
+                "mask": "255.255.255.0",
+                "nextHop": "203.0.113.1"
+              }
+            ]
+          },
+          "PC2": {
+            "hostname": "PC2",
+            "deviceType": "PC",
+            "interfaces": {
+              "GigabitEthernet0/0": {
+                "ipAddress": "198.51.100.10",
+                "subnetMask": "255.255.255.0",
+                "shutdown": false,
+                "switchportMode": null,
+                "accessVlan": null
+              }
+            },
+            "vlans": {
+              "1": {
+                "name": "default"
+              }
+            },
+            "staticRoutes": [
+              {
+                "network": "0.0.0.0",
+                "mask": "0.0.0.0",
+                "nextHop": "198.51.100.1"
+              }
+            ]
+          }
+        },
+        "links": [
+          {
+            "id": "L1",
+            "a": {
+              "deviceId": "PC1",
+              "interface": "GigabitEthernet0/0"
+            },
+            "b": {
+              "deviceId": "R1",
+              "interface": "GigabitEthernet0/0"
+            },
+            "enabled": true
+          },
+          {
+            "id": "L2",
+            "a": {
+              "deviceId": "R1",
+              "interface": "GigabitEthernet0/1"
+            },
+            "b": {
+              "deviceId": "R2",
+              "interface": "GigabitEthernet0/0"
+            },
+            "enabled": true
+          },
+          {
+            "id": "L3",
+            "a": {
+              "deviceId": "R2",
+              "interface": "GigabitEthernet0/1"
+            },
+            "b": {
+              "deviceId": "PC2",
+              "interface": "GigabitEthernet0/0"
+            },
+            "enabled": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "route-04",
+      "request": {
+        "intent": "DIAGNOSE",
+        "sourceId": "PC1",
+        "destination": "198.51.100.10",
+        "question": "Kiểm tra kết nối này: đã đủ bằng chứng kết luận lỗi chưa và nên kiểm tra gì tiếp theo?"
+      },
+      "context": {
+        "revision": 15,
+        "tick": 0,
+        "devices": {
+          "PC1": {
+            "hostname": "PC1",
+            "deviceType": "PC",
+            "interfaces": {
+              "GigabitEthernet0/0": {
+                "ipAddress": "192.0.2.10",
+                "subnetMask": "255.255.255.0",
+                "shutdown": false,
+                "switchportMode": null,
+                "accessVlan": null
+              }
+            },
+            "vlans": {
+              "1": {
+                "name": "default"
+              }
+            },
+            "staticRoutes": [
+              {
+                "network": "0.0.0.0",
+                "mask": "0.0.0.0",
+                "nextHop": "192.0.2.1"
+              }
+            ]
+          },
+          "R1": {
+            "hostname": "R1",
+            "deviceType": "ROUTER",
+            "interfaces": {
+              "GigabitEthernet0/0": {
+                "ipAddress": "192.0.2.1",
+                "subnetMask": "255.255.255.0",
+                "shutdown": false,
+                "switchportMode": null,
+                "accessVlan": null
+              },
+              "GigabitEthernet0/1": {
+                "ipAddress": "203.0.113.1",
+                "subnetMask": "255.255.255.252",
+                "shutdown": false,
+                "switchportMode": null,
+                "accessVlan": null
+              },
+              "GigabitEthernet0/3": {
+                "ipAddress": null,
+                "subnetMask": null,
+                "shutdown": true,
+                "switchportMode": null,
+                "accessVlan": null
+              }
+            },
+            "vlans": {
+              "1": {
+                "name": "default"
+              }
+            },
+            "staticRoutes": [
+              {
+                "network": "198.51.100.0",
+                "mask": "255.255.255.0",
+                "nextHop": "203.0.113.2"
+              }
+            ]
+          },
+          "R2": {
+            "hostname": "R2",
+            "deviceType": "ROUTER",
+            "interfaces": {
+              "GigabitEthernet0/0": {
+                "ipAddress": "203.0.113.2",
+                "subnetMask": "255.255.255.252",
+                "shutdown": false,
+                "switchportMode": null,
+                "accessVlan": null
+              },
+              "GigabitEthernet0/1": {
+                "ipAddress": "198.51.100.1",
+                "subnetMask": "255.255.255.0",
+                "shutdown": false,
+                "switchportMode": null,
+                "accessVlan": null
+              }
+            },
+            "vlans": {
+              "1": {
+                "name": "default"
+              }
+            },
+            "staticRoutes": []
+          },
+          "PC2": {
+            "hostname": "PC2",
+            "deviceType": "PC",
+            "interfaces": {
+              "GigabitEthernet0/0": {
+                "ipAddress": "198.51.100.10",
+                "subnetMask": "255.255.255.0",
+                "shutdown": false,
+                "switchportMode": null,
+                "accessVlan": null
+              }
+            },
+            "vlans": {
+              "1": {
+                "name": "default"
+              }
+            },
+            "staticRoutes": [
+              {
+                "network": "0.0.0.0",
+                "mask": "0.0.0.0",
+                "nextHop": "198.51.100.1"
+              }
+            ]
+          }
+        },
+        "links": [
+          {
+            "id": "L1",
+            "a": {
+              "deviceId": "PC1",
+              "interface": "GigabitEthernet0/0"
+            },
+            "b": {
+              "deviceId": "R1",
+              "interface": "GigabitEthernet0/0"
+            },
+            "enabled": true
+          },
+          {
+            "id": "L2",
+            "a": {
+              "deviceId": "R1",
+              "interface": "GigabitEthernet0/1"
+            },
+            "b": {
+              "deviceId": "R2",
+              "interface": "GigabitEthernet0/0"
+            },
+            "enabled": true
+          },
+          {
+            "id": "L3",
+            "a": {
+              "deviceId": "R2",
+              "interface": "GigabitEthernet0/1"
+            },
+            "b": {
+              "deviceId": "PC2",
+              "interface": "GigabitEthernet0/0"
+            },
+            "enabled": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "route-05",
+      "request": {
+        "intent": "DIAGNOSE",
+        "sourceId": "PC1",
+        "destination": "198.51.100.10",
+        "question": "Kiểm tra kết nối này: đã đủ bằng chứng kết luận lỗi chưa và nên kiểm tra gì tiếp theo?"
+      },
+      "context": {
+        "revision": 16,
+        "tick": 0,
+        "devices": {
+          "PC1": {
+            "hostname": "PC1",
+            "deviceType": "PC",
+            "interfaces": {
+              "GigabitEthernet0/0": {
+                "ipAddress": "192.0.2.10",
+                "subnetMask": "255.255.255.0",
+                "shutdown": false,
+                "switchportMode": null,
+                "accessVlan": null
+              }
+            },
+            "vlans": {
+              "1": {
+                "name": "default"
+              }
+            },
+            "staticRoutes": [
+              {
+                "network": "0.0.0.0",
+                "mask": "0.0.0.0",
+                "nextHop": "192.0.2.1"
+              }
+            ]
+          },
+          "R1": {
+            "hostname": "R1",
+            "deviceType": "ROUTER",
+            "interfaces": {
+              "GigabitEthernet0/0": {
+                "ipAddress": "192.0.2.1",
+                "subnetMask": "255.255.255.0",
+                "shutdown": false,
+                "switchportMode": null,
+                "accessVlan": null
+              },
+              "GigabitEthernet0/1": {
+                "ipAddress": "203.0.113.1",
+                "subnetMask": "255.255.255.252",
+                "shutdown": false,
+                "switchportMode": null,
+                "accessVlan": null
+              },
+              "GigabitEthernet0/3": {
+                "ipAddress": null,
+                "subnetMask": null,
+                "shutdown": true,
+                "switchportMode": null,
+                "accessVlan": null
+              }
+            },
+            "vlans": {
+              "1": {
+                "name": "default"
+              }
+            },
+            "staticRoutes": [
+              {
+                "network": "198.51.100.0",
+                "mask": "255.255.255.0",
+                "nextHop": "203.0.114.2"
+              }
+            ]
+          },
+          "R2": {
+            "hostname": "R2",
+            "deviceType": "ROUTER",
+            "interfaces": {
+              "GigabitEthernet0/0": {
+                "ipAddress": "203.0.113.2",
+                "subnetMask": "255.255.255.252",
+                "shutdown": false,
+                "switchportMode": null,
+                "accessVlan": null
+              },
+              "GigabitEthernet0/1": {
+                "ipAddress": "198.51.100.1",
+                "subnetMask": "255.255.255.0",
+                "shutdown": false,
+                "switchportMode": null,
+                "accessVlan": null
+              }
+            },
+            "vlans": {
+              "1": {
+                "name": "default"
+              }
+            },
+            "staticRoutes": [
+              {
+                "network": "192.0.2.0",
+                "mask": "255.255.255.0",
+                "nextHop": "203.0.113.1"
+              }
+            ]
+          },
+          "PC2": {
+            "hostname": "PC2",
+            "deviceType": "PC",
+            "interfaces": {
+              "GigabitEthernet0/0": {
+                "ipAddress": "198.51.100.10",
+                "subnetMask": "255.255.255.0",
+                "shutdown": false,
+                "switchportMode": null,
+                "accessVlan": null
+              }
+            },
+            "vlans": {
+              "1": {
+                "name": "default"
+              }
+            },
+            "staticRoutes": [
+              {
+                "network": "0.0.0.0",
+                "mask": "0.0.0.0",
+                "nextHop": "198.51.100.1"
+              }
+            ]
+          }
+        },
+        "links": [
+          {
+            "id": "L1",
+            "a": {
+              "deviceId": "PC1",
+              "interface": "GigabitEthernet0/0"
+            },
+            "b": {
+              "deviceId": "R1",
+              "interface": "GigabitEthernet0/0"
+            },
+            "enabled": true
+          },
+          {
+            "id": "L2",
+            "a": {
+              "deviceId": "R1",
+              "interface": "GigabitEthernet0/1"
+            },
+            "b": {
+              "deviceId": "R2",
+              "interface": "GigabitEthernet0/0"
+            },
+            "enabled": true
+          },
+          {
+            "id": "L3",
+            "a": {
+              "deviceId": "R2",
+              "interface": "GigabitEthernet0/1"
+            },
+            "b": {
+              "deviceId": "PC2",
+              "interface": "GigabitEthernet0/0"
+            },
+            "enabled": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "route-06",
+      "request": {
+        "intent": "DIAGNOSE",
+        "sourceId": "PC1",
+        "destination": "198.51.100.10",
+        "question": "Kiểm tra kết nối này: đã đủ bằng chứng kết luận lỗi chưa và nên kiểm tra gì tiếp theo?"
+      },
+      "context": {
+        "revision": 15,
+        "tick": 0,
+        "devices": {
+          "PC1": {
+            "hostname": "PC1",
+            "deviceType": "PC",
+            "interfaces": {
+              "GigabitEthernet0/0": {
+                "ipAddress": "192.0.2.10",
+                "subnetMask": "255.255.255.0",
+                "shutdown": false,
+                "switchportMode": null,
+                "accessVlan": null
+              }
+            },
+            "vlans": {
+              "1": {
+                "name": "default"
+              }
+            },
+            "staticRoutes": [
+              {
+                "network": "0.0.0.0",
+                "mask": "0.0.0.0",
+                "nextHop": "192.0.2.1"
+              }
+            ]
+          },
+          "R1": {
+            "hostname": "R1",
+            "deviceType": "ROUTER",
+            "interfaces": {
+              "GigabitEthernet0/0": {
+                "ipAddress": "192.0.2.1",
+                "subnetMask": "255.255.255.0",
+                "shutdown": false,
+                "switchportMode": null,
+                "accessVlan": null
+              },
+              "GigabitEthernet0/1": {
+                "ipAddress": "203.0.113.1",
+                "subnetMask": "255.255.255.252",
+                "shutdown": false,
+                "switchportMode": null,
+                "accessVlan": null
+              },
+              "GigabitEthernet0/3": {
+                "ipAddress": null,
+                "subnetMask": null,
+                "shutdown": true,
+                "switchportMode": null,
+                "accessVlan": null
+              }
+            },
+            "vlans": {
+              "1": {
+                "name": "default"
+              }
+            },
+            "staticRoutes": [
+              {
+                "network": "198.51.100.0",
+                "mask": "255.255.255.0",
+                "nextHop": "203.0.113.2"
+              },
+              {
+                "network": "198.51.100.10",
+                "mask": "255.255.255.255",
+                "nextHop": "192.0.2.254"
+              }
+            ]
+          },
+          "R2": {
+            "hostname": "R2",
+            "deviceType": "ROUTER",
+            "interfaces": {
+              "GigabitEthernet0/0": {
+                "ipAddress": "203.0.113.2",
+                "subnetMask": "255.255.255.252",
+                "shutdown": false,
+                "switchportMode": null,
+                "accessVlan": null
+              },
+              "GigabitEthernet0/1": {
+                "ipAddress": "198.51.100.1",
+                "subnetMask": "255.255.255.0",
+                "shutdown": false,
+                "switchportMode": null,
+                "accessVlan": null
+              }
+            },
+            "vlans": {
+              "1": {
+                "name": "default"
+              }
+            },
+            "staticRoutes": [
+              {
+                "network": "192.0.2.0",
+                "mask": "255.255.255.0",
+                "nextHop": "203.0.113.1"
+              }
+            ]
+          },
+          "PC2": {
+            "hostname": "PC2",
+            "deviceType": "PC",
+            "interfaces": {
+              "GigabitEthernet0/0": {
+                "ipAddress": "198.51.100.10",
+                "subnetMask": "255.255.255.0",
+                "shutdown": false,
+                "switchportMode": null,
+                "accessVlan": null
+              }
+            },
+            "vlans": {
+              "1": {
+                "name": "default"
+              }
+            },
+            "staticRoutes": [
+              {
+                "network": "0.0.0.0",
+                "mask": "0.0.0.0",
+                "nextHop": "198.51.100.1"
+              }
+            ]
+          }
+        },
+        "links": [
+          {
+            "id": "L1",
+            "a": {
+              "deviceId": "PC1",
+              "interface": "GigabitEthernet0/0"
+            },
+            "b": {
+              "deviceId": "R1",
+              "interface": "GigabitEthernet0/0"
+            },
+            "enabled": true
+          },
+          {
+            "id": "L2",
+            "a": {
+              "deviceId": "R1",
+              "interface": "GigabitEthernet0/1"
+            },
+            "b": {
+              "deviceId": "R2",
+              "interface": "GigabitEthernet0/0"
+            },
+            "enabled": true
+          },
+          {
+            "id": "L3",
+            "a": {
+              "deviceId": "R2",
+              "interface": "GigabitEthernet0/1"
+            },
+            "b": {
+              "deviceId": "PC2",
+              "interface": "GigabitEthernet0/0"
+            },
+            "enabled": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "route-07",
+      "request": {
+        "intent": "DIAGNOSE",
+        "sourceId": "PC1",
+        "destination": "198.51.100.10",
+        "question": "Kiểm tra kết nối này: đã đủ bằng chứng kết luận lỗi chưa và nên kiểm tra gì tiếp theo?"
+      },
+      "context": {
+        "revision": 16,
+        "tick": 0,
+        "devices": {
+          "PC1": {
+            "hostname": "PC1",
+            "deviceType": "PC",
+            "interfaces": {
+              "GigabitEthernet0/0": {
+                "ipAddress": "192.0.2.10",
+                "subnetMask": "255.255.255.0",
+                "shutdown": false,
+                "switchportMode": null,
+                "accessVlan": null
+              }
+            },
+            "vlans": {
+              "1": {
+                "name": "default"
+              }
+            },
+            "staticRoutes": [
+              {
+                "network": "0.0.0.0",
+                "mask": "0.0.0.0",
+                "nextHop": "192.0.2.1"
+              }
+            ]
+          },
+          "R1": {
+            "hostname": "R1",
+            "deviceType": "ROUTER",
+            "interfaces": {
+              "GigabitEthernet0/0": {
+                "ipAddress": "192.0.2.1",
+                "subnetMask": "255.255.255.0",
+                "shutdown": false,
+                "switchportMode": null,
+                "accessVlan": null
+              },
+              "GigabitEthernet0/1": {
+                "ipAddress": "203.0.113.1",
+                "subnetMask": "255.255.255.252",
+                "shutdown": true,
+                "switchportMode": null,
+                "accessVlan": null
+              },
+              "GigabitEthernet0/3": {
+                "ipAddress": null,
+                "subnetMask": null,
+                "shutdown": true,
+                "switchportMode": null,
+                "accessVlan": null
+              }
+            },
+            "vlans": {
+              "1": {
+                "name": "default"
+              }
+            },
+            "staticRoutes": [
+              {
+                "network": "198.51.100.0",
+                "mask": "255.255.255.0",
+                "nextHop": "203.0.113.2"
+              }
+            ]
+          },
+          "R2": {
+            "hostname": "R2",
+            "deviceType": "ROUTER",
+            "interfaces": {
+              "GigabitEthernet0/0": {
+                "ipAddress": "203.0.113.2",
+                "subnetMask": "255.255.255.252",
+                "shutdown": false,
+                "switchportMode": null,
+                "accessVlan": null
+              },
+              "GigabitEthernet0/1": {
+                "ipAddress": "198.51.100.1",
+                "subnetMask": "255.255.255.0",
+                "shutdown": false,
+                "switchportMode": null,
+                "accessVlan": null
+              }
+            },
+            "vlans": {
+              "1": {
+                "name": "default"
+              }
+            },
+            "staticRoutes": [
+              {
+                "network": "192.0.2.0",
+                "mask": "255.255.255.0",
+                "nextHop": "203.0.113.1"
+              }
+            ]
+          },
+          "PC2": {
+            "hostname": "PC2",
+            "deviceType": "PC",
+            "interfaces": {
+              "GigabitEthernet0/0": {
+                "ipAddress": "198.51.100.10",
+                "subnetMask": "255.255.255.0",
+                "shutdown": false,
+                "switchportMode": null,
+                "accessVlan": null
+              }
+            },
+            "vlans": {
+              "1": {
+                "name": "default"
+              }
+            },
+            "staticRoutes": [
+              {
+                "network": "0.0.0.0",
+                "mask": "0.0.0.0",
+                "nextHop": "198.51.100.1"
+              }
+            ]
+          }
+        },
+        "links": [
+          {
+            "id": "L1",
+            "a": {
+              "deviceId": "PC1",
+              "interface": "GigabitEthernet0/0"
+            },
+            "b": {
+              "deviceId": "R1",
+              "interface": "GigabitEthernet0/0"
+            },
+            "enabled": true
+          },
+          {
+            "id": "L2",
+            "a": {
+              "deviceId": "R1",
+              "interface": "GigabitEthernet0/1"
+            },
+            "b": {
+              "deviceId": "R2",
+              "interface": "GigabitEthernet0/0"
+            },
+            "enabled": true
+          },
+          {
+            "id": "L3",
+            "a": {
+              "deviceId": "R2",
+              "interface": "GigabitEthernet0/1"
+            },
+            "b": {
+              "deviceId": "PC2",
+              "interface": "GigabitEthernet0/0"
+            },
+            "enabled": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "route-08",
+      "request": {
+        "intent": "DIAGNOSE",
+        "sourceId": "PC1",
+        "destination": "198.51.100.10",
+        "question": "Kiểm tra kết nối này: đã đủ bằng chứng kết luận lỗi chưa và nên kiểm tra gì tiếp theo?"
+      },
+      "context": {
+        "revision": 16,
+        "tick": 0,
+        "devices": {
+          "PC1": {
+            "hostname": "PC1",
+            "deviceType": "PC",
+            "interfaces": {
+              "GigabitEthernet0/0": {
+                "ipAddress": "192.0.2.10",
+                "subnetMask": "255.255.255.0",
+                "shutdown": false,
+                "switchportMode": null,
+                "accessVlan": null
+              }
+            },
+            "vlans": {
+              "1": {
+                "name": "default"
+              }
+            },
+            "staticRoutes": [
+              {
+                "network": "0.0.0.0",
+                "mask": "0.0.0.0",
+                "nextHop": "192.0.2.1"
+              }
+            ]
+          },
+          "R1": {
+            "hostname": "R1",
+            "deviceType": "ROUTER",
+            "interfaces": {
+              "GigabitEthernet0/0": {
+                "ipAddress": "192.0.2.1",
+                "subnetMask": "255.255.255.0",
+                "shutdown": false,
+                "switchportMode": null,
+                "accessVlan": null
+              },
+              "GigabitEthernet0/1": {
+                "ipAddress": "203.0.113.1",
+                "subnetMask": "255.255.255.252",
+                "shutdown": false,
+                "switchportMode": null,
+                "accessVlan": null
+              },
+              "GigabitEthernet0/3": {
+                "ipAddress": null,
+                "subnetMask": null,
+                "shutdown": true,
+                "switchportMode": null,
+                "accessVlan": null
+              }
+            },
+            "vlans": {
+              "1": {
+                "name": "default"
+              }
+            },
+            "staticRoutes": [
+              {
+                "network": "198.51.100.0",
+                "mask": "255.255.255.0",
+                "nextHop": "203.0.113.2"
+              }
+            ]
+          },
+          "R2": {
+            "hostname": "R2",
+            "deviceType": "ROUTER",
+            "interfaces": {
+              "GigabitEthernet0/0": {
+                "ipAddress": "203.0.113.6",
+                "subnetMask": "255.255.255.252",
+                "shutdown": false,
+                "switchportMode": null,
+                "accessVlan": null
+              },
+              "GigabitEthernet0/1": {
+                "ipAddress": "198.51.100.1",
+                "subnetMask": "255.255.255.0",
+                "shutdown": false,
+                "switchportMode": null,
+                "accessVlan": null
+              }
+            },
+            "vlans": {
+              "1": {
+                "name": "default"
+              }
+            },
+            "staticRoutes": [
+              {
+                "network": "192.0.2.0",
+                "mask": "255.255.255.0",
+                "nextHop": "203.0.113.1"
+              }
+            ]
+          },
+          "PC2": {
+            "hostname": "PC2",
+            "deviceType": "PC",
+            "interfaces": {
+              "GigabitEthernet0/0": {
+                "ipAddress": "198.51.100.10",
+                "subnetMask": "255.255.255.0",
+                "shutdown": false,
+                "switchportMode": null,
+                "accessVlan": null
+              }
+            },
+            "vlans": {
+              "1": {
+                "name": "default"
+              }
+            },
+            "staticRoutes": [
+              {
+                "network": "0.0.0.0",
+                "mask": "0.0.0.0",
+                "nextHop": "198.51.100.1"
+              }
+            ]
+          }
+        },
+        "links": [
+          {
+            "id": "L1",
+            "a": {
+              "deviceId": "PC1",
+              "interface": "GigabitEthernet0/0"
+            },
+            "b": {
+              "deviceId": "R1",
+              "interface": "GigabitEthernet0/0"
+            },
+            "enabled": true
+          },
+          {
+            "id": "L2",
+            "a": {
+              "deviceId": "R1",
+              "interface": "GigabitEthernet0/1"
+            },
+            "b": {
+              "deviceId": "R2",
+              "interface": "GigabitEthernet0/0"
+            },
+            "enabled": true
+          },
+          {
+            "id": "L3",
+            "a": {
+              "deviceId": "R2",
+              "interface": "GigabitEthernet0/1"
+            },
+            "b": {
+              "deviceId": "PC2",
+              "interface": "GigabitEthernet0/0"
+            },
+            "enabled": true
+          }
+        ]
+      }
+    }
+  ]
+}

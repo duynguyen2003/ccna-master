@@ -1,0 +1,90 @@
+{
+  "version": "ops00-2026-10-22",
+  "planningOnly": true,
+  "currency": "USD",
+  "decision": {
+    "source": "User reply on 2026-10-22: local/fake only, 0 USD; Gemini account available",
+    "mode": "LOCAL_FAKE",
+    "allowExternalCalls": false,
+    "pilotBudgetMicroUsd": 0,
+    "dailyBudgetMicroUsd": 0,
+    "monthlyBudgetMicroUsd": 0,
+    "evalBudgetMicroUsd": 0,
+    "providerCallLimit": 0,
+    "provider": "gemini",
+    "accountLimits": {
+      "status": "UNVERIFIED_NOT_REQUIRED_FOR_FAKE",
+      "projectAlias": null,
+      "model": null,
+      "tier": null,
+      "rpm": null,
+      "inputTpm": null,
+      "rpd": null,
+      "observedAt": null
+    }
+  },
+  "incrementalMonthlyMicroUsd": {
+    "provider": 0,
+    "evaluation": 0,
+    "compute": 0,
+    "database": 0,
+    "backup": 0,
+    "monitoring": 0,
+    "network": 0,
+    "contingency": 0
+  },
+  "excludedExistingCosts": [
+    "Local computer",
+    "Electricity",
+    "Internet",
+    "Existing production hosting",
+    "Owner time"
+  ],
+  "candidateReferences": [
+    {
+      "id": "gemini-3.5-flash-lite-standard",
+      "provider": "gemini",
+      "model": "gemini-3.5-flash-lite",
+      "priceVersion": "google-standard-2026-10-22-flash-lite",
+      "verifiedAt": "2026-10-22",
+      "validThrough": null,
+      "inputMicroUsdPerMillionTokens": 300000,
+      "outputIncludingThinkingMicroUsdPerMillionTokens": 2500000,
+      "maxReasoningTokens": null,
+      "eligibleForLive": false,
+      "source": "https://ai.google.dev/gemini-api/docs/pricing#gemini-3.5-flash-lite"
+    },
+    {
+      "id": "gemini-3.8-flash-standard",
+      "provider": "gemini",
+      "model": "gemini-3.8-flash",
+      "priceVersion": "google-standard-2026-10-22-flash-promotional",
+      "verifiedAt": "2026-10-22",
+      "validThrough": "2026-12-31",
+      "inputMicroUsdPerMillionTokens": 750000,
+      "outputIncludingThinkingMicroUsdPerMillionTokens": 3750000,
+      "announcedNextPrice": {
+        "effectiveFrom": "2027-01-01",
+        "inputMicroUsdPerMillionTokens": 1500000,
+        "outputIncludingThinkingMicroUsdPerMillionTokens": 7500000
+      },
+      "maxReasoningTokens": null,
+      "eligibleForLive": false,
+      "source": "https://ai.google.dev/gemini-api/docs/pricing#gemini-3.8-flash"
+    }
+  ],
+  "illustration": {
+    "isForecast": false,
+    "inputTokens": 2500,
+    "visibleOutputTokens": 500,
+    "thinkingTokensAssumedForArithmeticOnly": 0,
+    "pilotUsers": 20,
+    "pilotDays": 14,
+    "requestsPerUserDay": 8,
+    "evalCalls": 400,
+    "expectedMicroUsd": {
+      "gemini-3.5-flash-lite-standard": { "perCall": 2000, "pilot": 4480000, "evaluation": 800000 },
+      "gemini-3.8-flash-standard": { "perCall": 3750, "pilot": 8400000, "evaluation": 1500000 }
+    }
+  }
+}

@@ -93,6 +93,9 @@ importers:
       zod:
         specifier: ^4.3.6
         version: 4.3.6
+      "@ccna/agent":
+        specifier: workspace:*
+        version: link:../agent
 
   src/frontend:
     dependencies:
@@ -192,6 +195,40 @@ importers:
         version: 4.1.17
 
   src/shared:
+    dependencies:
+      zod:
+        specifier: ^4.3.6
+        version: 4.3.6
+      "@ccna/agent-contracts":
+        specifier: workspace:*
+        version: link:../agent/contracts
+  src/agent:
+    dependencies:
+      "@ccna/shared":
+        specifier: workspace:*
+        version: link:../shared
+      "@prisma/adapter-pg":
+        specifier: ^7.6.0
+        version: 7.6.0
+      "@prisma/client":
+        specifier: ^7.6.0
+        version: 7.6.0(prisma@7.10.0(@types/react@19.2.18)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))
+      dotenv:
+        specifier: ^17.4.2
+        version: 17.4.2
+      express:
+        specifier: ^5.2.1
+        version: 5.2.1
+      jsonwebtoken:
+        specifier: ^9.0.3
+        version: 9.0.3
+      pg:
+        specifier: ^8.20.0
+        version: 8.20.0
+      zod:
+        specifier: ^4.3.6
+        version: 4.3.6
+  src/agent/contracts:
     dependencies:
       zod:
         specifier: ^4.3.6

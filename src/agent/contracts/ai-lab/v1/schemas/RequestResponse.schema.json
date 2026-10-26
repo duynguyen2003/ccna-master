@@ -1,0 +1,1474 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "contractVersion": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "data": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "requestId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "conversationId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "conversationEpoch": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "recoveryEpoch": {
+              "type": "string",
+              "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+            },
+            "intent": {
+              "type": "string",
+              "enum": [
+                "NEXT_STEP",
+                "DIAGNOSE",
+                "EXPLAIN_CONCEPT",
+                "LAB_REVIEW"
+              ]
+            },
+            "sourceRevision": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "currentRevision": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "stale": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "sourceProvenance": {
+              "type": "string",
+              "enum": [
+                "LIVE_SNAPSHOT",
+                "FEEDBACK_SNAPSHOT",
+                "LEGACY_FEEDBACK"
+              ]
+            },
+            "quota": {
+              "type": "object",
+              "properties": {
+                "remaining": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "reserved": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "resetAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                }
+              },
+              "required": [
+                "remaining",
+                "reserved",
+                "resetAt"
+              ],
+              "additionalProperties": false
+            },
+            "serverTime": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "QUEUED",
+                "RUNNING"
+              ]
+            },
+            "responseMode": {
+              "type": "string",
+              "const": "NONE"
+            },
+            "result": {
+              "type": "null"
+            },
+            "pollAfterMs": {
+              "type": "integer",
+              "minimum": 2000,
+              "maximum": 30000
+            }
+          },
+          "required": [
+            "requestId",
+            "conversationId",
+            "conversationEpoch",
+            "recoveryEpoch",
+            "intent",
+            "sourceRevision",
+            "currentRevision",
+            "stale",
+            "sourceProvenance",
+            "quota",
+            "serverTime",
+            "status",
+            "responseMode",
+            "result",
+            "pollAfterMs"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "requestId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "conversationId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "conversationEpoch": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "recoveryEpoch": {
+              "type": "string",
+              "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+            },
+            "intent": {
+              "type": "string",
+              "enum": [
+                "NEXT_STEP",
+                "DIAGNOSE",
+                "EXPLAIN_CONCEPT",
+                "LAB_REVIEW"
+              ]
+            },
+            "sourceRevision": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "currentRevision": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "stale": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "sourceProvenance": {
+              "type": "string",
+              "enum": [
+                "LIVE_SNAPSHOT",
+                "FEEDBACK_SNAPSHOT",
+                "LEGACY_FEEDBACK"
+              ]
+            },
+            "quota": {
+              "type": "object",
+              "properties": {
+                "remaining": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "reserved": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "resetAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                }
+              },
+              "required": [
+                "remaining",
+                "reserved",
+                "resetAt"
+              ],
+              "additionalProperties": false
+            },
+            "serverTime": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+            },
+            "status": {
+              "type": "string",
+              "const": "COMPLETED"
+            },
+            "responseMode": {
+              "type": "string",
+              "const": "LLM"
+            },
+            "result": {
+              "type": "object",
+              "properties": {
+                "messageId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "answer": {
+                  "type": "object",
+                  "properties": {
+                    "summary": {
+                      "type": "string",
+                      "pattern": "^[\\s\\S]{1,6000}$"
+                    },
+                    "claimType": {
+                      "type": "string",
+                      "enum": [
+                        "SUPPORTED_FINDING",
+                        "HYPOTHESIS",
+                        "NO_ISSUE_OBSERVED",
+                        "INSUFFICIENT_CONTEXT",
+                        "UNSUPPORTED"
+                      ]
+                    },
+                    "evidenceIds": {
+                      "maxItems": 20,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+                      }
+                    },
+                    "nextSteps": {
+                      "maxItems": 2,
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "text": {
+                            "type": "string",
+                            "pattern": "^[\\s\\S]{1,1000}$"
+                          },
+                          "commandId": {
+                            "type": "string",
+                            "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+                          }
+                        },
+                        "required": [
+                          "text"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "verification": {
+                      "type": "string",
+                      "pattern": "^[\\s\\S]{1,1000}$"
+                    },
+                    "hintLevel": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 3
+                    }
+                  },
+                  "required": [
+                    "summary",
+                    "claimType",
+                    "evidenceIds",
+                    "nextSteps",
+                    "verification",
+                    "hintLevel"
+                  ],
+                  "additionalProperties": false
+                },
+                "evidence": {
+                  "maxItems": 20,
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "evidenceId": {
+                        "type": "string",
+                        "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+                      },
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "INTERFACE",
+                          "ROUTE",
+                          "VLAN",
+                          "LINK",
+                          "TRACE",
+                          "PUBLIC_TASK"
+                        ]
+                      },
+                      "deviceId": {
+                        "type": "string",
+                        "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+                      },
+                      "interface": {
+                        "type": "string",
+                        "pattern": "^(?:(?:GigabitEthernet|FastEthernet)[0-9]+\\/[0-9]+|Loopback[0-9]+)$"
+                      },
+                      "sourceRevision": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "observation": {
+                        "type": "string",
+                        "pattern": "^[\\s\\S]{1,1000}$"
+                      },
+                      "confidenceClass": {
+                        "type": "string",
+                        "enum": [
+                          "OBSERVED",
+                          "INFERRED"
+                        ]
+                      },
+                      "scope": {
+                        "type": "string",
+                        "pattern": "^[\\s\\S]{1,200}$"
+                      }
+                    },
+                    "required": [
+                      "evidenceId",
+                      "kind",
+                      "sourceRevision",
+                      "observation",
+                      "confidenceClass",
+                      "scope"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "commands": {
+                  "maxItems": 2,
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "commandId": {
+                        "type": "string",
+                        "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+                      },
+                      "deviceId": {
+                        "type": "string",
+                        "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+                      },
+                      "mode": {
+                        "type": "string",
+                        "enum": [
+                          "USER_EXEC",
+                          "PRIVILEGED_EXEC",
+                          "GLOBAL_CONFIG",
+                          "INTERFACE_CONFIG",
+                          "VLAN_CONFIG"
+                        ]
+                      },
+                      "command": {
+                        "type": "string",
+                        "pattern": "^[\\s\\S]{1,500}$"
+                      }
+                    },
+                    "required": [
+                      "commandId",
+                      "deviceId",
+                      "mode",
+                      "command"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "versions": {
+                  "type": "object",
+                  "properties": {
+                    "contextSchemaVersion": {
+                      "type": "string",
+                      "const": "1.0.0"
+                    },
+                    "simulatorVersion": {
+                      "type": "string",
+                      "pattern": "^[\\s\\S]{1,40}$"
+                    },
+                    "diagnosticVersion": {
+                      "type": "string",
+                      "pattern": "^[\\s\\S]{1,80}$"
+                    },
+                    "promptVersion": {
+                      "type": "string",
+                      "pattern": "^[\\s\\S]{1,80}$"
+                    },
+                    "policyVersion": {
+                      "type": "string",
+                      "pattern": "^[\\s\\S]{1,80}$"
+                    },
+                    "modelVersion": {
+                      "type": "string",
+                      "pattern": "^[\\s\\S]{1,120}$"
+                    },
+                    "priceVersion": {
+                      "type": "string",
+                      "pattern": "^[\\s\\S]{1,80}$"
+                    },
+                    "appCommit": {
+                      "type": "string",
+                      "pattern": "^[a-f0-9]{40}$"
+                    }
+                  },
+                  "required": [
+                    "contextSchemaVersion",
+                    "simulatorVersion",
+                    "diagnosticVersion",
+                    "promptVersion",
+                    "policyVersion",
+                    "modelVersion",
+                    "priceVersion",
+                    "appCommit"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "messageId",
+                "answer",
+                "evidence",
+                "commands",
+                "versions"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "requestId",
+            "conversationId",
+            "conversationEpoch",
+            "recoveryEpoch",
+            "intent",
+            "sourceRevision",
+            "currentRevision",
+            "stale",
+            "sourceProvenance",
+            "quota",
+            "serverTime",
+            "status",
+            "responseMode",
+            "result"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "requestId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "conversationId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "conversationEpoch": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "recoveryEpoch": {
+              "type": "string",
+              "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+            },
+            "intent": {
+              "type": "string",
+              "enum": [
+                "NEXT_STEP",
+                "DIAGNOSE",
+                "EXPLAIN_CONCEPT",
+                "LAB_REVIEW"
+              ]
+            },
+            "sourceRevision": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "currentRevision": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "stale": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "sourceProvenance": {
+              "type": "string",
+              "enum": [
+                "LIVE_SNAPSHOT",
+                "FEEDBACK_SNAPSHOT",
+                "LEGACY_FEEDBACK"
+              ]
+            },
+            "quota": {
+              "type": "object",
+              "properties": {
+                "remaining": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "reserved": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "resetAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                }
+              },
+              "required": [
+                "remaining",
+                "reserved",
+                "resetAt"
+              ],
+              "additionalProperties": false
+            },
+            "serverTime": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+            },
+            "status": {
+              "type": "string",
+              "const": "COMPLETED"
+            },
+            "responseMode": {
+              "type": "string",
+              "const": "DETERMINISTIC"
+            },
+            "result": {
+              "type": "object",
+              "properties": {
+                "messageId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "answer": {
+                  "type": "object",
+                  "properties": {
+                    "summary": {
+                      "type": "string",
+                      "pattern": "^[\\s\\S]{1,6000}$"
+                    },
+                    "claimType": {
+                      "type": "string",
+                      "enum": [
+                        "SUPPORTED_FINDING",
+                        "HYPOTHESIS",
+                        "NO_ISSUE_OBSERVED",
+                        "INSUFFICIENT_CONTEXT",
+                        "UNSUPPORTED"
+                      ]
+                    },
+                    "evidenceIds": {
+                      "maxItems": 20,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+                      }
+                    },
+                    "nextSteps": {
+                      "maxItems": 2,
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "text": {
+                            "type": "string",
+                            "pattern": "^[\\s\\S]{1,1000}$"
+                          },
+                          "commandId": {
+                            "type": "string",
+                            "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+                          }
+                        },
+                        "required": [
+                          "text"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "verification": {
+                      "type": "string",
+                      "pattern": "^[\\s\\S]{1,1000}$"
+                    },
+                    "hintLevel": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 3
+                    }
+                  },
+                  "required": [
+                    "summary",
+                    "claimType",
+                    "evidenceIds",
+                    "nextSteps",
+                    "verification",
+                    "hintLevel"
+                  ],
+                  "additionalProperties": false
+                },
+                "evidence": {
+                  "maxItems": 20,
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "evidenceId": {
+                        "type": "string",
+                        "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+                      },
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "INTERFACE",
+                          "ROUTE",
+                          "VLAN",
+                          "LINK",
+                          "TRACE",
+                          "PUBLIC_TASK"
+                        ]
+                      },
+                      "deviceId": {
+                        "type": "string",
+                        "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+                      },
+                      "interface": {
+                        "type": "string",
+                        "pattern": "^(?:(?:GigabitEthernet|FastEthernet)[0-9]+\\/[0-9]+|Loopback[0-9]+)$"
+                      },
+                      "sourceRevision": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "observation": {
+                        "type": "string",
+                        "pattern": "^[\\s\\S]{1,1000}$"
+                      },
+                      "confidenceClass": {
+                        "type": "string",
+                        "enum": [
+                          "OBSERVED",
+                          "INFERRED"
+                        ]
+                      },
+                      "scope": {
+                        "type": "string",
+                        "pattern": "^[\\s\\S]{1,200}$"
+                      }
+                    },
+                    "required": [
+                      "evidenceId",
+                      "kind",
+                      "sourceRevision",
+                      "observation",
+                      "confidenceClass",
+                      "scope"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "commands": {
+                  "maxItems": 2,
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "commandId": {
+                        "type": "string",
+                        "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+                      },
+                      "deviceId": {
+                        "type": "string",
+                        "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+                      },
+                      "mode": {
+                        "type": "string",
+                        "enum": [
+                          "USER_EXEC",
+                          "PRIVILEGED_EXEC",
+                          "GLOBAL_CONFIG",
+                          "INTERFACE_CONFIG",
+                          "VLAN_CONFIG"
+                        ]
+                      },
+                      "command": {
+                        "type": "string",
+                        "pattern": "^[\\s\\S]{1,500}$"
+                      }
+                    },
+                    "required": [
+                      "commandId",
+                      "deviceId",
+                      "mode",
+                      "command"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "versions": {
+                  "type": "object",
+                  "properties": {
+                    "contextSchemaVersion": {
+                      "type": "string",
+                      "const": "1.0.0"
+                    },
+                    "simulatorVersion": {
+                      "type": "string",
+                      "pattern": "^[\\s\\S]{1,40}$"
+                    },
+                    "diagnosticVersion": {
+                      "type": "string",
+                      "pattern": "^[\\s\\S]{1,80}$"
+                    },
+                    "promptVersion": {
+                      "type": "string",
+                      "pattern": "^[\\s\\S]{1,80}$"
+                    },
+                    "policyVersion": {
+                      "type": "string",
+                      "pattern": "^[\\s\\S]{1,80}$"
+                    },
+                    "modelVersion": {
+                      "type": "string",
+                      "pattern": "^[\\s\\S]{1,120}$"
+                    },
+                    "priceVersion": {
+                      "type": "string",
+                      "pattern": "^[\\s\\S]{1,80}$"
+                    },
+                    "appCommit": {
+                      "type": "string",
+                      "pattern": "^[a-f0-9]{40}$"
+                    }
+                  },
+                  "required": [
+                    "contextSchemaVersion",
+                    "simulatorVersion",
+                    "diagnosticVersion",
+                    "promptVersion",
+                    "policyVersion",
+                    "modelVersion",
+                    "priceVersion",
+                    "appCommit"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "messageId",
+                "answer",
+                "evidence",
+                "commands",
+                "versions"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "requestId",
+            "conversationId",
+            "conversationEpoch",
+            "recoveryEpoch",
+            "intent",
+            "sourceRevision",
+            "currentRevision",
+            "stale",
+            "sourceProvenance",
+            "quota",
+            "serverTime",
+            "status",
+            "responseMode",
+            "result"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "requestId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "conversationId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "conversationEpoch": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "recoveryEpoch": {
+              "type": "string",
+              "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+            },
+            "intent": {
+              "type": "string",
+              "enum": [
+                "NEXT_STEP",
+                "DIAGNOSE",
+                "EXPLAIN_CONCEPT",
+                "LAB_REVIEW"
+              ]
+            },
+            "sourceRevision": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "currentRevision": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "stale": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "sourceProvenance": {
+              "type": "string",
+              "enum": [
+                "LIVE_SNAPSHOT",
+                "FEEDBACK_SNAPSHOT",
+                "LEGACY_FEEDBACK"
+              ]
+            },
+            "quota": {
+              "type": "object",
+              "properties": {
+                "remaining": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "reserved": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "resetAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                }
+              },
+              "required": [
+                "remaining",
+                "reserved",
+                "resetAt"
+              ],
+              "additionalProperties": false
+            },
+            "serverTime": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "FAILED",
+                "CANCELLED",
+                "EXPIRED",
+                "REVOKED",
+                "DELETED"
+              ]
+            },
+            "responseMode": {
+              "type": "string",
+              "const": "NONE"
+            },
+            "result": {
+              "type": "null"
+            }
+          },
+          "required": [
+            "requestId",
+            "conversationId",
+            "conversationEpoch",
+            "recoveryEpoch",
+            "intent",
+            "sourceRevision",
+            "currentRevision",
+            "stale",
+            "sourceProvenance",
+            "quota",
+            "serverTime",
+            "status",
+            "responseMode",
+            "result"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "requestId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "conversationId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "conversationEpoch": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "recoveryEpoch": {
+              "type": "string",
+              "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+            },
+            "intent": {
+              "type": "string",
+              "enum": [
+                "NEXT_STEP",
+                "DIAGNOSE",
+                "EXPLAIN_CONCEPT",
+                "LAB_REVIEW"
+              ]
+            },
+            "sourceRevision": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "currentRevision": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "stale": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "sourceProvenance": {
+              "type": "string",
+              "enum": [
+                "LIVE_SNAPSHOT",
+                "FEEDBACK_SNAPSHOT",
+                "LEGACY_FEEDBACK"
+              ]
+            },
+            "quota": {
+              "type": "object",
+              "properties": {
+                "remaining": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "reserved": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "resetAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                }
+              },
+              "required": [
+                "remaining",
+                "reserved",
+                "resetAt"
+              ],
+              "additionalProperties": false
+            },
+            "serverTime": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+            },
+            "status": {
+              "type": "string",
+              "const": "OUTCOME_UNKNOWN"
+            },
+            "responseMode": {
+              "type": "string",
+              "const": "NONE"
+            },
+            "result": {
+              "type": "null"
+            }
+          },
+          "required": [
+            "requestId",
+            "conversationId",
+            "conversationEpoch",
+            "recoveryEpoch",
+            "intent",
+            "sourceRevision",
+            "currentRevision",
+            "stale",
+            "sourceProvenance",
+            "quota",
+            "serverTime",
+            "status",
+            "responseMode",
+            "result"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "requestId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "conversationId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "conversationEpoch": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "recoveryEpoch": {
+              "type": "string",
+              "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+            },
+            "intent": {
+              "type": "string",
+              "enum": [
+                "NEXT_STEP",
+                "DIAGNOSE",
+                "EXPLAIN_CONCEPT",
+                "LAB_REVIEW"
+              ]
+            },
+            "sourceRevision": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "currentRevision": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "stale": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "sourceProvenance": {
+              "type": "string",
+              "enum": [
+                "LIVE_SNAPSHOT",
+                "FEEDBACK_SNAPSHOT",
+                "LEGACY_FEEDBACK"
+              ]
+            },
+            "quota": {
+              "type": "object",
+              "properties": {
+                "remaining": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "reserved": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "resetAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                }
+              },
+              "required": [
+                "remaining",
+                "reserved",
+                "resetAt"
+              ],
+              "additionalProperties": false
+            },
+            "serverTime": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+            },
+            "status": {
+              "type": "string",
+              "const": "OUTCOME_UNKNOWN"
+            },
+            "responseMode": {
+              "type": "string",
+              "const": "DETERMINISTIC"
+            },
+            "result": {
+              "type": "object",
+              "properties": {
+                "messageId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "answer": {
+                  "type": "object",
+                  "properties": {
+                    "summary": {
+                      "type": "string",
+                      "pattern": "^[\\s\\S]{1,6000}$"
+                    },
+                    "claimType": {
+                      "type": "string",
+                      "enum": [
+                        "SUPPORTED_FINDING",
+                        "HYPOTHESIS",
+                        "NO_ISSUE_OBSERVED",
+                        "INSUFFICIENT_CONTEXT",
+                        "UNSUPPORTED"
+                      ]
+                    },
+                    "evidenceIds": {
+                      "maxItems": 20,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+                      }
+                    },
+                    "nextSteps": {
+                      "maxItems": 2,
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "text": {
+                            "type": "string",
+                            "pattern": "^[\\s\\S]{1,1000}$"
+                          },
+                          "commandId": {
+                            "type": "string",
+                            "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+                          }
+                        },
+                        "required": [
+                          "text"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "verification": {
+                      "type": "string",
+                      "pattern": "^[\\s\\S]{1,1000}$"
+                    },
+                    "hintLevel": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 3
+                    }
+                  },
+                  "required": [
+                    "summary",
+                    "claimType",
+                    "evidenceIds",
+                    "nextSteps",
+                    "verification",
+                    "hintLevel"
+                  ],
+                  "additionalProperties": false
+                },
+                "evidence": {
+                  "maxItems": 20,
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "evidenceId": {
+                        "type": "string",
+                        "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+                      },
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "INTERFACE",
+                          "ROUTE",
+                          "VLAN",
+                          "LINK",
+                          "TRACE",
+                          "PUBLIC_TASK"
+                        ]
+                      },
+                      "deviceId": {
+                        "type": "string",
+                        "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+                      },
+                      "interface": {
+                        "type": "string",
+                        "pattern": "^(?:(?:GigabitEthernet|FastEthernet)[0-9]+\\/[0-9]+|Loopback[0-9]+)$"
+                      },
+                      "sourceRevision": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "observation": {
+                        "type": "string",
+                        "pattern": "^[\\s\\S]{1,1000}$"
+                      },
+                      "confidenceClass": {
+                        "type": "string",
+                        "enum": [
+                          "OBSERVED",
+                          "INFERRED"
+                        ]
+                      },
+                      "scope": {
+                        "type": "string",
+                        "pattern": "^[\\s\\S]{1,200}$"
+                      }
+                    },
+                    "required": [
+                      "evidenceId",
+                      "kind",
+                      "sourceRevision",
+                      "observation",
+                      "confidenceClass",
+                      "scope"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "commands": {
+                  "maxItems": 2,
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "commandId": {
+                        "type": "string",
+                        "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+                      },
+                      "deviceId": {
+                        "type": "string",
+                        "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+                      },
+                      "mode": {
+                        "type": "string",
+                        "enum": [
+                          "USER_EXEC",
+                          "PRIVILEGED_EXEC",
+                          "GLOBAL_CONFIG",
+                          "INTERFACE_CONFIG",
+                          "VLAN_CONFIG"
+                        ]
+                      },
+                      "command": {
+                        "type": "string",
+                        "pattern": "^[\\s\\S]{1,500}$"
+                      }
+                    },
+                    "required": [
+                      "commandId",
+                      "deviceId",
+                      "mode",
+                      "command"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "versions": {
+                  "type": "object",
+                  "properties": {
+                    "contextSchemaVersion": {
+                      "type": "string",
+                      "const": "1.0.0"
+                    },
+                    "simulatorVersion": {
+                      "type": "string",
+                      "pattern": "^[\\s\\S]{1,40}$"
+                    },
+                    "diagnosticVersion": {
+                      "type": "string",
+                      "pattern": "^[\\s\\S]{1,80}$"
+                    },
+                    "promptVersion": {
+                      "type": "string",
+                      "pattern": "^[\\s\\S]{1,80}$"
+                    },
+                    "policyVersion": {
+                      "type": "string",
+                      "pattern": "^[\\s\\S]{1,80}$"
+                    },
+                    "modelVersion": {
+                      "type": "string",
+                      "pattern": "^[\\s\\S]{1,120}$"
+                    },
+                    "priceVersion": {
+                      "type": "string",
+                      "pattern": "^[\\s\\S]{1,80}$"
+                    },
+                    "appCommit": {
+                      "type": "string",
+                      "pattern": "^[a-f0-9]{40}$"
+                    }
+                  },
+                  "required": [
+                    "contextSchemaVersion",
+                    "simulatorVersion",
+                    "diagnosticVersion",
+                    "promptVersion",
+                    "policyVersion",
+                    "modelVersion",
+                    "priceVersion",
+                    "appCommit"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "messageId",
+                "answer",
+                "evidence",
+                "commands",
+                "versions"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "requestId",
+            "conversationId",
+            "conversationEpoch",
+            "recoveryEpoch",
+            "intent",
+            "sourceRevision",
+            "currentRevision",
+            "stale",
+            "sourceProvenance",
+            "quota",
+            "serverTime",
+            "status",
+            "responseMode",
+            "result"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    }
+  },
+  "required": [
+    "contractVersion",
+    "data"
+  ],
+  "additionalProperties": false,
+  "$id": "urn:ccna:ai-lab:v1:RequestResponse"
+}

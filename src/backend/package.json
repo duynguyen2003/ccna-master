@@ -5,13 +5,14 @@
   "type": "commonjs",
   "scripts": {
     "start": "node src/Server.js",
-    "test:cli": "node --test src/simulation/*.test.js",
+    "test:cli": "node --test src/simulation/*.test.js ../agent/tests/aiLabCertification.test.js",
     "test:learning": "node --test src/learningPath/*.test.js",
     "test:core": "node --test src/exams/*.test.js src/security/*.test.js",
     "db:deploy": "prisma --config ../../prisma.config.ts migrate deploy",
     "prisma:generate": "prisma --config ../../prisma.config.ts generate"
   },
   "dependencies": {
+    "@ccna/agent": "workspace:*",
     "@ccna/shared": "workspace:*",
     "@prisma/adapter-pg": "^7.6.0",
     "@prisma/client": "^7.6.0",
