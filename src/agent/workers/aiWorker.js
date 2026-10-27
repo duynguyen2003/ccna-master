@@ -7,6 +7,7 @@ const { receipts } = require('../node/receipts');
 const { serviceAuth } = require('../node/serviceAuth');
 const { projectContext, contextPreparer } = require('../node/context');
 const { diagnosticAnswer } = require('../node/diagnostics');
+const { pythonAnalyze } = require('../node/pythonTransport');
 
 function createWorker(prisma, config, adapters) {
   const workerId = adapters.workerId || `worker_${randomUUID()}`;
@@ -38,6 +39,7 @@ function createWorker(prisma, config, adapters) {
         const input = await permits.plan(row.id, workerId, row.leaseVersion, prepared);
         const ack = schemas.InternalAnalyzeResponse.parse(
           await adapters.analyze(input, {
+            analyzeToken: auth.sign('ANALYZE', input, input.deadlineAt),
             claimToken: auth.sign('CLAIM', input, input.deadlineAt),
             receiptToken: auth.sign('RECEIPT', input, new Date(+new Date(input.deadlineAt) + 5000)),
           })
@@ -138,7 +140,7 @@ async function main() {
   const config = runtimeConfig();
   if (!config.enabled)
     throw new Error(
-      'Worker disabled: explicit fake mode and isolated loopback AI database required'
+      'Worker disabled: explicit local mode and isolated loopback AI database required'
     );
   let stopping = false;
   process.on('SIGINT', () => {
@@ -148,7 +150,11 @@ async function main() {
     stopping = true;
   });
   const worker = createWorker(getPrisma(), config, {
-    analyze: fakeAnalyze(process.env.AI_INTERNAL_URL || 'http://127.0.0.1:5500/internal/v1/ai'),
+    analyze: ['python-fake', 'python-gemini'].includes(process.env.AI_WORKER_MODE)
+      ? pythonAnalyze(
+          process.env.AI_ANALYZE_URL || 'http://127.0.0.1:8001/internal/v1/lab-assistant/analyze'
+        )
+      : fakeAnalyze(process.env.AI_INTERNAL_URL || 'http://127.0.0.1:5500/internal/v1/ai'),
   });
   try {
     while (!stopping) {

@@ -116,7 +116,19 @@ const inspectJs = (filename, source) => {
 
 const visitDirectory = (directory) => {
   for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
-    if (['node_modules', 'build', 'coverage', '.git'].includes(entry.name)) continue;
+    if (
+      [
+        'node_modules',
+        'build',
+        'coverage',
+        '.git',
+        '.venv',
+        '__pycache__',
+        '.pytest_cache',
+        '.ruff_cache',
+      ].includes(entry.name)
+    )
+      continue;
     const filename = path.join(directory, entry.name);
     if (entry.isDirectory()) visitDirectory(filename);
     else if (/\.(js|jsx|mjs|cjs|css)$/.test(filename)) {

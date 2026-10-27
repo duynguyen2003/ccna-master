@@ -20,7 +20,7 @@ src/
     ├── tests/               Kiểm chứng lab với simulator
     ├── scripts/             Công cụ kiểm thử, DB local, ngân sách
     ├── prisma/              Config chỉ dành cho DB thử của agent
-    └── python/              Evals hiện có; nơi triển khai PY-01/PY-02
+    └── python/              Dịch vụ Python, adapter fake/Gemini, tests và evals
 ```
 
 `@ccna/agent` là workspace Node. `@ccna/agent-contracts` là workspace riêng chỉ chứa
@@ -57,6 +57,14 @@ Các lệnh `ai:worker`, `test:ai:context`, `test:ai:diagnostics`, `test:ai:loca
 `check:ai:budget`, `ai:live:*` và `ai:db:*` vẫn giữ tên. Việc chuyển thư mục không
 cấp quyền gọi provider thật. Dữ liệu DB thử, log và ledger chi phí vẫn ở `.tmp/`
 tại gốc repo; không tạo ledger mới khi đổi đường dẫn công cụ.
+
+Python đã có [dịch vụ nội bộ với fake và Gemini local](python/README.md). Cài bằng
+`uv sync --project src/agent/python --frozen`, rồi chạy `pnpm test:ai:python` và
+`pnpm check:ai:python`. Worker/Python mặc định tắt; chọn `python-fake` hoặc
+`python-gemini` qua cấu hình server khi chạy với DB thử riêng. Kiểm luồng đầy đủ
+bằng `pnpm test:ai:python:integration`; lệnh này giả lập Google, không tốn tiền.
+`pnpm ai:python:live:check` chủ động thử một generation thật bằng dữ liệu tổng hợp,
+dùng ledger đã có. Xem [PY-02](../../docs/ai-lab-assistant/baseline/PY-02-provider.md).
 
 Báo cáo, tiến độ và giải thích task tiếp tục sửa tại
 [docs/ai-lab-assistant](../../docs/ai-lab-assistant/README.md). Xem

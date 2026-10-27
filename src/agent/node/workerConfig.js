@@ -1,6 +1,7 @@
 const { verifyOutput } = require('./outputVerifier');
 const { fakeInputTokens } = require('./context');
 const { VERSION: diagnosticVersion } = require('./diagnostics/catalog');
+const localBudget = require('./localGeminiBudget');
 function runtimeConfig(env = process.env) {
   let local = false;
   try {
@@ -24,7 +25,10 @@ function runtimeConfig(env = process.env) {
     ]
       .map((key) => env[key])
       .filter(Boolean),
-    enabled: env.AI_WORKER_MODE === 'fake' && env.NODE_ENV !== 'production' && local,
+    enabled:
+      ['fake', 'python-fake', 'python-gemini'].includes(env.AI_WORKER_MODE) &&
+      env.NODE_ENV !== 'production' &&
+      local,
     auth: {
       secret: env.AI_SERVICE_SECRET,
       issuer: 'ccna-node',
@@ -32,6 +36,29 @@ function runtimeConfig(env = process.env) {
       keyId: 'local-v1',
     },
     providers: {
+      'local-gemini-v1': {
+        provider: 'gemini',
+        dispatchEnabled: env.AI_WORKER_MODE === 'python-gemini',
+        responseMode: 'LLM',
+        inputBudgetOwner: 'python-preflight',
+        localLedgerFile: localBudget.ledgerFile,
+        versions: {
+          contextSchemaVersion: '1.0.0',
+          diagnosticVersion,
+          promptVersion: 'gemini-r1-v2',
+          modelVersion: localBudget.policy.model,
+          priceVersion: localBudget.policy.priceVersion,
+        },
+        // Each category is bounded by 800; the API caps their combined total
+        // at 800. DB reserves the more conservative 800 + 800 maximum.
+        caps: { maxInputTokens: 6000, maxOutputTokens: 800, maxReasoningTokens: 800 },
+        prices: {
+          input: localBudget.policy.inputMicroUsdPerMillionTokens,
+          output: localBudget.policy.outputIncludingThinkingMicroUsdPerMillionTokens,
+          reasoning: localBudget.policy.outputIncludingThinkingMicroUsdPerMillionTokens,
+        },
+        validateOutput: verifyOutput,
+      },
       'local-fake-v1': {
         provider: 'fake',
         responseMode: 'DETERMINISTIC',

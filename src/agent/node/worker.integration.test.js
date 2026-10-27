@@ -34,7 +34,7 @@ test('BE-04 durable workers, permits and accounting on isolated PostgreSQL', asy
   const api = service(db, config);
   const results = receipts(db, config);
   const peers = [];
-  async function spawn() {
+  async function spawn(portAttempts = 0) {
     const child = fork(path.join(__dirname, 'fixtures/worker-peer.cjs'), [], {
       env: process.env,
       execArgv: [],
@@ -63,9 +63,20 @@ test('BE-04 durable workers, permits and accounting on isolated PostgreSQL', asy
         pending.clear();
       });
     });
+    const base = `http://127.0.0.1:${ready.port}`;
+    try {
+      // Windows may allocate a Fetch-blocked ephemeral port (e.g. 6666).
+      // Rebind before any business request, never retry claim/generation.
+      const probe = await fetch(base, { redirect: 'error', signal: AbortSignal.timeout(2000) });
+      await probe.arrayBuffer();
+    } catch (error) {
+      await stop({ child });
+      if (error.cause?.message === 'bad port' && portAttempts < 7) return spawn(portAttempts + 1);
+      throw error;
+    }
     const peer = {
       child,
-      base: `http://127.0.0.1:${ready.port}`,
+      base,
       pid: ready.pid,
       rpc(action, ...args) {
         return new Promise((resolve, reject) => {

@@ -62,9 +62,11 @@ function update(file, mutate) {
   }
 }
 
-function reserve(file = ledgerFile, now = Date.now()) {
+function reserve(file = ledgerFile, now = Date.now(), binding = null) {
   return update(file, (ledger) => {
     if (ledger.circuitOpen) throw fail('LOCAL_CIRCUIT_OPEN');
+    if (binding && ledger.calls.some((call) => call.callId === binding.callId))
+      throw fail('LOCAL_CALL_ALREADY_RESERVED');
     const stamp = new Date(now).toISOString();
     const spent = (prefix) =>
       ledger.calls
@@ -86,8 +88,70 @@ function reserve(file = ledgerFile, now = Date.now()) {
     )
       throw fail('LOCAL_BUDGET_EXHAUSTED');
     const id = crypto.randomUUID();
-    ledger.calls.push({ id, at: now, reservedMicroUsd: reserveMicroUsd, status: 'PENDING' });
+    ledger.calls.push({
+      id,
+      at: now,
+      reservedMicroUsd: reserveMicroUsd,
+      status: 'PENDING',
+      ...(binding ? { callId: binding.callId, requestId: binding.requestId } : {}),
+    });
     return id;
+  });
+}
+
+function available(file = ledgerFile, now = Date.now()) {
+  const ledger = readBudget(file);
+  const stamp = new Date(now).toISOString();
+  const spent = (prefix) =>
+    ledger.calls
+      .filter((c) => new Date(c.at).toISOString().startsWith(prefix))
+      .reduce((sum, c) => sum + c.reservedMicroUsd, 0);
+  if (
+    ledger.circuitOpen ||
+    ledger.calls.length >= policy.maxCalls ||
+    (ledger.calls.length + 1) * reserveMicroUsd > policy.lifetimeMicroUsd ||
+    spent(stamp.slice(0, 10)) + reserveMicroUsd > policy.dailyMicroUsd ||
+    spent(stamp.slice(0, 7)) + reserveMicroUsd > policy.monthlyMicroUsd
+  )
+    throw fail('LOCAL_BUDGET_EXHAUSTED');
+}
+
+function recordReceipt(receipt, file = ledgerFile) {
+  return update(file, (ledger) => {
+    const call = ledger.calls.find(
+      (c) => c.callId === receipt.callId && c.requestId === receipt.requestId
+    );
+    if (!call) throw fail('LOCAL_CALL_INVALID');
+    // Node already rejects changed duplicate receipts before this operation.
+    call.status =
+      receipt.outcome === 'RECEIVED'
+        ? 'COMPLETE'
+        : receipt.outcome === 'KNOWN_FAILURE'
+          ? 'ERROR'
+          : 'UNKNOWN';
+    call.code = receipt.finishReason;
+    call.usage =
+      receipt.usage.status === 'FINAL'
+        ? {
+            inputTokens: receipt.usage.inputTokens,
+            outputTokens: receipt.usage.outputTokens,
+            thinkingTokens: receipt.usage.reasoningTokens,
+            estimatedMicroUsd: Math.ceil(
+              (receipt.usage.inputTokens * policy.inputMicroUsdPerMillionTokens +
+                (receipt.usage.outputTokens + receipt.usage.reasoningTokens) *
+                  policy.outputIncludingThinkingMicroUsdPerMillionTokens) /
+                1e6
+            ),
+          }
+        : null;
+    if (
+      receipt.finishReason === 'USAGE_EXCEEDS_RESERVATION' ||
+      receipt.usage.inputTokens > policy.maxInputTokens ||
+      (receipt.usage.outputTokens ?? 0) + (receipt.usage.reasoningTokens ?? 0) >
+        policy.maxTotalOutputTokens ||
+      call.usage?.estimatedMicroUsd > call.reservedMicroUsd
+    )
+      ledger.circuitOpen = true;
   });
 }
 
@@ -109,4 +173,6 @@ module.exports = {
   initializeBudget,
   reserve,
   finish,
+  available,
+  recordReceipt,
 };

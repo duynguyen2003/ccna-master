@@ -67,10 +67,23 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Install locked Python service environment
+        run: |
+          python -m pip install uv==0.11.22
+          uv sync --project src/agent/python --frozen --python python
+
+      - name: Verify Python service and offline provider faults
+        run: |
+          pnpm check:ai:python
+          uv run --directory src/agent/python --frozen ruff format --check app tests
+          pnpm test:ai:python
+          node --test src/agent/node/pythonTransport.test.js
+          pnpm exec eslint src/agent/python/tests/fixtures/node-service.cjs
+          pnpm exec eslint src/agent/node/pythonTransport*.js src/agent/node/python.integration.test.js src/agent/scripts/test-python-integration.cjs
+
       - name: Verify AI contracts in Python
         run: |
-          python -m pip install -r src/agent/contracts/ai-lab/v1/requirements-test.txt
-          python src/agent/contracts/ai-lab/v1/check_python.py
+          uv run --project src/agent/python --frozen python src/agent/contracts/ai-lab/v1/check_python.py
 
       - name: Verify source boundaries and imports
         run: pnpm check:boundaries
@@ -180,14 +193,24 @@ jobs:
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/netmastery_test
 
-      - name: Verify AI storage fresh install, populated upgrade and constraints
+      - name: Setup Python for worker integration
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install locked Python worker environment
+        run: |
+          python -m pip install uv==0.11.22
+          uv sync --project src/agent/python --frozen --python python
+
+      - name: Verify AI storage and Node-Python worker integration
         run: |
           node --test src/agent/node/access.test.js src/agent/node/snapshot.test.js src/agent/node/worker.test.js
           pnpm exec eslint src/agent/node/access*.js src/agent/node/snapshot*.js src/agent/node/middleware.js
           pnpm exec eslint src/agent/node/requests.js src/agent/node/quota.js src/agent/node/admission.integration.test.js src/agent/node/fixtures/admission-server.cjs src/agent/routes/aiLab.js
           pnpm exec eslint src/agent/scripts/test-ai-lab-storage.cjs src/agent/node/storage.integration.test.js
           pnpm exec eslint src/agent/node/lifecycle.js src/agent/node/serviceAuth.js src/agent/node/settlement.js src/agent/node/dispatch.js src/agent/node/receipts.js src/agent/node/leases.js src/agent/node/workerConfig.js src/agent/node/worker*.test.js src/agent/node/fixtures/worker-*.cjs src/agent/workers/aiWorker.js src/agent/routes/aiInternal.js
-          pnpm test:ai:storage
+          pnpm test:ai:python:integration
         env:
           AI_TEST_ADMIN_URL: postgresql://postgres:postgres@127.0.0.1:5432/postgres
 

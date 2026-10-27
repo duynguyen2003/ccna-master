@@ -19,6 +19,11 @@ Ví dụ, AI trả về JSON sai định dạng thì hệ thống dùng câu d�
 
 ## Điều kiện trước model thật
 
+**Ngoại lệ local ngày 26/10/2026:** [ADR-010](ADR-010-python-local-gemini.md) cho
+phép thử luồng worker/Python với Gemini thật bằng dữ liệu tổng hợp, DB thử riêng và
+ngân sách local dùng chung. Một lượt đã hoàn tất theo [PY-02](../baseline/PY-02-provider.md).
+Đây là kiểm tích hợp local; các điều kiện mở pilot/production bên dưới vẫn áp dụng.
+
 Trước khi bật model thật qua R1, OPS-00 phải chốt ngân sách ngày/tháng, nơi chạy và giới hạn tài khoản. AI-02 so sánh model bằng cùng bộ tình huống thử và chi phí. BE-06 xử lý đường gọi `/explain` cũ; OPS-02 có trần ngân sách và công tắc tắt. Chưa đạt các điều kiện này thì luồng mới tiếp tục dùng AI giả lập.
 
 ## Hệ quả và xem lại

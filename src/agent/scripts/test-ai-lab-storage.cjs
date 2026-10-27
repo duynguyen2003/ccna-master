@@ -413,6 +413,9 @@ async function main() {
         'src/agent/node/admission.integration.test.js',
         'src/agent/node/worker.integration.test.js',
         'src/agent/node/context.integration.test.js',
+        ...(process.env.PY02_INTEGRATION === '1'
+          ? ['src/agent/node/python.integration.test.js']
+          : []),
       ],
       {
         cwd: root,
@@ -431,6 +434,7 @@ async function main() {
           accessAdmissionWorkerPassed: true,
           contextOutputPassed: true,
           diagnosticsIntegrationPassed: true,
+          pythonIntegrationPassed: process.env.PY02_INTEGRATION === '1',
           legacyTables: before.tables,
           freshAndUpgradePassed: true,
           legacyClientPassed: true,
@@ -441,7 +445,10 @@ async function main() {
       ) + '\n'
     );
     console.log(
-      'BE-01 migration/constraint evidence saved under .tmp/ai-lab-be01; no application DB or provider calls.'
+      'AI migration/constraint evidence saved under .tmp/ai-lab-be01; no application DB used. ' +
+        (process.env.PY02_LIVE_SMOKE === '1'
+          ? 'Explicit PY-02 local live smoke enabled; inspect its separate result.'
+          : 'No external provider calls.')
     );
   } finally {
     for (const [name, oid] of created) {

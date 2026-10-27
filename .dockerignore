@@ -18,3 +18,8 @@ README.md
 **/.env.*
 .tmp
 backups
+**/.venv
+**/__pycache__
+**/.pytest_cache
+**/.ruff_cache
+**/*.pyc

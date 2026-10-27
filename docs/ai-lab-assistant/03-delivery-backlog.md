@@ -13,23 +13,23 @@
 
 ### 1.1. Tổng công việc
 
-| Phase | Mục tiêu | Số task | Giờ thấp | Giờ cao |
-|---|---|---:|---:|---:|
-| P0 | Chốt sản phẩm, lab, contract và điều kiện vận hành | 5 | 29 | 48 |
-| P1 | Nền tảng đầy đủ và alpha nội bộ | 15 | 124 | 188 |
-| P2 | Model thật, trải nghiệm, tải shared IP và pilot kín | 11 | 98 | 152 |
-| P3 | Củng cố chất lượng và phát hành R1 | 9 | 70 | 108 |
-| **R1 tổng** | **P0 + P1 + P2 + P3** | **40** | **321** | **496** |
-| **R1 gồm 25% dự phòng** | | | **401,25** | **620** |
-| P4 | R2 agent chỉ đọc, tính riêng | 7 | 58 | 92 |
+| Phase                   | Mục tiêu                                            | Số task |   Giờ thấp | Giờ cao |
+| ----------------------- | --------------------------------------------------- | ------: | ---------: | ------: |
+| P0                      | Chốt sản phẩm, lab, contract và điều kiện vận hành  |       5 |         29 |      48 |
+| P1                      | Nền tảng đầy đủ và alpha nội bộ                     |      15 |        124 |     188 |
+| P2                      | Model thật, trải nghiệm, tải shared IP và pilot kín |      11 |         98 |     152 |
+| P3                      | Củng cố chất lượng và phát hành R1                  |       9 |         70 |     108 |
+| **R1 tổng**             | **P0 + P1 + P2 + P3**                               |  **40** |    **321** | **496** |
+| **R1 gồm 25% dự phòng** |                                                     |         | **401,25** | **620** |
+| P4                      | R2 agent chỉ đọc, tính riêng                        |       7 |         58 |      92 |
 
 ### 1.2. Lịch suy ra từ giờ công
 
-| Khả năng làm mỗi tuần | R1, gồm dự phòng | Cách sử dụng |
-|---|---|---|
-| 15 giờ | Khoảng 27–42 tuần | Phù hợp làm thêm bên cạnh công việc chính |
-| **25 giờ** | **Khoảng 17–25 tuần** | **Giả định cơ sở của kế hoạch** |
-| 35 giờ | Khoảng 12–18 tuần | Chỉ dùng nếu thực tế duy trì được giờ tập trung này |
+| Khả năng làm mỗi tuần | R1, gồm dự phòng      | Cách sử dụng                                        |
+| --------------------- | --------------------- | --------------------------------------------------- |
+| 15 giờ                | Khoảng 27–42 tuần     | Phù hợp làm thêm bên cạnh công việc chính           |
+| **25 giờ**            | **Khoảng 17–25 tuần** | **Giả định cơ sở của kế hoạch**                     |
+| 35 giờ                | Khoảng 12–18 tuần     | Chỉ dùng nếu thực tế duy trì được giờ tập trung này |
 
 Tại 25 giờ/tuần, kịch bản trung tâm khoảng **21 tuần**. Đây là forecast để phân bổ nguồn lực, không phải cam kết ngày phát hành. Sau P0 và hai tuần triển khai đầu, cập nhật bằng throughput thực tế và công việc còn lại.
 
@@ -64,16 +64,16 @@ Sơ đồ thể hiện phụ thuộc kỹ thuật, không có nghĩa một ngư�
 
 ### 2.1. Gợi ý nhịp 21 tuần cơ sở
 
-| Tuần tham chiếu | Trọng tâm | Demo/bằng chứng cuối giai đoạn |
-|---|---|---|
-| 1–2 | P0; kiểm kê hạ tầng; chốt ba lab; skeleton contract | Chạy golden fixtures và mô phỏng luồng người học trên wireframe |
-| 3–5 | Schema, auth snapshot, reservation, request lifecycle | 20 retry chỉ tạo một request; người khác bị chặn |
-| 6–8 | Worker/Python fake, diagnostics, panel/hook, CI | Browser reload vẫn lấy đúng kết quả; không giữ khóa lab lúc chờ |
-| 9–10 | Hoàn tất alpha, prompts và provider adapter thật, eval lần 1 | Báo cáo chất lượng/chi phí theo model configuration |
-| 11–15 | Privacy, feedback/events, E2E, tải shared IP, backup; mời pilot khi đạt G2 | Luồng thật trên staging, có kill switch và budget |
-| 16–17 | Quan sát pilot và sửa lỗi; làm test/ops độc lập | Báo cáo 14 ngày, chỉ rõ sample size và lỗi còn lại |
-| 18–19 | Fault tests, eval mở rộng, xác nhận lại capacity sau sửa lỗi, rollback/restore | Bộ release evidence đạt ngưỡng R1 |
-| 20–21 | Canary, mở cohort dần, hỗ trợ, tổng kết | Quyết định mở rộng/giữ cohort; backlog R2 cập nhật |
+| Tuần tham chiếu | Trọng tâm                                                                      | Demo/bằng chứng cuối giai đoạn                                  |
+| --------------- | ------------------------------------------------------------------------------ | --------------------------------------------------------------- |
+| 1–2             | P0; kiểm kê hạ tầng; chốt ba lab; skeleton contract                            | Chạy golden fixtures và mô phỏng luồng người học trên wireframe |
+| 3–5             | Schema, auth snapshot, reservation, request lifecycle                          | 20 retry chỉ tạo một request; người khác bị chặn                |
+| 6–8             | Worker/Python fake, diagnostics, panel/hook, CI                                | Browser reload vẫn lấy đúng kết quả; không giữ khóa lab lúc chờ |
+| 9–10            | Hoàn tất alpha, prompts và provider adapter thật, eval lần 1                   | Báo cáo chất lượng/chi phí theo model configuration             |
+| 11–15           | Privacy, feedback/events, E2E, tải shared IP, backup; mời pilot khi đạt G2     | Luồng thật trên staging, có kill switch và budget               |
+| 16–17           | Quan sát pilot và sửa lỗi; làm test/ops độc lập                                | Báo cáo 14 ngày, chỉ rõ sample size và lỗi còn lại              |
+| 18–19           | Fault tests, eval mở rộng, xác nhận lại capacity sau sửa lỗi, rollback/restore | Bộ release evidence đạt ngưỡng R1                               |
+| 20–21           | Canary, mở cohort dần, hỗ trợ, tổng kết                                        | Quyết định mở rộng/giữ cohort; backlog R2 cập nhật              |
 
 Tuần tham chiếu có thể dịch trong dải 17–25 tuần. Không đặt ngày cụ thể khi chưa biết giờ làm và thời điểm bắt đầu. Nếu AI hỗ trợ giúp hoàn thành sớm, dùng số liệu task thực tế để forecast lại thay vì hứa giảm toàn bộ lịch ngay từ đầu.
 
@@ -163,12 +163,14 @@ Tuần tham chiếu có thể dịch trong dải 17–25 tuần. Không đặt n
 
 ### PY-01 · Python service, môi trường tái lập và health · 5–8 giờ
 
+- **Trạng thái 26/10/2026:** [x] Hoàn thành local/fake: Python 3.11/FastAPI, uv.lock, strict config, JWT tương thích Node, body/stream/deadline/capacity limits và health. Fake chỉ ACK sau claim/receipt ở Node; không bật worker transport hoặc model thật. 149 test Python, clean install và 270 hồi quy Node đạt. [Báo cáo dễ hiểu](baseline/PY-01-service.md). Chưa chạy image Docker/CI mới; tiếp theo PY-02.
 - **Vai trò:** SE. **Phụ thuộc:** ADR-01. **File:** `src/agent/python/pyproject.toml`, lockfile, `app/main.py`, config/security, Dockerfile.
 - **Thực hiện:** chọn runtime Python và dependency versions đã kiểm; strict config; service auth; input/body limits; liveness/readiness; fake adapter.
 - **Nghiệm thu:** clean install từ lockfile; không key thì readiness AI báo degraded/disabled đúng; không log secret; test internal auth/size/deadline; không public port ngoài yêu cầu vận hành.
 
 ### PY-02 · Provider adapter và output contract · 8–12 giờ
 
+- **Trạng thái 26/10/2026:** [x] Hoàn thành kỹ thuật local: worker transport Python, fake/Gemini, preflight toàn prompt/schema trước claim, Pydantic parity, usage nullable và receipt-only retry. Ngân sách dùng chung ledger với luồng local cũ. Một lượt Gemini thật hoàn tất qua worker/Python/PostgreSQL; 250 Python, 274 hồi quy Node, 34 storage và 42 HTTP/DB đạt. [Báo cáo dễ hiểu](baseline/PY-02-provider.md), [phạm vi live local](adr/ADR-010-python-local-gemini.md). Chưa nghiệm thu chất lượng model, UI hội thoại hoặc pilot.
 - **Vai trò:** SE. **Phụ thuộc:** PY-01, BE-04, BE-05. **File:** `app/adapters/`, `schemas/`, receipt client và tests.
 - **Thực hiện:** interface provider-neutral, fake provider, claim permit trước call, retry=0, deadlines, usage nullable, receipt retry riêng; model config server-side.
 - **Nghiệm thu:** valid/invalid fixtures qua cả Zod/Pydantic; timeout/429/malformed/usage missing có mapping rõ; hai lần cùng permit không dispatch hai call; không nhận endpoint URL từ user. AC-07/14.
@@ -412,15 +414,15 @@ Một tuần nên có một demo học viên hoặc vận hành nhìn được, 
 
 ## 10. Quản lý thay đổi và rủi ro lịch
 
-| Trigger | Hành động PM/SO | Tác động kế hoạch |
-|---|---|---|
-| Effort thực tế hai tuần vượt ước lượng >25% | Tính lại remaining work / throughput thực | Điều chỉnh ngày, không giảm gate quyền/chi phí |
-| Lab thiếu nội dung đúng/capability | Tạm đóng lab đó, sửa fixtures/nội dung | Giảm số lab pilot hoặc thêm task engine có effort riêng |
-| Provider/model không đạt quality | Đổi cấu hình, nội dung hoặc phạm vi câu hỏi | Chưa mở public; rerun eval theo version |
-| Shared-IP vẫn 429 dưới tải hợp lệ | Rà proxy/edge policy + benchmark | Chặn pilot lớp học đến khi có phương án đạt |
-| Không có ngân sách/host phù hợp | Dùng fake provider xây phần độc lập, chốt lựa chọn | Live pilot chờ điều kiện thực, không giả định chi phí 0 |
-| Pilot dùng ít, chưa đủ evidence | Kéo dài quan sát hoặc tuyển bổ sung | Không suy ra D7/chất lượng từ mẫu chưa đủ |
-| Một người quá tải vận hành | Giữ cohort nhỏ, giảm tốc độ feature | Ưu tiên reliability và nội dung hơn mở thêm lab |
-| Yêu cầu thanh toán/RAG/voice chen vào | Viết PRD nhỏ + effort + dependency trước | Tạo release riêng, tránh âm thầm làm R1 phình scope |
+| Trigger                                     | Hành động PM/SO                                    | Tác động kế hoạch                                       |
+| ------------------------------------------- | -------------------------------------------------- | ------------------------------------------------------- |
+| Effort thực tế hai tuần vượt ước lượng >25% | Tính lại remaining work / throughput thực          | Điều chỉnh ngày, không giảm gate quyền/chi phí          |
+| Lab thiếu nội dung đúng/capability          | Tạm đóng lab đó, sửa fixtures/nội dung             | Giảm số lab pilot hoặc thêm task engine có effort riêng |
+| Provider/model không đạt quality            | Đổi cấu hình, nội dung hoặc phạm vi câu hỏi        | Chưa mở public; rerun eval theo version                 |
+| Shared-IP vẫn 429 dưới tải hợp lệ           | Rà proxy/edge policy + benchmark                   | Chặn pilot lớp học đến khi có phương án đạt             |
+| Không có ngân sách/host phù hợp             | Dùng fake provider xây phần độc lập, chốt lựa chọn | Live pilot chờ điều kiện thực, không giả định chi phí 0 |
+| Pilot dùng ít, chưa đủ evidence             | Kéo dài quan sát hoặc tuyển bổ sung                | Không suy ra D7/chất lượng từ mẫu chưa đủ               |
+| Một người quá tải vận hành                  | Giữ cohort nhỏ, giảm tốc độ feature                | Ưu tiên reliability và nội dung hơn mở thêm lab         |
+| Yêu cầu thanh toán/RAG/voice chen vào       | Viết PRD nhỏ + effort + dependency trước           | Tạo release riêng, tránh âm thầm làm R1 phình scope     |
 
 Việc tạo kế hoạch này chưa tạo GitHub Issues, chưa commit/push, chưa mua dịch vụ hoặc triển khai. Backlog đã đủ cụ thể để bắt đầu DISC-01 và chuyển từng task thành issue khi bước vào triển khai.

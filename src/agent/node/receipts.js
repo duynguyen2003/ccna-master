@@ -12,6 +12,7 @@ const {
   clearCallContent,
 } = require('./lifecycle');
 const { settle, costOf } = require('./settlement');
+const localBudget = require('./localGeminiBudget');
 // Canonical without dropping nulls or normalizing text: every changed receipt is a conflict.
 const canonical = (v) =>
   Array.isArray(v)
@@ -141,6 +142,7 @@ function receipts(prisma, config) {
       const receipt = schemas.ProviderReceipt.parse(value);
       if (Buffer.byteLength(JSON.stringify(receipt)) > 65536) throw fail('AI_CONTEXT_TOO_LARGE');
       const hash = digest(receipt);
+      let localLedgerFile;
       const response = await locked(prisma, environment, receipt.requestId, async (tx, c) => {
         const call = c.call;
         if (
@@ -151,6 +153,7 @@ function receipts(prisma, config) {
           digest(c.row.versions) !== digest(receipt.versions)
         )
           throw fail('AI_LEASE_LOST');
+        localLedgerFile = provider(call).localLedgerFile;
         if (call.receiptHash) {
           if (call.receiptHash !== hash) {
             await event(tx, 'AI_RECEIPT_CONFLICT', c.row.id, { callId: call.id });
@@ -226,6 +229,7 @@ function receipts(prisma, config) {
         };
       });
       if (response.conflict) throw fail('AI_RECEIPT_CONFLICT');
+      if (localLedgerFile) localBudget.recordReceipt(receipt, localLedgerFile);
       return schemas.ReceiptResponse.parse(response);
     },
     finalize(requestId, worker) {

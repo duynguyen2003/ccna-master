@@ -190,6 +190,11 @@ function validateBoundary(value, provider) {
     !isDeepStrictEqual(input.allowedCommands, commandsFor(input.context))
   )
     throw fail('AI_INVALID_REQUEST');
+  // The Python Gemini adapter counts the complete prompt/schema before CLAIM.
+  // This explicit server-owned strategy avoids HTTP inside the planning lock;
+  // it is not an estimated tokenizer or a value supplied by the browser.
+  if (provider?.provider === 'gemini' && provider.inputBudgetOwner === 'python-preflight')
+    return input;
   if (!provider || typeof provider.measureInput !== 'function') throw fail('AI_DISABLED');
   // Provider adapter owns counting its complete prompt/schema. The bundled
   // implementation is a synthetic tokenizer for the local fake protocol.

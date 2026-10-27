@@ -23,22 +23,22 @@ báo cáo task vẫn ở `docs/ai-lab-assistant` để theo dõi tiến độ.
 
 ## 2. Từ hay gặp (giải thích đơn giản)
 
-| Từ | Nghĩa đơn giản |
-|---|---|
-| Nhà cung cấp AI | Công ty cho dùng model AI qua mạng (ví dụ OpenAI, Anthropic, Google). Mỗi lần gọi đều tốn tiền. |
-| Lời dặn cho AI (prompt) | Đoạn chữ viết sẵn để bảo AI nó là ai, được làm gì, không được làm gì. |
+| Từ                         | Nghĩa đơn giản                                                                                                                                                |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Nhà cung cấp AI            | Công ty cho dùng model AI qua mạng (ví dụ OpenAI, Anthropic, Google). Mỗi lần gọi đều tốn tiền.                                                               |
+| Lời dặn cho AI (prompt)    | Đoạn chữ viết sẵn để bảo AI nó là ai, được làm gì, không được làm gì.                                                                                         |
 | Khuôn câu trả lời (schema) | Mẫu cố định cho câu trả lời của AI (có những ô nào, mỗi ô là gì) để giao diện hiển thị ổn định. Thư viện kiểm tra khuôn: Zod (JavaScript), Pydantic (Python). |
-| Câu trả lời dự phòng | Lời giải thích soạn sẵn, không dùng AI, hiện ra khi AI lỗi, hết lượt hoặc đang bị tắt. |
-| Hạn mức | Số lượt hỏi AI tối đa của mỗi người mỗi ngày, và số tiền tối đa của cả hệ thống. |
-| Bản chụp trạng thái | Bản sao tình trạng bài lab (thiết bị, cấu hình) tại lúc học viên hỏi. AI đọc bản chụp, không động vào bài thật. |
-| Tiến trình chạy nền | Chương trình chạy phía sau, nhận việc từ hàng chờ và gọi AI, để giao diện không phải đứng chờ. |
-| Biên nhận | Bản ghi một lần gọi AI đã xảy ra, dùng để đối soát chi phí và tránh gọi hai lần. |
-| Lời giải mẫu | Chuỗi lệnh đúng hoàn chỉnh của một bài lab, dùng để kiểm tra hệ thống chấm điểm và AI. |
-| Bộ câu hỏi thử | Tập tình huống có sẵn để chấm chất lượng AI mỗi khi đổi lời dặn hoặc đổi model. |
-| Bản cũ | Câu trả lời của AI dựa trên cấu hình bài lab trước đó, còn bài lab đã thay đổi sau lúc hỏi. |
-| Môi trường thử | Bản hệ thống giống thật nhưng dùng dữ liệu và khóa riêng, để thử nghiệm an toàn. |
-| Công tắc tắt khẩn cấp | Nút tắt tính năng AI ngay lập tức mà không cần sửa code. |
-| Mở dần | Cho một phần nhỏ người dùng dùng trước (5%, rồi 25%...). Có vấn đề thì quay lại. |
+| Câu trả lời dự phòng       | Lời giải thích soạn sẵn, không dùng AI, hiện ra khi AI lỗi, hết lượt hoặc đang bị tắt.                                                                        |
+| Hạn mức                    | Số lượt hỏi AI tối đa của mỗi người mỗi ngày, và số tiền tối đa của cả hệ thống.                                                                              |
+| Bản chụp trạng thái        | Bản sao tình trạng bài lab (thiết bị, cấu hình) tại lúc học viên hỏi. AI đọc bản chụp, không động vào bài thật.                                               |
+| Tiến trình chạy nền        | Chương trình chạy phía sau, nhận việc từ hàng chờ và gọi AI, để giao diện không phải đứng chờ.                                                                |
+| Biên nhận                  | Bản ghi một lần gọi AI đã xảy ra, dùng để đối soát chi phí và tránh gọi hai lần.                                                                              |
+| Lời giải mẫu               | Chuỗi lệnh đúng hoàn chỉnh của một bài lab, dùng để kiểm tra hệ thống chấm điểm và AI.                                                                        |
+| Bộ câu hỏi thử             | Tập tình huống có sẵn để chấm chất lượng AI mỗi khi đổi lời dặn hoặc đổi model.                                                                               |
+| Bản cũ                     | Câu trả lời của AI dựa trên cấu hình bài lab trước đó, còn bài lab đã thay đổi sau lúc hỏi.                                                                   |
+| Môi trường thử             | Bản hệ thống giống thật nhưng dùng dữ liệu và khóa riêng, để thử nghiệm an toàn.                                                                              |
+| Công tắc tắt khẩn cấp      | Nút tắt tính năng AI ngay lập tức mà không cần sửa code.                                                                                                      |
+| Mở dần                     | Cho một phần nhỏ người dùng dùng trước (5%, rồi 25%...). Có vấn đề thì quay lại.                                                                              |
 
 ## 3. Hiện trạng (theo tài liệu kế hoạch ngày 16/10/2026)
 
@@ -60,15 +60,15 @@ báo cáo task vẫn ở `docs/ai-lab-assistant` để theo dõi tiến độ.
 
 ## 4. Tổng quan
 
-| Giai đoạn | Mục tiêu | Số task | Giờ thấp | Giờ cao |
-|---|---|---:|---:|---:|
-| 0. Chuẩn bị | Hiểu hiện trạng, chốt bài lab mẫu, quy ước chung, ngân sách | 5 | 29 | 48 |
-| 1. Xây nền | Có luồng đầy đủ chạy được nội bộ (dùng AI giả) | 15 | 124 | 188 |
-| 2. AI thật và thử nhóm nhỏ | Gắn model thật, đo chất lượng và chi phí, mời 10–20 học viên | 11 | 98 | 152 |
-| 3. Hoàn thiện và phát hành | Sửa theo thử nghiệm, kiểm tra kỹ, mở dần | 9 | 70 | 108 |
-| **Bản phát hành đầu (giai đoạn 0–3)** | | **40** | **321** | **496** |
-| Cộng 25% dự phòng | | | 401 | 620 |
-| 4. Trợ lý tự chọn công cụ xem | Làm sau khi bản đầu chạy ổn | 7 | 58 | 92 |
+| Giai đoạn                             | Mục tiêu                                                     | Số task | Giờ thấp | Giờ cao |
+| ------------------------------------- | ------------------------------------------------------------ | ------: | -------: | ------: |
+| 0. Chuẩn bị                           | Hiểu hiện trạng, chốt bài lab mẫu, quy ước chung, ngân sách  |       5 |       29 |      48 |
+| 1. Xây nền                            | Có luồng đầy đủ chạy được nội bộ (dùng AI giả)               |      15 |      124 |     188 |
+| 2. AI thật và thử nhóm nhỏ            | Gắn model thật, đo chất lượng và chi phí, mời 10–20 học viên |      11 |       98 |     152 |
+| 3. Hoàn thiện và phát hành            | Sửa theo thử nghiệm, kiểm tra kỹ, mở dần                     |       9 |       70 |     108 |
+| **Bản phát hành đầu (giai đoạn 0–3)** |                                                              |  **40** |  **321** | **496** |
+| Cộng 25% dự phòng                     |                                                              |         |      401 |     620 |
+| 4. Trợ lý tự chọn công cụ xem         | Làm sau khi bản đầu chạy ổn                                  |       7 |       58 |      92 |
 
 **Lịch tham khảo cho bản phát hành đầu (gồm dự phòng):**
 
@@ -89,55 +89,55 @@ báo cáo task vẫn ở `docs/ai-lab-assistant` để theo dõi tiến độ.
 
 ## 5. Bảng toàn bộ 47 task
 
-| Mã | Tên | Giờ | Cần xong trước | Nhãn |
-|---|---|---|---|---|
-| DISC-01 | Kiểm tra hiện trạng hệ thống | 4–6 | không | Làm bản gọn |
-| DISC-02 | Hỏi học viên, chốt yêu cầu | 5–8 | DISC-01 | Làm bản gọn |
-| DISC-03 | Chọn 3 bài lab mẫu và lời giải mẫu | 10–16 | DISC-02 | Cốt lõi |
-| ADR-01 | Chốt các quy ước chung | 6–10 | DISC-01, DISC-03 | Làm bản gọn |
-| OPS-00 | Chốt ngân sách và nơi chạy | 4–8 | DISC-01, ADR-01 | Cốt lõi |
-| BE-01 | Thêm bảng dữ liệu mới | 8–12 | ADR-01 | Làm bản gọn |
-| BE-02 | Kiểm tra quyền và chụp trạng thái bài lab | 8–12 | BE-01, DISC-03 | Cốt lõi |
-| BE-03 | Nhận câu hỏi, chống gửi trùng, giới hạn lượt | 12–18 | BE-01, BE-02, OPS-00 | Làm bản gọn |
-| BE-04 | Tiến trình chạy nền gọi AI | 12–18 | BE-03 | Hoãn được |
-| BE-05 | Lọc dữ liệu gửi AI và kiểm tra câu trả lời | 10–14 | BE-02, ADR-01 | Cốt lõi |
-| SIM-01 | Bộ tự chẩn đoán lỗi cho 3 lab | 12–18 | DISC-03, BE-05 | Cốt lõi |
-| PY-01 | Dựng chương trình Python cho phần AI | 5–8 | ADR-01 | Hoãn được |
-| PY-02 | Nối nhà cung cấp AI và khuôn câu trả lời | 8–12 | PY-01, BE-04, BE-05 | Hoãn được |
-| UX-01 | Phác giao diện và viết chữ cho các trạng thái | 5–8 | DISC-02, ADR-01 | Làm bản gọn |
-| FE-01 | Làm khung trợ lý trên giao diện | 8–12 | UX-01 | Cốt lõi |
-| FE-02 | Nối giao diện với máy chủ | 10–16 | FE-01, BE-03, PY-02 | Làm bản gọn |
-| BE-06 | Khóa đường gọi AI cũ, làm câu dự phòng chung | 4–6 | BE-03, BE-05 | Cốt lõi |
-| QA-01 | Kiểm thử quyền, dữ liệu, nhiều người cùng lúc | 10–16 | BE-04, BE-05, SIM-01, PY-02, FE-02, BE-06 | Làm bản gọn |
-| OPS-01 | Tự động kiểm thử và đóng gói | 8–12 | BE-04, PY-01, QA-01 | Làm bản gọn |
-| GATE-01 | Demo nội bộ | 4–6 | OPS-01, FE-02, SIM-01 | Làm bản gọn |
-| AI-01 | Viết lời dặn AI và 3 mức gợi ý | 8–12 | GATE-01, DISC-03 | Cốt lõi |
-| AI-02 | Chọn model bằng cách đo, tính chi phí | 12–18 | AI-01, PY-02, OPS-00 | Cốt lõi |
-| FE-03 | Hoàn thiện lỗi, bản cũ, gợi ý | 8–12 | FE-02, AI-01 | Làm bản gọn |
-| BE-07 | Đánh giá của học viên và số liệu đầu tiên | 8–12 | BE-01, GATE-01 | Làm bản gọn |
-| BE-08 | Xóa hội thoại và thời hạn lưu | 10–16 | BE-04, FE-02 | Làm bản gọn |
-| OPS-02 | Trần ngân sách, công tắc tắt, theo dõi | 8–12 | BE-04, BE-07, AI-02 | Cốt lõi |
-| QA-02 | Kiểm thử trọn luồng trên trình duyệt thật | 8–12 | FE-03, BE-07, BE-08, OPS-02 | Làm bản gọn |
-| OPS-04 | Thử tải nhiều người cùng lúc | 12–18 | QA-02, OPS-01, OPS-02 | Hoãn được |
-| OPS-03 | Môi trường thử, sao lưu, diễn tập | 6–10 | OPS-01, BE-08, OPS-02, OPS-04 | Làm bản gọn |
-| REL-01 | Mở thử nghiệm kín | 6–10 | AI-02, QA-02, OPS-03 | Cốt lõi |
-| REL-02 | Quan sát và sửa lỗi sau thử nghiệm | 12–20 | REL-01 | Cốt lõi |
-| SIM-02 | Sửa nội dung lab theo thử nghiệm | 8–12 | REL-02 | Cốt lõi |
-| BE-09 | Giải thích kết quả đúng với bản nộp | 8–12 | BE-06, BE-08, AI-01 | Làm bản gọn |
-| QA-03 | Chấm chất lượng bản phát hành đầu | 10–16 | AI-02, SIM-02, BE-09 | Làm bản gọn |
-| QA-04 | Cố ý làm hỏng để thử độ bền | 12–18 | QA-01, BE-08, BE-09, OPS-02 | Hoãn được |
-| OPS-05 | Đóng gói bản chạy thật, cảnh báo, phát hành tự động | 8–12 | OPS-04, OPS-02 | Hoãn được |
-| OPS-06 | Khôi phục, thời hạn lưu, đối soát chi phí | 8–12 | OPS-03, BE-08, QA-04 | Hoãn được |
-| FE-04 | Dễ dùng, vừa mọi màn hình, nhanh | 6–10 | FE-03, BE-09 | Làm bản gọn |
-| DOC-01 | Tài liệu hỗ trợ và vận hành cho một người | 4–6 | REL-02, OPS-05, OPS-06 | Làm bản gọn |
-| REL-03 | Cổng phát hành, mở dần | 6–10 | QA-03, QA-04, OPS-05, OPS-06, FE-04, DOC-01 | Làm bản gọn |
-| R2-01 | Quyết định có đáng làm giai đoạn 4 không | 4–6 | REL-03 | Hoãn được |
-| R2-02 | Bộ công cụ chỉ đọc cho AI | 10–16 | R2-01 | Hoãn được |
-| R2-03 | Quyền cho từng công cụ | 8–12 | R2-02 | Hoãn được |
-| R2-04 | AI tự chọn công cụ, có giới hạn | 12–20 | R2-03 | Hoãn được |
-| R2-05 | Tính chi phí từng bước, hiện tiến trình | 8–12 | R2-04 | Hoãn được |
-| R2-06 | Chấm chất lượng và thử tấn công | 10–16 | R2-05 | Hoãn được |
-| R2-07 | Thử nhóm nhỏ, quyết định mở rộng | 6–10 | R2-06 | Hoãn được |
+| Mã      | Tên                                                 | Giờ   | Cần xong trước                              | Nhãn        |
+| ------- | --------------------------------------------------- | ----- | ------------------------------------------- | ----------- |
+| DISC-01 | Kiểm tra hiện trạng hệ thống                        | 4–6   | không                                       | Làm bản gọn |
+| DISC-02 | Hỏi học viên, chốt yêu cầu                          | 5–8   | DISC-01                                     | Làm bản gọn |
+| DISC-03 | Chọn 3 bài lab mẫu và lời giải mẫu                  | 10–16 | DISC-02                                     | Cốt lõi     |
+| ADR-01  | Chốt các quy ước chung                              | 6–10  | DISC-01, DISC-03                            | Làm bản gọn |
+| OPS-00  | Chốt ngân sách và nơi chạy                          | 4–8   | DISC-01, ADR-01                             | Cốt lõi     |
+| BE-01   | Thêm bảng dữ liệu mới                               | 8–12  | ADR-01                                      | Làm bản gọn |
+| BE-02   | Kiểm tra quyền và chụp trạng thái bài lab           | 8–12  | BE-01, DISC-03                              | Cốt lõi     |
+| BE-03   | Nhận câu hỏi, chống gửi trùng, giới hạn lượt        | 12–18 | BE-01, BE-02, OPS-00                        | Làm bản gọn |
+| BE-04   | Tiến trình chạy nền gọi AI                          | 12–18 | BE-03                                       | Hoãn được   |
+| BE-05   | Lọc dữ liệu gửi AI và kiểm tra câu trả lời          | 10–14 | BE-02, ADR-01                               | Cốt lõi     |
+| SIM-01  | Bộ tự chẩn đoán lỗi cho 3 lab                       | 12–18 | DISC-03, BE-05                              | Cốt lõi     |
+| PY-01   | Dựng chương trình Python cho phần AI                | 5–8   | ADR-01                                      | Hoãn được   |
+| PY-02   | Nối nhà cung cấp AI và khuôn câu trả lời            | 8–12  | PY-01, BE-04, BE-05                         | Hoãn được   |
+| UX-01   | Phác giao diện và viết chữ cho các trạng thái       | 5–8   | DISC-02, ADR-01                             | Làm bản gọn |
+| FE-01   | Làm khung trợ lý trên giao diện                     | 8–12  | UX-01                                       | Cốt lõi     |
+| FE-02   | Nối giao diện với máy chủ                           | 10–16 | FE-01, BE-03, PY-02                         | Làm bản gọn |
+| BE-06   | Khóa đường gọi AI cũ, làm câu dự phòng chung        | 4–6   | BE-03, BE-05                                | Cốt lõi     |
+| QA-01   | Kiểm thử quyền, dữ liệu, nhiều người cùng lúc       | 10–16 | BE-04, BE-05, SIM-01, PY-02, FE-02, BE-06   | Làm bản gọn |
+| OPS-01  | Tự động kiểm thử và đóng gói                        | 8–12  | BE-04, PY-01, QA-01                         | Làm bản gọn |
+| GATE-01 | Demo nội bộ                                         | 4–6   | OPS-01, FE-02, SIM-01                       | Làm bản gọn |
+| AI-01   | Viết lời dặn AI và 3 mức gợi ý                      | 8–12  | GATE-01, DISC-03                            | Cốt lõi     |
+| AI-02   | Chọn model bằng cách đo, tính chi phí               | 12–18 | AI-01, PY-02, OPS-00                        | Cốt lõi     |
+| FE-03   | Hoàn thiện lỗi, bản cũ, gợi ý                       | 8–12  | FE-02, AI-01                                | Làm bản gọn |
+| BE-07   | Đánh giá của học viên và số liệu đầu tiên           | 8–12  | BE-01, GATE-01                              | Làm bản gọn |
+| BE-08   | Xóa hội thoại và thời hạn lưu                       | 10–16 | BE-04, FE-02                                | Làm bản gọn |
+| OPS-02  | Trần ngân sách, công tắc tắt, theo dõi              | 8–12  | BE-04, BE-07, AI-02                         | Cốt lõi     |
+| QA-02   | Kiểm thử trọn luồng trên trình duyệt thật           | 8–12  | FE-03, BE-07, BE-08, OPS-02                 | Làm bản gọn |
+| OPS-04  | Thử tải nhiều người cùng lúc                        | 12–18 | QA-02, OPS-01, OPS-02                       | Hoãn được   |
+| OPS-03  | Môi trường thử, sao lưu, diễn tập                   | 6–10  | OPS-01, BE-08, OPS-02, OPS-04               | Làm bản gọn |
+| REL-01  | Mở thử nghiệm kín                                   | 6–10  | AI-02, QA-02, OPS-03                        | Cốt lõi     |
+| REL-02  | Quan sát và sửa lỗi sau thử nghiệm                  | 12–20 | REL-01                                      | Cốt lõi     |
+| SIM-02  | Sửa nội dung lab theo thử nghiệm                    | 8–12  | REL-02                                      | Cốt lõi     |
+| BE-09   | Giải thích kết quả đúng với bản nộp                 | 8–12  | BE-06, BE-08, AI-01                         | Làm bản gọn |
+| QA-03   | Chấm chất lượng bản phát hành đầu                   | 10–16 | AI-02, SIM-02, BE-09                        | Làm bản gọn |
+| QA-04   | Cố ý làm hỏng để thử độ bền                         | 12–18 | QA-01, BE-08, BE-09, OPS-02                 | Hoãn được   |
+| OPS-05  | Đóng gói bản chạy thật, cảnh báo, phát hành tự động | 8–12  | OPS-04, OPS-02                              | Hoãn được   |
+| OPS-06  | Khôi phục, thời hạn lưu, đối soát chi phí           | 8–12  | OPS-03, BE-08, QA-04                        | Hoãn được   |
+| FE-04   | Dễ dùng, vừa mọi màn hình, nhanh                    | 6–10  | FE-03, BE-09                                | Làm bản gọn |
+| DOC-01  | Tài liệu hỗ trợ và vận hành cho một người           | 4–6   | REL-02, OPS-05, OPS-06                      | Làm bản gọn |
+| REL-03  | Cổng phát hành, mở dần                              | 6–10  | QA-03, QA-04, OPS-05, OPS-06, FE-04, DOC-01 | Làm bản gọn |
+| R2-01   | Quyết định có đáng làm giai đoạn 4 không            | 4–6   | REL-03                                      | Hoãn được   |
+| R2-02   | Bộ công cụ chỉ đọc cho AI                           | 10–16 | R2-01                                       | Hoãn được   |
+| R2-03   | Quyền cho từng công cụ                              | 8–12  | R2-02                                       | Hoãn được   |
+| R2-04   | AI tự chọn công cụ, có giới hạn                     | 12–20 | R2-03                                       | Hoãn được   |
+| R2-05   | Tính chi phí từng bước, hiện tiến trình             | 8–12  | R2-04                                       | Hoãn được   |
+| R2-06   | Chấm chất lượng và thử tấn công                     | 10–16 | R2-05                                       | Hoãn được   |
+| R2-07   | Thử nhóm nhỏ, quyết định mở rộng                    | 6–10  | R2-06                                       | Hoãn được   |
 
 Tổng cộng theo nhãn: 13 task Cốt lõi, 20 task Làm bản gọn, 14 task Hoãn được.
 
@@ -210,7 +210,7 @@ Mục tiêu: có một luồng đầy đủ chạy được nội bộ. Học vi
 #### BE-02 · Kiểm tra quyền và chụp trạng thái bài lab
 
 - **Tiến độ 23/10/2026:** hoàn thành nền local; 7 kiểm integration DB/HTTP và 6 unit đạt. Đã nối metadata vào start/submit và guard vào namespace AI. [Bằng chứng](baseline/BE-02-access-snapshot.md). API nhận câu hỏi và kết nối UI hội thoại tiếp tục ở BE-03/FE-02.
-**Nhãn:** Cốt lõi · **Giờ:** 8–12 · **Cần xong trước:** BE-01, DISC-03
+  **Nhãn:** Cốt lõi · **Giờ:** 8–12 · **Cần xong trước:** BE-01, DISC-03
 
 - **Làm gì:** Trước khi trả lời, kiểm tra người hỏi: còn đăng nhập hợp lệ, tài khoản chưa bị khóa, còn là thành viên của bài lab, thuộc nhóm được dùng thử. Sau đó chụp lại trạng thái bài lab tại lúc hỏi (bỏ bớt thông tin nhạy cảm) để AI dựa vào bản chụp, không dựa vào thứ có thể đã thay đổi. Mỗi người chỉ đọc được hội thoại của chính mình, kể cả trong lab nhóm.
 - **Để làm gì:** Không ai xem được hội thoại của người khác. AI không đọc nhầm trạng thái đã cũ.
@@ -220,7 +220,7 @@ Mục tiêu: có một luồng đầy đủ chạy được nội bộ. Học vi
 #### BE-03 · Nhận câu hỏi, chống gửi trùng, giới hạn lượt
 
 - **Tiến độ 23/10/2026:** hoàn thành admission local, kiểm 20 retries qua hai tiến trình backend và tranh quota/rollback DB. [Hồ sơ BE-03](baseline/BE-03-admission.md). API nhận/lấy trạng thái request đã có; xử lý queue và gọi model tiếp tục ở BE-04.
-**Nhãn:** Làm bản gọn · **Giờ:** 12–18 · **Cần xong trước:** BE-01, BE-02, OPS-00
+  **Nhãn:** Làm bản gọn · **Giờ:** 12–18 · **Cần xong trước:** BE-01, BE-02, OPS-00
 
 - **Làm gì:** Khi nhận một câu hỏi: kiểm tra trùng (bấm nhiều lần chỉ tính một lần), giữ chỗ chi phí trước khi gọi AI, giới hạn theo ngày cho từng người và cho cả hệ thống, mỗi người chỉ có một câu hỏi đang xử lý, báo lỗi theo một khuôn thống nhất. Xử lý đúng cả trường hợp dữ liệu hạn mức bị mất khi khôi phục từ bản sao lưu.
 - **Để làm gì:** Chặn việc tốn tiền ngoài ý muốn (bấm liên tục, mở nhiều tab, chạy nhiều máy chủ).
@@ -230,7 +230,7 @@ Mục tiêu: có một luồng đầy đủ chạy được nội bộ. Học vi
 #### BE-04 · Tiến trình chạy nền gọi AI
 
 - **Tiến độ 23/10/2026:** hoàn thành local/fake. Worker có lease/fence/reaper, permit/receipt được xác thực, quyết toán một lần và xử lý usage chưa rõ. Kiểm bằng hai process cùng DB, CLI không chờ model giả. [Hồ sơ BE-04](baseline/BE-04-worker.md). Tiếp theo **BE-05**; Python/provider thật và UI hội thoại chưa bật.
-**Nhãn:** Hoãn được · **Giờ:** 12–18 · **Cần xong trước:** BE-03
+  **Nhãn:** Hoãn được · **Giờ:** 12–18 · **Cần xong trước:** BE-03
 
 - **Làm gì:** Xây phần xử lý chạy nền: lấy việc từ hàng chờ, báo “còn sống” định kỳ, thu hồi việc bị bỏ dở. Chỉ gọi AI khi có “giấy phép”, ghi biên nhận sau mỗi lần gọi. Việc gọi AI đặt ngoài giao dịch dữ liệu để không giữ khóa lâu.
 - **Để làm gì:** Học viên không phải đứng chờ AI. Nếu máy chủ sập giữa chừng thì không gọi AI hai lần và không tính tiền hai lần.
@@ -260,7 +260,9 @@ Mục tiêu: có một luồng đầy đủ chạy được nội bộ. Học vi
 
 #### PY-01 · Dựng chương trình Python cho phần AI
 
-**Nhãn:** Hoãn được · **Giờ:** 5–8 · **Cần xong trước:** ADR-01
+**Nhãn:** Cốt lõi theo ADR-005 · **Giờ:** 5–8 · **Cần xong trước:** ADR-01
+
+- **Tiến độ 26/10/2026:** hoàn thành local/fake. Có chương trình Python riêng, cài lại từ uv.lock, kiểm token Node, giới hạn dữ liệu/thời gian và health. Chỉ trả đã xử lý sau Node lưu biên nhận. 149 test Python và 270 hồi quy Node đạt; chưa bật model thật hoặc ghép worker transport. [Giải thích PY-01](baseline/PY-01-service.md). Tiếp theo PY-02.
 
 - **Làm gì:** Tạo một chương trình Python riêng (dùng FastAPI) lo phần nói chuyện với AI: cài đặt lặp lại được, có kiểm tra “còn sống / sẵn sàng”, chỉ nhận lời gọi nội bộ có xác thực, giới hạn kích thước dữ liệu, có chế độ AI giả.
 - **Để làm gì:** Tách phần AI khỏi phần mô phỏng mạng, để sau này đổi model hay thêm tính năng mà không động vào phần chấm điểm.
@@ -269,6 +271,10 @@ Mục tiêu: có một luồng đầy đủ chạy được nội bộ. Học vi
 - **Quyết định đã chốt ADR-004/005:** Python xử lý prompt/provider; Node giữ domain/quyền/accounting. PY-01 nằm trong nền tảng R1.
 
 #### PY-02 · Nối nhà cung cấp AI và khuôn câu trả lời
+
+- **Bổ sung 27/10/2026:** ghép prompt/test người dùng gửi vào `gemini-r1-v2`: bốn module intent, tám ví dụ, kiểm độ dài/ID local, loại history cũ và giữ usage khi output bị chặn. Đã đo token thật cho builder bằng countTokens, không có generation mới. [Chi tiết và phạm vi LAB_REVIEW](baseline/PY-02-provider.md#8-prompt-được-bổ-sung-ngày-2710-như-thế-nào). UI hội thoại và chính sách hint BE-09 tiếp tục riêng.
+
+- **Tiến độ 26/10/2026:** hoàn thành kỹ thuật local: worker → Python → Gemini, đếm token đầy đủ trước permit, Pydantic giữ schema chung, receipt retry riêng và dùng ledger chi phí chung. Đã gọi một lượt Gemini thật thành công bằng câu hỏi tổng hợp; 250 test Python, 274 hồi quy Node, 34 storage và 42 HTTP/DB đạt. [Giải thích PY-02](baseline/PY-02-provider.md). Chưa nối UI hội thoại hoặc mở pilot/production.
 
 **Nhãn:** Hoãn được · **Giờ:** 8–12 · **Cần xong trước:** PY-01, BE-04, BE-05
 

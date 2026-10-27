@@ -74,4 +74,9 @@ Mỗi request gọi `generateContent` một lần. Chỉ nhận candidate `STOP`
 
 ## Điều kiện thay thế
 
+**Cập nhật 26/10/2026:** [PY-02](../baseline/PY-02-provider.md) đã kiểm một lượt
+Gemini thật qua worker/Python/PostgreSQL riêng, dùng chung ledger này theo
+[ADR-010](ADR-010-python-local-gemini.md). Đường `/explain` cũ chưa bị đóng trong
+PY-02; phần thống nhất đường gọi tiếp tục ở BE-06.
+
 Khi ghép R1, thay nhánh local bằng hàng chờ, hạn mức, cấp phép và biên nhận PostgreSQL cùng Python adapter đúng quy ước dữ liệu. Trước pilot cần đánh giá trên ba lab, xác minh hạn mức tài khoản, chính sách dữ liệu, staging/backup, công tắc tắt và các mốc còn mở. Model truy cập được và một câu trả lời hợp lệ chưa chứng minh chất lượng hoặc khả năng chạy production.

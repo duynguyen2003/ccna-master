@@ -5,6 +5,7 @@ const { fitBoundary } = require('./context');
 const { fail, limitsOf } = require('./quota');
 const { locked, eligible, fenced, event } = require('./lifecycle');
 const { costOf } = require('./settlement');
+const localBudget = require('./localGeminiBudget');
 function dispatch(prisma, config) {
   const { environment, recoveryEpoch, providers = {} } = config;
   function providerFor(c) {
@@ -14,6 +15,7 @@ function dispatch(prisma, config) {
       !eligible(c) ||
       !c.policy.dispatchEnabled ||
       !p ||
+      (p.provider === 'gemini' && !p.dispatchEnabled) ||
       c.row.recoveryEpoch !== recoveryEpoch ||
       c.row.deadlineAt <= c.now
     )
@@ -37,6 +39,13 @@ function dispatch(prisma, config) {
       return locked(prisma, environment, requestId, async (tx, c) => {
         fenced(c, workerId, leaseVersion);
         const p = providerFor(c);
+        if (p.localLedgerFile) {
+          try {
+            localBudget.available(p.localLedgerFile);
+          } catch {
+            throw fail('AI_BUDGET_PAUSED');
+          }
+        }
         if (c.row.sourceRevision === null) throw fail('AI_INVALID_REQUEST');
         if (c.call && c.call.state !== 'PLANNED') throw fail('AI_DISPATCH_ALREADY_CLAIMED');
         const callId = c.call?.id || randomUUID();
@@ -101,7 +110,7 @@ function dispatch(prisma, config) {
           c.row.leaseExpiresAt <= c.now
         )
           throw fail('AI_LEASE_LOST');
-        providerFor(c);
+        const p = providerFor(c);
         if (!call.analyzeInput || new Date(call.analyzeInput.deadlineAt) <= c.now)
           throw fail('AI_LEASE_LOST');
         const reservations = await tx.aiReservation.findMany({
@@ -147,6 +156,13 @@ function dispatch(prisma, config) {
           WHERE environment = ${environment} AND slot_number < ${capacity} AND request_id IS NULL
           ORDER BY slot_number FOR UPDATE SKIP LOCKED LIMIT 1`;
         if (!slots.length) throw fail('AI_CAPACITY_EXHAUSTED');
+        if (p.localLedgerFile) {
+          try {
+            localBudget.reserve(p.localLedgerFile, Date.now(), body);
+          } catch {
+            throw fail('AI_BUDGET_PAUSED');
+          }
+        }
         const deadlineAt = new Date(call.analyzeInput.deadlineAt);
         await tx.aiExecutionSlot.update({
           where: { environment_slotNumber: { environment, slotNumber: slots[0].slot_number } },

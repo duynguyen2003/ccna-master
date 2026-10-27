@@ -38,6 +38,19 @@ Lần đầu chỉ hỗ trợ v1. Khi có bản tiếp theo, trong giai đoạn 
 
 ## Hệ quả và xem lại
 
+**Cập nhật PY-02 ngày 26/10/2026:** worker đã có transport Python; adapter
+fake/Gemini, preflight toàn request và retry receipt riêng đã được kiểm trên
+PostgreSQL thử. Pydantic bọc JSON Schema chung, kiểm raw JSON trước ép kiểu/bỏ
+trường; 76 fixture chung đạt parity. Một lượt Gemini thật qua luồng mới thành
+công theo [ADR-010](ADR-010-python-local-gemini.md). Contract vẫn v1.0.0;
+pilot/production chưa bật. [Báo cáo PY-02](../baseline/PY-02-provider.md).
+
+**Cập nhật PY-01 ngày 26/10/2026:** [dịch vụ Python local/fake](../baseline/PY-01-service.md)
+đã dùng trực tiếp JSON Schema sinh từ nguồn chung để kiểm raw JSON, có JWT tương
+thích Node, health và claim/receipt fake trước ACK. Worker chính chưa chuyển
+transport; bọc Pydantic có parity, provider/prompt/tokenizer và receipt retry đầy
+đủ tiếp tục ở PY-02. Không đổi contract v1.0.0 hoặc bật model thật.
+
 CI kiểm các file JSON và mẫu thử đã sinh có khớp nguồn chung hay không. Muốn sửa chúng thì sửa shared source/builder rồi sinh lại, tránh mỗi bên có một bản khác nhau.
 
 Ở mốc ADR-01, phần đã có là quy ước dữ liệu và kiểm thử tương thích. Các task BE triển khai database, quyền và worker sau đó; dịch vụ Python, giao diện và phối hợp agent R2 vẫn cần công việc riêng. Có bản thiết kế/schema chưa chứng minh các dịch vụ đó đã chạy.
