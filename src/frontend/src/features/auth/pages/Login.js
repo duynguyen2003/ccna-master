@@ -1,3 +1,4 @@
+import AppIcon from '../../../components/ui/AppIcon';
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { api } from '../../../services/Api';
@@ -118,7 +119,7 @@ const Login = () => {
 
       {globalError && (
         <div className="form-global-error">
-          <span className="material-icons-round">error_outline</span>
+          <AppIcon name={'error_outline'} className="app-icon" />
           {globalError}
         </div>
       )}
@@ -219,9 +220,7 @@ const Login = () => {
           ) : (
             <>
               ĐĂNG NHẬP{' '}
-              <span className="material-icons-round" style={{ fontSize: 18 }}>
-                arrow_forward
-              </span>
+              <AppIcon name={'arrow_forward'} className="app-icon" style={{ fontSize: 18 }} />
             </>
           )}
         </button>
@@ -231,7 +230,7 @@ const Login = () => {
             to="/forgot-password"
             title="Quên mật khẩu?"
             className="auth-inline-link"
-            style={{ fontSize: '13px', fontWeight: '500', color: '#1e293b' }}
+            style={{ fontSize: '13px', fontWeight: '500', color: 'var(--color-foreground)' }}
           >
             Quên mật khẩu?
           </Link>

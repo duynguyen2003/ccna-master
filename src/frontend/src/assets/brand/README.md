@@ -1,6 +1,6 @@
 # NetMaster artwork
 
-Source: the user-provided `Logo NetMastery@1x.png` (960 × 540). The artwork itself reads **NetMaster**; application names and ordinary text remain NetMastery.
+Source: the user-provided `Logo NetMastery@1x.png` (960 × 540). The artwork and learner interface use **NetMaster**. Technical package and repository names remain unchanged.
 
 - `netmaster-logo.png`: complete, tightly cropped artwork with transparent background, suitable for reuse/import into Figma.
 - `netmaster-mark.png` and `netmaster-wordmark.png`: aligned slices with identical canvas height. Per the user's sizing preference, `BrandLogo` displays the mark at 20% and the wordmark at 65% of its container width. On dark surfaces CSS makes the wordmark white while preserving the colored icon. On small headers/collapsed sidebars only the mark is displayed.

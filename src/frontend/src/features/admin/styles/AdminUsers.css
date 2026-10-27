@@ -95,7 +95,7 @@
 .admin-users-filter-button:focus-visible,
 .admin-users-filter-button.is-open {
   border-color: #5d71ff;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+  box-shadow: 0 0 0 3px rgb(var(--brand-primary-rgb) / 0.12);
   outline: none;
 }
 
@@ -212,15 +212,15 @@
   gap: 12px;
   margin-bottom: 12px;
   padding: 10px 14px;
-  border: 1px solid #dbeafe;
-  background: #eff6ff;
+  border: 1px solid var(--color-primary-soft);
+  background: var(--color-muted);
   border-radius: 6px;
 }
 
 .admin-users-bulkbar-count {
   font-size: 13px;
   font-weight: 600;
-  color: #1e40af;
+  color: var(--color-primary-hover);
 }
 
 .admin-users-bulkbar-actions {
@@ -342,7 +342,7 @@
 }
 
 .admin-badge.student {
-  background-color: #e0f2fe;
+  background-color: var(--color-primary-pale);
   color: #075985;
 }
 

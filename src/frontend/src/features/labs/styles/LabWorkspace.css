@@ -259,7 +259,10 @@
   font-size: 0.75rem;
   outline: none;
   box-sizing: border-box;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background-color 0.2s ease;
 }
 .cli-lab-inline-form input::placeholder {
   color: var(--lab-text-subtle);
@@ -301,7 +304,13 @@
   justify-content: center;
   white-space: nowrap;
   box-sizing: border-box;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition:
+    background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .cli-lab-inline-form button:hover:not(:disabled),
 .cli-lab-member-row button:hover:not(:disabled) {
@@ -521,7 +530,9 @@
   font-family: inherit;
   font-size: 0.75rem;
   outline: none;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 .cli-lab-probe-form input:focus,
 .cli-lab-probe-form .app-select__trigger:focus-visible {
@@ -681,7 +692,9 @@
   font-family: inherit;
   font-size: 0.72rem;
   outline: none;
-  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
 }
 .cli-lab-replay-bar input:focus {
   border-color: var(--lab-accent);
@@ -701,7 +714,13 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.18s ease;
+  transition:
+    background-color 0.18s ease,
+    color 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.18s ease,
+    opacity 0.18s ease;
 }
 
 .cli-lab-objective {
@@ -1083,6 +1102,17 @@
     flex: 1;
   }
 }
+.cli-lab-theme .network-topology {
+  height: clamp(240px, 32vh, 360px);
+  min-height: 240px;
+}
+.cli-lab-theme .is-console-focused .network-topology {
+  height: 180px;
+  min-height: 160px;
+}
+.cli-lab-theme .is-console-focused .cli-xterm-host {
+  height: max(260px, 38vh);
+}
 @media (max-width: 560px) {
   .cli-lab-theme .cli-lab-header {
     padding-inline: 14px;
@@ -1112,4 +1142,10 @@
   .cli-lab-theme .cli-xterm-host {
     height: 280px;
   }
+}
+.cli-lab-theme .cli-console-toggle {
+  width: auto;
+  min-width: 92px;
+  padding: 0 12px;
+  white-space: nowrap;
 }

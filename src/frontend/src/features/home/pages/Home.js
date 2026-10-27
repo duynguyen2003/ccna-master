@@ -1,5 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import AppIcon from '../../../components/ui/AppIcon';
+import LearningResumeBanner from '../../../components/learning/LearningResumeBanner';
+import HeroTopology from '../components/HeroTopology';
+import HeroTerminalPreview from '../components/HeroTerminalPreview';
+import useReducedMotion from '../../../hooks/useReducedMotion';
+import React, { lazy, Suspense, useState, useEffect, useRef } from 'react';
+import '../styles/Home.css';
+import { Link, useLocation } from 'react-router-dom';
 import {
   ArrowRight,
   BookOpen,
@@ -83,15 +89,13 @@ const features = [
 const FeatureCard = ({ materialIcon, title, desc, to }) => (
   <Link to={to} className="feat-card">
     <div className="feat-icon-box">
-      <span className="material-icons-round feat-icon">{materialIcon}</span>
+      <AppIcon name={materialIcon} className="app-icon feat-icon" />
     </div>
     <h3 className="feat-title">{title}</h3>
     <p className="feat-desc">{desc}</p>
     <span className="feat-explore-btn">
       Khám phá
-      <span className="material-icons-round" style={{ fontSize: 16 }}>
-        arrow_forward
-      </span>
+      <AppIcon name={'arrow_forward'} className="app-icon" style={{ fontSize: 16 }} />
     </span>
   </Link>
 );
@@ -110,6 +114,11 @@ const CourseCardSkeleton = () => (
 /* ===============================
    HERO TYPEWRITER CONFIG
  ================================= */
+
+/* ===============================
+   MAIN COMPONENT
+ ================================= */
+
 const HERO_PREFIX = 'Học CCNA theo lộ trình.';
 const HERO_HIGHLIGHT_PHRASES = [
   'Thực hành mạng ngay khi học.',
@@ -118,23 +127,24 @@ const HERO_HIGHLIGHT_PHRASES = [
   'Tự tin làm chủ hạ tầng mạng.',
 ];
 
-/* ===============================
-   MAIN COMPONENT
- ================================= */
+const HeroTerminal = lazy(() => import('../components/HeroTerminal'));
 
 export const Home = () => {
+  const reducedMotion = useReducedMotion();
+  const [demoOpen, setDemoOpen] = useState(false);
   const { token, isAuthenticated } = useAuth();
-  const navigate = useNavigate();
   const location = useLocation();
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const containerRef = useRef(null);
-  const resumeCourse = courses.find((c) => c.progress > 0 && c.progress < 100) || null;
 
   // Hiệu ứng chữ chạy từng chữ một (Typewriter effect) hiện đại cho tiêu đề banner
-  const isReducedMotion = prefersReducedMotion();
+
+  const isReducedMotion = reducedMotion;
   const [prefixText, setPrefixText] = useState(isReducedMotion ? HERO_PREFIX : '');
-  const [highlightText, setHighlightText] = useState(isReducedMotion ? HERO_HIGHLIGHT_PHRASES[0] : '');
+  const [highlightText, setHighlightText] = useState(
+    isReducedMotion ? HERO_HIGHLIGHT_PHRASES[0] : ''
+  );
   const [isPrefixDone, setIsPrefixDone] = useState(isReducedMotion);
   const [phraseIndex, setPhraseIndex] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -187,7 +197,15 @@ export const Home = () => {
         return () => clearTimeout(timeout);
       }
     }
-  }, [prefixText, highlightText, isPrefixDone, isDeleting, phraseIndex, isReducedMotion]);
+  }, [
+    prefixText,
+    highlightText,
+    isPrefixDone,
+    isDeleting,
+    phraseIndex,
+    isReducedMotion,
+    isAuthenticated,
+  ]);
 
   const scrollToSection = (sectionId) => {
     document.getElementById(sectionId)?.scrollIntoView({
@@ -228,7 +246,6 @@ export const Home = () => {
             desc: c.description,
             progress: progress,
             backgroundImage: getCourseBackground(c),
-            nextLessonTitle: c.nextLessonTitle || 'Bài học tiếp theo: Tiếp tục lộ trình hiện tại',
           };
         });
         setCourses(mapped);
@@ -273,6 +290,7 @@ export const Home = () => {
         );
       };
 
+      fadeOnScroll('.home-learning-resume', '.home-learning-resume');
       fadeOnScroll('.landing-steps .landing-section-heading', '.landing-steps');
       fadeOnScroll('.landing-step-card', '.landing-steps__grid', 0.08);
       fadeOnScroll('.landing-faq .landing-section-heading', '.landing-faq');
@@ -280,7 +298,7 @@ export const Home = () => {
       fadeOnScroll('.landing-final-cta', '.landing-final-cta');
       ScrollTrigger.refresh();
     },
-    { scope: containerRef }
+    { dependencies: [isAuthenticated, reducedMotion], scope: containerRef, revertOnUpdate: true }
   );
 
   // Tự động chạy GSAP timeline & ScrollTrigger (fade in khi cuộn xuống, fade out khi cuộn ngược lên)
@@ -296,26 +314,6 @@ export const Home = () => {
         { opacity: 0, y: -16 },
         { opacity: 1, y: 0, duration: 0.45, clearProps: 'opacity,transform' }
       );
-
-      // 2. Continue learning section (nếu có bài học đang dở)
-      if (containerRef.current?.querySelector('.continue-learning')) {
-        gsap.fromTo(
-          '.continue-learning',
-          { opacity: 0, y: 20 },
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.45,
-            ease: 'power2.out',
-            scrollTrigger: {
-              trigger: '.continue-learning',
-              start: 'top 90%',
-              end: 'bottom 10%',
-              toggleActions: 'play reverse play reverse',
-            },
-          }
-        );
-      }
 
       // 3. Lộ trình khóa học: Fade in khi cuộn vào tầm nhìn, Fade out khi cuộn ngược lên
       if (containerRef.current?.querySelector('.curriculum')) {
@@ -377,7 +375,7 @@ export const Home = () => {
 
       ScrollTrigger.refresh();
     },
-    { scope: containerRef }
+    { dependencies: [isAuthenticated, reducedMotion], scope: containerRef, revertOnUpdate: true }
   );
 
   // Fade course card nhanh khi vào viewport và đảo chiều khi rời viewport.
@@ -409,7 +407,11 @@ export const Home = () => {
         }
       );
     },
-    { dependencies: [loading], scope: containerRef, revertOnUpdate: true }
+    {
+      dependencies: [isAuthenticated, loading, reducedMotion],
+      scope: containerRef,
+      revertOnUpdate: true,
+    }
   );
 
   // Nội dung course thay skeleton nhưng giữ nguyên kích thước; chỉ refresh vị trí ScrollTrigger.
@@ -418,46 +420,41 @@ export const Home = () => {
     const frameId = requestAnimationFrame(() => ScrollTrigger.refresh());
     return () => cancelAnimationFrame(frameId);
   }, [loading]);
-  const handleResumeLearning = () => {
-    if (!isAuthenticated) {
-      navigate('/login');
-      return;
-    }
-    if (resumeCourse) {
-      navigate(`/lesson?course=${resumeCourse.courseId}`);
-    }
-  };
-
-  const resumeNextLessonText = resumeCourse ? resumeCourse.nextLessonTitle : '';
-  const ResumeIcon = resumeCourse?.icon || FALLBACK_ICON;
-
   return (
     <div className="home-wrapper" ref={containerRef}>
       <section className="landing-hero" aria-labelledby="landing-title">
         <div className="landing-hero__content">
-          <p className="landing-eyebrow">NETMASTERY · HỌC VÀ LUYỆN THI CCNA</p>
-          <h1
-            id="landing-title"
-            aria-label="Học CCNA theo lộ trình. Thực hành mạng ngay khi học."
-          >
-            <span className="hero-title-prefix">{prefixText}</span>
-            {!isPrefixDone && (
-              <span
-                className="hero-typewriter-cursor hero-typewriter-cursor--prefix"
-                aria-hidden="true"
-              />
-            )}
-            {' '}
-            <span className="hero-title-highlight">
-              {highlightText}
-              {isPrefixDone && (
-                <span className="hero-typewriter-cursor" aria-hidden="true" />
-              )}
-            </span>
-          </h1>
+          <p className="landing-eyebrow">NETMASTER · HỌC VÀ LUYỆN THI CCNA</p>
+          <div className="hero-title-slot">
+            {HERO_HIGHLIGHT_PHRASES.map((phrase) => (
+              <span className="hero-title-reserve" aria-hidden="true" key={phrase}>
+                {HERO_PREFIX} {phrase}
+              </span>
+            ))}
+            <h1
+              id="landing-title"
+              aria-label="Học CCNA theo lộ trình. Thực hành mạng ngay khi học."
+            >
+              <span className="hero-title-prefix">
+                {isReducedMotion ? HERO_PREFIX : prefixText}
+              </span>
+              {!isReducedMotion && !isPrefixDone && (
+                <span
+                  className="hero-typewriter-cursor hero-typewriter-cursor--prefix"
+                  aria-hidden="true"
+                />
+              )}{' '}
+              <span className="hero-title-highlight">
+                {isReducedMotion ? HERO_HIGHLIGHT_PHRASES[0] : highlightText}
+                {!isReducedMotion && isPrefixDone && (
+                  <span className="hero-typewriter-cursor" aria-hidden="true" />
+                )}
+              </span>
+            </h1>
+          </div>
           <p className="landing-hero__description">
-            Từ bài học nền tảng đến lab cấu hình và bài thi thử, bạn có thể học và tự kiểm tra
-            trong cùng một nền tảng. Phù hợp cho người mới bắt đầu học mạng.
+            Từ bài học nền tảng đến lab cấu hình và bài thi thử, bạn có thể học và tự kiểm tra trong
+            cùng một nền tảng. Phù hợp cho người mới bắt đầu học mạng.
           </p>
           <div className="landing-hero__actions">
             <Link to="/roadmap" className="landing-button landing-button--primary">
@@ -473,76 +470,54 @@ export const Home = () => {
           </div>
         </div>
 
-        <div className="landing-hero__journey" aria-label="Ba phần trong hành trình học CCNA">
-          <div className="landing-journey__heading">
-            <span>Hành trình học CCNA</span>
-            <span>CCNA 200-301</span>
+        <div className="landing-hero__visual">
+          <HeroTopology />
+          <div className="landing-hero__journey hero-terminal-card" aria-label="Terminal minh họa">
+            <div className="hero-terminal-heading">
+              <div className="hero-terminal-heading__title">
+                <span className="hero-terminal-lights" aria-hidden="true">
+                  <span />
+                  <span />
+                  <span />
+                </span>
+                <span>R1 · Terminal minh họa</span>
+              </div>
+              <span>CCNA</span>
+            </div>
+            {demoOpen ? (
+              <Suspense fallback={<p>Đang mở terminal…</p>}>
+                <HeroTerminal />
+              </Suspense>
+            ) : (
+              <>
+                <HeroTerminalPreview />
+                <button
+                  type="button"
+                  className="hero-demo-button"
+                  onClick={() => setDemoOpen(true)}
+                >
+                  Thử CLI
+                </button>
+              </>
+            )}
+            <Link to="/exam/testing-center" className="hero-exam-badge">
+              <ClipboardCheck size={17} aria-hidden="true" />
+              Luyện thi CCNA
+            </Link>
           </div>
-          <ol className="landing-journey__list">
-            <li>
-              <span className="landing-journey__icon"><BookOpen size={19} aria-hidden="true" /></span>
-              <span><strong>Học kiến thức nền tảng</strong><small>Theo từng khóa học và bài học</small></span>
-              <span className="landing-journey__number">01</span>
-            </li>
-            <li>
-              <span className="landing-journey__icon"><Network size={19} aria-hidden="true" /></span>
-              <span><strong>Thực hành cấu hình</strong><small>Áp dụng kiến thức trong bài lab</small></span>
-              <span className="landing-journey__number">02</span>
-            </li>
-            <li>
-              <span className="landing-journey__icon"><ClipboardCheck size={19} aria-hidden="true" /></span>
-              <span><strong>Tự kiểm tra</strong><small>Luyện tập với bài thi thử</small></span>
-              <span className="landing-journey__number">03</span>
-            </li>
-          </ol>
-          <div className="landing-journey__footer">Học theo nhịp độ phù hợp với bạn</div>
         </div>
       </section>
-
-      {/* Khóa học đang dở cần xuất hiện trước nội dung giới thiệu cho học viên. */}
-      {isAuthenticated && resumeCourse && (
-        <section className="continue-learning">
-          <div className="continue-learning-inner">
-            <div className="continue-learning-icon-wrap">
-              <div className="continue-learning-icon-box" aria-hidden="true">
-                <ResumeIcon size={26} strokeWidth={1.8} />
-              </div>
-            </div>
-
-            <div className="continue-learning-content">
-              <h2 className="continue-learning-title">
-                {resumeCourse.title.replace(/\s*\(Updated\)/gi, '')}
-              </h2>
-              <p className="continue-learning-next-lesson">{resumeNextLessonText}</p>
-              <div className="continue-learning-progress-wrap">
-                <div className="continue-learning-progress-track">
-                  <div
-                    className="continue-learning-progress-fill"
-                    style={{ width: `${resumeCourse.progress}%` }}
-                  />
-                </div>
-                <p className="continue-learning-progress-label">
-                  Đang học {resumeCourse.progress}%
-                </p>
-              </div>
-            </div>
-
-            <div className="continue-learning-actions">
-              <button
-                type="button"
-                className="continue-learning-btn primary"
-                onClick={handleResumeLearning}
-              >
-                Tiếp tục bài học
-                <ArrowRight size={16} />
-              </button>
-            </div>
-          </div>
-        </section>
+      {isAuthenticated && (
+        <div className="home-learning-resume">
+          <LearningResumeBanner />
+        </div>
       )}
 
-
-      <section id="home-how-it-works" className="landing-steps" aria-labelledby="landing-steps-title">
+      <section
+        id="home-how-it-works"
+        className="landing-steps"
+        aria-labelledby="landing-steps-title"
+      >
         <div className="landing-section-heading">
           <p className="landing-eyebrow">MỘT LỘ TRÌNH, BA CÁCH HỌC</p>
           <h2 id="landing-steps-title">Đi từ hiểu kiến thức đến làm được bài tập</h2>
@@ -557,10 +532,15 @@ export const Home = () => {
               src={roadmapPreview}
               alt="Giao diện lộ trình học CCNA với ba chặng kiến thức"
               loading="lazy"
+              width={1440}
+              height={900}
+              decoding="async"
             />
             <h3>Học theo lộ trình</h3>
             <p>Bắt đầu từ kiến thức mạng nền tảng và theo dõi phần đã hoàn thành.</p>
-            <Link to="/roadmap">Xem lộ trình <ArrowRight size={16} aria-hidden="true" /></Link>
+            <Link to="/roadmap">
+              Xem lộ trình <ArrowRight size={16} aria-hidden="true" />
+            </Link>
           </article>
           <article className="landing-step-card">
             <span className="landing-step-card__number">02</span>
@@ -570,10 +550,15 @@ export const Home = () => {
               src={labPreview}
               alt="Giao diện xem trước lab với sơ đồ mạng và danh sách nhiệm vụ"
               loading="lazy"
+              width={1440}
+              height={900}
+              decoding="async"
             />
             <h3>Làm lab thực hành</h3>
             <p>Chọn bài lab để luyện thao tác cấu hình và xử lý tình huống mạng.</p>
-            <Link to="/labs">Khám phá lab <ArrowRight size={16} aria-hidden="true" /></Link>
+            <Link to="/labs">
+              Khám phá lab <ArrowRight size={16} aria-hidden="true" />
+            </Link>
           </article>
           <article className="landing-step-card">
             <span className="landing-step-card__number">03</span>
@@ -583,10 +568,15 @@ export const Home = () => {
               src={examPreview}
               alt="Giao diện trung tâm kiểm tra với các bài thi thử CCNA"
               loading="lazy"
+              width={1440}
+              height={900}
+              decoding="async"
             />
             <h3>Luyện thi và xem lại</h3>
             <p>Làm bài kiểm tra, xem kết quả và ôn lại nội dung cần cải thiện.</p>
-            <Link to="/exam/testing-center">Xem bài kiểm tra <ArrowRight size={16} aria-hidden="true" /></Link>
+            <Link to="/exam/testing-center">
+              Xem bài kiểm tra <ArrowRight size={16} aria-hidden="true" />
+            </Link>
           </article>
         </div>
       </section>
@@ -655,7 +645,7 @@ export const Home = () => {
                           className="progress-bar-bg"
                           style={{
                             height: '6px',
-                            background: '#e2e8f0',
+                            background: 'var(--color-muted)',
                             borderRadius: '3px',
                             overflow: 'hidden',
                           }}
@@ -665,7 +655,7 @@ export const Home = () => {
                             style={{
                               width: `${course.progress}%`,
                               height: '100%',
-                              background: 'linear-gradient(90deg, #2563eb, #3b82f6)',
+                              background: 'linear-gradient(90deg, #386298, #4d74a2)',
                               transition: 'width 0.5s ease-out',
                             }}
                           />
@@ -717,11 +707,16 @@ export const Home = () => {
           </details>
           <details>
             <summary>Có thể xem nội dung trước khi đăng ký không?</summary>
-            <p>Bạn có thể xem lộ trình và danh sách lab. Để lưu tiến độ và bắt đầu thực hành, hãy đăng nhập.</p>
+            <p>
+              Bạn có thể xem lộ trình và danh sách lab. Để lưu tiến độ và bắt đầu thực hành, hãy
+              đăng nhập.
+            </p>
           </details>
           <details>
             <summary>Tôi có thể tự kiểm tra sau khi học không?</summary>
-            <p>Có. Mục Kiểm tra có các bài thi thử và phần xem lại kết quả để bạn tiếp tục ôn tập.</p>
+            <p>
+              Có. Mục Kiểm tra có các bài thi thử và phần xem lại kết quả để bạn tiếp tục ôn tập.
+            </p>
           </details>
         </div>
       </section>
@@ -732,8 +727,12 @@ export const Home = () => {
           <h2 id="landing-final-title">Sẵn sàng học CCNA theo lộ trình của bạn?</h2>
           <p>Xem các chặng học, chọn bài phù hợp và bắt đầu thực hành khi bạn sẵn sàng.</p>
         </div>
-        <Link to={isAuthenticated ? '/roadmap' : '/register'} className="landing-button landing-button--light">
-          {isAuthenticated ? 'Mở lộ trình học' : 'Tạo tài khoản'} <ArrowRight size={18} aria-hidden="true" />
+        <Link
+          to={isAuthenticated ? '/roadmap' : '/register'}
+          className="landing-button landing-button--light"
+        >
+          {isAuthenticated ? 'Mở lộ trình học' : 'Tạo tài khoản'}{' '}
+          <ArrowRight size={18} aria-hidden="true" />
         </Link>
       </section>
     </div>

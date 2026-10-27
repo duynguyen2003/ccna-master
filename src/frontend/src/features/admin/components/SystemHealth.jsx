@@ -25,7 +25,7 @@ const SystemHealth = ({ loading = false }) => {
       label: 'Máy chủ API',
       status: 'Hoạt động',
       icon: Server,
-      color: '#3b82f6',
+      color: '#386298',
       sub: 'Uptime: 99.9%',
     },
     {

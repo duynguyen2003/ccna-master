@@ -1,12 +1,12 @@
 /* ============================================================
-   Footer.css — NetMastery Footer Component
+   Footer.css — NetMaster Footer Component
    ============================================================ */
 
 /* ── CSS Variables ─────────────────────────────────────────── */
 :root {
   --footer-bg: #181821;
   --footer-border: #2a2a38;
-  --footer-text-primary: #ffffff;
+  --footer-text-primary: var(--color-on-primary);
   --footer-text-muted: #a9b3bb;
   --footer-text-subtle: #5a6370;
   --footer-link-hover: #1d9bf0;
@@ -82,7 +82,7 @@
   font-size: 13px;
 }
 
-.footer__contact-item .material-icons-round {
+.footer__contact-item .app-icon {
   font-size: 16px !important;
   color: var(--footer-link-hover);
   flex-shrink: 0;
@@ -157,11 +157,11 @@
 }
 
 .footer__made-with span {
-  color: #ef4444;
+  color: var(--color-danger);
 }
 
 /* ── Responsive: Tablet (2 cột) ────────────────────────────── */
-@media (max-width: 900px) {
+@media (max-width: 1024px) {
   .footer__grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 32px;
@@ -169,7 +169,7 @@
 }
 
 /* ── Responsive: Mobile (1 cột xếp chồng) ─────────────────── */
-@media (max-width: 600px) {
+@media (max-width: 768px) {
   .footer__inner {
     padding: 40px 16px 0;
   }

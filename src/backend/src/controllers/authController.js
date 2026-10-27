@@ -10,15 +10,13 @@ const crypto = require('crypto');
 const { isAccountActive, createAccessToken } = require('../security/session');
 const { getPrisma } = require('../config/database');
 const { sendResetPasswordEmail } = require('../config/email');
+const { buildResetPasswordUrl: createResetPasswordUrl } = require('../auth/frontendLinks');
 
 const prisma = getPrisma();
 const RESET_TOKEN_TTL_MINUTES = 30;
 
 const buildResetPasswordUrl = (token) => {
-  const frontendUrl = (process.env.FRONTEND_URL || 'http://localhost:3000').replace(/\/$/, '');
-  return frontendUrl.includes('#')
-    ? `${frontendUrl}/reset-password/${token}`
-    : `${frontendUrl}/#/reset-password/${token}`;
+  return createResetPasswordUrl(token, process.env.FRONTEND_URL || 'http://localhost:3000');
 };
 
 const hashResetToken = (token) => crypto.createHash('sha256').update(token).digest('hex');

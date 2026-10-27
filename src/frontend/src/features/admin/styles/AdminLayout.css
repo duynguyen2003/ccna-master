@@ -12,7 +12,8 @@
 }
 
 .admin-layout :is(button, a[href]) {
-  transition-property: color, background-color, border-color, box-shadow, opacity, transform, filter;
+  transition-property:
+    color, background-color, border-color, box-shadow, opacity, transform, filter;
   transition-duration: 180ms;
   transition-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
 }
@@ -25,7 +26,8 @@
   transform: scale(0.98);
 }
 
-.admin-layout :is(button, a[href], input:not([type='hidden']), select, textarea, summary):focus-visible {
+.admin-layout
+  :is(button, a[href], input:not([type='hidden']), select, textarea, summary):focus-visible {
   outline: 2px solid var(--admin-primary);
   outline-offset: 2px;
 }
@@ -223,7 +225,7 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  background: linear-gradient(135deg, var(--color-primary-gradient-start), var(--color-primary));
   display: flex;
   align-items: center;
   justify-content: center;

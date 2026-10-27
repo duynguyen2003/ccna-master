@@ -28,6 +28,12 @@ const attempt = () => ({
   },
 });
 beforeEach(() => {
+  HTMLDialogElement.prototype.showModal = function () {
+    this.setAttribute('open', '');
+  };
+  HTMLDialogElement.prototype.close = function () {
+    this.removeAttribute('open');
+  };
   jest.clearAllMocks();
   localStorage.clear();
   mockAuth = { user: { id: 1 }, token: 'token-a', isAuthenticated: true, loading: false };

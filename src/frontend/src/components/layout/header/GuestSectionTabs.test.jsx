@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import GuestSectionTabs from './GuestSectionTabs';
+import { ThemeProvider } from '../../../context/ThemeContext';
 import TopHeader from './TopHeader';
 
 let mockAuth;
@@ -167,7 +168,9 @@ const renderHeader = () =>
       {items.map((item) => (
         <section key={item.id} id={item.id} />
       ))}
-      <TopHeader />
+      <ThemeProvider>
+        <TopHeader />
+      </ThemeProvider>
     </>
   );
 

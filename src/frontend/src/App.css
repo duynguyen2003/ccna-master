@@ -1,17 +1,13 @@
-/* Icons (Required) */
-@import url('https://fonts.googleapis.com/icon?family=Material+Icons+Round');
-@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
-
 /* Text Fonts removed for system default */
 
 :root {
-  --primary-color: #007aff;
-  --bg-color: #ffffff;
-  --text-color: #0f172a;
-  --card-bg: #ffffff;
-  --border-color: #e2e8f0;
-  --text-muted: #64748b;
-  --hover-bg: #f1f5f9;
+  --primary-color: var(--color-primary);
+  --bg-color: var(--color-surface);
+  --text-color: var(--color-foreground);
+  --card-bg: var(--color-surface);
+  --border-color: var(--color-border);
+  --text-muted: var(--color-muted-foreground);
+  --hover-bg: var(--color-muted);
   --header-height: 64px;
   /* Global Colors */
   --navy-50: #e7e9ef;
@@ -22,41 +18,47 @@
   --navy-900: #060d17;
   --navy-950: #03070c;
 
-  --blue-primary: #2563eb;
-  --blue-hover: #1d4ed8;
-  --blue-600: #2563eb;
-  --blue-500: #3b82f6;
-  --blue-400: #60a5fa;
+  --blue-primary: var(--color-primary);
+  --blue-hover: var(--color-primary-hover);
+  --blue-600: var(--color-primary);
+  --blue-500: var(--color-primary);
+  --blue-400: var(--color-primary);
 
-  --slate-50: #f4f6f9;
-  --slate-100: #f1f5f9;
-  --slate-200: #e2e8f0;
-  --slate-300: #cbd5e1;
-  --slate-400: #94a3b8;
-  --slate-500: #64748b;
-  --slate-600: #475569;
-  --slate-800: #1e293b;
-  --slate-900: #0f172a;
+  --slate-50: var(--color-muted);
+  --slate-100: var(--color-muted);
+  --slate-200: var(--color-muted);
+  --slate-300: var(--color-muted);
+  --slate-400: var(--color-muted);
+  --slate-500: var(--color-muted);
+  --slate-600: var(--color-muted);
+  --slate-800: var(--color-muted);
+  --slate-900: var(--color-muted);
 
-  --white: #ffffff;
+  --white: var(--color-surface);
   --system-ui:
     -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   /* Exam Specific Variables */
-  --primary: #2563eb;
-  --primary-light: #eff6ff;
-  --success: #16a34a;
-  --danger: #dc2626;
-  --bg-page: #ffffff;
-  --bg-card: #ffffff;
-  --text-main: #1e293b;
-  --text-sub: #64748b;
-  --border: #e2e8f0;
+  --primary: var(--color-primary);
+  --primary-light: var(--color-muted);
+  --success: var(--color-success);
+  --danger: var(--color-danger);
+  --bg-page: var(--color-surface);
+  --bg-card: var(--color-surface);
+  --text-main: var(--color-foreground);
+  --text-sub: var(--color-muted-foreground);
+  --border: var(--color-border);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 body {
   font-family: var(--system-ui);
   background-color: var(--bg-color);
-  color: var(--text-color);
+  color: var(--text-main);
   transition:
     background-color 0.3s,
     color 0.3s;
@@ -82,7 +84,13 @@ select {
   border-radius: 6px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease,
+    opacity 0.2s ease;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -92,63 +100,69 @@ select {
 
 .btn-primary {
   background-color: var(--blue-primary);
-  color: white;
-  box-shadow: 0 4px 14px 0 rgba(37, 99, 235, 0.39);
+  color: var(--color-on-primary);
+  box-shadow: 0 4px 14px 0 rgb(var(--brand-primary-rgb) / 0.39);
 }
 
 .btn-primary:hover {
   background-color: var(--blue-hover);
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.23);
+  box-shadow: 0 6px 20px rgb(var(--brand-primary-rgb) / 0.23);
 }
 
 .btn-secondary {
   background-color: var(--navy-800);
-  color: white;
+  color: var(--color-on-primary);
   border: 1px solid var(--slate-600);
 }
 
 .btn-secondary:hover {
-  background-color: var(--slate-800);
+  background-color: var(--color-muted-foreground);
 }
 
 /* Badges */
 .badge-blue {
-  background: #dbeafe;
-  color: #1e40af;
+  background: var(--color-primary-soft);
+  color: var(--color-primary-hover);
 }
 
 .badge-green {
-  background: #dcfce7;
-  color: #166534;
+  background: var(--color-success-bg);
+  color: var(--color-success);
 }
 
 .badge-red {
-  background: #fee2e2;
+  background: var(--color-danger-bg);
   color: #991b1b;
 }
 
 .badge-yellow {
-  background: #fef9c3;
-  color: #854d0e;
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
 }
 
 .badge-gray {
-  background: #f1f5f9;
-  color: #475569;
+  background: var(--color-muted);
+  color: var(--color-muted-foreground);
 }
 
 /* Cards */
 .card {
-  background: white;
+  background: var(--color-surface);
   border: 1px solid var(--slate-200);
   border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
-  transition: all 0.2s;
+  transition:
+    background-color 0.2s,
+    color 0.2s,
+    border-color 0.2s,
+    box-shadow 0.2s,
+    transform 0.2s,
+    opacity 0.2s;
 }
 
 .card:hover {
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  border-color: #bfdbfe;
+  border-color: var(--color-primary-border);
 }

@@ -36,7 +36,7 @@
     "ai:db:status": "node src/agent/scripts/ai-lab-local-db.cjs status",
     "ai:db:stop": "node src/agent/scripts/ai-lab-local-db.cjs stop",
     "test:learning": "node --test src/backend/src/learningPath/*.test.js",
-    "test:core": "node --test src/backend/src/exams/*.test.js src/backend/src/security/*.test.js",
+    "test:core": "node --test src/backend/src/auth/*.test.js src/backend/src/exams/*.test.js src/backend/src/security/*.test.js",
     "db:deploy": "prisma migrate deploy",
     "backup": "node src/scripts/backup.cjs",
     "restore": "node src/scripts/restore.cjs",

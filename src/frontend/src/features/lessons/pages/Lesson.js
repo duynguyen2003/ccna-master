@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
+import '../styles/Lesson.css';
+import '../../../components/ui/styles/LearningError.css';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ChevronLeft,
@@ -14,9 +16,10 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import api from '../../../services/Api';
-import MarkdownRenderer from '../../../components/common/MarkdownRenderer';
+import InstructorNotes from '../components/InstructorNotes';
 import HeartbeatLoader from '../../../components/ui/HeartbeatLoader';
-import errorIllustration from '../../../assets/images/fix1.png';
+import Dialog from '../../../components/ui/Dialog';
+import errorIllustration from '../../../assets/images/fix1.webp';
 import VideoProgressPlayer, { formatVideoTime } from '../components/VideoProgressPlayer';
 import { storeTransitionEvent } from '../../courses/hooks/useLearningProgress';
 import { useToast } from '../../../components/ui/Toast';
@@ -64,7 +67,11 @@ const Lesson = () => {
 
   const [viewportWidth, setViewportWidth] = useState(getViewportWidth);
   const [leftOpen, setLeftOpen] = useState(() => getViewportWidth() >= PANEL_BREAKPOINT);
-  const [rightOpen, setRightOpen] = useState(() => getViewportWidth() >= PANEL_BREAKPOINT);
+  const [rightOpen, setRightOpen] = useState(false);
+  const setNoteEditor = useCallback((element) => {
+    noteTextareaRef.current = element;
+    if (element) element.setSelectionRange(element.value.length, element.value.length);
+  }, []);
 
   const [course, setCourse] = useState(null);
   const { showToast, ToastComponent } = useToast();
@@ -84,6 +91,7 @@ const Lesson = () => {
   const noteWriteRef = useRef(Promise.resolve());
   const noteEditedRef = useRef(false);
   const noteTextareaRef = useRef(null);
+  const curriculumToggleRef = useRef(null);
   const [seekRequest, setSeekRequest] = useState(null);
 
   const [lessonProgress, setLessonProgress] = useState({});
@@ -112,7 +120,7 @@ const Lesson = () => {
       setRightOpen(false);
     } else {
       setLeftOpen(true);
-      setRightOpen(true);
+      setRightOpen(false);
     }
   }, [isCompact]);
 
@@ -261,7 +269,10 @@ const Lesson = () => {
     );
 
     if (foundModule) {
-      if (foundModule.id === activeModule?.id && lessons.some((item) => item.id === parsedLessonId)) {
+      if (
+        foundModule.id === activeModule?.id &&
+        lessons.some((item) => item.id === parsedLessonId)
+      ) {
         setSelectedLessonId(parsedLessonId);
         return;
       }
@@ -395,19 +406,11 @@ const Lesson = () => {
 
   const completedCount = lessons.filter((lesson) => lessonProgress[lesson.id]?.completed).length;
   const progressPercent = lessons.length ? (completedCount / lessons.length) * 100 : 0;
-  const showOverlay = isCompact && (leftOpen || rightOpen);
 
   const updateLessonCompletion = (lessonId, completed) => {
     setLessons((currentLessons) =>
       currentLessons.map((lesson) => (lesson.id === lessonId ? { ...lesson, completed } : lesson))
     );
-  };
-
-  const closePanels = () => {
-    if (isCompact) {
-      setLeftOpen(false);
-      setRightOpen(false);
-    }
   };
 
   const handleSelectLesson = (lessonId) => {
@@ -576,9 +579,10 @@ const Lesson = () => {
   const activeMetrics = videoMetrics[selectedLessonId] || {};
   const displayedPosition = activeMetrics.playedSeconds ?? activeProgress.playedSeconds ?? 0;
   const displayedDuration = activeProgress.durationSeconds || activeMetrics.durationSeconds || 0;
-  const displayedPercent = displayedDuration > 0
-    ? Math.max(0, Math.min(100, Math.round((displayedPosition / displayedDuration) * 100)))
-    : 0;
+  const displayedPercent =
+    displayedDuration > 0
+      ? Math.max(0, Math.min(100, Math.round((displayedPosition / displayedDuration) * 100)))
+      : 0;
   const resumePosition = Math.max(0, activeMetrics.lastPosition || 0);
   const progressSaveFailed =
     activeMetrics.saveStatus === 'error' || lessonSaveStatus[selectedLessonId] === 'error';
@@ -643,6 +647,8 @@ const Lesson = () => {
     }
   };
 
+  const CurriculumPanel = isCompact ? Dialog : 'aside';
+
   if (loading) {
     return <HeartbeatLoader label="Đang tải nội dung bài học..." />;
   }
@@ -652,7 +658,13 @@ const Lesson = () => {
       <div className="lesson-error-container">
         <div className="lesson-error-card">
           <div className="lesson-error-illustration">
-            <img src={errorIllustration} alt="Không tìm thấy bài học" />
+            <img
+              src={errorIllustration}
+              alt="Không tìm thấy bài học"
+              width={512}
+              height={512}
+              decoding="async"
+            />
           </div>
           <h2 className="lesson-error-title">Không tìm thấy bài học</h2>
           <p className="lesson-error-desc">
@@ -676,84 +688,105 @@ const Lesson = () => {
 
   return (
     <div className="lesson-layout">
-      {showOverlay && (
-        <button
-          type="button"
-          className="lesson-overlay"
-          onClick={closePanels}
-          aria-label="Close lesson panels"
-        ></button>
-      )}
-
-      <div className="lesson-sidebar" style={{ display: leftOpen ? 'block' : 'none' }}>
-        <div className="ls-header">
-          <small className="ls-course-label">{course?.title || course?.code || 'Khóa học'}</small>
-          <h3 className="ls-module-title">{activeModule?.title}</h3>
-          <div className="ls-progress-summary">
-            <span>Tiến độ chương</span>
-            <strong>
-              {completedCount}/{lessons.length} bài
-            </strong>
-          </div>
-          <div className="ls-progress-bg">
-            <div className="ls-progress-bar" style={{ width: `${progressPercent}%` }}></div>
-          </div>
-        </div>
-
-        <div className="ls-section-list">
-          {lessons.map((lesson) => {
-            const isActive = lesson.id === selectedLessonId;
-            const isCompleted = lessonProgress[lesson.id]?.completed;
-            const lessonDuration =
-              isActive && displayedDuration > 0
-                ? formatVideoTime(displayedDuration)
-                : lesson.videoDuration;
-
-            return (
-              <div key={lesson.id} className="ls-section-item">
+      {(!isCompact || leftOpen) && (
+        <CurriculumPanel
+          {...(isCompact
+            ? {
+                title: 'Nội dung chương',
+                onClose: () => setLeftOpen(false),
+                className: 'lesson-curriculum-dialog',
+                animateExit: true,
+              }
+            : {
+                className: 'lesson-sidebar',
+                'aria-label': 'Nội dung chương',
+                'aria-hidden': !leftOpen,
+                'data-open': String(leftOpen),
+                inert: leftOpen ? undefined : '',
+              })}
+        >
+          <div
+            className={`lesson-sidebar-content${isCompact ? '' : ' t-panel-slide'}`}
+            data-open={String(leftOpen)}
+          >
+            {!isCompact && (
+              <div className="ls-panel-heading">
+                <h2>Nội dung chương</h2>
                 <button
                   type="button"
-                  className={`ls-section-btn ${isActive ? 'active' : ''}`}
-                  onClick={() => handleSelectLesson(lesson.id)}
-                  aria-current={isActive ? 'page' : undefined}
+                  onClick={() => {
+                    setLeftOpen(false);
+                    curriculumToggleRef.current?.focus();
+                  }}
+                  aria-label="Thu gọn nội dung chương"
                 >
-                  <div className="ls-section-btn-icon">
-                    {isCompleted ? (
-                      <CheckCircle size={16} color="#22c55e" />
-                    ) : isActive ? (
-                      <Play size={16} fill="currentColor" />
-                    ) : (
-                      <div className="ls-section-btn-icon-empty"></div>
-                    )}
-                  </div>
-                  <div className="ls-section-btn-content">
-                    <span className={`ls-section-btn-text ${isActive ? 'active' : ''}`}>
-                      {formatLessonTitle(lesson.title)}
-                    </span>
-                    <span className="ls-section-btn-meta">
-                      Bài {lesson.sectionNumber || lesson.orderIndex}
-                      {lessonDuration ? ` · ${lessonDuration}` : ''}
-                    </span>
-                  </div>
+                  <X size={18} aria-hidden="true" />
                 </button>
               </div>
-            );
-          })}
-        </div>
-      </div>
+            )}
+            <div className="ls-header">
+              <small className="ls-course-label">
+                {course?.title || course?.code || 'Khóa học'}
+              </small>
+              <h3 className="ls-module-title">{activeModule?.title}</h3>
+              <div className="ls-progress-summary">
+                <span>Tiến độ chương</span>
+                <strong>
+                  {completedCount}/{lessons.length} bài
+                </strong>
+              </div>
+              <div className="ls-progress-bg">
+                <div className="ls-progress-bar" style={{ width: `${progressPercent}%` }}></div>
+              </div>
+            </div>
+
+            <div className="ls-section-list">
+              {lessons.map((lesson) => {
+                const isActive = lesson.id === selectedLessonId;
+                const isCompleted = lessonProgress[lesson.id]?.completed;
+                const lessonDuration =
+                  isActive && displayedDuration > 0
+                    ? formatVideoTime(displayedDuration)
+                    : lesson.videoDuration;
+
+                return (
+                  <div key={lesson.id} className="ls-section-item">
+                    <button
+                      type="button"
+                      className={`ls-section-btn ${isActive ? 'active' : ''}`}
+                      onClick={() => handleSelectLesson(lesson.id)}
+                      aria-current={isActive ? 'page' : undefined}
+                    >
+                      <div className="ls-section-btn-icon">
+                        {isCompleted ? (
+                          <CheckCircle size={16} color="var(--color-success)" />
+                        ) : isActive ? (
+                          <Play size={16} fill="currentColor" />
+                        ) : (
+                          <div className="ls-section-btn-icon-empty"></div>
+                        )}
+                      </div>
+                      <div className="ls-section-btn-content">
+                        <span className={`ls-section-btn-text ${isActive ? 'active' : ''}`}>
+                          {formatLessonTitle(lesson.title)}
+                        </span>
+                        <span className="ls-section-btn-meta">
+                          Bài {lesson.sectionNumber || lesson.orderIndex}
+                          {lessonDuration ? ` · ${lessonDuration}` : ''}
+                        </span>
+                      </div>
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </CurriculumPanel>
+      )}
 
       <div className="lesson-content">
         <div className="lc-topbar">
           <div className="lc-topbar-left">
-            <button
-              type="button"
-              onClick={toggleLeftSidebar}
-              className="lc-topbar-menu-btn"
-              aria-label="Toggle lesson navigation"
-              aria-expanded={leftOpen}
-            >
-              <Menu size={20} />
-            </button>
             <nav className="lc-breadcrumb" aria-label="Đường dẫn bài học">
               {courseId && (
                 <>
@@ -787,277 +820,285 @@ const Lesson = () => {
             </button>
             <button
               type="button"
-              className="btn lc-btn-prev"
-              onClick={handlePrev}
-              disabled={!hasPrev}
-              style={{ opacity: hasPrev ? 1 : 0.5, cursor: hasPrev ? 'pointer' : 'not-allowed' }}
+              onClick={toggleLeftSidebar}
+              ref={curriculumToggleRef}
+              className="lc-topbar-menu-btn"
+              aria-label="Mở hoặc đóng nội dung chương"
+              title="Nội dung chương"
+              aria-expanded={leftOpen}
             >
-              <ChevronLeft size={16} className="icon-mr-4" /> Trước
+              <Menu size={20} aria-hidden="true" />
             </button>
-            <span className="lc-next-control" title={isNextDisabled ? nextDisabledReason : undefined}>
-              <button
-                type="button"
-                className="btn btn-primary lc-btn-next"
-                onClick={handleNext}
-                disabled={isNextDisabled}
-                aria-describedby={isNextDisabled ? 'lc-next-help' : undefined}
-              >
-                Tiếp theo <ChevronRight size={16} className="icon-ml-4" />
-              </button>
-            </span>
-            {isNextDisabled && (
-              <span id="lc-next-help" className="sr-only">
-                {nextDisabledReason}
-              </span>
-            )}
           </div>
         </div>
 
         <div className="lesson-main">
           <div className="lc-main-container">
             {selectedLesson.videoUrl && (
-              <div className="lc-video-frame">
-                <VideoProgressPlayer
-                  key={selectedLesson.id}
-                  url={selectedLesson.videoUrl}
-                  lessonId={selectedLesson.id}
-                  token={token}
-                  user={user}
-                  seekRequest={seekRequest}
-                  onProgressChange={(state) => handleProgress(selectedLesson.id, state)}
-                  onMetricsChange={handleVideoMetrics}
-                />
+              <div className="lc-video-stage">
+                <div className="lc-video-frame">
+                  <VideoProgressPlayer
+                    key={selectedLesson.id}
+                    url={selectedLesson.videoUrl}
+                    lessonId={selectedLesson.id}
+                    token={token}
+                    user={user}
+                    seekRequest={seekRequest}
+                    onProgressChange={(state) => handleProgress(selectedLesson.id, state)}
+                    onMetricsChange={handleVideoMetrics}
+                  />
+                </div>
               </div>
             )}
 
-            <header className="lc-lesson-heading">
-              <span className="lc-eyebrow">
-                Bài {selectedLesson.sectionNumber || selectedLesson.orderIndex || ''}
-              </span>
-              <h1 className="lc-title">{selectedLessonTitle}</h1>
-              <p>
-                {selectedLesson.videoUrl
-                  ? selectedLesson.contentHtml?.trim()
-                    ? 'Tiến độ được lưu tự động khi bạn xem. Ghi chú giảng viên nằm bên dưới.'
-                    : 'Tiến độ được lưu tự động khi bạn xem.'
-                  : 'Đọc nội dung bài học bên dưới và đánh dấu đã đọc xong khi hoàn thành.'}
-              </p>
-            </header>
+            <div className="lc-lesson-body">
+              <header className="lc-lesson-heading">
+                <span className="lc-eyebrow">
+                  Bài {selectedLesson.sectionNumber || selectedLesson.orderIndex || ''}
+                </span>
+                <h1 className="lc-title">{selectedLessonTitle}</h1>
+                <p>
+                  {selectedLesson.videoUrl
+                    ? selectedLesson.contentHtml?.trim()
+                      ? 'Tiến độ được lưu tự động khi bạn xem. Ghi chú giảng viên nằm bên dưới.'
+                      : 'Tiến độ được lưu tự động khi bạn xem.'
+                    : 'Đọc nội dung bài học bên dưới và đánh dấu đã đọc xong khi hoàn thành.'}
+                </p>
+              </header>
 
-            {selectedLesson.videoUrl ? (
-              <section className="lc-progress-card" aria-label="Tiến độ học bài">
-                <div className="lc-progress-head">
-                  <div>
-                    <span className="lc-progress-label">Tiến độ video</span>
-                    <h2>
-                      {formatVideoTime(displayedPosition)} /{' '}
-                      {displayedDuration ? formatVideoTime(displayedDuration) : '—'}
-                    </h2>
-                  </div>
-                  <span
-                    className={
-                      activeProgress.completed
-                        ? 'lc-progress-badge completed'
+              {!selectedLesson.videoUrl && <InstructorNotes content={selectedLesson.contentHtml} />}
+              {selectedLesson.videoUrl ? (
+                <section className="lc-progress-card" aria-label="Tiến độ học bài">
+                  <div className="lc-progress-head">
+                    <div>
+                      <span className="lc-progress-label">Tiến độ video</span>
+                      <h2>
+                        {formatVideoTime(displayedPosition)} /{' '}
+                        {displayedDuration ? formatVideoTime(displayedDuration) : '—'}
+                      </h2>
+                    </div>
+                    <span
+                      className={
+                        activeProgress.completed
+                          ? 'lc-progress-badge completed'
+                          : activeProgress.played
+                            ? 'lc-progress-badge active'
+                            : 'lc-progress-badge'
+                      }
+                    >
+                      {activeProgress.completed
+                        ? 'Hoàn thành'
                         : activeProgress.played
-                          ? 'lc-progress-badge active'
-                          : 'lc-progress-badge'
-                    }
+                          ? 'Đang học'
+                          : 'Chưa bắt đầu'}
+                    </span>
+                  </div>
+                  <div
+                    className="lc-progress-track"
+                    role="progressbar"
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={displayedPercent}
+                    aria-label="Mốc video đã phát"
                   >
-                    {activeProgress.completed
-                      ? 'Hoàn thành'
-                      : activeProgress.played
-                        ? 'Đang học'
-                        : 'Chưa bắt đầu'}
-                  </span>
-                </div>
-                <div
-                  className="lc-progress-track"
-                  role="progressbar"
-                  aria-valuemin={0}
-                  aria-valuemax={100}
-                  aria-valuenow={displayedPercent}
-                  aria-label="Mốc video đã phát"
-                >
-                  <div className="lc-progress-fill" style={{ width: displayedPercent + '%' }} />
-                </div>
-                <div className="lc-progress-summary">
-                  <div>
-                    <strong>{displayedDuration ? `${displayedPercent}%` : '—'}</strong>
-                    <span role="status">{progressStatusText}</span>
+                    <div className="lc-progress-fill" style={{ width: displayedPercent + '%' }} />
                   </div>
-                  {resumePosition > 0 && (
+                  <div className="lc-progress-summary">
+                    <div>
+                      <strong>{displayedDuration ? `${displayedPercent}%` : '—'}</strong>
+                      <span role="status">{progressStatusText}</span>
+                    </div>
+                    {resumePosition > 0 && (
+                      <button
+                        type="button"
+                        className="lc-resume-btn"
+                        onClick={() => seekVideoTo(resumePosition)}
+                      >
+                        <Play size={15} fill="currentColor" />
+                        Tiếp tục từ {formatVideoTime(resumePosition)}
+                      </button>
+                    )}
+                    {lessonSaveStatus[selectedLessonId] === 'error' && (
+                      <button
+                        type="button"
+                        className="lc-progress-retry"
+                        onClick={() => retryProgressSave(selectedLessonId)}
+                      >
+                        Thử lưu lại
+                      </button>
+                    )}
+                  </div>
+                </section>
+              ) : (
+                <section className="lc-progress-card" aria-label="Tiến độ bài đọc">
+                  <div className="lc-progress-head">
+                    <div>
+                      <span className="lc-progress-label">Tiến độ bài đọc</span>
+                      <h2>Bài đọc</h2>
+                    </div>
+                    <span
+                      className={`lc-progress-badge ${activeProgress.completed ? 'completed' : ''}`}
+                    >
+                      {activeProgress.completed ? 'Hoàn thành' : 'Chưa hoàn thành'}
+                    </span>
+                  </div>
+                  <p>Đánh dấu sau khi bạn đã đọc nội dung từ giảng viên.</p>
+                  {!activeProgress.completed && (
                     <button
                       type="button"
-                      className="lc-resume-btn"
-                      onClick={() => seekVideoTo(resumePosition)}
+                      className="lc-text-complete-btn"
+                      onClick={() =>
+                        scheduleProgressSync(selectedLesson.id, { percent: 100, completed: true })
+                      }
+                      disabled={!token || lessonSaveStatus[selectedLessonId] === 'saving'}
                     >
-                      <Play size={15} fill="currentColor" />
-                      Tiếp tục từ {formatVideoTime(resumePosition)}
+                      Đã đọc xong
                     </button>
                   )}
-                  {lessonSaveStatus[selectedLessonId] === 'error' && (
-                    <button
-                      type="button"
-                      className="lc-progress-retry"
-                      onClick={() => retryProgressSave(selectedLessonId)}
-                    >
-                      Thử lưu lại
-                    </button>
-                  )}
-                </div>
-              </section>
-            ) : (
-              <section className="lc-progress-card" aria-label="Tiến độ bài đọc">
-                <div className="lc-progress-head">
-                  <div>
-                    <span className="lc-progress-label">Tiến độ bài đọc</span>
-                    <h2>Bài đọc</h2>
+                  <div className="lc-progress-foot" role="status">
+                    <span>
+                      {!token
+                        ? 'Đăng nhập để lưu tiến độ bài đọc.'
+                        : lessonSaveStatus[selectedLessonId] === 'saving'
+                          ? 'Đang lưu tiến độ…'
+                          : lessonSaveStatus[selectedLessonId] === 'error'
+                            ? 'Lưu tiến độ chưa thành công.'
+                            : activeProgress.completed
+                              ? 'Tiến độ đã được lưu.'
+                              : 'Tiến độ được lưu khi bạn xác nhận đã đọc xong.'}
+                    </span>
+                    {lessonSaveStatus[selectedLessonId] === 'error' && (
+                      <button type="button" onClick={() => retryProgressSave(selectedLessonId)}>
+                        Thử lưu lại
+                      </button>
+                    )}
                   </div>
-                  <span className={`lc-progress-badge ${activeProgress.completed ? 'completed' : ''}`}>
-                    {activeProgress.completed ? 'Hoàn thành' : 'Chưa hoàn thành'}
-                  </span>
-                </div>
-                <p>Đánh dấu sau khi bạn đã đọc nội dung từ giảng viên.</p>
-                {!activeProgress.completed && (
+                </section>
+              )}
+
+              {selectedLesson.videoUrl && <InstructorNotes content={selectedLesson.contentHtml} />}
+            </div>
+          </div>
+        </div>
+
+        <nav className="lc-navigation" aria-label="Điều hướng bài học">
+          <div className="lc-navigation-info">
+            <strong>
+              Bài {currentIndex + 1}/{lessons.length}
+            </strong>
+            {isNextDisabled && <span id="lc-next-help">{nextDisabledReason}</span>}
+          </div>
+          <button
+            type="button"
+            className="lc-btn-prev"
+            onClick={handlePrev}
+            disabled={!hasPrev}
+            title={!hasPrev ? 'Đây là bài đầu tiên trong chương.' : undefined}
+          >
+            <ChevronLeft size={16} aria-hidden="true" /> Trước
+          </button>
+          <button
+            type="button"
+            className="lc-btn-next"
+            onClick={handleNext}
+            disabled={isNextDisabled}
+            aria-describedby={isNextDisabled ? 'lc-next-help' : undefined}
+          >
+            Tiếp theo <ChevronRight size={16} aria-hidden="true" />
+          </button>
+        </nav>
+      </div>
+
+      {rightOpen && (
+        <Dialog
+          title="Ghi chú bài học"
+          onClose={() => setRightOpen(false)}
+          className="lesson-notes-dialog"
+          animateExit
+        >
+          <div className="rs-content">
+            <div className="rs-note-toolbar">
+              <span>Ghi chú cá nhân</span>
+              <button
+                type="button"
+                onClick={insertCurrentTimestamp}
+                disabled={
+                  !token ||
+                  !selectedLesson.videoUrl ||
+                  noteLoad.lessonId !== selectedLessonId ||
+                  noteLoad.status !== 'ready'
+                }
+              >
+                <Clock size={14} /> Gắn mốc {formatVideoTime(displayedPosition)}
+              </button>
+            </div>
+            {selectedLesson.videoUrl && noteTimestamps.length > 0 && (
+              <div className="rs-note-timestamps" aria-label="Các mốc thời gian trong ghi chú">
+                {noteTimestamps.map((timestamp) => (
                   <button
                     type="button"
-                    className="lc-text-complete-btn"
-                    onClick={() =>
-                      scheduleProgressSync(selectedLesson.id, { percent: 100, completed: true })
-                    }
-                    disabled={!token || lessonSaveStatus[selectedLessonId] === 'saving'}
+                    key={timestamp.seconds}
+                    onClick={() => seekVideoTo(timestamp.seconds)}
                   >
-                    Đã đọc xong
+                    <Play size={12} fill="currentColor" /> {timestamp.label}
+                  </button>
+                ))}
+              </div>
+            )}
+            <div className="rs-note-editor">
+              <textarea
+                ref={setNoteEditor}
+                className="rs-textarea"
+                aria-label="Ghi chú cá nhân cho bài học"
+                placeholder={
+                  token
+                    ? 'Ví dụ: Kiểm tra bảng định tuyến bằng lệnh show ip route…'
+                    : 'Vui lòng đăng nhập để viết và lưu ghi chú cá nhân...'
+                }
+                value={noteContent}
+                onChange={handleNoteChange}
+                onBlur={() => {
+                  if (debounceTimer.current) clearTimeout(debounceTimer.current);
+                  if (pendingNoteRef.current) saveNoteSnapshot(pendingNoteRef.current);
+                }}
+                disabled={
+                  !token || noteLoad.lessonId !== selectedLessonId || noteLoad.status !== 'ready'
+                }
+                maxLength={10000}
+              />
+              <div className="rs-note-status" role="status">
+                <span>
+                  {token &&
+                  (noteLoad.lessonId !== selectedLessonId || noteLoad.status === 'loading')
+                    ? 'Đang tải ghi chú…'
+                    : token && noteLoad.status === 'error'
+                      ? 'Chưa tải được ghi chú. Nội dung đã lưu vẫn được giữ nguyên.'
+                      : saveStatus === 'saving'
+                        ? 'Đang lưu…'
+                        : saveStatus === 'saved'
+                          ? 'Đã lưu'
+                          : saveStatus === 'error'
+                            ? 'Lưu chưa thành công'
+                            : token
+                              ? 'Tự lưu khi bạn nhập'
+                              : 'Cần đăng nhập'}
+                </span>
+                {token && noteLoad.lessonId === selectedLessonId && noteLoad.status === 'error' && (
+                  <button type="button" onClick={() => setNoteAttempt((attempt) => attempt + 1)}>
+                    Thử tải lại
                   </button>
                 )}
-                <div className="lc-progress-foot" role="status">
-                  <span>
-                    {!token
-                      ? 'Đăng nhập để lưu tiến độ bài đọc.'
-                      : lessonSaveStatus[selectedLessonId] === 'saving'
-                        ? 'Đang lưu tiến độ…'
-                        : lessonSaveStatus[selectedLessonId] === 'error'
-                          ? 'Lưu tiến độ chưa thành công.'
-                          : activeProgress.completed
-                            ? 'Tiến độ đã được lưu.'
-                            : 'Tiến độ được lưu khi bạn xác nhận đã đọc xong.'}
-                  </span>
-                  {lessonSaveStatus[selectedLessonId] === 'error' && (
-                    <button type="button" onClick={() => retryProgressSave(selectedLessonId)}>
-                      Thử lưu lại
-                    </button>
-                  )}
-                </div>
-              </section>
-            )}
-
-            {selectedLesson.contentHtml?.trim() && (
-              <section className="lc-lesson-notes" aria-labelledby="lesson-notes-title">
-                <div className="lc-notes-head">
-                  <div>
-                    <span className="lc-progress-label">Tài liệu bài học</span>
-                    <h2 id="lesson-notes-title">Ghi chú từ giảng viên</h2>
-                  </div>
-                  <FileText size={20} aria-hidden="true" />
-                </div>
-                <div className="lc-text-content">
-                  <MarkdownRenderer content={selectedLesson.contentHtml} />
-                </div>
-              </section>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <div className="lesson-sidebar-right" style={{ display: rightOpen ? 'flex' : 'none' }}>
-        <div className="rs-header">
-          <div>
-            <strong>Ghi chú</strong>
-            <span>Chỉ bạn nhìn thấy</span>
-          </div>
-          <button type="button" onClick={toggleRightSidebar} aria-label="Thu gọn ghi chú">
-            <X size={18} />
-          </button>
-        </div>
-        <div className="rs-content">
-          <div className="rs-note-toolbar">
-            <span>Ghi chú cá nhân</span>
-            <button
-              type="button"
-              onClick={insertCurrentTimestamp}
-              disabled={
-                !token ||
-                !selectedLesson.videoUrl ||
-                noteLoad.lessonId !== selectedLessonId ||
-                noteLoad.status !== 'ready'
-              }
-            >
-              <Clock size={14} /> Gắn mốc {formatVideoTime(displayedPosition)}
-            </button>
-          </div>
-          {selectedLesson.videoUrl && noteTimestamps.length > 0 && (
-            <div className="rs-note-timestamps" aria-label="Các mốc thời gian trong ghi chú">
-              {noteTimestamps.map((timestamp) => (
-                <button
-                  type="button"
-                  key={timestamp.seconds}
-                  onClick={() => seekVideoTo(timestamp.seconds)}
-                >
-                  <Play size={12} fill="currentColor" /> {timestamp.label}
-                </button>
-              ))}
+                {saveStatus === 'error' && noteLoad.status === 'ready' && (
+                  <button type="button" onClick={() => saveNoteSnapshot(pendingNoteRef.current)}>
+                    Thử lại
+                  </button>
+                )}
+              </div>
+              <small>{noteContent.length.toLocaleString('vi-VN')} / 10.000 ký tự</small>
             </div>
-          )}
-          <div className="rs-note-editor">
-            <textarea
-              ref={noteTextareaRef}
-              className="rs-textarea"
-              aria-label="Ghi chú cá nhân cho bài học"
-              placeholder={
-                token
-                  ? 'Ví dụ: Kiểm tra bảng định tuyến bằng lệnh show ip route…'
-                  : 'Vui lòng đăng nhập để viết và lưu ghi chú cá nhân...'
-              }
-              value={noteContent}
-              onChange={handleNoteChange}
-              onBlur={() => {
-                if (debounceTimer.current) clearTimeout(debounceTimer.current);
-                if (pendingNoteRef.current) saveNoteSnapshot(pendingNoteRef.current);
-              }}
-              disabled={!token || noteLoad.lessonId !== selectedLessonId || noteLoad.status !== 'ready'}
-              maxLength={10000}
-            />
-            <div className="rs-note-status" role="status">
-              <span>
-                {token && (noteLoad.lessonId !== selectedLessonId || noteLoad.status === 'loading')
-                  ? 'Đang tải ghi chú…'
-                  : token && noteLoad.status === 'error'
-                    ? 'Chưa tải được ghi chú. Nội dung đã lưu vẫn được giữ nguyên.'
-                    : saveStatus === 'saving'
-                      ? 'Đang lưu…'
-                      : saveStatus === 'saved'
-                        ? 'Đã lưu'
-                        : saveStatus === 'error'
-                          ? 'Lưu chưa thành công'
-                          : token
-                            ? 'Tự lưu khi bạn nhập'
-                            : 'Cần đăng nhập'}
-              </span>
-              {token && noteLoad.lessonId === selectedLessonId && noteLoad.status === 'error' && (
-                <button type="button" onClick={() => setNoteAttempt((attempt) => attempt + 1)}>
-                  Thử tải lại
-                </button>
-              )}
-              {saveStatus === 'error' && noteLoad.status === 'ready' && (
-                <button type="button" onClick={() => saveNoteSnapshot(pendingNoteRef.current)}>
-                  Thử lại
-                </button>
-              )}
-            </div>
-            <small>{noteContent.length.toLocaleString('vi-VN')} / 10.000 ký tự</small>
           </div>
-        </div>
-      </div>
+        </Dialog>
+      )}
       {ToastComponent}
     </div>
   );

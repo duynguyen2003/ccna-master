@@ -1,26 +1,31 @@
+import AppIcon from '../../../components/ui/AppIcon';
 import React, { useState, useEffect, useLayoutEffect } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Play, CheckCircle, Lock, ChevronRight, Map, ArrowLeft } from 'lucide-react';
 import { api } from '../../../services/Api';
 import { useAuth } from '../../../context/AuthContext';
 import HeartbeatLoader from '../../../components/ui/HeartbeatLoader';
-import errorIllustration from '../../../assets/images/fix1.png';
+import errorIllustration from '../../../assets/images/fix1.webp';
 import '../styles/CourseDetail.css';
+import '../../../components/ui/styles/LearningError.css';
 
 const COURSE_GRADIENTS = {
-  ITN: { gradient: 'linear-gradient(135deg, #1d4ed8, #0ea5e9)', color: '#1d4ed8' },
+  ITN: {
+    gradient: 'linear-gradient(135deg, #2d4e7a, #7395be)',
+    color: 'var(--color-primary-hover)',
+  },
   SRWE: { gradient: 'linear-gradient(135deg, #6d28d9, #7c3aed)', color: '#6d28d9' },
   ENSA: { gradient: 'linear-gradient(135deg, #7c3aed, #a855f7)', color: '#7c3aed' },
 };
 const DEFAULT_GRADIENT = {
-  gradient: 'linear-gradient(135deg, #2563eb, #60a5fa)',
-  color: '#2563eb',
+  gradient: 'linear-gradient(135deg, #386298, #7395be)',
+  color: 'var(--color-primary)',
 };
 
 const MODULE_STATUS = {
-  completed: { label: 'Hoàn thành', bg: '#dcfce7', color: '#15803d' },
-  active: { label: 'Đang học', bg: '#dbeafe', color: '#1d4ed8' },
-  locked: { label: 'Chưa mở', bg: '#f1f5f9', color: '#94a3b8' },
+  completed: { label: 'Hoàn thành', bg: 'var(--color-success-bg)', color: 'var(--color-success)' },
+  active: { label: 'Đang học', bg: 'var(--color-muted)', color: 'var(--color-primary-hover)' },
+  locked: { label: 'Chưa mở', bg: 'var(--color-muted)', color: 'var(--color-muted-foreground)' },
 };
 
 const CourseDetail = () => {
@@ -33,7 +38,6 @@ const CourseDetail = () => {
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState('curriculum');
   const [expandedModule, setExpandedModule] = useState(null);
 
   useLayoutEffect(() => {
@@ -65,7 +69,13 @@ const CourseDetail = () => {
       <div className="lesson-error-container">
         <div className="lesson-error-card">
           <div className="lesson-error-illustration">
-            <img src={errorIllustration} alt="Khóa học không tồn tại" />
+            <img
+              src={errorIllustration}
+              alt="Khóa học không tồn tại"
+              width={512}
+              height={512}
+              decoding="async"
+            />
           </div>
           <h2 className="lesson-error-title">Ôi hỏng!</h2>
           <p className="lesson-error-desc">
@@ -134,9 +144,7 @@ const CourseDetail = () => {
               className="cdp-breadcrumb-tag"
               onClick={() => navigate(`/${from}`)}
             >
-              <span className="material-icons-round" style={{ fontSize: 14 }}>
-                arrow_back
-              </span>
+              <AppIcon name={'arrow_back'} className="app-icon" style={{ fontSize: 14 }} />
               LỘ TRÌNH CHỨNG CHỈ
             </button>
 
@@ -148,15 +156,15 @@ const CourseDetail = () => {
             {/* Meta row */}
             <div className="cdp-meta-row">
               <span className="cdp-meta-chip">
-                <span className="material-icons-round">schedule</span>
+                <AppIcon name={'schedule'} className="app-icon" />
                 {course.totalHours || '—'} Giờ nội dung
               </span>
               <span className="cdp-meta-chip">
-                <span className="material-icons-round">bar_chart</span>
+                <AppIcon name={'bar_chart'} className="app-icon" />
                 {course.level || 'Chuyên viên'}
               </span>
               <span className="cdp-meta-chip">
-                <span className="material-icons-round">translate</span>
+                <AppIcon name={'translate'} className="app-icon" />
                 {course.language || 'Tiếng Việt'}
               </span>
             </div>
@@ -177,13 +185,13 @@ const CourseDetail = () => {
               {course.competencies?.length > 0 && (
                 <div className="cdp-section">
                   <p className="cdp-section-title">
-                    <span className="material-icons-round">emoji_objects</span>
+                    <AppIcon name={'emoji_objects'} className="app-icon" />
                     CÁC NĂNG LỰC CỐT LÕI
                   </p>
                   <div className="cdp-competencies-grid">
                     {course.competencies.map((comp, i) => (
                       <div key={i} className="cdp-comp-item">
-                        <span className="material-icons-round">check</span>
+                        <AppIcon name={'check'} className="app-icon" />
                         {comp}
                       </div>
                     ))}
@@ -194,8 +202,8 @@ const CourseDetail = () => {
               {/* Curriculum */}
               <div className="cdp-section">
                 <p className="cdp-section-title">
-                  <span className="material-icons-round">menu_book</span>
-                  LỘ TRÌNH KIẾN TRÚC
+                  <AppIcon name={'menu_book'} className="app-icon" />
+                  Nội dung khóa học
                 </p>
                 <div className="cdp-curriculum-meta">
                   <span>{course.modules?.length || 0} Học phần</span>
@@ -213,8 +221,12 @@ const CourseDetail = () => {
 
                   return (
                     <div key={module.id} className="cdp-module-row" id={`module-row-${module.id}`}>
-                      <div
+                      <button
+                        type="button"
                         className="cdp-module-row-header"
+                        disabled={!isNavigable}
+                        aria-expanded={isExpanded}
+                        aria-controls={`module-lessons-${module.id}`}
                         style={{
                           opacity: isLocked ? 0.6 : 1,
                           cursor: isNavigable ? 'pointer' : 'default',
@@ -228,8 +240,16 @@ const CourseDetail = () => {
                         <div
                           className="cdp-module-row-num"
                           style={{
-                            background: isCompleted ? '#dcfce7' : isLocked ? '#f1f5f9' : '#dbeafe',
-                            color: isCompleted ? '#15803d' : isLocked ? '#94a3b8' : '#1d4ed8',
+                            background: isCompleted
+                              ? 'var(--color-success-bg)'
+                              : isLocked
+                                ? 'var(--color-muted)'
+                                : 'var(--color-muted)',
+                            color: isCompleted
+                              ? 'var(--color-success)'
+                              : isLocked
+                                ? 'var(--color-muted-foreground)'
+                                : 'var(--color-primary-hover)',
                           }}
                         >
                           {isCompleted ? (
@@ -262,25 +282,23 @@ const CourseDetail = () => {
                           </span>
                           {isNavigable && (
                             <div className={`cdp-chevron-icon ${isExpanded ? 'expanded' : ''}`}>
-                              <ChevronRight size={15} color="#94a3b8" />
+                              <ChevronRight size={15} color="var(--color-muted-foreground)" />
                             </div>
                           )}
                         </div>
-                      </div>
+                      </button>
 
                       {/* Lesson List (Accordion Content) */}
                       {isExpanded && module.lessons && module.lessons.length > 0 && (
-                        <div className="cdp-lesson-list">
+                        <div className="cdp-lesson-list" id={`module-lessons-${module.id}`}>
                           {module.lessons.map((lesson, lIdx) => (
-                            <div
+                            <Link
                               key={lesson.id}
                               className="cdp-lesson-item"
-                              onClick={() =>
-                                navigate(`/lesson?course=${courseId}&lesson=${lesson.id}`)
-                              }
+                              to={`/lesson?course=${courseId}&lesson=${lesson.id}`}
                             >
                               <div className="cdp-lesson-item-left">
-                                <span className="material-icons-round">play_circle</span>
+                                <AppIcon name={'play_circle'} className="app-icon" />
                                 <span className="cdp-lesson-item-title">
                                   {lesson.sectionNumber
                                     ? `${lesson.sectionNumber}. `
@@ -295,7 +313,7 @@ const CourseDetail = () => {
                                   </span>
                                 )}
                               </div>
-                            </div>
+                            </Link>
                           ))}
                         </div>
                       )}
@@ -309,17 +327,30 @@ const CourseDetail = () => {
             <div className="cdp-sidebar">
               <div className="cdp-enroll-card">
                 {/* Thumbnail */}
-                <div className="cdp-thumb-wrap" onClick={handleStartLearning}>
+                <button
+                  type="button"
+                  className="cdp-thumb-wrap"
+                  onClick={handleStartLearning}
+                  aria-label={`Mở khóa học ${course.title}`}
+                >
                   {course.thumbnailUrl ? (
-                    <img className="cdp-thumb-img" src={course.thumbnailUrl} alt={course.title} />
+                    <img
+                      className="cdp-thumb-img"
+                      src={course.thumbnailUrl}
+                      alt={course.title}
+                      width={640}
+                      height={360}
+                      loading="lazy"
+                      decoding="async"
+                    />
                   ) : (
                     <div style={{ position: 'absolute', inset: 0, background: colors.gradient }} />
                   )}
                   <div className="cdp-thumb-play">
-                    <span className="material-icons-round">play_circle</span>
+                    <AppIcon name={'play_circle'} className="app-icon" />
                     <span>Xem trước khóa học</span>
                   </div>
-                </div>
+                </button>
 
                 {/* Enroll body */}
                 <div className="cdp-enroll-body">
@@ -330,7 +361,7 @@ const CourseDetail = () => {
                   <button
                     id="cdp-enroll-btn"
                     className="cdp-enroll-btn"
-                    style={{ background: colors.gradient }}
+                    style={{ background: 'var(--color-primary)' }}
                     onClick={handleStartLearning}
                   >
                     {isLocked ? (
@@ -340,9 +371,11 @@ const CourseDetail = () => {
                     ) : !isAuthenticated ? (
                       <>
                         Đăng nhập để học{' '}
-                        <span className="material-icons-round" style={{ fontSize: 18 }}>
-                          arrow_forward
-                        </span>
+                        <AppIcon
+                          name={'arrow_forward'}
+                          className="app-icon"
+                          style={{ fontSize: 18 }}
+                        />
                       </>
                     ) : isStarted ? (
                       <>
@@ -351,15 +384,17 @@ const CourseDetail = () => {
                     ) : (
                       <>
                         Bắt đầu học{' '}
-                        <span className="material-icons-round" style={{ fontSize: 18 }}>
-                          arrow_forward
-                        </span>
+                        <AppIcon
+                          name={'arrow_forward'}
+                          className="app-icon"
+                          style={{ fontSize: 18 }}
+                        />
                       </>
                     )}
                   </button>
 
                   {isLocked ? (
-                    <p className="cdp-access-note" style={{ color: '#dc2626' }}>
+                    <p className="cdp-access-note" style={{ color: 'var(--color-danger)' }}>
                       {course.lockedReason ||
                         'Bạn cần hoàn thành các bài học ở chặng trước để mở khóa.'}
                     </p>
@@ -377,7 +412,7 @@ const CourseDetail = () => {
                           display: 'flex',
                           justifyContent: 'space-between',
                           fontSize: '0.78rem',
-                          color: '#64748b',
+                          color: 'var(--color-muted-foreground)',
                           marginBottom: '0.35rem',
                         }}
                       >
@@ -388,7 +423,7 @@ const CourseDetail = () => {
                       </div>
                       <div
                         style={{
-                          background: '#e2e8f0',
+                          background: 'var(--color-muted)',
                           borderRadius: '9999px',
                           height: 6,
                           overflow: 'hidden',
@@ -414,7 +449,7 @@ const CourseDetail = () => {
                       <ul className="cdp-includes-list">
                         {course.includes.map((item, i) => (
                           <li key={i}>
-                            <span className="material-icons-round">{item.icon}</span>
+                            <AppIcon name={item.icon} className="app-icon" />
                             {item.text}
                           </li>
                         ))}

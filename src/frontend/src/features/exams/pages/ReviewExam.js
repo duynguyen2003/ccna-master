@@ -102,7 +102,7 @@ const ReviewExamSession = () => {
             className="take-exam__question-card"
             style={{ textAlign: 'center', padding: '3rem' }}
           >
-            <h2>Không có dữ liệu câu hỏi để xem lại</h2>
+            <h1>Không có dữ liệu câu hỏi để xem lại</h1>
             <button className="btn btn-primary" onClick={() => navigate('/exam/testing-center')}>
               Quay lại trang chủ
             </button>
@@ -110,20 +110,21 @@ const ReviewExamSession = () => {
         ) : (
           /* ── Question Card (Review Mode) ── */
           <div className="take-exam__question-card">
+            <h1 className="sr-only">Xem lại bài kiểm tra</h1>
             {/* Meta */}
             <div className="take-exam__question-meta">
               <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
                 <span
                   className="take-exam__q-tag"
                   style={{
-                    background: isCorrect ? '#dcfce7' : '#fee2e2',
-                    color: isCorrect ? '#166534' : '#991b1b',
+                    background: isCorrect ? 'var(--color-success-bg)' : 'var(--color-danger-bg)',
+                    color: isCorrect ? 'var(--color-success)' : '#991b1b',
                   }}
                 >
                   {isCorrect ? '✓ CÂU HỎI ' : '✕ CÂU HỎI '}
                   {currentQ + 1}: {isCorrect ? 'ĐÚNG' : 'SAI'}
                 </span>
-                <span style={{ fontSize: '0.78rem', color: '#64748b' }}>
+                <span style={{ fontSize: '0.78rem', color: 'var(--color-muted-foreground)' }}>
                   Lĩnh vực: {question.domain}
                 </span>
               </div>
@@ -136,6 +137,10 @@ const ReviewExamSession = () => {
                   src={question.imageUrl}
                   alt="Exam topology"
                   style={{ maxWidth: '100%', borderRadius: '8px', border: '1px solid #e2e8f0' }}
+                  width={640}
+                  height={360}
+                  loading="lazy"
+                  decoding="async"
                 />
               </div>
             )}
@@ -162,7 +167,7 @@ const ReviewExamSession = () => {
                           style={{
                             marginLeft: '0.5rem',
                             fontSize: '0.78rem',
-                            color: '#16a34a',
+                            color: 'var(--color-success)',
                             fontWeight: 600,
                           }}
                         >
@@ -174,7 +179,7 @@ const ReviewExamSession = () => {
                           style={{
                             marginLeft: '0.5rem',
                             fontSize: '0.78rem',
-                            color: '#dc2626',
+                            color: 'var(--color-danger)',
                             fontWeight: 600,
                           }}
                         >
@@ -248,7 +253,7 @@ const ReviewExamSession = () => {
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '0.5rem',
-                background: '#f1f5f9',
+                background: 'var(--color-muted)',
                 border: '1px solid #e2e8f0',
                 borderRadius: '0.5rem',
                 padding: '0.75rem',
@@ -256,7 +261,7 @@ const ReviewExamSession = () => {
                 fontWeight: 600,
                 fontSize: '0.9rem',
                 width: '100%',
-                color: '#1e293b',
+                color: 'var(--color-foreground)',
               }}
               onClick={() => {
                 const targetId = result.resultId || examId;
@@ -269,7 +274,7 @@ const ReviewExamSession = () => {
               <div
                 style={{
                   fontSize: '0.8rem',
-                  color: '#64748b',
+                  color: 'var(--color-muted-foreground)',
                   fontWeight: 600,
                   textTransform: 'uppercase',
                   marginBottom: '0.3rem',
@@ -281,12 +286,18 @@ const ReviewExamSession = () => {
                 style={{
                   fontSize: '1.2rem',
                   fontWeight: 700,
-                  color: result.pass ? '#16a34a' : '#dc2626',
+                  color: result.pass ? 'var(--color-success)' : 'var(--color-danger)',
                 }}
               >
                 Điểm: {result.score}/1000
               </div>
-              <div style={{ fontSize: '0.85rem', color: '#475569', marginTop: '0.3rem' }}>
+              <div
+                style={{
+                  fontSize: '0.85rem',
+                  color: 'var(--color-muted-foreground)',
+                  marginTop: '0.3rem',
+                }}
+              >
                 {answeredCorrect} / {questions.length} câu đúng
               </div>
             </div>
@@ -298,7 +309,7 @@ const ReviewExamSession = () => {
                   display: 'flex',
                   justifyContent: 'space-between',
                   fontSize: '0.75rem',
-                  color: '#64748b',
+                  color: 'var(--color-muted-foreground)',
                   marginBottom: '0.25rem',
                   fontWeight: 600,
                 }}
@@ -310,11 +321,11 @@ const ReviewExamSession = () => {
               </div>
               <div
                 className="take-exam__progress-bar"
-                style={{ height: '6px', background: '#e2e8f0' }}
+                style={{ height: '6px', background: 'var(--color-muted)' }}
               >
                 <div
                   className="take-exam__progress-fill"
-                  style={{ width: `${reviewPct}%`, background: '#2563eb' }}
+                  style={{ width: `${reviewPct}%`, background: 'var(--color-primary)' }}
                 />
               </div>
             </div>
@@ -331,22 +342,22 @@ const ReviewExamSession = () => {
                 const ca = Array.isArray(q.correctAnswer) ? q.correctAnswer : [q.correctAnswer];
                 const isRightAnswer =
                   ua.length === ca.length && ua.every((val) => ca.includes(val));
-                let bg = '#f1f5f9',
-                  color = '#64748b',
+                let bg = 'var(--color-muted-foreground)',
+                  color = 'var(--color-muted-foreground)',
                   border = 'none';
                 if (index === currentQ) {
                   bg = 'white';
-                  color = '#2563eb';
-                  border = '2px solid #2563eb';
+                  color = 'var(--color-primary)';
+                  border = '2px solid #386298';
                 } else if (ua.length === 0) {
-                  bg = '#f1f5f9';
-                  color = '#94a3b8';
+                  bg = 'var(--color-muted-foreground)';
+                  color = 'var(--color-muted-foreground)';
                 } else if (isRightAnswer) {
-                  bg = '#dcfce7';
-                  color = '#16a34a';
+                  bg = 'var(--color-success-bg)';
+                  color = 'var(--color-success)';
                 } else {
-                  bg = '#fee2e2';
-                  color = '#dc2626';
+                  bg = 'var(--color-danger-bg)';
+                  color = 'var(--color-danger)';
                 }
                 return (
                   <button
@@ -364,21 +375,21 @@ const ReviewExamSession = () => {
               <div className="take-exam__legend-item">
                 <div
                   className="take-exam__legend-dot"
-                  style={{ background: '#dcfce7', border: '1px solid #16a34a' }}
+                  style={{ background: 'var(--color-success-bg)', border: '1px solid #16a34a' }}
                 ></div>
                 <span>Đáp án đúng</span>
               </div>
               <div className="take-exam__legend-item">
                 <div
                   className="take-exam__legend-dot"
-                  style={{ background: '#fee2e2', border: '1px solid #dc2626' }}
+                  style={{ background: 'var(--color-danger-bg)', border: '1px solid #dc2626' }}
                 ></div>
                 <span>Đáp án sai</span>
               </div>
               <div className="take-exam__legend-item">
                 <div
                   className="take-exam__legend-dot"
-                  style={{ background: '#f1f5f9', border: '1px solid #e2e8f0' }}
+                  style={{ background: 'var(--color-muted)', border: '1px solid #e2e8f0' }}
                 ></div>
                 <span>Chưa xem lại</span>
               </div>

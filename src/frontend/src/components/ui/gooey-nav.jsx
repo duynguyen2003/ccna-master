@@ -103,10 +103,7 @@ function Segment({
         <svg
           aria-hidden="true"
           preserveAspectRatio="none"
-          className={cn(
-            'gooey-nav-seam-svg',
-            isVertical ? 'gooey-nav-seam-v' : 'gooey-nav-seam-h'
-          )}
+          className={cn('gooey-nav-seam-svg', isVertical ? 'gooey-nav-seam-v' : 'gooey-nav-seam-h')}
           viewBox={isVertical ? `0 0 ${NECK_W} ${span}` : `0 0 ${span} ${NECK_H}`}
           style={
             isVertical
@@ -148,7 +145,11 @@ function NavLabel({
 
   const content = (
     <>
-      {icon && <span className="gooey-nav-icon">{icon}</span>}
+      {icon && (
+        <span className="gooey-nav-icon" aria-hidden="true">
+          {icon}
+        </span>
+      )}
       {label && <span className="gooey-nav-label-text">{label}</span>}
     </>
   );
@@ -166,7 +167,8 @@ function NavLabel({
   const sharedProps = {
     'data-slot': 'gooey-nav-item',
     'data-active': isActive,
-    'aria-current': isActive ? (href ? 'page' : true) : undefined,
+    'aria-current': isActive && href ? 'page' : undefined,
+    'aria-pressed': !href ? isActive : undefined,
     className,
     style,
     onClick: onSelect,
@@ -193,10 +195,10 @@ export function GooeyNav({
   size = 'md',
   orientation = 'auto',
   itemLayout = 'stacked',
-  activeColor = '#2563eb',
-  activeLabelColor = '#ffffff',
-  barColor = '#f1f5f9',
-  inactiveLabelColor = '#64748b',
+  activeColor = 'var(--color-primary)',
+  activeLabelColor = 'var(--color-on-primary)',
+  barColor = 'var(--color-background)',
+  inactiveLabelColor = 'var(--color-muted-foreground)',
   separation,
   radius,
   className,
@@ -209,7 +211,9 @@ export function GooeyNav({
   // Responsive mobile detection for 'auto' orientation
   const [isMobile, setIsMobile] = useState(() => {
     if (typeof window === 'undefined') return false;
-    return window.matchMedia ? window.matchMedia('(max-width: 768px)').matches : window.innerWidth <= 768;
+    return window.matchMedia
+      ? window.matchMedia('(max-width: 768px)').matches
+      : window.innerWidth <= 768;
   });
 
   useEffect(() => {
@@ -221,8 +225,7 @@ export function GooeyNav({
     return () => mql.removeEventListener('change', handleMediaChange);
   }, []);
 
-  const isVertical =
-    orientation === 'auto' ? !isMobile : orientation === 'vertical';
+  const isVertical = orientation === 'auto' ? !isMobile : orientation === 'vertical';
 
   // Determine which route matches current pathname
   const routeIndex = useMemo(() => {
@@ -251,19 +254,25 @@ export function GooeyNav({
   }
 
   const active = value !== undefined ? value : uncontrolled;
-  const span = separation !== undefined
-    ? (isMobile ? Math.min(separation, 14) : separation)
-    : (isMobile ? (SIZES[size]?.separation ?? 14) : (SIZES[size]?.separation ?? 18));
-  const corner = radius !== undefined
-    ? (isMobile ? Math.min(radius, 12) : radius)
-    : (isMobile ? (SIZES[size]?.radius ?? 10) : (SIZES[size]?.radius ?? 14));
+  const span =
+    separation !== undefined
+      ? isMobile
+        ? Math.min(separation, 14)
+        : separation
+      : isMobile
+        ? (SIZES[size]?.separation ?? 14)
+        : (SIZES[size]?.separation ?? 18);
+  const corner =
+    radius !== undefined
+      ? isMobile
+        ? Math.min(radius, 12)
+        : radius
+      : isMobile
+        ? (SIZES[size]?.radius ?? 10)
+        : (SIZES[size]?.radius ?? 14);
 
   const open = useCallback(
-    (seam) =>
-      seam === 0 ||
-      seam === items.length ||
-      seam - 1 === active ||
-      seam === active,
+    (seam) => seam === 0 || seam === items.length || seam - 1 === active || seam === active,
     [items.length, active]
   );
 
@@ -273,11 +282,7 @@ export function GooeyNav({
   );
 
   return (
-    <nav
-      data-slot="gooey-nav"
-      className={cn('gooey-nav-container', className)}
-      {...props}
-    >
+    <nav data-slot="gooey-nav" className={cn('gooey-nav-container', className)} {...props}>
       <ul
         key={isVertical ? 'vertical' : 'horizontal'}
         className={cn(
@@ -316,14 +321,10 @@ export function GooeyNav({
               reduced={reduced}
               radii={radii}
               isVertical={isVertical}
-              className={cn(
-                isActive ? 'is-active' : 'is-inactive'
-              )}
+              className={cn(isActive ? 'is-active' : 'is-inactive')}
               style={{
                 backgroundColor: isActive ? activeColor : barColor,
-                boxShadow: isActive
-                  ? '0 6px 16px -2px rgba(37, 99, 235, 0.35)'
-                  : 'none',
+                boxShadow: isActive ? '0 6px 16px -2px rgba(56, 98, 152, 0.35)' : 'none',
               }}
             >
               <NavLabel

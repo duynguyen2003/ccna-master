@@ -42,21 +42,21 @@
 
 .network-editor-select:focus-visible,
 .topology-editor-button:focus-visible {
-  outline: 2px solid #3b82f6;
+  outline: 2px solid var(--color-primary-gradient-start);
   outline-offset: 2px;
 }
 
 .topology-editor-button {
   padding: 7px 12px;
   color: #fff;
-  background: #2563eb;
-  border-color: #2563eb;
+  background: var(--color-primary);
+  border-color: var(--color-primary);
   cursor: pointer;
 }
 
 .topology-editor-button:hover:not(:disabled) {
-  background: #1d4ed8;
-  border-color: #1d4ed8;
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
   transform: translateY(-1px);
 }
 

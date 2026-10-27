@@ -1,36 +1,38 @@
+import AppIcon from '../../ui/AppIcon';
 import React from 'react';
+import '../styles/Navbar.css';
 import { GooeyNav } from '../../ui/gooey-nav';
 
 const navItems = [
   {
     label: 'Trang chủ',
     href: '/',
-    icon: <span className="material-icons-round">home</span>,
+    icon: <AppIcon name={'home'} className="app-icon" />,
     isActive: (pathname) => pathname === '/',
   },
   {
     label: 'Khóa học',
     href: '/roadmap',
-    icon: <span className="material-icons-round">auto_stories</span>,
+    icon: <AppIcon name={'auto_stories'} className="app-icon" />,
     isActive: (pathname) =>
       pathname === '/roadmap' || pathname.startsWith('/course') || pathname === '/lesson',
   },
   {
     label: 'Thực hành',
     href: '/labs',
-    icon: <span className="material-icons-round">terminal</span>,
+    icon: <AppIcon name={'terminal'} className="app-icon" />,
     isActive: (pathname) => pathname === '/labs' || pathname.startsWith('/labs'),
   },
   {
     label: 'Kiểm tra',
     href: '/exam/testing-center',
-    icon: <span className="material-icons-round">quiz</span>,
+    icon: <AppIcon name={'quiz'} className="app-icon" />,
     isActive: (pathname) => pathname.startsWith('/exam'),
   },
   {
     label: 'Tài liệu',
     href: '/resources',
-    icon: <span className="material-icons-round">folder</span>,
+    icon: <AppIcon name={'folder'} className="app-icon" />,
     isActive: (pathname) => pathname === '/resources',
   },
 ];
@@ -42,10 +44,10 @@ const Navbar = () => {
         items={navItems}
         orientation="auto"
         itemLayout="stacked"
-        activeColor="#2563eb"
-        barColor="#f1f5f9"
-        activeLabelColor="#ffffff"
-        inactiveLabelColor="#64748b"
+        activeColor="var(--color-primary)"
+        barColor="var(--color-muted)"
+        activeLabelColor="var(--color-on-primary)"
+        inactiveLabelColor="var(--color-muted-foreground)"
         separation={18}
         radius={14}
         className="sidebar-gooey-nav"

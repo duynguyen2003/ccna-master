@@ -4,6 +4,7 @@ import Navbar from './header/Navbar';
 import TopHeader from './header/TopHeader';
 import Footer from './footer/Footer';
 import { useAuth } from '../../context/AuthContext';
+import LearningResumeBanner from '../learning/LearningResumeBanner';
 
 const Layout = ({ children }) => {
   const { isAuthenticated } = useAuth();
@@ -19,12 +20,22 @@ const Layout = ({ children }) => {
     <div
       className={`layout-container${isHomeRoute ? ' layout-container--home' : ''}${isGuestHome ? ' layout-container--guest-home' : ''}${hasGraphPaperBackground ? ' layout-container--graph-paper' : ''}`}
     >
+      <a
+        className="skip-link"
+        href="#main-content"
+        onClick={() => document.getElementById('main-content')?.focus()}
+      >
+        Bỏ qua điều hướng
+      </a>
       <TopHeader />
       <div className="layout-body">
         {!isGuestHome && <Navbar />}
 
         <div className="main-wrapper">
-          <main className="main-content">{children}</main>
+          {pathname !== '/' && <LearningResumeBanner />}
+          <main className="main-content" id="main-content" tabIndex={-1}>
+            {children}
+          </main>
         </div>
       </div>
 

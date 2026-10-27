@@ -10,8 +10,24 @@ const BrandLogo = ({ className = '', inverse = false }) => (
     role="img"
     aria-label="NetMaster — Học mạng để đi làm"
   >
-    <img className="brand-logo__mark" src={mark} alt="" draggable="false" />
-    <img className="brand-logo__wordmark" src={wordmark} alt="" draggable="false" />
+    <img
+      className="brand-logo__mark"
+      src={mark}
+      alt=""
+      draggable="false"
+      width={334}
+      height={319}
+      decoding="async"
+    />
+    <img
+      className="brand-logo__wordmark"
+      src={wordmark}
+      alt=""
+      draggable="false"
+      width={866}
+      height={319}
+      decoding="async"
+    />
   </span>
 );
 

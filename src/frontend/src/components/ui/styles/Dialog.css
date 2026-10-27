@@ -1,0 +1,39 @@
+.ui-dialog {
+  width: min(720px, calc(100vw - 32px));
+  max-height: calc(100dvh - 48px);
+  margin: auto;
+  padding: 0;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  color: var(--text-color);
+  background: var(--card-bg);
+  box-shadow: 0 16px 48px rgb(0 0 0 / 0.2);
+}
+.ui-dialog::backdrop {
+  background: rgb(2 6 23 / 0.6);
+}
+.ui-dialog-panel {
+  padding: 24px;
+}
+.ui-dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.ui-dialog-header h2 {
+  font-size: 1.2rem;
+}
+.ui-dialog-close {
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--card-bg);
+  color: inherit;
+  cursor: pointer;
+}

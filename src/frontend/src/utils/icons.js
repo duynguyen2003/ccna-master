@@ -13,6 +13,7 @@ export { default as BarChart2 } from 'lucide-react/dist/esm/icons/chart-no-axes-
 export { default as Bold } from 'lucide-react/dist/esm/icons/bold.js';
 export { default as BookOpen } from 'lucide-react/dist/esm/icons/book-open.js';
 export { default as CalendarDays } from 'lucide-react/dist/esm/icons/calendar-days.js';
+export { default as Calculator } from 'lucide-react/dist/esm/icons/calculator.js';
 export { default as Check } from 'lucide-react/dist/esm/icons/check.js';
 export { default as CheckCircle } from 'lucide-react/dist/esm/icons/circle-check-big.js';
 export { default as CheckCircle2 } from 'lucide-react/dist/esm/icons/circle-check.js';
@@ -49,6 +50,7 @@ export { default as GraduationCap } from 'lucide-react/dist/esm/icons/graduation
 export { default as Hash } from 'lucide-react/dist/esm/icons/hash.js';
 export { default as Heading2 } from 'lucide-react/dist/esm/icons/heading-2.js';
 export { default as History } from 'lucide-react/dist/esm/icons/history.js';
+export { default as House } from 'lucide-react/dist/esm/icons/house.js';
 export { default as Image } from 'lucide-react/dist/esm/icons/image.js';
 export { default as ImageIcon } from 'lucide-react/dist/esm/icons/image.js';
 export { default as ImagePlus } from 'lucide-react/dist/esm/icons/image-plus.js';

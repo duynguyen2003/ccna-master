@@ -264,7 +264,7 @@ const Dashboard = () => {
                 style={{
                   border: 'none',
                   cursor: 'pointer',
-                  background: activeTab === 'week' ? '#3b82f6' : 'transparent',
+                  background: activeTab === 'week' ? '#386298' : 'transparent',
                   color: activeTab === 'week' ? '#fff' : '#64748b',
                 }}
                 onClick={() => setActiveTab('week')}
@@ -276,7 +276,7 @@ const Dashboard = () => {
                 style={{
                   border: 'none',
                   cursor: 'pointer',
-                  background: activeTab === 'month' ? '#3b82f6' : 'transparent',
+                  background: activeTab === 'month' ? '#386298' : 'transparent',
                   color: activeTab === 'month' ? '#fff' : '#64748b',
                 }}
                 onClick={() => setActiveTab('month')}

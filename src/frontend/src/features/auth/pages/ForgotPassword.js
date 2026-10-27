@@ -1,3 +1,4 @@
+import AppIcon from '../../../components/ui/AppIcon';
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../../services/Api';
@@ -54,14 +55,14 @@ const ForgotPassword = () => {
 
       {globalError && (
         <div className="form-global-error">
-          <span className="material-icons-round">error_outline</span>
+          <AppIcon name={'error_outline'} className="app-icon" />
           {globalError}
         </div>
       )}
 
       {result && (
         <div className="auth-success-box">
-          <span className="material-icons-round">mark_email_read</span>
+          <AppIcon name={'mark_email_read'} className="app-icon" />
           <div>
             <strong style={{ display: 'block', marginBottom: '4px' }}>Yêu cầu đã được gửi</strong>
             <p style={{ margin: 0, fontSize: '13px' }}>{result.message}</p>
@@ -104,18 +105,18 @@ const ForgotPassword = () => {
                 }}
                 autoComplete="email"
               />
-              <span className="form-input-icon material-icons-round">mail</span>
+              <AppIcon name={'mail'} className="form-input-icon app-icon" />
             </div>
             {error && (
               <div className="form-error">
-                <span className="material-icons-round">error</span>
+                <AppIcon name={'error'} className="app-icon" />
                 {error}
               </div>
             )}
           </div>
 
           <div className="auth-info-box">
-            <span className="material-icons-round">info</span>
+            <AppIcon name={'info'} className="app-icon" />
             <div>Liên kết đặt lại mật khẩu sẽ có hiệu lực trong 30 phút.</div>
           </div>
 
@@ -124,10 +125,7 @@ const ForgotPassword = () => {
               <div className="spinner"></div>
             ) : (
               <>
-                GỬI YÊU CẦU{' '}
-                <span className="material-icons-round" style={{ fontSize: 18 }}>
-                  send
-                </span>
+                GỬI YÊU CẦU <AppIcon name={'send'} className="app-icon" style={{ fontSize: 18 }} />
               </>
             )}
           </button>

@@ -474,6 +474,7 @@ const CourseDetail = () => {
         await fetchData(true);
       } catch (err) {
         setPageError(err.message || 'Không thể xóa chương.'); // Fix 6
+        throw err;
       }
     },
     [token, activeModuleId, fetchData]
@@ -493,6 +494,7 @@ const CourseDetail = () => {
         await fetchData(true);
       } catch (err) {
         setPageError(err.message || 'Không thể xóa bài học.'); // Fix 6
+        throw err;
       }
     },
     [token, editingLessonId, fetchData]
@@ -794,7 +796,11 @@ const CourseDetail = () => {
                       </span>
                       <div className="acm-editor-split">
                         <div className="acm-editor-box">
-                          <div className="acm-editor-toolbar" role="toolbar" aria-label="Định dạng nội dung bài học">
+                          <div
+                            className="acm-editor-toolbar"
+                            role="toolbar"
+                            aria-label="Định dạng nội dung bài học"
+                          >
                             {markdownTools.map(({ action, label, Icon }) => (
                               <button
                                 key={action}
@@ -827,7 +833,8 @@ const CourseDetail = () => {
                       </div>
                     </div>
                     <small className="acm-field-hint">
-                      Chọn một đoạn để định dạng nhanh. {lessonForm.contentHtml.length} ký tự; nội dung được lưu khi bấm Lưu bài học.
+                      Chọn một đoạn để định dạng nhanh. {lessonForm.contentHtml.length} ký tự; nội
+                      dung được lưu khi bấm Lưu bài học.
                     </small>
                   </div>
                 ) : null}
@@ -1010,12 +1017,7 @@ const CourseDetail = () => {
       </AdminModal>
 
       {toast ? (
-        <Toast
-          message={toast}
-          type="success"
-          duration={2800}
-          onClose={handleCloseToast}
-        />
+        <Toast message={toast} type="success" duration={2800} onClose={handleCloseToast} />
       ) : null}
     </div>
   );

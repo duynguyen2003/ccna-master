@@ -1,6 +1,12 @@
 import { gsap, prefersReducedMotion } from '../../labs/utils/labMotion';
 
-const CONFETTI_COLORS = ['#2563eb', '#38bdf8', '#10b981', '#f59e0b', '#ec4899'];
+const CONFETTI_COLORS = [
+  'var(--color-primary)',
+  '#38bdf8',
+  'var(--color-success)',
+  'var(--color-warning)',
+  '#ec4899',
+];
 
 const createNodeConfetti = (nodeElement, particleCount = 120) => {
   if (!nodeElement || typeof document === 'undefined') return null;

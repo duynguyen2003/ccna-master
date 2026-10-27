@@ -1,3 +1,4 @@
+import { Sun, Moon } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Check,
@@ -135,6 +136,16 @@ export default function CliLabWorkspace({
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState(0);
   const [theme, setTheme] = useState('dark');
+  const [consoleFocused, setConsoleFocused] = useState(false);
+  useEffect(() => {
+    if (!consoleFocused) return;
+    const frame = requestAnimationFrame(() =>
+      dialog.current
+        ?.querySelector('.cli-xterm-host')
+        ?.scrollIntoView({ block: 'nearest', behavior: 'auto' })
+    );
+    return () => cancelAnimationFrame(frame);
+  }, [consoleFocused]);
   const mounted = useRef(true);
   const dialog = useRef(null);
   const onboardingFocusRestore = useRef(null);
@@ -626,7 +637,9 @@ export default function CliLabWorkspace({
         </div>
       </div>
 
-      <div className="cli-workspace network-workspace cli-lab-surface">
+      <div
+        className={`cli-workspace network-workspace cli-lab-surface ${consoleFocused ? 'is-console-focused' : ''}`}
+      >
         <header className="cli-workspace-header cli-lab-header">
           <div className="cli-lab-heading">
             <span className="cli-workspace-kicker">PHÒNG THỰC HÀNH MẠNG</span>
@@ -668,13 +681,25 @@ export default function CliLabWorkspace({
           )}
           <button
             type="button"
+            className="cli-lab-theme-toggle cli-console-toggle"
+            aria-pressed={consoleFocused}
+            onClick={() => setConsoleFocused((value) => !value)}
+          >
+            Ưu tiên CLI
+          </button>
+          <button
+            type="button"
             className="cli-lab-theme-toggle"
             onClick={() => setTheme((value) => (value === 'dark' ? 'light' : 'dark'))}
             aria-label={
               theme === 'dark' ? 'Chuyển sang giao diện sáng' : 'Chuyển sang giao diện tối'
             }
           >
-            {theme === 'dark' ? '☼' : '☾'}
+            {theme === 'dark' ? (
+              <Sun size={18} aria-hidden="true" />
+            ) : (
+              <Moon size={18} aria-hidden="true" />
+            )}
           </button>
           <button type="button" className="cli-lab-close" onClick={onClose} aria-label="Đóng">
             <X size={18} />

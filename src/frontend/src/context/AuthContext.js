@@ -28,38 +28,35 @@ export const useAuth = () => {
   return context;
 };
 
-// Provider bọc quanh App
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [token, setToken] = useState(null);
-  const [loading, setLoading] = useState(true); // loading ban đầu khi đọc localStorage
-  const [pendingToast, setPendingToast] = useState(null); // Toast to show after navigation
+function readStoredSession() {
+  try {
+    const savedToken = localStorage.getItem('accessToken');
+    const savedUser = localStorage.getItem('userData');
+    if (savedToken && savedUser && isTokenValid(savedToken))
+      return { user: JSON.parse(savedUser), token: savedToken };
+    return { user: null, token: null, clear: Boolean(savedToken || savedUser) };
+  } catch {
+    return { user: null, token: null, clear: true };
+  }
+}
 
-  // Khởi tạo: đọc localStorage khi app load, kiểm tra token còn hạn không
+// Restore local state before the first render; no backend request blocks public pages.
+export const AuthProvider = ({ children }) => {
+  const [initialSession] = useState(readStoredSession);
+  const [user, setUser] = useState(initialSession.user);
+  const [token, setToken] = useState(initialSession.token);
+  const [loading, setLoading] = useState(true);
+  const [pendingToast, setPendingToast] = useState(null);
+
   useEffect(() => {
-    try {
-      const savedToken = localStorage.getItem('accessToken');
-      const savedUser = localStorage.getItem('userData');
-      if (savedToken && savedUser) {
-        // ✅ Kiểm tra token hết hạn trước khi restore session
-        if (isTokenValid(savedToken)) {
-          setToken(savedToken);
-          setUser(JSON.parse(savedUser));
-        } else {
-          // Token hết hạn → xóa sạch, buộc đăng nhập lại
-          console.warn('Token đã hết hạn, xóa session.');
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('userData');
-        }
-      }
-    } catch (error) {
-      console.error('Lỗi đọc localStorage:', error);
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('userData');
-    } finally {
-      setLoading(false);
+    if (initialSession.clear) {
+      try {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('userData');
+      } catch {}
     }
-  }, []);
+    setLoading(false);
+  }, [initialSession]);
 
   // Hàm đăng nhập: lưu token + user vào state + localStorage
   const login = useCallback((userData, accessToken) => {

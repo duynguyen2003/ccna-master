@@ -320,7 +320,7 @@ export const api = {
 
   // [OPT-02] Trả về { data: [] } thống nhất với các hàm list khác
   getResources: async (token) => {
-    const json = await safeApiFetch('/learning/resources', token, { data: [] });
+    const json = await apiFetch('/learning/resources', token);
     return json;
   },
 
@@ -393,9 +393,7 @@ export const api = {
     }),
 
   getStudyTimeStats: async (token, period = 'week') => {
-    const json = await safeApiFetch(`/users/stats/study-time?period=${period}`, token, {
-      data: [],
-    });
+    const json = await apiFetch(`/users/stats/study-time?period=${period}`, token);
     return json.data || [];
   },
 

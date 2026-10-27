@@ -75,7 +75,7 @@ const ActivityBarChart = ({ data, loading = false }) => {
           />
           <Bar dataKey="value" radius={[4, 4, 0, 0]} barSize={50}>
             {data.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={entry.value === maxValue ? '#3b82f6' : '#bfdbfe'} />
+              <Cell key={`cell-${index}`} fill={entry.value === maxValue ? '#386298' : '#b9cce3'} />
             ))}
           </Bar>
         </BarChart>

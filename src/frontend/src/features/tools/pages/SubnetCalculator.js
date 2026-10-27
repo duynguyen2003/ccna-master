@@ -1,4 +1,6 @@
+import AppIcon from '../../../components/ui/AppIcon';
 import React, { useState, useCallback } from 'react';
+import '../styles/SubnetCalculator.css';
 import { Link } from 'react-router-dom';
 import DropdownSelect from '../../../components/ui/DropdownSelect';
 
@@ -166,19 +168,17 @@ const SubnetCalculator = () => {
       {/* ─── Breadcrumb ─── */}
       <nav className="subnet-breadcrumb">
         <Link to="/" className="subnet-breadcrumb-link">
-          <span className="material-icons-round" style={{ fontSize: 18 }}>
-            home
-          </span>
+          <AppIcon name={'home'} className="app-icon" style={{ fontSize: 18 }} />
           Trang chủ
         </Link>
-        <span className="material-icons-round subnet-breadcrumb-sep">chevron_right</span>
+        <AppIcon name={'chevron_right'} className="app-icon subnet-breadcrumb-sep" />
         <span className="subnet-breadcrumb-current">Trình tính toán Subnet</span>
       </nav>
 
       {/* ─── Header ─── */}
       <header className="subnet-header">
         <div className="subnet-header-icon">
-          <span className="material-icons-round">calculate</span>
+          <AppIcon name={'calculate'} className="app-icon" />
         </div>
         <h1 className="subnet-header-title">Trình tính toán Subnet CCNA</h1>
         <p className="subnet-header-desc">Công cụ hỗ trợ học tập CCNA miễn phí cho cộng đồng.</p>
@@ -193,9 +193,11 @@ const SubnetCalculator = () => {
               ĐỊA CHỈ IP
             </label>
             <div className="subnet-input-wrap">
-              <span className="material-icons-round subnet-input-icon">language</span>
+              <AppIcon name={'language'} className="app-icon subnet-input-icon" />
               <input
                 id="subnet-ip"
+                aria-invalid={Boolean(error)}
+                aria-describedby={error ? 'subnet-error' : undefined}
                 type="text"
                 className={`subnet-input ${error ? 'has-error' : ''}`}
                 placeholder="Ví dụ: 192.168.1.0"
@@ -253,15 +255,15 @@ const SubnetCalculator = () => {
           <div className="subnet-field subnet-field-btn">
             <label className="subnet-label">&nbsp;</label>
             <button className="subnet-btn" onClick={handleCalculate} id="btn-subnet-calculate">
-              <span className="material-icons-round">equalizer</span>
+              <AppIcon name={'equalizer'} className="app-icon" />
               Tính toán
             </button>
           </div>
         </div>
 
         {error && (
-          <div className="subnet-error">
-            <span className="material-icons-round">error_outline</span>
+          <div className="subnet-error" id="subnet-error" role="alert">
+            <AppIcon name={'error_outline'} className="app-icon" />
             {error}
           </div>
         )}
@@ -273,28 +275,28 @@ const SubnetCalculator = () => {
           {/* Detail Table */}
           <div className="subnet-result-card">
             <div className="subnet-result-card-header">
-              <span className="material-icons-round">info</span>
+              <AppIcon name={'info'} className="app-icon" />
               KẾT QUẢ CHI TIẾT
             </div>
             <table className="subnet-table detail-table">
               <tbody>
                 <tr>
                   <td className="label-cell">
-                    <span className="material-icons-round row-icon">router</span>
+                    <AppIcon name={'router'} className="app-icon row-icon" />
                     Network Address
                   </td>
                   <td className="value-cell highlight">{result.networkAddress}</td>
                 </tr>
                 <tr>
                   <td className="label-cell">
-                    <span className="material-icons-round row-icon">cell_tower</span>
+                    <AppIcon name={'cell_tower'} className="app-icon row-icon" />
                     Broadcast Address
                   </td>
                   <td className="value-cell">{result.broadcastAddress}</td>
                 </tr>
                 <tr>
                   <td className="label-cell">
-                    <span className="material-icons-round row-icon">swap_horiz</span>
+                    <AppIcon name={'swap_horiz'} className="app-icon row-icon" />
                     Usable Host Range
                   </td>
                   <td className="value-cell">
@@ -305,7 +307,7 @@ const SubnetCalculator = () => {
                 </tr>
                 <tr>
                   <td className="label-cell">
-                    <span className="material-icons-round row-icon">devices</span>
+                    <AppIcon name={'devices'} className="app-icon row-icon" />
                     Total Usable Hosts
                   </td>
                   <td className="value-cell">
@@ -314,7 +316,7 @@ const SubnetCalculator = () => {
                 </tr>
                 <tr>
                   <td className="label-cell">
-                    <span className="material-icons-round row-icon">grid_on</span>
+                    <AppIcon name={'grid_on'} className="app-icon row-icon" />
                     Subnet Mask
                   </td>
                   <td className="value-cell">
@@ -324,7 +326,7 @@ const SubnetCalculator = () => {
                 </tr>
                 <tr>
                   <td className="label-cell">
-                    <span className="material-icons-round row-icon">flip</span>
+                    <AppIcon name={'flip'} className="app-icon row-icon" />
                     Wildcard Mask
                   </td>
                   <td className="value-cell">{result.wildcardMask}</td>
@@ -337,7 +339,7 @@ const SubnetCalculator = () => {
           {showSubnets && subnets.length > 0 && (
             <div className="subnet-result-card">
               <div className="subnet-result-card-header">
-                <span className="material-icons-round">view_list</span>
+                <AppIcon name={'view_list'} className="app-icon" />
                 DANH SÁCH SUBNET KHẢ DỤNG (/{subPrefix} VÍ DỤ)
               </div>
               <div className="subnet-table-scroll">

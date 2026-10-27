@@ -15,7 +15,7 @@
 
 .admin-search-input:focus {
   border-color: var(--admin-primary);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+  box-shadow: 0 0 0 3px rgb(var(--brand-primary-rgb) / 0.12);
   background-color: #ffffff;
 }
 
@@ -42,7 +42,7 @@
 
 .admin-btn-primary:hover {
   background-color: var(--admin-primary-hover);
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+  box-shadow: 0 2px 8px rgb(var(--brand-primary-rgb) / 0.25);
 }
 
 /* ========== BADGES ========== */

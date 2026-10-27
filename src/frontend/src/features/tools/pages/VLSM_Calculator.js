@@ -1,4 +1,6 @@
+import AppIcon from '../../../components/ui/AppIcon';
 import React, { useState, useCallback } from 'react';
+import '../styles/VLSM_Calculator.css';
 import { Link } from 'react-router-dom';
 import DropdownSelect from '../../../components/ui/DropdownSelect';
 
@@ -248,36 +250,39 @@ const VLSMCalculator = () => {
       {/* ─── Breadcrumb ─── */}
       <nav className="vlsm-breadcrumb">
         <Link to="/" className="vlsm-breadcrumb-link">
-          <span className="material-icons-round" style={{ fontSize: 18 }}>
-            home
-          </span>
+          <AppIcon name={'home'} className="app-icon" style={{ fontSize: 18 }} />
           Trang chủ
         </Link>
-        <span className="material-icons-round vlsm-breadcrumb-sep">chevron_right</span>
+        <AppIcon name={'chevron_right'} className="app-icon vlsm-breadcrumb-sep" />
         <span className="vlsm-breadcrumb-current">VLSM Calculator</span>
       </nav>
 
       {/* ─── Header ─── */}
       <header className="vlsm-header">
         <div className="vlsm-header-icon">
-          <span className="material-icons-round">account_tree</span>
+          <AppIcon name={'account_tree'} className="app-icon" />
         </div>
         <h1 className="vlsm-header-title">VLSM Calculator</h1>
         <p className="vlsm-header-desc">Công cụ tính toán mạng con VLSM</p>
       </header>
 
       {/* ─── Collapsible Guide Toggle ─── */}
-      <button className="vlsm-guide-toggle" onClick={() => setShowGuide(!showGuide)}>
-        <span className="material-icons-round" style={{ fontSize: 18, color: '#f59e0b' }}>
-          lightbulb
-        </span>
+      <button
+        className="vlsm-guide-toggle"
+        aria-expanded={showGuide}
+        onClick={() => setShowGuide(!showGuide)}
+      >
+        <AppIcon
+          name={'lightbulb'}
+          className="app-icon"
+          style={{ fontSize: 18, color: 'var(--color-warning)' }}
+        />
         <span>Click để xem hướng dẫn và quy tắc tính VLSM</span>
-        <span
-          className="material-icons-round vlsm-guide-chevron"
+        <AppIcon
+          name={'expand_more'}
+          className="app-icon vlsm-guide-chevron"
           style={{ transform: showGuide ? 'rotate(180deg)' : 'rotate(0)' }}
-        >
-          expand_more
-        </span>
+        />
       </button>
 
       {/* ─── Info Cards (2-column dark) - hiện khi click ─── */}
@@ -286,7 +291,7 @@ const VLSMCalculator = () => {
           {/* Left: VLSM là gì? */}
           <div className="vlsm-info-card">
             <div className="vlsm-info-card-title">
-              <span className="material-icons-round">menu_book</span>
+              <AppIcon name={'menu_book'} className="app-icon" />
               VLSM là gì?
             </div>
             <p className="vlsm-info-card-desc">
@@ -296,15 +301,15 @@ const VLSMCalculator = () => {
             </p>
             <ul className="vlsm-info-list">
               <li>
-                <span className="material-icons-round vlsm-info-check">check_circle</span>
+                <AppIcon name={'check_circle'} className="app-icon vlsm-info-check" />
                 Tối ưu hóa không gian địa chỉ IP.
               </li>
               <li>
-                <span className="material-icons-round vlsm-info-check">check_circle</span>
+                <AppIcon name={'check_circle'} className="app-icon vlsm-info-check" />
                 Giảm nhiều địa chỉ IP không sử dụng.
               </li>
               <li>
-                <span className="material-icons-round vlsm-info-check">check_circle</span>
+                <AppIcon name={'check_circle'} className="app-icon vlsm-info-check" />
                 Tăng tính bảo mật thông qua phân đoạn mạng.
               </li>
             </ul>
@@ -313,7 +318,7 @@ const VLSMCalculator = () => {
           {/* Right: Hướng dẫn sử dụng */}
           <div className="vlsm-info-card">
             <div className="vlsm-info-card-title">
-              <span className="material-icons-round">integration_instructions</span>
+              <AppIcon name={'integration_instructions'} className="app-icon" />
               Hướng dẫn sử dụng
             </div>
             <div className="vlsm-steps-list">
@@ -348,13 +353,18 @@ const VLSMCalculator = () => {
         {/* LEFT: Major Network */}
         <section className="vlsm-card vlsm-major-card">
           <div className="vlsm-card-title">
-            <span className="material-icons-round">hub</span>
+            <AppIcon name={'hub'} className="app-icon" />
             Mạng Chính
           </div>
 
           <div className="vlsm-field">
-            <label className="vlsm-label">ĐỊA CHỈ IP GỐC</label>
+            <label className="vlsm-label" htmlFor="vlsm-major-ip">
+              ĐỊA CHỈ IP GỐC
+            </label>
             <input
+              id="vlsm-major-ip"
+              aria-invalid={Boolean(error)}
+              aria-describedby={error ? 'vlsm-error' : undefined}
               type="text"
               className="vlsm-input"
               placeholder="Ví dụ: 192.168.1.0"
@@ -366,8 +376,11 @@ const VLSMCalculator = () => {
           </div>
 
           <div className="vlsm-field">
-            <label className="vlsm-label">PREFIX GỐC</label>
+            <label className="vlsm-label" htmlFor="vlsm-prefix">
+              PREFIX GỐC
+            </label>
             <DropdownSelect
+              id="vlsm-prefix"
               aria-label="Prefix gốc"
               className="vlsm-select"
               value={majorPrefix}
@@ -382,9 +395,7 @@ const VLSMCalculator = () => {
           </div>
 
           <div className="vlsm-major-info">
-            <span className="material-icons-round" style={{ fontSize: 16 }}>
-              info_outline
-            </span>
+            <AppIcon name={'info_outline'} className="app-icon" style={{ fontSize: 16 }} />
             Dải mạng gốc sẽ được phân bổ cho các mạng con. VLSM cho phép sử dụng không gian địa chỉ
             hiệu quả.
           </div>
@@ -393,12 +404,10 @@ const VLSMCalculator = () => {
         {/* RIGHT: Subnets */}
         <section className="vlsm-card vlsm-subnets-card">
           <div className="vlsm-card-title">
-            <span className="material-icons-round">device_hub</span>
+            <AppIcon name={'device_hub'} className="app-icon" />
             Cấu hình Mạng con
             <button className="vlsm-add-btn" onClick={addSubnet} title="Thêm mạng con">
-              <span className="material-icons-round" style={{ fontSize: 18 }}>
-                add
-              </span>
+              <AppIcon name={'add'} className="app-icon" style={{ fontSize: 18 }} />
               Thêm
             </button>
           </div>
@@ -408,8 +417,11 @@ const VLSMCalculator = () => {
               <div className="vlsm-subnet-row" key={s.id}>
                 <div className="vlsm-subnet-fields">
                   <div className="vlsm-field vlsm-field-name">
-                    <label className="vlsm-label">TÊN MẠNG</label>
+                    <label className="vlsm-label" htmlFor={`vlsm-name-${s.id}`}>
+                      Tên mạng con {idx + 1}
+                    </label>
                     <input
+                      id={`vlsm-name-${s.id}`}
                       type="text"
                       className="vlsm-input"
                       placeholder={`VD: Phòng ${idx + 1}`}
@@ -419,8 +431,13 @@ const VLSMCalculator = () => {
                     />
                   </div>
                   <div className="vlsm-field vlsm-field-hosts">
-                    <label className="vlsm-label">HOSTS</label>
+                    <label className="vlsm-label" htmlFor={`vlsm-hosts-${s.id}`}>
+                      Số host mạng con {idx + 1}
+                    </label>
                     <input
+                      id={`vlsm-hosts-${s.id}`}
+                      aria-invalid={Boolean(error)}
+                      aria-describedby={error ? 'vlsm-error' : undefined}
                       type="number"
                       className="vlsm-input vlsm-input-hosts"
                       placeholder="50"
@@ -436,8 +453,9 @@ const VLSMCalculator = () => {
                   onClick={() => removeSubnet(s.id)}
                   disabled={subnets.length <= 1}
                   title="Xóa mạng con"
+                  aria-label={`Xóa mạng con ${idx + 1}`}
                 >
-                  <span className="material-icons-round">delete_outline</span>
+                  <AppIcon name={'delete_outline'} className="app-icon" />
                 </button>
               </div>
             ))}
@@ -447,8 +465,8 @@ const VLSMCalculator = () => {
 
       {/* ─── Error ─── */}
       {error && (
-        <div className="vlsm-error">
-          <span className="material-icons-round">error_outline</span>
+        <div className="vlsm-error" id="vlsm-error" role="alert">
+          <AppIcon name={'error_outline'} className="app-icon" />
           {error}
         </div>
       )}
@@ -457,7 +475,7 @@ const VLSMCalculator = () => {
       <div className="vlsm-action-center">
         <button className="vlsm-calc-btn" onClick={handleCalculate} id="btn-vlsm-calculate">
           <span>TÍNH TOÁN VLSM</span>
-          <span className="material-icons-round">bolt</span>
+          <AppIcon name={'bolt'} className="app-icon" />
         </button>
       </div>
 

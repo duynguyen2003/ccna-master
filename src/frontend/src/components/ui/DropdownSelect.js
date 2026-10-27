@@ -112,9 +112,7 @@ export default function DropdownSelect({
     if (closeTimerRef.current) window.clearTimeout(closeTimerRef.current);
     setPhase('closing');
     const closeDuration = durationMs(
-      window
-        .getComputedStyle(document.documentElement)
-        .getPropertyValue('--dropdown-close-dur')
+      window.getComputedStyle(document.documentElement).getPropertyValue('--dropdown-close-dur')
     );
     closeTimerRef.current = window.setTimeout(() => {
       setPhase('closed');
@@ -163,16 +161,22 @@ export default function DropdownSelect({
         '--cli-accent',
         readThemeValue(
           '--lab-accent-strong',
-          readThemeValue('--admin-primary', 'var(--primary-color, #2563eb)')
+          readThemeValue('--admin-primary', 'var(--primary-color, #386298)')
         )
       ),
       '--app-select-menu-muted': readThemeValue(
         '--cli-text-muted',
-        readThemeValue('--lab-text-muted', readThemeValue('--admin-text-muted', '#64748b'))
+        readThemeValue(
+          '--lab-text-muted',
+          readThemeValue('--admin-text-muted', 'var(--color-muted-foreground)')
+        )
       ),
       '--app-select-menu-hover': readThemeValue(
         '--cli-surface-muted',
-        readThemeValue('--lab-surface-soft', readThemeValue('--hover-bg', '#f1f5f9'))
+        readThemeValue(
+          '--lab-surface-soft',
+          readThemeValue('--hover-bg', 'var(--color-muted-foreground)')
+        )
       ),
     };
 
@@ -235,10 +239,7 @@ export default function DropdownSelect({
     if (!isMounted) return undefined;
 
     const closeWhenOutside = (event) => {
-      if (
-        triggerRef.current?.contains(event.target) ||
-        menuRef.current?.contains(event.target)
-      ) {
+      if (triggerRef.current?.contains(event.target) || menuRef.current?.contains(event.target)) {
         return;
       }
       closeMenuRef.current();
@@ -283,7 +284,8 @@ export default function DropdownSelect({
   );
 
   const moveActive = (direction) => {
-    const start = activeIndex >= 0 ? activeIndex + direction : direction > 0 ? 0 : options.length - 1;
+    const start =
+      activeIndex >= 0 ? activeIndex + direction : direction > 0 ? 0 : options.length - 1;
     const next = nextEnabledIndex(options, start, direction);
     if (next >= 0) setActiveIndex(next);
   };
@@ -427,9 +429,7 @@ export default function DropdownSelect({
         disabled={disabled}
         title={title}
         style={style}
-        onClick={() =>
-          phase === 'closed' || phase === 'closing' ? openMenu() : closeMenu()
-        }
+        onClick={() => (phase === 'closed' || phase === 'closing' ? openMenu() : closeMenu())}
         onKeyDown={handleKeyDown}
       >
         <span className="app-select__value">{selectedOption?.label || '\u00a0'}</span>

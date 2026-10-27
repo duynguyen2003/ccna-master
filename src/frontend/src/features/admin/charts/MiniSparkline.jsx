@@ -2,7 +2,7 @@
 import React from 'react';
 import { ResponsiveContainer, AreaChart, Area } from 'recharts';
 
-const MiniSparkline = ({ data, color = '#3b82f6' }) => {
+const MiniSparkline = ({ data, color = '#386298' }) => {
   const chartData = React.useMemo(() => {
     // Nếu không có dữ liệu, trả về một mảng số 0 để đường kẻ nằm phẳng ở đáy
     if (!data || data.length === 0) {
