@@ -1,0 +1,2 @@
+# Contract validation only. The future FastAPI service has a separate PY-01 lockfile.
+jsonschema==4.26.0

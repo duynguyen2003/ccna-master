@@ -1,0 +1,41 @@
+{
+  "contractVersion": "1.0.0",
+  "requestId": "7ea5187b-5dd0-42c7-960a-8106fcfb439d",
+  "callId": "b5988e7c-ff06-4efa-9e06-8efa64166e37",
+  "contextHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "leaseVersion": 1,
+  "providerRequestId": "fake-provider-request-1",
+  "usage": {
+    "status": "FINAL",
+    "inputTokens": 400,
+    "outputTokens": 100,
+    "reasoningTokens": 0
+  },
+  "versions": {
+    "contextSchemaVersion": "1.0.0",
+    "simulatorVersion": "2.1.0",
+    "diagnosticVersion": "diagnostics-v1",
+    "promptVersion": "prompt-v1",
+    "policyVersion": "policy-v1",
+    "modelVersion": "fake-v1",
+    "priceVersion": "fake-price-v1",
+    "appCommit": "0000000000000000000000000000000000000000"
+  },
+  "outcome": "RECEIVED",
+  "output": {
+    "summary": "Cổng liên quan đang bị tắt bằng cấu hình.",
+    "claimType": "SUPPORTED_FINDING",
+    "evidenceIds": [
+      "fact-r12-r1-g00"
+    ],
+    "nextSteps": [
+      {
+        "text": "Kiểm tra trạng thái cổng trên R1.",
+        "commandId": "show-r1-interfaces"
+      }
+    ],
+    "verification": "Đối chiếu trạng thái cổng rồi kiểm tra lại kết nối.",
+    "hintLevel": 2
+  },
+  "finishReason": "stop"
+}

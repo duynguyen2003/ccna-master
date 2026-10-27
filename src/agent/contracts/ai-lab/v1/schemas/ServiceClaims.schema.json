@@ -1,0 +1,225 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "anyOf": [
+    {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string",
+          "const": "1.0.0"
+        },
+        "requestId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "callId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "contextHash": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "leaseVersion": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "operation": {
+          "type": "string",
+          "const": "ANALYZE"
+        },
+        "aud": {
+          "type": "string",
+          "const": "ai-analyze"
+        },
+        "iss": {
+          "type": "string",
+          "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+        },
+        "sub": {
+          "type": "string",
+          "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+        },
+        "keyId": {
+          "type": "string",
+          "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+        },
+        "iat": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "exp": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "contractVersion",
+        "requestId",
+        "callId",
+        "contextHash",
+        "leaseVersion",
+        "operation",
+        "aud",
+        "iss",
+        "sub",
+        "keyId",
+        "iat",
+        "exp"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string",
+          "const": "1.0.0"
+        },
+        "requestId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "callId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "contextHash": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "leaseVersion": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "operation": {
+          "type": "string",
+          "const": "CLAIM"
+        },
+        "aud": {
+          "type": "string",
+          "const": "ai-claim"
+        },
+        "iss": {
+          "type": "string",
+          "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+        },
+        "sub": {
+          "type": "string",
+          "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+        },
+        "keyId": {
+          "type": "string",
+          "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+        },
+        "iat": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "exp": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "contractVersion",
+        "requestId",
+        "callId",
+        "contextHash",
+        "leaseVersion",
+        "operation",
+        "aud",
+        "iss",
+        "sub",
+        "keyId",
+        "iat",
+        "exp"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string",
+          "const": "1.0.0"
+        },
+        "requestId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "callId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "contextHash": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "leaseVersion": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "operation": {
+          "type": "string",
+          "const": "RECEIPT"
+        },
+        "aud": {
+          "type": "string",
+          "const": "ai-receipt"
+        },
+        "iss": {
+          "type": "string",
+          "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+        },
+        "sub": {
+          "type": "string",
+          "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+        },
+        "keyId": {
+          "type": "string",
+          "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+        },
+        "iat": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "exp": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "contractVersion",
+        "requestId",
+        "callId",
+        "contextHash",
+        "leaseVersion",
+        "operation",
+        "aud",
+        "iss",
+        "sub",
+        "keyId",
+        "iat",
+        "exp"
+      ],
+      "additionalProperties": false
+    }
+  ],
+  "$id": "urn:ccna:ai-lab:v1:ServiceClaims"
+}

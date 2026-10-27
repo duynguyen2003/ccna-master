@@ -53,7 +53,12 @@ const ExamResultSession = () => {
         style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
       >
         <div
-          style={{ textAlign: 'center', padding: '2rem', background: '#fff', borderRadius: '8px' }}
+          style={{
+            textAlign: 'center',
+            padding: '2rem',
+            background: 'var(--color-surface)',
+            borderRadius: '8px',
+          }}
         >
           <h2>Không tìm thấy kết quả</h2>
           <p>Có thể dữ liệu đã bị xóa hoặc đường dẫn không đúng.</p>
@@ -118,8 +123,8 @@ const ExamResultSession = () => {
             <div
               className="er-score-ring"
               style={{
-                borderColor: isPassed ? '#16a34a' : '#dc2626',
-                boxShadow: `0 0 0 6px ${isPassed ? '#dcfce7' : '#fee2e2'}`,
+                borderColor: isPassed ? 'var(--color-success)' : 'var(--color-danger)',
+                boxShadow: `0 0 0 6px ${isPassed ? 'var(--color-success-bg)' : 'var(--color-danger-bg)'}`,
               }}
             >
               <span className="er-score-ring__icon">{isPassed ? '🏆' : '📋'}</span>
@@ -156,19 +161,19 @@ const ExamResultSession = () => {
             <div className="er-stat-card__sub">Giới hạn {durationStr}</div>
           </div>
           <div className="er-stat-card">
-            <div className="er-stat-card__label" style={{ color: '#16a34a' }}>
+            <div className="er-stat-card__label" style={{ color: 'var(--color-success)' }}>
               <span>✅</span> CHÍNH XÁC
             </div>
-            <div className="er-stat-card__value" style={{ color: '#16a34a' }}>
+            <div className="er-stat-card__value" style={{ color: 'var(--color-success)' }}>
               {correctCount}
             </div>
             <div className="er-stat-card__sub">Câu trả lời đúng</div>
           </div>
           <div className="er-stat-card">
-            <div className="er-stat-card__label" style={{ color: '#dc2626' }}>
+            <div className="er-stat-card__label" style={{ color: 'var(--color-danger)' }}>
               <span>⊗</span> SAI
             </div>
-            <div className="er-stat-card__value" style={{ color: '#dc2626' }}>
+            <div className="er-stat-card__value" style={{ color: 'var(--color-danger)' }}>
               {wrongCount}
             </div>
             <div className="er-stat-card__sub">Cần xem lại</div>

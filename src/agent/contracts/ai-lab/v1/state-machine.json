@@ -1,0 +1,57 @@
+{
+  "contractVersion": "1.0.0",
+  "request": {
+    "QUEUED": [
+      "RUNNING",
+      "CANCELLED",
+      "EXPIRED",
+      "REVOKED",
+      "DELETED"
+    ],
+    "RUNNING": [
+      "QUEUED",
+      "COMPLETED",
+      "FAILED",
+      "CANCELLED",
+      "REVOKED",
+      "OUTCOME_UNKNOWN",
+      "DELETED"
+    ],
+    "COMPLETED": [],
+    "FAILED": [],
+    "CANCELLED": [],
+    "EXPIRED": [],
+    "REVOKED": [],
+    "OUTCOME_UNKNOWN": [],
+    "DELETED": []
+  },
+  "providerCall": {
+    "PLANNED": [
+      "DISPATCHED",
+      "KNOWN_FAILURE"
+    ],
+    "DISPATCHED": [
+      "RECEIVED",
+      "KNOWN_FAILURE",
+      "OUTCOME_UNKNOWN"
+    ],
+    "OUTCOME_UNKNOWN": [
+      "RECEIVED",
+      "KNOWN_FAILURE"
+    ],
+    "RECEIVED": [],
+    "KNOWN_FAILURE": []
+  },
+  "guardedTransitions": [
+    {
+      "from": "RUNNING",
+      "to": "QUEUED",
+      "requires": [
+        "leaseExpired",
+        "deadlineRemaining",
+        "callState=null|PLANNED"
+      ]
+    }
+  ],
+  "retryProviderAfterDispatch": false
+}

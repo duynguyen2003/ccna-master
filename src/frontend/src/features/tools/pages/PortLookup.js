@@ -1,4 +1,6 @@
+import AppIcon from '../../../components/ui/AppIcon';
 import React, { useState, useMemo, useEffect } from 'react';
+import '../styles/PortLookup.css';
 import { Link } from 'react-router-dom';
 import DropdownSelect from '../../../components/ui/DropdownSelect';
 
@@ -186,19 +188,17 @@ const PortLookup = () => {
       {/* ─── Breadcrumb ─── */}
       <nav className="port-breadcrumb">
         <Link to="/" className="port-breadcrumb-link">
-          <span className="material-icons-round" style={{ fontSize: 18 }}>
-            home
-          </span>
+          <AppIcon name={'home'} className="app-icon" style={{ fontSize: 18 }} />
           Trang chủ
         </Link>
-        <span className="material-icons-round port-breadcrumb-sep">chevron_right</span>
+        <AppIcon name={'chevron_right'} className="app-icon port-breadcrumb-sep" />
         <span className="port-breadcrumb-current">Tra cứu Port & Giao thức</span>
       </nav>
 
       {/* Header */}
       <header className="port-header">
         <div className="port-header-icon">
-          <span className="material-icons-round">format_list_bulleted</span>
+          <AppIcon name={'format_list_bulleted'} className="app-icon" />
         </div>
         <h1 className="port-title">Tra cứu Port & Giao thức mạng</h1>
         <p className="port-desc">Tra cứu nhanh danh sách các cổng dịch vụ và giao thức hệ thống.</p>
@@ -209,21 +209,20 @@ const PortLookup = () => {
         <div className="port-scoreboard">
           <div className="scoreboard-left">
             <span className="scoreboard-title">
-              <span className="material-icons-round">school</span> SCOREBOARD
+              <AppIcon name={'school'} className="app-icon" /> SCOREBOARD
             </span>
             <div className="score-pill correct">
-              <span className="material-icons-round">check_circle</span> Đúng: {scoreStats.correct}
+              <AppIcon name={'check_circle'} className="app-icon" /> Đúng: {scoreStats.correct}
             </div>
             <div className="score-pill wrong">
-              <span className="material-icons-round">cancel</span> Sai: {scoreStats.wrong}
+              <AppIcon name={'cancel'} className="app-icon" /> Sai: {scoreStats.wrong}
             </div>
             <div className="score-pill skipped">
-              <span className="material-icons-round">visibility_off</span> Bỏ qua:{' '}
-              {scoreStats.skipped}
+              <AppIcon name={'visibility_off'} className="app-icon" /> Bỏ qua: {scoreStats.skipped}
             </div>
           </div>
           <button className="reset-btn" onClick={handleReset}>
-            <span className="material-icons-round">refresh</span> LÀM LẠI
+            <AppIcon name={'refresh'} className="app-icon" /> LÀM LẠI
           </button>
         </div>
       )}
@@ -231,8 +230,9 @@ const PortLookup = () => {
       {/* Control Bar (Search, Filter, Toggle) */}
       <div className="port-control-bar">
         <div className="port-search-wrapper">
-          <span className="material-icons-round search-icon">search</span>
+          <AppIcon name={'search'} className="app-icon search-icon" />
           <input
+            aria-label="Tìm port hoặc giao thức"
             type="text"
             className="port-search-input"
             placeholder="Nhập số port hoặc tên giao thức..."
@@ -256,10 +256,18 @@ const PortLookup = () => {
 
         <div className="port-toggle-wrapper">
           <label className="toggle-switch">
-            <input type="checkbox" checked={isQuizMode} onChange={toggleQuizMode} />
+            <input
+              id="port-study-mode"
+              type="checkbox"
+              aria-label="Chế độ học tập"
+              checked={isQuizMode}
+              onChange={toggleQuizMode}
+            />
             <span className="slider round"></span>
           </label>
-          <span className="toggle-label">Chế độ học tập</span>
+          <label htmlFor="port-study-mode" className="toggle-label">
+            Chế độ học tập
+          </label>
         </div>
       </div>
 
@@ -307,14 +315,16 @@ const PortLookup = () => {
                             />
                             {/* Icons inside the input for gamification */}
                             {state.status === 'correct' && (
-                              <span className="material-icons-round status-icon correct-icon">
-                                check_circle
-                              </span>
+                              <AppIcon
+                                name={'check_circle'}
+                                className="app-icon status-icon correct-icon"
+                              />
                             )}
                             {state.status === 'wrong' && (
-                              <span className="material-icons-round status-icon wrong-icon">
-                                cancel
-                              </span>
+                              <AppIcon
+                                name={'cancel'}
+                                className="app-icon status-icon wrong-icon"
+                              />
                             )}
                           </div>
                           {/* Reveal button */}
@@ -324,7 +334,7 @@ const PortLookup = () => {
                               title="Xem đáp án"
                               onClick={() => handleReveal(item.id, item.port)}
                             >
-                              <span className="material-icons-round">visibility</span>
+                              <AppIcon name={'visibility'} className="app-icon" />
                             </button>
                           )}
                         </div>
@@ -367,7 +377,7 @@ const PortLookup = () => {
             disabled={currentPage === 1}
             onClick={() => setCurrentPage((p) => p - 1)}
           >
-            <span className="material-icons-round">chevron_left</span>
+            <AppIcon name={'chevron_left'} className="app-icon" />
           </button>
 
           {getPageNumbers().map((p) => (
@@ -392,7 +402,7 @@ const PortLookup = () => {
             disabled={currentPage === totalPages}
             onClick={() => setCurrentPage((p) => p + 1)}
           >
-            <span className="material-icons-round">chevron_right</span>
+            <AppIcon name={'chevron_right'} className="app-icon" />
           </button>
         </div>
       )}

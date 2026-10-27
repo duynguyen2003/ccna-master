@@ -30,7 +30,7 @@
 
 .exam-hub-create-btn {
   border: none;
-  background: #2563eb !important;
+  background: var(--color-primary) !important;
   color: #ffffff;
   height: 40px;
   border-radius: 6px;
@@ -695,9 +695,9 @@
 }
 
 .exam-view-details a {
-  color: #2563eb;
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
+  color: var(--color-primary);
+  background: var(--color-muted);
+  border: 1px solid var(--color-primary-border);
   border-radius: 6px;
   padding: 3px 10px;
   font-size: 12px;
@@ -710,9 +710,9 @@
 }
 
 .exam-view-details a:hover {
-  background: #2563eb;
+  background: var(--color-primary);
   color: #ffffff;
-  border-color: #2563eb;
+  border-color: var(--color-primary);
 }
 
 @media (max-width: 1200px) {

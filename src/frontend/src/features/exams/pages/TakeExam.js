@@ -1,3 +1,5 @@
+import AppIcon from '../../../components/ui/AppIcon';
+import Dialog from '../../../components/ui/Dialog';
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import '../styles/ExamFlow.css';
@@ -274,17 +276,17 @@ const TakeExamSession = () => {
           style={{
             maxWidth: 560,
             width: '100%',
-            background: '#fff',
+            background: 'var(--color-surface)',
             border: '1px solid #e2e8f0',
             borderRadius: '8px',
             padding: '1.5rem',
             textAlign: 'center',
           }}
         >
-          <h2 style={{ marginTop: 0, marginBottom: '0.5rem', color: '#0f172a' }}>
-            Guest không được phép làm bài thi
-          </h2>
-          <p style={{ marginTop: 0, marginBottom: '1rem', color: '#64748b' }}>
+          <h1 style={{ marginTop: 0, marginBottom: '0.5rem', color: 'var(--color-foreground)' }}>
+            Đăng nhập để làm bài kiểm tra
+          </h1>
+          <p style={{ marginTop: 0, marginBottom: '1rem', color: 'var(--color-muted-foreground)' }}>
             Bạn có thể xem thông tin tại Trung tâm Kiểm tra, nhưng cần đăng nhập để bắt đầu bài thi.
           </p>
           <div
@@ -322,17 +324,19 @@ const TakeExamSession = () => {
           style={{
             maxWidth: 560,
             width: '100%',
-            background: '#fff',
+            background: 'var(--color-surface)',
             border: '1px solid #e2e8f0',
             borderRadius: '8px',
             padding: '2rem',
             textAlign: 'center',
           }}
         >
-          <h2 style={{ marginTop: 0, marginBottom: '0.5rem', color: '#0f172a' }}>
+          <h2 style={{ marginTop: 0, marginBottom: '0.5rem', color: 'var(--color-foreground)' }}>
             Không có dữ liệu câu hỏi
           </h2>
-          <p style={{ marginTop: 0, marginBottom: '1.5rem', color: '#64748b' }}>
+          <p
+            style={{ marginTop: 0, marginBottom: '1.5rem', color: 'var(--color-muted-foreground)' }}
+          >
             Bài thi này hiện tại chưa có câu hỏi nào. Vui lòng quay lại sau.
           </p>
           <button
@@ -352,13 +356,54 @@ const TakeExamSession = () => {
 
   return (
     <div className="take-exam-page">
+      <h1 className="sr-only">Làm bài kiểm tra</h1>
+      <div className="take-exam-mobile-status">
+        <div role="timer" aria-live="off" aria-label="Thời gian còn lại">
+          <small>Thời gian</small>
+          <strong>{formatted}</strong>
+        </div>
+        <details className="take-exam-mobile-map">
+          <summary>
+            Chọn câu {currentQ + 1}/{totalQ}
+          </summary>
+          <div className="take-exam__q-grid">
+            {questions.map((item, index) => (
+              <button
+                type="button"
+                key={item.id}
+                className={getQDotClass(index)}
+                aria-label={`Đi đến câu ${index + 1}`}
+                aria-current={currentQ === index ? 'step' : undefined}
+                onClick={(event) => {
+                  setCurrentQ(index);
+                  event.currentTarget.closest('details').open = false;
+                }}
+              >
+                {index + 1}
+              </button>
+            ))}
+          </div>
+        </details>
+        <button
+          type="button"
+          className="ui-button ui-button--secondary"
+          onClick={() => setShowConfirm(true)}
+        >
+          Nộp bài
+        </button>
+      </div>
       <div className="take-exam__body">
         {/* ── Question Card ── */}
         <div className="take-exam__question-card">
           <div className="take-exam__question-meta">
             <span className="take-exam__q-tag">CÂU HỎI {currentQ + 1}</span>
-            <button className="take-exam__bookmark-btn" onClick={toggleFlag}>
-              {flagged.has(question.id) ? '🚩' : '⚑'} ĐÁNH DẤU XEM LẠI
+            <button
+              className="take-exam__bookmark-btn"
+              aria-pressed={flagged.has(question.id)}
+              onClick={toggleFlag}
+            >
+              <span aria-hidden="true">{flagged.has(question.id) ? '🚩' : '⚑'}</span> ĐÁNH DẤU XEM
+              LẠI
             </button>
           </div>
 
@@ -368,6 +413,10 @@ const TakeExamSession = () => {
                 src={question.imageUrl}
                 alt="Exam topology"
                 style={{ maxWidth: '100%', borderRadius: '8px', border: '1px solid #e2e8f0' }}
+                width={640}
+                height={360}
+                loading="lazy"
+                decoding="async"
               />
             </div>
           )}
@@ -379,7 +428,12 @@ const TakeExamSession = () => {
 
           <div className="take-exam__options">
             <div
-              style={{ fontSize: '12px', color: '#6366f1', marginBottom: '10px', fontWeight: 600 }}
+              style={{
+                fontSize: '12px',
+                color: 'var(--color-primary)',
+                marginBottom: '10px',
+                fontWeight: 600,
+              }}
             >
               {isMultipleAnswer ? '(Chọn nhiều đáp án)' : '(Chọn 1 đáp án đúng)'}
             </div>
@@ -391,6 +445,7 @@ const TakeExamSession = () => {
                 <button
                   key={idx}
                   className={`take-exam__option ${isSelected ? 'take-exam__option--selected' : ''}`}
+                  aria-pressed={isSelected}
                   onClick={() => selectAnswer(idx)}
                 >
                   <span className="take-exam__option-badge">{OPTION_LABELS[idx]}</span>
@@ -430,7 +485,7 @@ const TakeExamSession = () => {
             style={{
               marginBottom: '1.5rem',
               textAlign: 'center',
-              background: isWarning ? '#fef2f2' : 'white',
+              background: isWarning ? 'var(--color-danger-bg)' : 'var(--color-surface)',
               border: isWarning ? '1px solid #fecaca' : '1px solid #e2e8f0',
             }}
           >
@@ -438,7 +493,7 @@ const TakeExamSession = () => {
               style={{
                 fontSize: '0.85rem',
                 fontWeight: 600,
-                color: isWarning ? '#dc2626' : '#64748b',
+                color: isWarning ? 'var(--color-danger)' : 'var(--color-muted-foreground)',
                 textTransform: 'uppercase',
                 letterSpacing: '0.5px',
                 marginBottom: '0.5rem',
@@ -454,19 +509,17 @@ const TakeExamSession = () => {
                 gap: '0.5rem',
                 fontSize: '2rem',
                 fontWeight: 700,
-                color: isWarning ? '#dc2626' : '#1e293b',
+                color: isWarning ? 'var(--color-danger)' : 'var(--color-foreground)',
               }}
             >
-              <span className="material-icons-round" style={{ fontSize: '2rem' }}>
-                timer
-              </span>
+              <AppIcon name={'timer'} className="app-icon" style={{ fontSize: '2rem' }} />
               {formatted}
             </div>
             {isWarning && (
               <div
                 style={{
                   fontSize: '0.75rem',
-                  color: '#dc2626',
+                  color: 'var(--color-danger)',
                   fontWeight: 600,
                   marginTop: '0.5rem',
                 }}
@@ -496,7 +549,7 @@ const TakeExamSession = () => {
               <div className="take-exam__legend-item">
                 <div
                   className="take-exam__legend-dot"
-                  style={{ background: '#2563eb', borderRadius: '2px' }}
+                  style={{ background: 'var(--color-primary)', borderRadius: '2px' }}
                 ></div>
                 <span>Đã trả lời</span>
               </div>
@@ -504,7 +557,7 @@ const TakeExamSession = () => {
                 <div
                   className="take-exam__legend-dot"
                   style={{
-                    background: '#f1f5f9',
+                    background: 'var(--color-muted)',
                     border: '1px solid #e2e8f0',
                     borderRadius: '2px',
                   }}
@@ -515,8 +568,8 @@ const TakeExamSession = () => {
                 <div
                   className="take-exam__legend-dot"
                   style={{
-                    background: '#f1f5f9',
-                    border: '2px solid #2563eb',
+                    background: 'var(--color-muted)',
+                    border: '2px solid #386298',
                     borderRadius: '2px',
                   }}
                 ></div>
@@ -526,7 +579,7 @@ const TakeExamSession = () => {
                 <div
                   className="take-exam__legend-dot"
                   style={{
-                    background: '#f1f5f9',
+                    background: 'var(--color-muted)',
                     border: '1px solid #dc2626',
                     borderRadius: '2px',
                     position: 'relative',
@@ -545,82 +598,41 @@ const TakeExamSession = () => {
 
       {/* ── Confirm Submit Modal ── */}
       {showConfirm && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 999,
+        <Dialog
+          className="exam-dialog"
+          title="Xác nhận nộp bài?"
+          onClose={() => {
+            if (!isSubmitting) setShowConfirm(false);
           }}
         >
-          <div
-            style={{
-              background: 'white',
-              borderRadius: '8px',
-              padding: '2rem',
-              maxWidth: '400px',
-              width: '90%',
-              textAlign: 'center',
-            }}
-          >
-            <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>📋</div>
-            <h2
-              style={{
-                fontSize: '1.2rem',
-                fontWeight: 700,
-                color: '#1e293b',
-                marginBottom: '0.5rem',
-              }}
+          <p className="exam-confirm-copy">
+            Bạn đã trả lời{' '}
+            <strong>
+              {Object.keys(userAnswers).length}/{totalQ}
+            </strong>{' '}
+            câu hỏi.
+            {totalQ - Object.keys(userAnswers).length > 0 &&
+              ` Còn ${totalQ - Object.keys(userAnswers).length} câu chưa trả lời.`}
+          </p>
+          <div className="exam-confirm-actions">
+            <button
+              type="button"
+              className="ui-button ui-button--secondary"
+              disabled={isSubmitting}
+              onClick={() => setShowConfirm(false)}
             >
-              Xác nhận nộp bài?
-            </h2>
-            <p style={{ fontSize: '0.875rem', color: '#64748b', marginBottom: '1.5rem' }}>
-              Bạn đã trả lời{' '}
-              <strong>
-                {Object.keys(userAnswers).length}/{totalQ}
-              </strong>{' '}
-              câu hỏi.
-              {totalQ - Object.keys(userAnswers).length > 0 &&
-                ` Còn ${totalQ - Object.keys(userAnswers).length} câu chưa trả lời.`}
-            </p>
-            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
-              <button
-                style={{
-                  padding: '0.7rem 1.5rem',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '6px',
-                  background: 'white',
-                  cursor: 'pointer',
-                  fontWeight: 600,
-                }}
-                onClick={() => setShowConfirm(false)}
-              >
-                Làm tiếp
-              </button>
-              <button
-                style={{
-                  padding: '0.7rem 1.5rem',
-                  border: 'none',
-                  borderRadius: '6px',
-                  background: isSubmitting ? '#94a3b8' : '#2563eb',
-                  color: 'white',
-                  cursor: isSubmitting ? 'not-allowed' : 'pointer',
-                  fontWeight: 700,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                }}
-                onClick={handleSubmit}
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? 'Đang nộp...' : 'Nộp bài ✓'}
-              </button>
-            </div>
+              Làm tiếp
+            </button>
+            <button
+              type="button"
+              className="ui-button"
+              disabled={isSubmitting}
+              onClick={handleSubmit}
+            >
+              {isSubmitting ? 'Đang nộp...' : 'Nộp bài ✓'}
+            </button>
           </div>
-        </div>
+        </Dialog>
       )}
       {ToastComponent}
     </div>

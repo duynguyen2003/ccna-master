@@ -7,6 +7,7 @@ const { buildLabProgress, buildLabTasks } = require('../simulation/labProgress')
 const { fail, mayAccess, withAttempt } = require('../simulation/attemptAccess');
 const { explainFeedback } = require('../simulation/labFeedback');
 const learningPathService = require('../services/learningPathService');
+const { publicMetadata, safeFeedback } = require('@ccna/agent/node/snapshot');
 const prisma = getPrisma();
 const definitionOf = (a) =>
   a.definition || { initialState: a.lab.initialState, gradingSpec: a.lab.gradingSpec };
@@ -77,6 +78,9 @@ module.exports.startAttempt = handle(async (req, res) => {
           userId: req.user.id,
           labId,
           definition: { initialState: lab.initialState, gradingSpec: lab.gradingSpec },
+          publicMetadata: publicMetadata(lab, { gradingSpec: lab.gradingSpec }),
+          publicMetadataProvenance: 'CAPTURED_AT_ATTEMPT_START',
+          publicMetadataCapturedAt: new Date(),
           members: [],
           deviceState: engine.initial(lab.initialState),
           simulatorVersion: lab.simulatorVersion || '1.0.0',
@@ -164,6 +168,10 @@ module.exports.submitAttempt = handle(async (req, res) => {
         status: result.passed ? 'PASSED' : 'IN_PROGRESS',
         score: result.score,
         feedback: result,
+        feedbackRevision: a.deviceState.revision,
+        feedbackRecordedAt: new Date(),
+        safeFeedbackSnapshot: safeFeedback(result),
+        feedbackProvenance: 'FEEDBACK_SNAPSHOT',
         submittedAt: result.passed ? new Date() : null,
       },
     });

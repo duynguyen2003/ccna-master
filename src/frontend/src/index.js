@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
+import { upgradeLegacyLocation } from './components/routing/legacyRoutes';
 import { AuthProvider } from './context/AuthContext';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -16,6 +17,7 @@ window.addEventListener('error', (e) => {
 const queryClient = new QueryClient();
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
+upgradeLegacyLocation();
 root.render(
   <React.StrictMode>
     <GoogleOAuthProvider

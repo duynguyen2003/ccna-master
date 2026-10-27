@@ -251,10 +251,10 @@
 }
 
 .labm-tab-btn.active {
-  background: #eff6ff;
-  color: #1d4ed8;
-  border-color: #93c5fd;
-  box-shadow: inset 0 0 0 1px rgba(29, 78, 216, 0.1);
+  background: var(--color-muted);
+  color: var(--color-primary-hover);
+  border-color: var(--color-primary-tint);
+  box-shadow: inset 0 0 0 1px rgb(var(--brand-primary-rgb) / 0.1);
 }
 
 .labm-form-error-banner {
@@ -335,9 +335,9 @@
 }
 
 .labm-rte-btn:hover {
-  background: #eff6ff;
-  border-color: #bfdbfe;
-  color: #1d4ed8;
+  background: var(--color-muted);
+  border-color: var(--color-primary-border);
+  color: var(--color-primary-hover);
 }
 
 .labm-rte-editor {
@@ -447,8 +447,8 @@
 }
 
 .labm-upload-card:hover {
-  border-color: #60a5fa;
-  background: #eff6ff;
+  border-color: var(--color-primary-highlight);
+  background: var(--color-muted);
 }
 
 .labm-upload-card-title {
@@ -507,9 +507,9 @@
 }
 
 .labm-tool-chip {
-  border: 1px solid #bfdbfe;
-  background: #eff6ff;
-  color: #1d4ed8;
+  border: 1px solid var(--color-primary-border);
+  background: var(--color-muted);
+  color: var(--color-primary-hover);
   border-radius: 4px;
   padding: 4px 10px;
   font-size: 12px;

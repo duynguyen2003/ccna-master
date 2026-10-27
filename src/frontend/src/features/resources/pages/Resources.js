@@ -1,20 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import '../styles/Resources.css';
 import { useAuth } from '../../../context/AuthContext';
 import HeartbeatLoader from '../../../components/ui/HeartbeatLoader';
+import StatusAlert from '../../../components/ui/StatusAlert';
 import api, { API_URL } from '../../../services/Api';
-import {
-  FileText,
-  Download,
-  Search,
-  Pin,
-  Video,
-  Monitor,
-  Cpu,
-  Sparkles,
-} from 'lucide-react';
+import { FileText, Download, Search, Pin, Video, Monitor, Cpu, Sparkles } from 'lucide-react';
 export const Resources = () => {
   const [resources, setResources] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('Tất cả');
   const [currentPage, setCurrentPage] = useState(1);
@@ -25,20 +20,26 @@ export const Resources = () => {
     setCurrentPage(1);
   }, [searchQuery, activeFilter]);
   useEffect(() => {
+    let active = true;
     const fetchResources = async () => {
+      setLoading(true);
+      setLoadError(false);
       try {
         const res = await api.getResources(token);
-        if (res && res.data) {
+        if (active && res && res.data) {
           setResources(res.data);
         }
       } catch (error) {
-        console.error('Error fetching resources:', error);
+        if (active) setLoadError(true);
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
     };
     fetchResources();
-  }, [token]);
+    return () => {
+      active = false;
+    };
+  }, [token, loadAttempt]);
 
   const getFileUrl = (item) => {
     if (!item || !item.id) return '#';
@@ -49,12 +50,14 @@ export const Resources = () => {
   // Hàm lấy Icon tương ứng với loại tài liệu
   const getIcon = (type) => {
     const t = type.toLowerCase();
-    if (t.includes('pdf')) return <FileText color="#ef4444" size={20} />;
+    if (t.includes('pdf')) return <FileText color="var(--color-danger)" size={20} />;
     if (t.includes('packet') || t.includes('pkt') || t.includes('lab'))
-      return <Cpu color="#3b82f6" size={20} />;
-    if (t.includes('slide') || t.includes('ppt')) return <Monitor color="#f59e0b" size={20} />;
-    if (t.includes('video') || t.includes('mp4')) return <Video color="#10b981" size={20} />;
-    return <FileText color="#6b7280" size={20} />;
+      return <Cpu color="var(--color-primary)" size={20} />;
+    if (t.includes('slide') || t.includes('ppt'))
+      return <Monitor color="var(--color-warning)" size={20} />;
+    if (t.includes('video') || t.includes('mp4'))
+      return <Video color="var(--color-success)" size={20} />;
+    return <FileText color="var(--color-muted-foreground)" size={20} />;
   };
 
   // Hàm định dạng ngày tháng
@@ -113,15 +116,28 @@ export const Resources = () => {
     <div className="doc-container">
       {/* Header */}
       <div className="doc-header">
-        <h1>Thư viện Tinh gọn</h1>
+        <h1>Tài liệu học tập</h1>
         <p>Tài nguyên học tập CCNA chọn lọc và tối giản.</p>
       </div>
+      {loadError && (
+        <section>
+          <StatusAlert variant="error" message="Không tải được tài liệu." />
+          <button
+            type="button"
+            className="ui-button ui-button--secondary"
+            onClick={() => setLoadAttempt((value) => value + 1)}
+          >
+            Thử lại
+          </button>
+        </section>
+      )}
 
       {/* Search & Filters */}
       <div className="doc-controls">
         <div className="doc-search-wrapper">
           <Search className="search-icon" size={18} />
           <input
+            aria-label="Tìm tài liệu"
             type="text"
             placeholder="Tìm kiếm tài liệu..."
             value={searchQuery}
@@ -134,6 +150,7 @@ export const Resources = () => {
             <button
               key={filter}
               className={`filter-btn ${activeFilter === filter ? 'active' : ''}`}
+              aria-pressed={activeFilter === filter}
               onClick={() => setActiveFilter(filter)}
             >
               {filter}
@@ -152,7 +169,7 @@ export const Resources = () => {
             {pinnedResources.map((item) => (
               <div className="pinned-card" key={`pinned-${item.id}`}>
                 <div className="pinned-info">
-                  <Sparkles size={18} color="#3b82f6" className="sparkle-icon" />
+                  <Sparkles size={18} color="var(--color-primary)" className="sparkle-icon" />
                   <span className="pinned-name">{item.title}</span>
                 </div>
                 <div className="pinned-actions">
@@ -162,6 +179,7 @@ export const Resources = () => {
                     target="_blank"
                     rel="noreferrer"
                     className="download-btn-icon"
+                    aria-label={`Tải ${item.title}`}
                   >
                     <Download size={16} />
                   </a>
@@ -185,8 +203,26 @@ export const Resources = () => {
             <div className="col-size">DUNG LƯỢNG</div>
           </div>
 
-          {filteredResources.length === 0 ? (
-            <div className="empty-state">Không tìm thấy tài liệu nào.</div>
+          {filteredResources.length === 0 && !loadError ? (
+            <div className="empty-state" role="status">
+              <p>
+                {resources.length === 0
+                  ? 'Chưa có tài liệu trong thư viện.'
+                  : 'Không có tài liệu phù hợp với bộ lọc.'}
+              </p>
+              {resources.length > 0 && (
+                <button
+                  type="button"
+                  className="ui-button ui-button--secondary"
+                  onClick={() => {
+                    setSearchQuery('');
+                    setActiveFilter('Tất cả');
+                  }}
+                >
+                  Xóa bộ lọc
+                </button>
+              )}
+            </div>
           ) : (
             <div className="list-body">
               {currentItems.map((item) => (
@@ -204,6 +240,7 @@ export const Resources = () => {
                     <span className="item-size">{item.size || 'N/A'}</span>
                     <a
                       href={getFileUrl(item)}
+                      aria-label={`Tải ${item.title}`}
                       target="_blank"
                       rel="noreferrer"
                       className="row-download-btn"

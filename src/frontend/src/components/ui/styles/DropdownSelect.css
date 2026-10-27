@@ -15,10 +15,10 @@
   gap: 8px;
   min-height: 40px;
   padding: 9px 12px;
-  border: 1px solid var(--border-color, #cbd5e1);
+  border: 1px solid var(--border-color, var(--color-border));
   border-radius: 8px;
-  background-color: var(--card-bg, #ffffff);
-  color: var(--text-color, #0f172a);
+  background-color: var(--card-bg, var(--color-surface));
+  color: var(--text-color, var(--color-foreground));
   font: inherit;
   line-height: 1.35;
   text-align: left;
@@ -30,12 +30,13 @@
 }
 
 .app-select__trigger:hover:not(:disabled) {
-  border-color: #94a3b8;
+  border-color: var(--color-border);
 }
 
 .app-select__trigger[aria-expanded='true'] {
-  border-color: var(--primary-color, #2563eb);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-color, #2563eb) 14%, transparent);
+  border-color: var(--primary-color, var(--color-primary));
+  box-shadow: 0 0 0 3px
+    color-mix(in srgb, var(--primary-color, var(--color-primary)) 14%, transparent);
 }
 
 .app-select__trigger:disabled {
@@ -53,7 +54,7 @@
 
 .app-select__chevron {
   flex: 0 0 auto;
-  color: var(--text-muted, #64748b);
+  color: var(--text-muted, var(--color-muted-foreground));
   transition: transform 180ms ease;
 }
 
@@ -68,13 +69,13 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   padding: 5px;
-  border: 1px solid var(--app-select-menu-border, var(--border-color, #cbd5e1));
+  border: 1px solid var(--app-select-menu-border, var(--border-color, var(--color-border)));
   border-radius: 10px;
-  background: var(--app-select-menu-bg, var(--card-bg, #ffffff));
-  color: var(--app-select-menu-color, var(--text-color, #0f172a));
+  background: var(--app-select-menu-bg, var(--card-bg, var(--color-surface)));
+  color: var(--app-select-menu-color, var(--text-color, var(--color-foreground)));
   box-shadow: 0 14px 32px rgba(15, 23, 42, 0.18);
   scrollbar-width: thin;
-  scrollbar-color: var(--app-select-menu-muted, #94a3b8) transparent;
+  scrollbar-color: var(--app-select-menu-muted, var(--color-muted)) transparent;
 }
 
 .app-select__option {
@@ -102,16 +103,16 @@
 }
 
 .app-select__option.is-active {
-  background: var(--app-select-menu-hover, var(--hover-bg, #f1f5f9));
+  background: var(--app-select-menu-hover, var(--hover-bg, var(--color-muted)));
 }
 
 .app-select__option.is-selected {
-  color: var(--app-select-menu-accent, var(--primary-color, #2563eb));
+  color: var(--app-select-menu-accent, var(--primary-color, var(--color-primary)));
   font-weight: 700;
 }
 
 .app-select__option.is-selected.is-active {
-  background: var(--app-select-menu-hover, var(--hover-bg, #f1f5f9));
+  background: var(--app-select-menu-hover, var(--hover-bg, var(--color-muted)));
 }
 
 .app-select__option[aria-disabled='true'] {
@@ -121,7 +122,7 @@
 
 .app-select__empty {
   padding: 10px;
-  color: var(--app-select-menu-muted, #64748b);
+  color: var(--app-select-menu-muted, var(--color-muted-foreground));
   font-size: 13px;
 }
 
@@ -172,7 +173,7 @@
 }
 
 .app-select__trigger:focus-visible {
-  outline: 2px solid var(--primary-color, #2563eb);
+  outline: 2px solid var(--primary-color, var(--color-primary));
   outline-offset: 2px;
 }
 

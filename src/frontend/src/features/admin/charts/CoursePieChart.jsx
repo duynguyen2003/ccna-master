@@ -4,7 +4,7 @@ import { PieChart as PieIcon } from 'lucide-react';
 import { PieChart, Pie, Cell, Tooltip } from 'recharts';
 import AdminMotionSwap from '../components/AdminMotionSwap';
 
-const COLORS = ['#3b82f6', '#22c55e', '#f59e0b', '#a855f7', '#ef4444'];
+const COLORS = ['#386298', '#22c55e', '#f59e0b', '#a855f7', '#ef4444'];
 
 const CoursePieChart = ({ data, loading = false }) => {
   if (loading) {

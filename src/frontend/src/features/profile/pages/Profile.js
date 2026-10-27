@@ -29,6 +29,7 @@ import {
 import { api, API_URL } from '../../../services/Api.js';
 import { useAuth } from '../../../context/AuthContext';
 import HeartbeatLoader from '../../../components/ui/HeartbeatLoader';
+import StatusAlert from '../../../components/ui/StatusAlert';
 
 export default function Profile() {
   const { token } = useAuth();
@@ -38,42 +39,73 @@ export default function Profile() {
   const [studyPeriod, setStudyPeriod] = useState('week');
   const [studyChartData, setStudyChartData] = useState([]);
   const [studyChartLoading, setStudyChartLoading] = useState(false);
+  const [profileError, setProfileError] = useState(false);
+  const [profileAttempt, setProfileAttempt] = useState(0);
+  const [studyChartError, setStudyChartError] = useState(false);
+  const [chartAttempt, setChartAttempt] = useState(0);
 
   useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setProfile(null);
+    setProfileError(false);
     const fetchProfile = async () => {
       try {
         const data = await api.getUserProfile(token);
-        setProfile(data);
+        if (!data) throw new Error('PROFILE_UNAVAILABLE');
+        if (!cancelled) setProfile(data);
       } catch (error) {
-        console.error('Failed to fetch profile', error);
+        if (!cancelled) setProfileError(true);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
     if (token) fetchProfile();
-  }, [token]);
+    else setLoading(false);
+    return () => {
+      cancelled = true;
+    };
+  }, [token, profileAttempt]);
 
   useEffect(() => {
+    let cancelled = false;
     const fetchStudyChart = async () => {
       if (!token) return;
       setStudyChartLoading(true);
+      setStudyChartError(false);
       try {
         const data = await api.getStudyTimeStats(token, studyPeriod);
-        setStudyChartData(data);
+        if (!cancelled) setStudyChartData(Array.isArray(data) ? data : []);
       } catch (e) {
-        console.error('Failed to fetch study time stats', e);
+        if (!cancelled) setStudyChartError(true);
       } finally {
-        setStudyChartLoading(false);
+        if (!cancelled) setStudyChartLoading(false);
       }
     };
     fetchStudyChart();
-  }, [token, studyPeriod]);
+    return () => {
+      cancelled = true;
+    };
+  }, [token, studyPeriod, chartAttempt]);
 
   if (loading) {
     return <HeartbeatLoader label="Đang tải hồ sơ học tập..." />;
   }
 
-  if (!profile) return null;
+  if (profileError || !profile)
+    return (
+      <section className="profile-load-error" aria-label="Hồ sơ học tập">
+        <h1>Hồ sơ học tập</h1>
+        <StatusAlert variant="error" message="Không tải được hồ sơ. Vui lòng thử lại." />
+        <button
+          type="button"
+          className="ui-button"
+          onClick={() => setProfileAttempt((value) => value + 1)}
+        >
+          Thử lại
+        </button>
+      </section>
+    );
 
   const recentActivities = profile.activities || [];
   const badges = profile.badges || [];
@@ -87,7 +119,7 @@ export default function Profile() {
   };
 
   return (
-    <div className="app">
+    <div className="app profile-page">
       <div className="container">
         <div className="profile-grid">
           {/* Row 0: Header Card */}
@@ -107,6 +139,9 @@ export default function Profile() {
                       e.target.parentElement.innerText =
                         profile.fullName?.charAt(0).toUpperCase() || 'U';
                     }}
+                    width={80}
+                    height={80}
+                    decoding="async"
                   />
                 ) : (
                   profile.fullName?.charAt(0).toUpperCase() || 'U'
@@ -157,7 +192,7 @@ export default function Profile() {
           <div className="metric-card">
             <span className="metric-label">Lab hoàn thành</span>
             <div className="metric-value">
-              {stats?.labsDone || 0} <small>/ 50</small>
+              {stats?.labsDone || 0} <small>lab</small>
             </div>
           </div>
 
@@ -173,7 +208,7 @@ export default function Profile() {
                   <div className="course-item" key={idx}>
                     <div className="course-info">
                       <span>{cp.courseName || cp.courseId}</span>
-                      <span style={{ color: '#3b82f6' }}>{cp.progressPercent}%</span>
+                      <span style={{ color: 'var(--color-primary)' }}>{cp.progressPercent}%</span>
                     </div>
                     <div className="course-bar">
                       <div
@@ -237,22 +272,26 @@ export default function Profile() {
                   initialDimension={{ width: 500, height: 260 }}
                 >
                   <LineChart data={weeklyScores}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      stroke="var(--color-muted-foreground)"
+                      vertical={false}
+                    />
                     <XAxis
                       dataKey="week"
-                      tick={{ fontSize: 11, fill: '#64748b' }}
+                      tick={{ fontSize: 11, fill: 'var(--color-muted-foreground)' }}
                       axisLine={false}
                       tickLine={false}
                     />
                     <YAxis
                       domain={[0, 100]}
-                      tick={{ fontSize: 11, fill: '#64748b' }}
+                      tick={{ fontSize: 11, fill: 'var(--color-muted-foreground)' }}
                       axisLine={false}
                       tickLine={false}
                     />
                     <Tooltip
                       contentStyle={{
-                        background: '#fff',
+                        background: 'var(--color-surface)',
                         border: '1px solid #e2e8f0',
                         borderRadius: 12,
                         boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
@@ -262,9 +301,14 @@ export default function Profile() {
                     <Line
                       type="monotone"
                       dataKey="score"
-                      stroke="#3b82f6"
+                      stroke="var(--color-primary)"
                       strokeWidth={3}
-                      dot={{ r: 4, fill: '#3b82f6', strokeWidth: 2, stroke: '#fff' }}
+                      dot={{
+                        r: 4,
+                        fill: 'var(--color-primary)',
+                        strokeWidth: 2,
+                        stroke: 'var(--color-on-primary)',
+                      }}
                       activeDot={{ r: 6, strokeWidth: 0 }}
                     />
                   </LineChart>
@@ -275,6 +319,27 @@ export default function Profile() {
             </div>
           </div>
 
+          {weeklyScores?.length > 0 && (
+            <details className="chart-data section-card span-4">
+              <summary>Xem bảng điểm</summary>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Tuần</th>
+                    <th>Điểm</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {weeklyScores.map((row, index) => (
+                    <tr key={index}>
+                      <td>{row.week}</td>
+                      <td>{row.score}/100</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </details>
+          )}
           <div className="section-card span-2">
             <div
               className="card-title"
@@ -289,7 +354,7 @@ export default function Profile() {
                 style={{
                   display: 'flex',
                   gap: '4px',
-                  background: '#f1f5f9',
+                  background: 'var(--color-muted)',
                   borderRadius: '8px',
                   padding: '3px',
                 }}
@@ -301,6 +366,7 @@ export default function Profile() {
                 ].map(({ key, label }) => (
                   <button
                     key={key}
+                    aria-pressed={studyPeriod === key}
                     onClick={() => setStudyPeriod(key)}
                     style={{
                       padding: '4px 12px',
@@ -309,8 +375,11 @@ export default function Profile() {
                       cursor: 'pointer',
                       fontSize: '0.78rem',
                       fontWeight: studyPeriod === key ? 700 : 400,
-                      background: studyPeriod === key ? '#fff' : 'transparent',
-                      color: studyPeriod === key ? '#2563eb' : '#64748b',
+                      background: studyPeriod === key ? 'var(--color-on-primary)' : 'transparent',
+                      color:
+                        studyPeriod === key
+                          ? 'var(--color-primary)'
+                          : 'var(--color-muted-foreground)',
                       boxShadow: studyPeriod === key ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
                       transition: 'all 0.15s',
                     }}
@@ -330,7 +399,18 @@ export default function Profile() {
                     height: '100%',
                   }}
                 >
-                  <Loader2 className="spin" size={24} color="#2563eb" />
+                  <Loader2 className="spin" size={24} color="var(--color-primary)" />
+                </div>
+              ) : studyChartError ? (
+                <div>
+                  <StatusAlert variant="error" message="Không tải được biểu đồ thời gian học." />
+                  <button
+                    type="button"
+                    className="ui-button ui-button--secondary"
+                    onClick={() => setChartAttempt((value) => value + 1)}
+                  >
+                    Thử lại biểu đồ
+                  </button>
                 </div>
               ) : studyChartData.length > 0 ? (
                 <ResponsiveContainer
@@ -340,28 +420,37 @@ export default function Profile() {
                   initialDimension={{ width: 500, height: 260 }}
                 >
                   <BarChart data={studyChartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      stroke="var(--color-muted-foreground)"
+                      vertical={false}
+                    />
                     <XAxis
                       dataKey="label"
-                      tick={{ fontSize: 11, fill: '#64748b' }}
+                      tick={{ fontSize: 11, fill: 'var(--color-muted-foreground)' }}
                       axisLine={false}
                       tickLine={false}
                     />
                     <YAxis
-                      tick={{ fontSize: 11, fill: '#64748b' }}
+                      tick={{ fontSize: 11, fill: 'var(--color-muted-foreground)' }}
                       axisLine={false}
                       tickLine={false}
                     />
                     <Tooltip
                       contentStyle={{
-                        background: '#fff',
+                        background: 'var(--color-surface)',
                         border: '1px solid #e2e8f0',
                         borderRadius: 12,
                         boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
                       }}
                       formatter={(value) => [`${value} phút`, 'Thời gian']}
                     />
-                    <Bar dataKey="minutes" fill="#0ea5e9" radius={[4, 4, 0, 0]} barSize={24} />
+                    <Bar
+                      dataKey="minutes"
+                      fill="var(--color-primary)"
+                      radius={[4, 4, 0, 0]}
+                      barSize={24}
+                    />
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
@@ -370,6 +459,27 @@ export default function Profile() {
             </div>
           </div>
 
+          {!studyChartLoading && !studyChartError && studyChartData.length > 0 && (
+            <details className="chart-data section-card span-4">
+              <summary>Xem bảng thời gian học</summary>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Thời gian</th>
+                    <th>Số phút</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {studyChartData.map((row, index) => (
+                    <tr key={index}>
+                      <td>{row.label}</td>
+                      <td>{row.minutes}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </details>
+          )}
           {/* Row 4: Recent Activity (Full width) */}
           <div className="section-card span-4">
             <div className="card-title">
@@ -385,26 +495,26 @@ export default function Profile() {
                     case 'LESSON_COMPLETED':
                       icon = <MonitorPlay size={20} />;
                       badge = 'Bài học';
-                      badgeColor = '#dbeafe';
-                      reviewPath = `/lesson/${act.referenceId}`;
+                      badgeColor = '#e4edf6';
+                      reviewPath = '/roadmap';
                       break;
                     case 'LAB_COMPLETED':
                       icon = <CheckCircle2 size={20} />;
                       badge = 'Lab thực hành';
-                      badgeColor = '#dcfce7';
+                      badgeColor = 'var(--color-success-bg)';
                       reviewPath = `/labs`;
                       break;
                     case 'EXAM_COMPLETED':
                     case 'EXAM_PASSED':
                       icon = <FileText size={20} />;
                       badge = 'Bài thi';
-                      badgeColor = '#fef9c3';
+                      badgeColor = 'var(--color-warning-bg)';
                       reviewPath = `/exam`;
                       break;
                     default:
                       icon = <Activity size={20} />;
                       badge = 'Hoạt động';
-                      badgeColor = '#f1f5f9';
+                      badgeColor = 'var(--color-muted-foreground)';
                       reviewPath = null;
                   }
 
@@ -422,7 +532,7 @@ export default function Profile() {
                                 padding: '1px 8px',
                                 borderRadius: '9999px',
                                 background: badgeColor,
-                                color: '#1e293b',
+                                color: 'var(--color-foreground)',
                               }}
                             >
                               {badge}

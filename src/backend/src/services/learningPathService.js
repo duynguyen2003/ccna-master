@@ -48,9 +48,7 @@ async function readCatalog(db, includeDrafts = false) {
   });
 }
 
-async function readState(db, userId, includeDrafts = false) {
-  // An interactive transaction owns one pg connection. Keep explicit queries
-  // sequential instead of queueing concurrent work on that same connection.
+async function readUser(db, userId) {
   const user = userId
     ? await db.user.findUnique({
         where: { id: userId },
@@ -60,6 +58,13 @@ async function readState(db, userId, includeDrafts = false) {
   if (userId && (!user || user.deletedAt))
     throw fail(401, 'USER_NOT_FOUND', 'Tài khoản không còn khả dụng.');
   if (userId && !user.isActive) throw fail(403, 'USER_INACTIVE', 'Tài khoản đã bị vô hiệu hóa.');
+  return user;
+}
+
+async function readState(db, userId, includeDrafts = false) {
+  // An interactive transaction owns one pg connection. Keep explicit queries
+  // sequential instead of queueing concurrent work on that same connection.
+  const user = await readUser(db, userId);
   const catalog = await readCatalog(db, includeDrafts);
   const progress = userId
     ? await db.userProgress.findMany({ where: { userId }, orderBy: { id: 'asc' } })
@@ -83,14 +88,74 @@ async function lockUser(db, userId) {
   await db.$queryRaw`SELECT pg_advisory_xact_lock(${userId}::int, 0::int)::text AS locked`;
 }
 
-const transaction = (userId, callback) =>
+const withUserLock = (userId, callback) =>
   getPrisma().$transaction(
     async (db) => {
       await lockUser(db, userId);
-      return callback(db, await readState(db, userId));
+      return callback(db);
     },
     { timeout: 15000, maxWait: 10000 }
   );
+
+const transaction = (userId, callback) =>
+  withUserLock(userId, async (db) => callback(db, await readState(db, userId)));
+
+async function readVideoAccess(db, userId, lessonId) {
+  await readUser(db, userId);
+  const target = await db.lesson.findFirst({
+    where: {
+      id: lessonId,
+      deletedAt: null,
+      module: {
+        deletedAt: null,
+        course: { deletedAt: null, status: { in: PUBLISHED_STATUSES } },
+      },
+    },
+    select: { module: { select: { course: { select: { orderIndex: true } } } } },
+  });
+  if (!target) throw fail(404, 'LESSON_NOT_FOUND', 'Không tìm thấy bài học.');
+
+  // Authorization needs live task identities and completion evidence, including
+  // earlier courses/modules. Summary rows can be stale after curriculum edits.
+  // Omit lesson content, exams, topics, badges and every later course. Reuse the
+  // domain calculation so telemetry cannot diverge from roadmap access rules.
+  const accessLabSelect = { id: true, courseId: true, moduleId: true, status: true };
+  const catalog = await db.course.findMany({
+    where: {
+      deletedAt: null,
+      status: { in: PUBLISHED_STATUSES },
+      orderIndex: { lte: target.module.course.orderIndex },
+    },
+    select: {
+      id: true,
+      title: true,
+      orderIndex: true,
+      status: true,
+      modules: {
+        where: { deletedAt: null },
+        select: {
+          id: true,
+          title: true,
+          orderIndex: true,
+          lessons: { where: { deletedAt: null }, select: { id: true } },
+          labs: { where: visibleLabs, select: accessLabSelect },
+        },
+      },
+      labs: { where: visibleLabs, select: accessLabSelect },
+    },
+  });
+  const progress = await db.userProgress.findMany({
+    where: {
+      userId,
+      courseId: { in: catalog.map((course) => course.id) },
+      OR: [{ lessonId: { not: null } }, { labId: { not: null } }],
+    },
+    select: { courseId: true, lessonId: true, labId: true, progressPercent: true, status: true },
+  });
+  const context = findLesson({ path: buildLearningPath(catalog, progress) }, lessonId);
+  assertAccess(context.course, context.module);
+  return context;
+}
 
 function assertAccess(course, module) {
   if (!course) throw fail(404, 'COURSE_NOT_FOUND', 'Không tìm thấy khóa học đã xuất bản.');
@@ -352,9 +417,8 @@ function studyDate(now = new Date()) {
 }
 
 async function updateVideoProgress(userId, input) {
-  return transaction(userId, async (db, state) => {
-    const { course, module, lesson } = findLesson(state, input.lessonId);
-    assertAccess(course, module);
+  return withUserLock(userId, async (db) => {
+    const { lesson } = await readVideoAccess(db, userId, input.lessonId);
     const now = new Date();
     const sessionKey = {
       userId,
@@ -405,7 +469,10 @@ async function updateVideoProgress(userId, input) {
       watchedSeconds: Math.max(previousSeconds, input.sessionWatchedSeconds),
     };
     if (previousSession) {
-      await db.videoProgressSession.update({ where: { id: previousSession.id }, data: sessionData });
+      await db.videoProgressSession.update({
+        where: { id: previousSession.id },
+        data: sessionData,
+      });
     } else {
       await db.videoProgressSession.create({
         data: { ...sessionKey, ...sessionData, startedAt: rawStartedAt },
@@ -429,9 +496,7 @@ async function updateVideoProgress(userId, input) {
       },
       update: {
         watchedSeconds: { increment: watchedSeconds },
-        ...(newerPosition
-          ? { lastPosition: input.lastPosition, lastPositionAt: capturedAt }
-          : {}),
+        ...(newerPosition ? { lastPosition: input.lastPosition, lastPositionAt: capturedAt } : {}),
         ...(lesson.completed ? { isCompleted: true } : {}),
       },
     });
@@ -444,11 +509,8 @@ async function updateVideoProgress(userId, input) {
         create: { userId, date, duration: watchedSeconds },
         update: { duration: { increment: watchedSeconds } },
       });
-      const totals = await db.studyLog.aggregate({ where: { userId }, _sum: { duration: true } });
-      await db.user.update({
-        where: { id: userId },
-        data: { totalStudyTime: Math.floor((totals._sum.duration || 0) / 60) },
-      });
+      // StudyLog is the source of truth. Reports aggregate on read instead of
+      // scanning all historical days and rewriting User on every heartbeat.
     }
     return video;
   });

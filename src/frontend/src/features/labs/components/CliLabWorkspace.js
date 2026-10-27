@@ -1,3 +1,4 @@
+import { Sun, Moon } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Check,
@@ -115,6 +116,13 @@ export default function CliLabWorkspace({
   const [joinId, setJoinId] = useState('');
   const [memberId, setMemberId] = useState('');
   const [explanation, setExplanation] = useState('');
+  const [explanationDetails, setExplanationDetails] = useState(null);
+  const explanationOwner = useRef(null);
+  explanationOwner.current = { token, attemptId: attempt?.id };
+  useEffect(() => {
+    setExplanation('');
+    setExplanationDetails(null);
+  }, [token, attempt?.id]);
   const [achievements, setAchievements] = useState(null);
   const [destination, setDestination] = useState('');
   const [protocol, setProtocol] = useState('icmp');
@@ -128,6 +136,16 @@ export default function CliLabWorkspace({
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState(0);
   const [theme, setTheme] = useState('dark');
+  const [consoleFocused, setConsoleFocused] = useState(false);
+  useEffect(() => {
+    if (!consoleFocused) return;
+    const frame = requestAnimationFrame(() =>
+      dialog.current
+        ?.querySelector('.cli-xterm-host')
+        ?.scrollIntoView({ block: 'nearest', behavior: 'auto' })
+    );
+    return () => cancelAnimationFrame(frame);
+  }, [consoleFocused]);
   const mounted = useRef(true);
   const dialog = useRef(null);
   const onboardingFocusRestore = useRef(null);
@@ -619,7 +637,9 @@ export default function CliLabWorkspace({
         </div>
       </div>
 
-      <div className="cli-workspace network-workspace cli-lab-surface">
+      <div
+        className={`cli-workspace network-workspace cli-lab-surface ${consoleFocused ? 'is-console-focused' : ''}`}
+      >
         <header className="cli-workspace-header cli-lab-header">
           <div className="cli-lab-heading">
             <span className="cli-workspace-kicker">PHÒNG THỰC HÀNH MẠNG</span>
@@ -661,13 +681,25 @@ export default function CliLabWorkspace({
           )}
           <button
             type="button"
+            className="cli-lab-theme-toggle cli-console-toggle"
+            aria-pressed={consoleFocused}
+            onClick={() => setConsoleFocused((value) => !value)}
+          >
+            Ưu tiên CLI
+          </button>
+          <button
+            type="button"
             className="cli-lab-theme-toggle"
             onClick={() => setTheme((value) => (value === 'dark' ? 'light' : 'dark'))}
             aria-label={
               theme === 'dark' ? 'Chuyển sang giao diện sáng' : 'Chuyển sang giao diện tối'
             }
           >
-            {theme === 'dark' ? '☼' : '☾'}
+            {theme === 'dark' ? (
+              <Sun size={18} aria-hidden="true" />
+            ) : (
+              <Moon size={18} aria-hidden="true" />
+            )}
           </button>
           <button type="button" className="cli-lab-close" onClick={onClose} aria-label="Đóng">
             <X size={18} />
@@ -847,7 +879,8 @@ export default function CliLabWorkspace({
                             disabled={!editable}
                             onClick={toggleSelectedLink}
                           >
-                            {displayed.links?.find((link) => link.id === selectedLink)?.enabled === false
+                            {displayed.links?.find((link) => link.id === selectedLink)?.enabled ===
+                            false
                               ? 'Nối lại dây'
                               : 'Ngắt dây đã chọn'}
                           </button>
@@ -940,8 +973,8 @@ export default function CliLabWorkspace({
                           className="cli-lab-term-tip"
                           title="Probe mô phỏng đường đi của gói tin qua từng hop trong topology"
                         >
-                          Chọn một dây trên topology rồi dùng nút Ngắt/Nối để mô phỏng sự cố; marker gói tin sẽ đi qua
-                          các hop thực tế khi có kết quả.
+                          Chọn một dây trên topology rồi dùng nút Ngắt/Nối để mô phỏng sự cố; marker
+                          gói tin sẽ đi qua các hop thực tế khi có kết quả.
                         </p>
                       </div>
                     </details>
@@ -1120,14 +1153,34 @@ export default function CliLabWorkspace({
                         disabled={busy || isPreview}
                         onClick={() =>
                           perform(async () => {
+                            const owner = explanationOwner.current;
                             const result = await api.cliExplain(token, attempt.id);
+                            if (
+                              explanationOwner.current.token !== owner.token ||
+                              explanationOwner.current.attemptId !== owner.attemptId
+                            )
+                              return;
                             setExplanation(result.explanation);
+                            setExplanationDetails(result);
                           })
                         }
                       >
                         Giải thích kết quả
                       </button>
-                      {explanation && <p className="network-explanation">{explanation}</p>}
+                      {explanation && (
+                        <div aria-live="polite">
+                          <small>
+                            {explanationDetails?.explanation === explanation &&
+                            explanationDetails.provider === 'gemini'
+                              ? `Gemini · ${explanationDetails.model}`
+                              : 'Giải thích theo kết quả chấm'}
+                            {explanationDetails?.explanation === explanation &&
+                              explanationDetails.unavailable &&
+                              ' · AI chưa khả dụng, đang dùng gợi ý có sẵn'}
+                          </small>
+                          <p className="network-explanation">{explanation}</p>
+                        </div>
+                      )}
                     </section>
                   )}
 

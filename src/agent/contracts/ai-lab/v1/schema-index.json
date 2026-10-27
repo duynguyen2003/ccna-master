@@ -1,0 +1,23 @@
+{
+  "contractVersion": "1.0.0",
+  "jsonSchemaDraft": "draft-07",
+  "schemas": {
+    "CreateRequest": "schemas/CreateRequest.schema.json",
+    "RequestResource": "schemas/RequestResource.schema.json",
+    "RequestResponse": "schemas/RequestResponse.schema.json",
+    "ErrorResponse": "schemas/ErrorResponse.schema.json",
+    "FeedbackRequest": "schemas/FeedbackRequest.schema.json",
+    "FeedbackResponse": "schemas/FeedbackResponse.schema.json",
+    "QuotaResponse": "schemas/QuotaResponse.schema.json",
+    "CapabilitiesResponse": "schemas/CapabilitiesResponse.schema.json",
+    "HistoryResponse": "schemas/HistoryResponse.schema.json",
+    "DeleteConversationResponse": "schemas/DeleteConversationResponse.schema.json",
+    "InternalAnalyzeRequest": "schemas/InternalAnalyzeRequest.schema.json",
+    "ProviderReceipt": "schemas/ProviderReceipt.schema.json",
+    "ClaimRequest": "schemas/ClaimRequest.schema.json",
+    "ServiceClaims": "schemas/ServiceClaims.schema.json",
+    "ClaimResponse": "schemas/ClaimResponse.schema.json",
+    "ReceiptResponse": "schemas/ReceiptResponse.schema.json",
+    "InternalAnalyzeResponse": "schemas/InternalAnalyzeResponse.schema.json"
+  }
+}

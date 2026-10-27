@@ -1,14 +1,14 @@
 /* ==========================================
    AUTH PAGES - Redesigned Split-Screen
-   NetMastery Academy Brand
+   NetMaster Academy Brand
    ========================================== */
 
 :root {
   --auth-primary: var(--primary-color);
   --auth-primary-hover: var(--blue-hover);
-  --auth-text-dark: #1e293b;
-  --auth-text-gray: #64748b;
-  --auth-bg-light: #ffffff;
+  --auth-text-dark: var(--color-foreground);
+  --auth-text-gray: var(--color-muted-foreground);
+  --auth-bg-light: var(--color-surface);
   --glass-bg: rgba(255, 255, 255, 0.1);
   --glass-border: rgba(255, 255, 255, 0.2);
 }
@@ -35,7 +35,7 @@
   position: absolute;
   top: 10px;
   right: 12px;
-  background: white;
+  background: var(--color-surface);
   border: none;
   width: 32px;
   height: 32px;
@@ -47,11 +47,17 @@
   cursor: pointer;
   z-index: 50;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  transition: all 0.2s;
+  transition:
+    background-color 0.2s,
+    color 0.2s,
+    border-color 0.2s,
+    box-shadow 0.2s,
+    transform 0.2s,
+    opacity 0.2s;
 }
 
 .auth-close-btn:hover {
-  background: #f1f5f9;
+  background: var(--color-muted);
   color: var(--auth-text-dark);
   transform: scale(1.05);
 }
@@ -62,7 +68,7 @@
   width: min(90vw, 100%);
   max-width: 760px;
   min-height: 550px;
-  background-color: #fff;
+  background-color: var(--color-surface);
   border-radius: 8px;
   flex-shrink: 0;
   overflow: hidden;
@@ -127,7 +133,7 @@
   border: 1px solid var(--glass-border);
   border-radius: 8px;
   text-align: center;
-  color: white;
+  color: var(--color-on-primary);
   box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.3);
   animation: float-in 1s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
@@ -144,33 +150,9 @@
   }
 }
 
-.portal-logo-wrapper {
+.portal-brand {
+  --brand-logo-width: 260px;
   margin-bottom: 24px;
-  display: inline-flex;
-}
-
-.portal-logo {
-  width: 64px;
-  height: 64px;
-  background: var(--primary-color);
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 0 30px rgba(0, 122, 255, 0.4);
-}
-
-.portal-logo .material-icons-round {
-  font-size: 36px;
-  color: white;
-}
-
-.portal-title {
-  font-size: 20px;
-  font-weight: 800;
-  margin-bottom: 8px;
-  letter-spacing: -0.01em;
-  line-height: 1.2;
 }
 
 .portal-subtitle {
@@ -182,7 +164,7 @@
 /* --- Right Panel --- */
 .auth-right-panel {
   flex: 1;
-  background: white;
+  background: var(--color-surface);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -259,7 +241,7 @@
   left: 14px;
   top: 50%;
   transform: translateY(-50%);
-  color: #94a3b8;
+  color: var(--color-muted-foreground);
   font-size: 20px;
   transition: color 0.3s;
 }
@@ -267,16 +249,22 @@
 .form-input {
   width: 100%;
   padding: 12px 14px 12px 42px;
-  background: #f1f5f9;
+  background: var(--color-muted);
   border: 1.5px solid transparent;
   border-radius: 6px;
   font-size: 14px;
-  transition: all 0.3s;
+  transition:
+    background-color 0.3s,
+    color 0.3s,
+    border-color 0.3s,
+    box-shadow 0.3s,
+    transform 0.3s,
+    opacity 0.3s;
   color: var(--auth-text-dark);
 }
 
 .form-input:focus {
-  background: white;
+  background: var(--color-surface);
   border-color: var(--auth-primary);
   box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
   outline: none;
@@ -293,7 +281,7 @@
   transform: translateY(-50%);
   background: none;
   border: none;
-  color: #94a3b8;
+  color: var(--color-muted-foreground);
   cursor: pointer;
   display: flex;
   padding: 4px;
@@ -319,14 +307,14 @@
 .auth-motion-form .auth-input-field {
   border: 1px solid #d8dee8;
   border-radius: 999px;
-  background: #ffffff;
+  background: var(--color-surface);
   transition:
     border-color 200ms ease-out,
     box-shadow 200ms ease-out;
 }
 
 .auth-motion-form .auth-input-field:focus-within {
-  border-color: #94a3b8;
+  border-color: var(--color-border);
   box-shadow: 0 0 0 3px rgba(100, 116, 139, 0.14);
 }
 
@@ -359,17 +347,17 @@
 }
 
 .auth-motion-form .auth-input-field:focus-within .auth-input-icon {
-  color: #475569;
+  color: var(--color-muted-foreground);
 }
 
 .auth-motion-form .auth-input-field.is-error {
-  border-color: #ef4444;
+  border-color: var(--color-danger);
   box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.14);
   animation: auth-field-shake 450ms ease-out;
 }
 
 .auth-motion-form .auth-input-field.is-error .auth-input-icon {
-  color: #dc2626;
+  color: var(--color-danger);
 }
 
 .auth-motion-form .auth-field-message {
@@ -404,11 +392,11 @@
 
 .auth-motion-form .auth-password-toggle:hover {
   color: var(--auth-text-dark);
-  background-color: #f1f5f9;
+  background-color: var(--color-muted);
 }
 
 .auth-motion-form .auth-password-toggle:focus-visible {
-  outline: 2px solid #94a3b8;
+  outline: 2px solid var(--color-border);
   outline-offset: 1px;
 }
 
@@ -526,13 +514,19 @@
   width: 100%;
   padding: 14px;
   background: var(--auth-primary);
-  color: white;
+  color: var(--color-on-primary);
   border: none;
   border-radius: 6px;
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.3s;
+  transition:
+    background-color 0.3s,
+    color 0.3s,
+    border-color 0.3s,
+    box-shadow 0.3s,
+    transform 0.3s,
+    opacity 0.3s;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -569,12 +563,12 @@
   content: '';
   flex: 1;
   height: 1px;
-  background: #e2e8f0;
+  background: var(--color-muted);
 }
 
 .auth-divider span {
   font-size: 12px;
-  color: #94a3b8;
+  color: var(--color-muted-foreground);
   font-weight: 600;
 }
 
@@ -582,8 +576,8 @@
 .google-btn {
   width: 100%;
   padding: 14px;
-  background: white;
-  border: 1px solid #e2e8f0;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: 6px;
   display: flex;
   align-items: center;
@@ -591,14 +585,20 @@
   gap: 12px;
   font-size: 14px;
   font-weight: 600;
-  color: #475569;
+  color: var(--color-muted-foreground);
   cursor: pointer;
-  transition: all 0.3s;
+  transition:
+    background-color 0.3s,
+    color 0.3s,
+    border-color 0.3s,
+    box-shadow 0.3s,
+    transform 0.3s,
+    opacity 0.3s;
 }
 
 .google-btn:hover {
-  background: #ffffff;
-  border-color: #cbd5e1;
+  background: var(--color-surface);
+  border-color: var(--color-border);
 }
 
 .google-icon {
@@ -640,15 +640,15 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  color: #ef4444;
+  color: var(--color-danger);
   font-size: 12px;
   margin-top: 6px;
 }
 
 .form-global-error {
-  background: #fef2f2;
-  border: 1px solid #fee2e2;
-  color: #dc2626;
+  background: var(--color-danger-bg);
+  border: 1px solid var(--color-danger-bg);
+  color: var(--color-danger);
   padding: 12px 16px;
   border-radius: 6px;
   font-size: 13px;
@@ -660,9 +660,9 @@
 
 /* Success Box */
 .auth-success-box {
-  background: #f0fdf4;
-  border: 1px solid #dcfce7;
-  color: #166534;
+  background: var(--color-success-bg);
+  border: 1px solid var(--color-success-bg);
+  color: var(--color-success);
   padding: 16px;
   border-radius: 8px;
   margin-bottom: 24px;
@@ -671,9 +671,9 @@
 }
 
 .auth-info-box {
-  background: #eff6ff;
-  border: 1px solid #dbeafe;
-  color: #1e40af;
+  background: var(--color-muted);
+  border: 1px solid var(--color-primary-soft);
+  color: var(--color-primary-hover);
   padding: 14px;
   border-radius: 8px;
   font-size: 13px;
@@ -687,7 +687,7 @@
   width: 18px;
   height: 18px;
   border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top-color: white;
+  border-top-color: var(--color-on-primary);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -697,7 +697,6 @@
     transform: rotate(360deg);
   }
 }
-
 
 /* --- Responsive --- */
 @media (max-width: 1024px) {
@@ -733,4 +732,26 @@
   .auth-content-wrapper {
     max-width: 100%;
   }
+}
+.auth-page {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  width: 100vw;
+  height: 100dvh;
+  max-width: none;
+  max-height: none;
+  color: var(--color-foreground);
+}
+.auth-page::backdrop {
+  background: var(--color-background);
+}
+.auth-left-panel {
+  color: var(--hero-foreground);
+}
+.auth-left-panel .portal-subtitle {
+  color: var(--hero-foreground);
+}
+.auth-page {
+  overscroll-behavior: contain;
 }

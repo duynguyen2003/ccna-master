@@ -1,6 +1,6 @@
 // src/frontend/src/features/admin/components/QuickActions.jsx
 import React from 'react';
-import { PlusCircle, UserPlus, FileText, Settings, Send } from 'lucide-react';
+import { PlusCircle, UserPlus, FileText, Send } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const QuickActions = () => {
@@ -10,7 +10,7 @@ const QuickActions = () => {
     {
       label: 'Thêm khóa học',
       icon: PlusCircle,
-      color: '#3b82f6',
+      color: '#386298',
       path: '/admin/courses',
     },
     {

@@ -1,4 +1,6 @@
+import AppIcon from '../../../components/ui/AppIcon';
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import '../styles/CiscoCliLookup.css';
 import { Link } from 'react-router-dom';
 import ciscoCommands from '../../../data/cisco-commands.json';
 
@@ -25,9 +27,11 @@ const CopyButton = ({ textToCopy }) => {
       onClick={handleCopy}
       title="Sao chép lệnh"
     >
-      <span className="material-icons-round" style={{ fontSize: 14 }}>
-        {isCopied ? 'check' : 'content_copy'}
-      </span>
+      <AppIcon
+        name={isCopied ? 'check' : 'content_copy'}
+        className="app-icon"
+        style={{ fontSize: 14 }}
+      />
       {isCopied ? 'Đã sao chép' : 'Sao chép'}
     </button>
   );
@@ -64,12 +68,13 @@ const CommandCard = ({ commandData, allCommands, onSearchCommand }) => {
           Có thể bạn cần xem thêm:
           {relatedCommands.map((cmd, idx) => (
             <React.Fragment key={cmd.id}>
-              <span
+              <button
+                type="button"
                 className="cli-related-link"
                 onClick={() => onSearchCommand(cmd.command.split(' ')[0])} // Search the base command
               >
                 {cmd.command.split(' ')[0]}
-              </span>
+              </button>
               {idx < relatedCommands.length - 1 && ', '}
             </React.Fragment>
           ))}
@@ -147,19 +152,17 @@ const CiscoCliLookup = () => {
       {/* ─── Breadcrumb ─── */}
       <nav className="cli-breadcrumb">
         <Link to="/" className="cli-breadcrumb-link">
-          <span className="material-icons-round" style={{ fontSize: 18 }}>
-            home
-          </span>
+          <AppIcon name={'home'} className="app-icon" style={{ fontSize: 18 }} />
           Trang chủ
         </Link>
-        <span className="material-icons-round cli-breadcrumb-sep">chevron_right</span>
+        <AppIcon name={'chevron_right'} className="app-icon cli-breadcrumb-sep" />
         <span className="cli-breadcrumb-current">Tra cứu Cisco CLI</span>
       </nav>
 
       {/* ─── Header ─── */}
       <header className="cli-header">
         <div className="cli-header-icon">
-          <span className="material-icons-round">terminal</span>
+          <AppIcon name={'terminal'} className="app-icon" />
         </div>
         <h1 className="cli-title">Tra cứu câu lệnh Cisco CLI</h1>
         <p className="cli-desc">
@@ -177,6 +180,7 @@ const CiscoCliLookup = () => {
               key={cat}
               className={`cli-category-pill ${activeCategory === cat ? 'active' : ''}`}
               onClick={() => setActiveCategory(cat)}
+              aria-pressed={activeCategory === cat}
             >
               {cat}
             </button>
@@ -185,8 +189,9 @@ const CiscoCliLookup = () => {
 
         {/* Search Box */}
         <div className="cli-search-box">
-          <span className="material-icons-round cli-search-icon">search</span>
+          <AppIcon name={'search'} className="app-icon cli-search-icon" />
           <input
+            aria-label="Tìm câu lệnh Cisco"
             ref={searchInputRef}
             type="text"
             className="cli-search-input"
@@ -196,7 +201,7 @@ const CiscoCliLookup = () => {
           />
           {searchTerm.length > 0 && (
             <button className="cli-search-clear" onClick={handleClearSearch} title="Xóa tìm kiếm">
-              <span className="material-icons-round">close</span>
+              <AppIcon name={'close'} className="app-icon" />
             </button>
           )}
         </div>
@@ -216,7 +221,7 @@ const CiscoCliLookup = () => {
         ) : (
           /* Empty State */
           <div className="cli-empty-state">
-            <span className="material-icons-round cli-empty-icon">search_off</span>
+            <AppIcon name={'search_off'} className="app-icon cli-empty-icon" />
             <h3 className="cli-empty-title">Không tìm thấy lệnh nào</h3>
             <p className="cli-empty-desc">
               Thử tìm kiếm với một từ khóa khác hoặc xóa bộ lọc để xem toàn bộ danh sách.

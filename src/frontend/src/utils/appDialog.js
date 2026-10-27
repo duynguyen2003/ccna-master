@@ -31,6 +31,8 @@ function openDialog(kind, message, initialValue = '') {
       }
       const finish = (value) => {
         window.removeEventListener('hashchange', cancel);
+        window.removeEventListener('popstate', cancel);
+        window.removeEventListener('netmaster:navigation', cancel);
         dialog.close();
         dialog.remove();
         if (previousFocus?.isConnected) previousFocus.focus();
@@ -74,6 +76,8 @@ function openDialog(kind, message, initialValue = '') {
         }
       });
       window.addEventListener('hashchange', cancel, { once: true });
+      window.addEventListener('popstate', cancel, { once: true });
+      window.addEventListener('netmaster:navigation', cancel, { once: true });
       dialog.append(title, description, form);
       document.body.append(dialog);
       dialog.showModal();

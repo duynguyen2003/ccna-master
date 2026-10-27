@@ -1,5 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
+import BrandLogo from '../../../components/branding/BrandLogo';
 import {
   LayoutDashboard,
   Users,
@@ -15,13 +16,7 @@ const Sidebar = () => {
     <div className="admin-sidebar">
       {/* Logo */}
       <div className="admin-sidebar-header">
-        <div className="admin-brand-icon">
-          <span className="material-icons-round">router</span>
-        </div>
-        <div className="admin-brand-text">
-          <span className="admin-brand-title">NetMastery</span>
-          <span className="admin-brand-subtitle">HỌC MẠNG ĐỂ ĐI LÀM</span>
-        </div>
+        <BrandLogo className="admin-brand" />
       </div>
 
       {/* Navigation */}

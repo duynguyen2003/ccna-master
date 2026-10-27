@@ -99,13 +99,30 @@ test(
         (await restored.query('SELECT score FROM exam_results WHERE id=1')).rows[0].score,
         1000
       );
-      assert.equal(
-        (
-          await restored.query(
-            'SELECT COUNT(*)::int AS count FROM _prisma_migrations WHERE finished_at IS NOT NULL'
-          )
-        ).rows[0].count,
-        3
+      const expectedMigrations = fs
+        .readdirSync(path.join(repositoryDirectory, 'src/backend/prisma/migrations'), {
+          withFileTypes: true,
+        })
+        .filter(
+          (entry) =>
+            entry.isDirectory() &&
+            fs.existsSync(
+              path.join(
+                repositoryDirectory,
+                'src/backend/prisma/migrations',
+                entry.name,
+                'migration.sql'
+              )
+            )
+        )
+        .map((entry) => entry.name)
+        .sort();
+      const restoredMigrations = await restored.query(
+        'SELECT migration_name FROM _prisma_migrations WHERE finished_at IS NOT NULL ORDER BY migration_name'
+      );
+      assert.deepEqual(
+        restoredMigrations.rows.map((row) => row.migration_name),
+        expectedMigrations
       );
       assert.equal(
         fs.readFileSync(path.join(restoredUploads, 'lab.txt'), 'utf8'),

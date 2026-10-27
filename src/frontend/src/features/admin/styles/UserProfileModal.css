@@ -142,7 +142,7 @@
 }
 
 .upm-stat-value.highlight {
-  color: #2563eb;
+  color: var(--color-primary);
 }
 
 /* Academic Progress */
@@ -211,7 +211,7 @@
 
 .upm-progress-bar-fill {
   height: 100%;
-  background: #2563eb;
+  background: var(--color-primary);
   border-radius: 2px;
 }
 
@@ -270,7 +270,7 @@
 }
 
 .upm-btn-edit {
-  background: #007aff; /* Bright blue from image */
+  background: var(--color-primary); /* Bright blue from image */
   color: #ffffff;
   border: none;
   border-radius: 6px;

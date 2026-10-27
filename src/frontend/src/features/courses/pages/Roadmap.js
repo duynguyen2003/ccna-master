@@ -16,8 +16,9 @@ import LearningPathMap from '../components/learningPath/LearningPathMap';
 import CourseDetailModal from '../components/learningPath/CourseDetailModal';
 import HeartbeatLoader from '../../../components/ui/HeartbeatLoader';
 
-import errorIllustration from '../../../assets/images/fix1.png';
+import errorIllustration from '../../../assets/images/fix1.webp';
 import '../styles/Roadmap.css';
+import '../../../components/ui/styles/LearningError.css';
 
 const LAYOUT_OPTIONS = [
   { value: 'auto', label: 'Tự động' },
@@ -115,10 +116,7 @@ export const RoadmapOverview = ({
           </span>
         ) : null}
       </div>
-      <p className="lp-overview-description">
-        Các chặng học được bố trí zigzag tuần tự uốn lượn. Bạn cần hoàn thành chặng trước để mở khóa
-        chặng tiếp theo.
-      </p>
+      <p className="lp-overview-description">Hoàn thành chặng trước để mở khóa chặng tiếp theo.</p>
     </div>
 
     <div className="lp-overview-controls">
@@ -428,7 +426,13 @@ export const Roadmap = () => {
           <div className="lesson-error-container">
             <div className="lesson-error-card">
               <div className="lesson-error-illustration">
-                <img src={errorIllustration} alt="Lỗi tải lộ trình" />
+                <img
+                  src={errorIllustration}
+                  alt="Lỗi tải lộ trình"
+                  width={512}
+                  height={512}
+                  decoding="async"
+                />
               </div>
               <h2 className="lesson-error-title">Không thể tải lộ trình học tập</h2>
               <p className="lesson-error-desc">

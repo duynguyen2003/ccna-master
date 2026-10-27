@@ -55,10 +55,10 @@
 }
 
 .acm-primary-btn {
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  background: linear-gradient(135deg, var(--color-primary-gradient-start), var(--color-primary));
   color: #fff;
   padding: 10px 14px;
-  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.22);
+  box-shadow: 0 8px 18px rgb(var(--brand-primary-rgb) / 0.22);
 }
 
 .acm-primary-btn:hover {
@@ -92,7 +92,7 @@
 }
 
 .acm-secondary-btn:hover {
-  background-color: #dbeafe;
+  background-color: var(--color-primary-soft);
 }
 
 .acm-btn-muted {
@@ -273,8 +273,8 @@
 }
 
 .acm-level-pill {
-  background-color: #eff6ff;
-  color: #1d4ed8;
+  background-color: var(--color-muted);
+  color: var(--color-primary-hover);
 }
 
 .acm-status-badge.published {
@@ -397,8 +397,8 @@
 .acm-input:focus,
 .acm-textarea:focus,
 .acm-editor-textarea:focus {
-  border-color: #60a5fa;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+  border-color: var(--color-primary-highlight);
+  box-shadow: 0 0 0 3px rgb(var(--brand-primary-rgb) / 0.15);
 }
 
 .acm-input.error,
@@ -488,7 +488,7 @@
 }
 
 .acm-upload-dropzone:hover {
-  border-color: #3b82f6;
+  border-color: var(--color-primary-gradient-start);
   background-color: #f0f7ff;
 }
 
@@ -498,7 +498,7 @@
 }
 
 .acm-upload-dropzone:hover .acm-upload-icon {
-  color: #3b82f6;
+  color: var(--color-primary-gradient-start);
 }
 
 .acm-upload-text {
@@ -551,7 +551,7 @@
   width: 16px;
   height: 16px;
   cursor: pointer;
-  accent-color: #2563eb;
+  accent-color: var(--color-primary);
 }
 
 /* New Input Style */
@@ -569,8 +569,8 @@
 
 .acm-input:focus,
 .acm-textarea:focus {
-  border-color: #3b82f6 !important;
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1) !important;
+  border-color: var(--color-primary-gradient-start) !important;
+  box-shadow: 0 0 0 4px rgb(var(--brand-primary-rgb) / 0.1) !important;
 }
 
 .acm-field > span {
@@ -596,14 +596,14 @@
    or just target the primary button inside. */
 
 .admin-btn-primary {
-  background-color: #2563eb !important;
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+  background-color: var(--color-primary) !important;
+  box-shadow: 0 4px 12px rgb(var(--brand-primary-rgb) / 0.3);
   padding: 10px 24px !important;
   font-weight: 600 !important;
 }
 
 .admin-btn-primary:hover {
-  background-color: #1d4ed8 !important;
+  background-color: var(--color-primary-hover) !important;
   transform: translateY(-1px);
 }
 
@@ -634,8 +634,8 @@
 
 .acm-select-trigger.active {
   background-color: #ffffff;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+  border-color: var(--color-primary-gradient-start);
+  box-shadow: 0 0 0 4px rgb(var(--brand-primary-rgb) / 0.1);
 }
 
 .acm-select-icon {
@@ -687,8 +687,8 @@
 }
 
 .acm-select-option.selected {
-  background-color: #eff6ff;
-  color: #2563eb;
+  background-color: var(--color-muted);
+  color: var(--color-primary);
   font-weight: 600;
 }
 
@@ -720,6 +720,7 @@
 }
 
 .acm-module-sidebar {
+  min-width: 0;
   padding: 14px;
 }
 
@@ -761,8 +762,8 @@
 }
 
 .acm-module-item.open {
-  border-color: #bfdbfe;
-  box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.06);
+  border-color: var(--color-primary-border);
+  box-shadow: inset 0 0 0 1px rgb(var(--brand-primary-rgb) / 0.06);
 }
 
 .acm-module-toggle {
@@ -782,8 +783,8 @@
   width: 24px;
   height: 24px;
   border-radius: 7px;
-  background-color: #eff6ff;
-  color: #1d4ed8;
+  background-color: var(--color-muted);
+  color: var(--color-primary-hover);
   font-size: 11px;
   font-weight: 700;
   display: inline-flex;
@@ -839,7 +840,8 @@
 }
 
 .acm-module-lesson-item {
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   background-color: #ffffff;
@@ -854,14 +856,18 @@
   transition: var(--admin-transition);
 }
 
+.acm-module-lesson-item > svg {
+  flex-shrink: 0;
+}
+
 .acm-module-lesson-item:hover {
-  border-color: #93c5fd;
-  background-color: #eff6ff;
+  border-color: var(--color-primary-tint);
+  background-color: var(--color-muted);
 }
 
 .acm-module-lesson-item.active {
-  border-color: #2563eb;
-  background-color: #dbeafe;
+  border-color: var(--color-primary);
+  background-color: var(--color-primary-soft);
 }
 
 .acm-module-lesson-item span {
@@ -888,6 +894,7 @@
 .acm-module-add-lesson,
 .acm-module-delete,
 .acm-module-edit {
+  flex-shrink: 0;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   cursor: pointer;
@@ -914,12 +921,12 @@
   flex: 1;
   padding: 7px 10px;
   background-color: #eaf2ff;
-  color: #1d4ed8;
+  color: var(--color-primary-hover);
 }
 
 .acm-module-add-lesson.active,
 .acm-module-add-lesson:hover {
-  background-color: #1d4ed8;
+  background-color: var(--color-primary-hover);
   color: #fff;
 }
 
@@ -942,7 +949,7 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  color: #1d4ed8;
+  color: var(--color-primary-hover);
   margin-bottom: 10px;
 }
 
@@ -961,7 +968,7 @@
   padding: 5px 10px;
   font-size: 12px;
   background-color: #eaf2ff;
-  color: #1d4ed8;
+  color: var(--color-primary-hover);
 }
 
 .acm-topic-chip button {
@@ -986,6 +993,7 @@
 }
 
 .acm-composer-pane {
+  min-width: 0;
   padding: 14px;
   display: flex;
   flex-direction: column;
@@ -994,7 +1002,7 @@
 
 .acm-composer-empty {
   min-height: 280px;
-  border: 1px dashed #bfdbfe;
+  border: 1px dashed var(--color-primary-border);
   border-radius: 8px;
   display: flex;
   align-items: center;
@@ -1024,8 +1032,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #dbeafe, #e0e7ff);
-  color: #2563eb;
+  background: linear-gradient(135deg, var(--color-primary-soft), #e0e7ff);
+  color: var(--color-primary);
 }
 
 .acm-composer {
@@ -1039,13 +1047,14 @@
   padding: 14px 14px 10px;
   border-bottom: 1px solid #e2e8f0;
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   gap: 14px;
 }
 
 .acm-composer-module {
   margin: 0;
-  color: #1d4ed8;
+  color: var(--color-primary-hover);
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
@@ -1092,7 +1101,7 @@
 
 .acm-step-dot.active,
 .acm-step-dot.done {
-  background-color: #2563eb;
+  background-color: var(--color-primary);
   color: #ffffff;
 }
 
@@ -1102,7 +1111,7 @@
 }
 
 .acm-step-label.active {
-  color: #2563eb;
+  color: var(--color-primary);
   font-weight: 700;
 }
 
@@ -1114,7 +1123,7 @@
 }
 
 .acm-step-line.done {
-  background-color: #2563eb;
+  background-color: var(--color-primary);
 }
 
 .acm-composer-body {
@@ -1139,9 +1148,9 @@
 }
 
 .acm-note-box {
-  border: 1px solid #dbeafe;
-  background-color: #eff6ff;
-  color: #1e40af;
+  border: 1px solid var(--color-primary-soft);
+  background-color: var(--color-muted);
+  color: var(--color-primary-hover);
 }
 
 .acm-warning-box {
@@ -1196,13 +1205,13 @@
 
 .acm-editor-toolbar button:hover,
 .acm-editor-toolbar button:focus-visible {
-  border-color: #bfdbfe;
-  background-color: #eff6ff;
-  color: #1d4ed8;
+  border-color: var(--color-primary-border);
+  background-color: var(--color-muted);
+  color: var(--color-primary-hover);
 }
 
 .acm-editor-toolbar button:focus-visible {
-  outline: 2px solid #2563eb;
+  outline: 2px solid var(--color-primary);
   outline-offset: 1px;
 }
 
@@ -1213,12 +1222,16 @@
   border: none;
   border-radius: 0;
   outline: none;
-  font: 13px/1.6 ui-monospace, SFMono-Regular, Consolas, monospace;
+  font:
+    13px/1.6 ui-monospace,
+    SFMono-Regular,
+    Consolas,
+    monospace;
   resize: vertical;
 }
 
 .acm-editor-textarea:focus-visible {
-  box-shadow: inset 0 0 0 2px #93c5fd;
+  box-shadow: inset 0 0 0 2px var(--color-primary-tint);
 }
 
 .acm-editor-preview {
@@ -1325,19 +1338,28 @@
 }
 
 .acm-lesson-row.active {
-  border-color: #2563eb;
-  background-color: #eff6ff;
+  border-color: var(--color-primary);
+  background-color: var(--color-muted);
 }
 
-.acm-lesson-row span {
+.acm-lesson-row > span {
+  flex: 1;
+  min-width: 0;
   display: inline-flex;
   align-items: center;
   gap: 7px;
   color: #334155;
   font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.acm-lesson-row > span > svg {
+  flex-shrink: 0;
 }
 
 .acm-lesson-row-actions {
+  flex-shrink: 0;
+  align-items: center;
   display: inline-flex;
   gap: 4px;
 }
@@ -1366,7 +1388,7 @@
 
 @media (max-width: 1200px) {
   .acm-detail-layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .acm-module-sidebar {

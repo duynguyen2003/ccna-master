@@ -5,7 +5,7 @@
   --admin-sidebar-bg: #1e2a3a;
   --admin-sidebar-hover: rgba(255, 255, 255, 0.06);
   --admin-sidebar-active: #ffffff;
-  --admin-sidebar-active-bg: #3b82f6;
+  --admin-sidebar-active-bg: var(--brand-primary);
   --admin-sidebar-text: #94a3b8;
 
   /* Main area: Light gray */
@@ -23,8 +23,8 @@
   --admin-border-color: #e2e8f0;
 
   /* Primary Actions */
-  --admin-primary: #3b82f6;
-  --admin-primary-hover: #2563eb;
+  --admin-primary: var(--brand-primary);
+  --admin-primary-hover: var(--brand-primary-hover);
   --admin-danger: #ef4444;
   --admin-success: #22c55e;
   --admin-warning: #f59e0b;

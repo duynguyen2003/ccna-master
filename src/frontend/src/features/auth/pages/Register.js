@@ -1,3 +1,4 @@
+import AppIcon from '../../../components/ui/AppIcon';
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../../../services/Api';
@@ -114,12 +115,12 @@ const Register = () => {
     <AuthLayout toast={ToastComponent} className="auth-page--register">
       <div className="auth-header">
         <h1 className="auth-title">Đăng ký tài khoản</h1>
-        <p className="auth-subtitle">Tham gia NetMastery để bắt đầu hành trình của bạn.</p>
+        <p className="auth-subtitle">Tham gia NetMaster để bắt đầu hành trình của bạn.</p>
       </div>
 
       {globalError && (
         <div className="form-global-error">
-          <span className="material-icons-round">error_outline</span>
+          <AppIcon name={'error_outline'} className="app-icon" />
           {globalError}
         </div>
       )}
@@ -306,10 +307,7 @@ const Register = () => {
             <div className="spinner"></div>
           ) : (
             <>
-              ĐĂNG KÝ{' '}
-              <span className="material-icons-round" style={{ fontSize: 18 }}>
-                how_to_reg
-              </span>
+              ĐĂNG KÝ <AppIcon name={'how_to_reg'} className="app-icon" style={{ fontSize: 18 }} />
             </>
           )}
         </button>

@@ -1,3 +1,4 @@
+import AppIcon from '../../../components/ui/AppIcon';
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../../../services/Api';
@@ -108,21 +109,21 @@ const ResetPassword = () => {
 
       {isCheckingToken && (
         <div className="auth-info-box">
-          <span className="material-icons-round">hourglass_top</span>
+          <AppIcon name={'hourglass_top'} className="app-icon" />
           <div>Đang kiểm tra liên kết...</div>
         </div>
       )}
 
       {!isCheckingToken && globalError && (
         <div className="form-global-error">
-          <span className="material-icons-round">error_outline</span>
+          <AppIcon name={'error_outline'} className="app-icon" />
           {globalError}
         </div>
       )}
 
       {isSuccess ? (
         <div className="auth-success-box">
-          <span className="material-icons-round">check_circle</span>
+          <AppIcon name={'check_circle'} className="app-icon" />
           <div>
             <strong>Đặt lại mật khẩu thành công</strong>
             <p>Bạn sẽ được chuyển hướng đến trang đăng nhập sau giây lát.</p>
@@ -145,21 +146,22 @@ const ResetPassword = () => {
                 onChange={handleChange}
                 autoComplete="new-password"
               />
-              <span className="form-input-icon material-icons-round">lock</span>
+              <AppIcon name={'lock'} className="form-input-icon app-icon" />
               <button
                 type="button"
                 className="password-toggle"
                 onClick={() => setShowPassword((prev) => !prev)}
                 tabIndex={-1}
               >
-                <span className="material-icons-round">
-                  {showPassword ? 'visibility_off' : 'visibility'}
-                </span>
+                <AppIcon
+                  name={showPassword ? 'visibility_off' : 'visibility'}
+                  className="app-icon"
+                />
               </button>
             </div>
             {errors.password && (
               <div className="form-error">
-                <span className="material-icons-round">error</span>
+                <AppIcon name={'error'} className="app-icon" />
                 {errors.password}
               </div>
             )}
@@ -180,21 +182,22 @@ const ResetPassword = () => {
                 onChange={handleChange}
                 autoComplete="new-password"
               />
-              <span className="form-input-icon material-icons-round">lock</span>
+              <AppIcon name={'lock'} className="form-input-icon app-icon" />
               <button
                 type="button"
                 className="password-toggle"
                 onClick={() => setShowConfirmPassword((prev) => !prev)}
                 tabIndex={-1}
               >
-                <span className="material-icons-round">
-                  {showConfirmPassword ? 'visibility_off' : 'visibility'}
-                </span>
+                <AppIcon
+                  name={showConfirmPassword ? 'visibility_off' : 'visibility'}
+                  className="app-icon"
+                />
               </button>
             </div>
             {errors.confirmPassword && (
               <div className="form-error">
-                <span className="material-icons-round">error</span>
+                <AppIcon name={'error'} className="app-icon" />
                 {errors.confirmPassword}
               </div>
             )}
@@ -206,9 +209,7 @@ const ResetPassword = () => {
             ) : (
               <>
                 ĐẶT LẠI MẬT KHẨU{' '}
-                <span className="material-icons-round" style={{ fontSize: 18 }}>
-                  check
-                </span>
+                <AppIcon name={'check'} className="app-icon" style={{ fontSize: 18 }} />
               </>
             )}
           </button>

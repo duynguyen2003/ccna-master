@@ -2,7 +2,7 @@
 
 [Về kế hoạch tổng](README.md) · [Sản phẩm](01-product-and-learning.md) · [Backlog](03-delivery-backlog.md) · [Kiểm thử/vận hành](04-quality-and-operations.md)
 
-Tất cả contract bên dưới là thiết kế đề xuất. Khi triển khai phải đưa schema vào file dùng được bởi test và CI, thay vì duy trì riêng ví dụ Markdown và code không đồng bộ.
+**Chốt ADR-01 ngày 19/10/2026:** wire contract v1.0.0, state machine, error map và fixtures nằm tại [src/agent/contracts/ai-lab/v1](../../src/agent/contracts/ai-lab/v1/README.md); nguồn schema duy nhất là [shared Zod module](../../src/agent/contracts/aiLabContract.js), đã kiểm cùng fixtures trên frontend/Node/Python. Các endpoint/service/migration AI bên dưới vẫn là thiết kế để triển khai ở các task sau. Khi ví dụ/ghi chú cũ khác artifact versioned, dùng artifact và ADR đã chốt.
 
 ## 1. Kiến trúc đích
 
@@ -40,13 +40,13 @@ Ba tiến trình ứng dụng: Node API, Node worker và Python AI service. Node
 
 | ADR | Quyết định mặc định | Trigger xem lại |
 |---|---|---|
-| ADR-001 | API bất đồng bộ, poll trạng thái; chỉ render output sau validate | Khi polling gây tải lớn hoặc có nhu cầu progress real-time mới đánh giá SSE |
-| ADR-002 | PostgreSQL queue + quota transaction | Lock latency/DB CPU/queue backlog vượt mục tiêu ở tải thực; benchmark trước khi chuyển queue |
-| ADR-003 | Một provider/model đã eval cho R1, fallback xác định | Cần thêm provider vì availability/giá; mỗi cấu hình mới phải qua eval và policy dữ liệu |
-| ADR-004 | Node deterministic diagnostics; Python dùng facts | Nếu chuyển engine sang công nghệ khác phải có migration domain riêng |
-| ADR-005 | R1 không cần framework agent; R2 có spike LangGraph so với state machine nhỏ | Chọn theo nhu cầu tool loops/checkpoint và khả năng duy trì một người |
-| ADR-006 | Không stream token chưa kiểm tra tới người học | Nếu thêm streaming, chỉ stream status hoặc block đã validate; cần thiết kế revocation và output safety mới |
-| ADR-007 | Tách request result khỏi provider-call accounting | Bắt buộc giữ cả khi hủy/xóa/quyền bị thu hồi; tránh mất chi phí thật |
+| [ADR-001](adr/ADR-001-async-api.md) | API bất đồng bộ, poll trạng thái; chỉ render output sau validate | Khi polling gây tải lớn hoặc có nhu cầu progress real-time mới đánh giá SSE |
+| [ADR-002](adr/ADR-002-postgres-queue-quota.md) | PostgreSQL queue + quota transaction | Lock latency/DB CPU/queue backlog vượt mục tiêu ở tải thực; benchmark trước khi chuyển queue |
+| [ADR-003](adr/ADR-003-provider-policy.md) | Một provider/model đã eval cho R1, fallback xác định; hãng/model chọn ở OPS-00/AI-02 | Cần thêm provider vì availability/giá; mỗi cấu hình mới phải qua eval và policy dữ liệu |
+| [ADR-004](adr/ADR-004-node-facts-ownership.md) | Node deterministic diagnostics; Python dùng facts | Nếu chuyển engine sang công nghệ khác phải có migration domain riêng |
+| [ADR-005](adr/ADR-005-orchestration-contract-source.md) | R1 không dùng framework agent; một nguồn schema, R2 có spike riêng | Chọn theo nhu cầu tool loops/checkpoint và khả năng duy trì một người |
+| [ADR-006](adr/ADR-006-validated-output.md) | Không stream token chưa kiểm tra tới người học | Nếu thêm streaming, chỉ stream status hoặc block đã validate; cần thiết kế revocation và output safety mới |
+| [ADR-007](adr/ADR-007-receipts-accounting.md) | Tách request result khỏi provider-call accounting | Bắt buộc giữ cả khi hủy/xóa/quyền bị thu hồi; tránh mất chi phí thật |
 
 PostgreSQL mô tả `SKIP LOCKED` phù hợp cho nhiều consumer của bảng kiểu queue, đồng thời cảnh báo nó không phù hợp cho đọc dữ liệu tổng quát cần nhất quán. Kế hoạch chỉ dùng nó để claim job; quota vẫn dùng transaction/locks rõ ràng. [Tài liệu PostgreSQL 16](https://www.postgresql.org/docs/16/sql-select.html#SQL-FOR-UPDATE-SHARE)
 
@@ -104,6 +104,7 @@ stateDiagram-v2
     QUEUED --> CANCELLED: owner cancels
     QUEUED --> EXPIRED: queue deadline
     QUEUED --> REVOKED: permission removed
+    RUNNING --> QUEUED: expired lease + no dispatch + deadline remains
     RUNNING --> COMPLETED: validated answer or safe fallback
     RUNNING --> FAILED: known failure, no usable answer
     RUNNING --> CANCELLED: cancellation
@@ -173,6 +174,8 @@ Bucket được lock theo thứ tự cố định, dùng transaction và điều
 
 Đây là mô hình logic để triển khai Prisma + SQL migrations. Không sao chép nguyên ví dụ ba bảng của bản đề xuất ban đầu vì chúng chưa đủ quản lý pending requests, quota và kết quả chưa rõ.
 
+**Đã triển khai lưu trữ local 23/10/2026:** [BE-01](baseline/BE-01-storage.md) có 11 model R1, nullable metadata, partial unique active request và SQL checks; DB mới/nâng cấp, schema diff và client cũ đã kiểm. Bản Prisma dùng `ownerKey` để giữ dedup sau tách identity, `requestedHintLevel`/`effectiveHintLevel`, composite FK request/conversation/epoch và call/contextHash. Tiền dùng BigInt micro-USD. Bảng dưới vẫn mô tả cả hành vi runtime sẽ triển khai ở BE-02/03/04/07/08; migration chưa áp vào DB ứng dụng.
+
 | Bảng/model | Trường chính | Ràng buộc và index |
 |---|---|---|
 | `AiConversation` | UUID, userId, attemptId, epoch, createdAt, updatedAt, deletedAt | Unique `(userId, attemptId)`; epoch tăng khi xóa/reset; không cấp quyền qua relation đơn thuần |
@@ -227,81 +230,21 @@ Eligibility và hạn mức được tính qua một policy resolver phía Node 
 | POST | `/messages/:messageId/feedback` | Upsert đánh giá của owner |
 | DELETE | `/conversation` | Tombstone + tăng epoch, 202 kèm thời hạn purge |
 
-Route `by-client-id` phải khai báo trước `:requestId`; mọi param UUID được validate. Cùng một schema lỗi cho Node và FE. Request body đề xuất:
+Route `by-client-id` phải khai báo trước `:requestId`; mọi param UUID được validate. Wire contract đã chốt có `contractVersion=1.0.0`, envelope `{contractVersion,data}` hoặc `{contractVersion,error}` và header `X-AI-Contract-Version` tương ứng.
 
-```json
-{
-  "clientRequestId": "e1975f55-815c-4da2-ae4b-2699b2e427e6",
-  "intent": "DIAGNOSE",
-  "message": "Vì sao PC1 chưa ping được PC2?",
-  "selectedDeviceId": "PC1",
-  "target": { "deviceId": "PC2" },
-  "taskId": "connectivity-pc1-pc2",
-  "requestedHintLevel": 2,
-  "expectedRevision": 12,
-  "conversationEpoch": 1,
-  "recoveryEpoch": "recovery-2026-10-16-a"
-}
-```
+Input schema `CreateRequest` dùng intent enum `NEXT_STEP`, `DIAGNOSE`, `EXPLAIN_CONCEPT`, `LAB_REVIEW`. DIAGNOSE cần selectedDeviceId và đúng một target `{deviceId}` hoặc `{ipv4}`; EXPLAIN_CONCEPT cần message. Unknown fields bị từ chối. Hint client chỉ là đề nghị, Node quyết định mức hiệu lực; context/user/model không nhận từ browser.
 
-Intent enum: `NEXT_STEP`, `DIAGNOSE`, `EXPLAIN_CONCEPT`, `LAB_REVIEW`. Trường target là device ID trong snapshot hoặc IPv4 hợp lệ cho simulator, không phải URL bên ngoài. Các trường tùy intent được schema refine; unknown fields bị từ chối. Normalization cho payloadHash thống nhất Unicode/newlines/optional null; không đổi ý nghĩa câu hỏi hoặc tự thay revision khi retry.
+Ví dụ chuẩn được sinh từ cùng nguồn và kiểm trong CI:
 
-Response nhận request:
+- [Request tạo mới](../../src/agent/contracts/ai-lab/v1/examples/create-request.json).
+- [Response hoàn tất, có stale revision](../../src/agent/contracts/ai-lab/v1/examples/completed-response.json).
+- [Toàn bộ schema, HTTP map và fixtures hợp lệ/không hợp lệ](../../src/agent/contracts/ai-lab/v1/README.md).
 
-```json
-{
-  "data": {
-    "requestId": "7ea5187b-5dd0-42c7-960a-8106fcfb439d",
-    "conversationId": "9506ee20-d092-462e-888f-078338aef96e",
-    "status": "QUEUED",
-    "sourceRevision": 12,
-    "pollAfterMs": 2000,
-    "quota": { "remaining": 17, "reserved": 1 },
-    "serverTime": "2026-10-16T07:30:00Z"
-  }
-}
-```
+Fingerprint chuẩn hóa NFC/newlines/optional null và sort key nhưng không trim/case-fold nội dung; gồm attemptId/body, bỏ clientRequestId đã nằm trong unique key. Lookup request cũ trước so stale/recovery/quota mới. Source revision không đổi khi retry hoặc khi state live đổi.
 
-Response hoàn tất:
+Pending response có responseMode NONE, result null và pollAfterMs. COMPLETED có LLM hoặc DETERMINISTIC; OUTCOME_UNKNOWN chỉ NONE hoặc DETERMINISTIC. Result chứa messageId, answer, evidence và command đã được Node resolve từ các ID hợp lệ, không nhận fact/lệnh tùy ý do model tạo.
 
-```json
-{
-  "data": {
-    "requestId": "7ea5187b-5dd0-42c7-960a-8106fcfb439d",
-    "status": "COMPLETED",
-    "responseMode": "LLM",
-    "messageId": "b5988e7c-ff06-4efa-9e06-8efa64166e37",
-    "sourceRevision": 12,
-    "currentRevision": 13,
-    "stale": true,
-    "answer": {
-      "summary": "Cổng liên quan đến đường kết nối đang bị tắt bằng cấu hình.",
-      "claimType": "SUPPORTED_FINDING",
-      "evidenceIds": ["fact-r12-r1-g00-admin-down", "trace-r12-pc1-pc2-stop-r1"],
-      "nextSteps": [{ "text": "Kiểm tra trạng thái cổng trên R1.", "command": "show ip interface brief", "deviceId": "R1" }],
-      "verification": "Đối chiếu trạng thái cổng trước khi kiểm tra lại kết nối.",
-      "hintLevel": 2
-    },
-    "evidence": [
-      {
-        "evidenceId": "fact-r12-r1-g00-admin-down",
-        "deviceId": "R1",
-        "interface": "GigabitEthernet0/0",
-        "sourceRevision": 12,
-        "observation": "administratively down"
-      },
-      {
-        "evidenceId": "trace-r12-pc1-pc2-stop-r1",
-        "deviceId": "R1",
-        "sourceRevision": 12,
-        "observation": "clone trace PC1 to PC2 stopped at the related interface"
-      }
-    ]
-  }
-}
-```
-
-Đây là ví dụ schema khi người học chủ động chọn gợi ý mức 2, không phải kết quả đo/model thật. `messageId` dùng cho feedback; evidence được Node resolve từ facts đã xác minh, không nhận nguyên object do model tự tạo. UI có thể chỉ hiển thị thời điểm và nhãn “cấu hình trước đó”; revision vẫn giữ trong dữ liệu để truy vết.
+Legacy feedback thiếu provenance dùng sourceRevision null, stale null và sourceProvenance LEGACY_FEEDBACK; không gắn revision live giả và không trả LLM. Đây là wire examples synthetic, chưa phải kết quả model thật.
 
 ### 6.1. Lỗi và hành vi client
 
@@ -318,9 +261,10 @@ Response hoàn tất:
 | 413 `AI_CONTEXT_TOO_LARGE` | Topology/input vượt profile đã chứng nhận | Giải thích phạm vi hỗ trợ; không cắt mất evidence trọng yếu |
 | 429 `AI_USER_RATE_LIMITED` / `AI_QUOTA_EXHAUSTED` / `AI_CONCURRENT_LIMIT` | Hạn mức theo user | `Retry-After` hoặc resetAt nếu có, không retry liên tục |
 | 503 `AI_CAPACITY_EXHAUSTED` / `AI_DISABLED` / `AI_BUDGET_PAUSED` | Hệ thống chưa nhận request có phí | Fallback, giữ terminal; người học chủ động thử lại |
+| 500 `AI_INTERNAL_ERROR` | Lỗi server không gửi chi tiết nội bộ | Với POST chưa rõ đã nhận, reconcile theo client ID trước gửi mới |
 | 502/504 hoặc response không theo schema từ proxy | Chưa biết server đã nhận hay chưa | Tra by-client-id; không tạo ID mới ngay |
 
-Request đã trả 202 dùng GET status 200 để báo kết quả terminal, kể cả provider fail. Không biến GET thành thao tác retry model. Cấu trúc lỗi AI thống nhất `{ error: { code, message, retryAfterSeconds?, requestId? } }`; không gửi stack, URL/key provider hoặc chi tiết rubric. Middleware auth chung hiện trả `{message}`; adapter của route/client cần xử lý 401 theo HTTP status trong quá trình tích hợp, giữ tương thích các luồng cũ khi chuẩn hóa envelope.
+Request đã trả 202 dùng GET status 200 để báo kết quả terminal, kể cả provider fail. Không biến GET thành thao tác retry model. Cấu trúc lỗi AI thống nhất `{ contractVersion, error: { code, message, retryAfterSeconds?, resetAt?, requestId? } }`; không gửi stack, URL/key provider hoặc chi tiết rubric. Middleware auth chung hiện trả `{message}`; adapter của route/client cần xử lý 401 theo HTTP status trong quá trình tích hợp, giữ tương thích các luồng cũ khi chuẩn hóa envelope.
 
 ### 6.2. Polling
 
@@ -347,9 +291,11 @@ Nếu các service ở khác host/network boundary, dùng TLS xác thực server
 
 Envelope input gồm `contractVersion`, `requestId`, `callId`, `contextHash`, `deadlineAt`, `policy`, `providerConfigId`, `context`, `facts`, `allowedCommands`, `history`. Python nhận config ID từ Node và map sang server config; không nhận credentials hoặc model override từ người học.
 
-Output JSON gồm `contractVersion`, `callId`, `contextHash`, `answer`, `evidenceRefs`, `suggestedCommands`, `usage`, `providerRequestId`, `versions`, `finishReason`. Usage thiếu số liệu có token counts null và status `UNRESOLVED`. Python validation không thay Node validation tại trust boundary.
+Output model được Python đóng gói trong `ProviderReceipt`: call/request/hash/fence binding, `output` (summary/claim/evidence IDs/command IDs), `usage`, `providerRequestId`, `versions`, `finishReason` và outcome. Usage thiếu số liệu có token counts null khi chưa biết và status `UNRESOLVED`. Node resolve evidence/command từ facts đã cấp. Python validation không thay Node validation tại trust boundary.
 
-Pydantic và Zod dùng cùng JSON fixtures/JSON Schema được version trong `contracts/ai-lab/v1/`. CI chạy fixtures hợp lệ/bất hợp lệ qua cả hai phía. SemVer cho contract: thêm optional field tương thích minor; thay nghĩa/required field là major. Mỗi rollout hỗ trợ current + previous contract trong cửa sổ deploy cần thiết.
+Response HTTP của analyze chỉ ACK `{contractVersion,callId,contextHash,receiptHash}` sau khi ghi receipt; worker/finalizer đọc receipt đã ghi tại Node để hoàn tất. Không có output model trực tiếp ở ACK để bỏ qua đường receipt/validation. Ví dụ/schema chính xác nằm trong [contract v1](../../src/agent/contracts/ai-lab/v1/README.md).
+
+Zod là nguồn sinh JSON Schema; Python hiện kiểm cùng fixtures bằng JSON Schema validator. FastAPI/Pydantic wrapper sau này phải giữ parity và không bỏ unknown fields trước kiểm tra. Header `X-AI-Contract-Version` khớp body/envelope; hiện chỉ có 1.0.0. Thêm optional field dùng minor khi encoder thương lượng version và không gửi field mới cho client cũ; strict schema không tự bỏ unknown fields. Thay nghĩa/required field dùng major. Khi có bản kế tiếp, rollout phải hỗ trợ current + previous adapter/schema trong cửa sổ tương thích.
 
 ### 7.3. Context allowlist
 
@@ -428,7 +374,7 @@ Cross-attempt memory chưa nằm trong R2 mặc định. Chỉ lưu tóm tắt k
 
 ## 10. Tích hợp frontend và luồng cũ
 
-File đề xuất: `src/frontend/src/features/ai-lab/{AiLabPanel,AiMessage,AiHintCard,AiContextBadge}.jsx`, `src/frontend/src/hooks/useAiLabAssistant.js`, stylesheet theo tokens lab hiện có và API methods trong `src/frontend/src/services/Api.js`.
+File đề xuất đã thống nhất với tài liệu UI: `src/frontend/src/features/labs/components/ai/{AiLabPanel,AiMessage,AiHintCard,AiContextBadge}.jsx`, `src/frontend/src/features/labs/hooks/useAiLabAssistant.js`, stylesheet theo tokens lab hiện có và API methods trong `src/frontend/src/services/Api.js`. Dùng schema từ `@ccna/shared/aiLabContract`; hook gửi request async/poll theo ADR-001.
 
 - Lazy-load panel để hạn chế tăng bundle ban đầu; đo bundle delta trước/after.
 - `aiLoading`/request state riêng, không thêm vào `busyRef` của terminal.
@@ -442,21 +388,22 @@ Luồng `/explain` cũ cần xử lý trước pilot: giữ response tương th�
 ## 11. Cấu trúc triển khai đề xuất
 
 ```text
-contracts/ai-lab/v1/             schema và fixtures hợp lệ/bất hợp lệ
-src/backend/src/ai/                 request, quota, policy, snapshot, receipts, diagnostics
+src/agent/contracts/ai-lab/v1/             schema và fixtures hợp lệ/bất hợp lệ
+src/agent/node/                 request, quota, policy, snapshot, receipts, diagnostics
 src/backend/src/controllers/aiLabController.js
-src/backend/src/routes/aiLab.js
-src/backend/src/routes/aiInternal.js
-src/backend/src/workers/aiWorker.js
-src/backend/src/ai/*.test.js         node:test + PostgreSQL integration
-src/frontend/src/features/ai-lab/  UI và component tests
-src/frontend/src/hooks/useAiLabAssistant.js
-ai-service/app/                 FastAPI, schemas, adapters, prompts, policy
-ai-service/tests/               pytest, contract và fake-provider tests
-ai-service/evals/               fixtures, rubric, runner; không chứa dữ liệu production
-ai-service/pyproject.toml       dependencies + dev tooling
-ai-service/uv.lock              một lockfile Python; chốt công cụ ở task PY-01
-ai-service/Dockerfile
+src/agent/routes/aiLab.js
+src/agent/routes/aiInternal.js
+src/agent/workers/aiWorker.js
+src/agent/node/*.test.js         node:test + PostgreSQL integration
+src/agent/contracts/aiLabContract.js      nguồn wire schema và helper contract (đã có)
+src/frontend/src/features/labs/components/ai/  UI và component tests
+src/frontend/src/features/labs/hooks/useAiLabAssistant.js
+src/agent/python/app/                 FastAPI, schemas, adapters, prompts, policy
+src/agent/python/tests/               pytest, contract và fake-provider tests
+src/agent/python/evals/               fixtures, rubric, runner; không chứa dữ liệu production
+src/agent/python/pyproject.toml       dependencies + dev tooling
+src/agent/python/uv.lock              một lockfile Python; chốt công cụ ở task PY-01
+src/agent/python/Dockerfile
 src/scripts/ai-*/                   load, reconcile, retention và hỗ trợ vận hành
 docs/ai-lab-assistant/          bộ kế hoạch và ADR/eval reports khi triển khai
 ```

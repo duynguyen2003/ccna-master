@@ -1,0 +1,130 @@
+{
+  "contractVersion": "1.0.0",
+  "requestId": "7ea5187b-5dd0-42c7-960a-8106fcfb439d",
+  "callId": "b5988e7c-ff06-4efa-9e06-8efa64166e37",
+  "contextHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "leaseVersion": 1,
+  "deadlineAt": "2026-10-19T05:00:35Z",
+  "providerConfigId": "fake-r1",
+  "request": {
+    "intent": "DIAGNOSE",
+    "message": "Vì sao PC1 chưa ping được PC2?",
+    "selectedDeviceId": "PC1",
+    "target": {
+      "deviceId": "PC2"
+    },
+    "taskId": null
+  },
+  "policy": {
+    "effectiveHintLevel": 2,
+    "maxProviderCalls": 1,
+    "maxInputTokens": 6000,
+    "maxOutputTokens": 800,
+    "maxReasoningTokens": 0,
+    "maxCostMicros": 1000
+  },
+  "context": {
+    "sourceRevision": 12,
+    "lab": {
+      "id": "AI-IPV4-01",
+      "title": "IPv4/interface",
+      "objective": "Kiểm tra kết nối PC1-PC2.",
+      "commandProfile": "ccna-network-v2",
+      "simulatorVersion": "2.1.0",
+      "publicMetadataProvenance": "ATTEMPT_SNAPSHOT"
+    },
+    "devices": [
+      {
+        "id": "PC1",
+        "deviceType": "PC",
+        "hostname": "PC1",
+        "interfaces": [
+          {
+            "name": "GigabitEthernet0/0",
+            "ipAddress": null,
+            "subnetMask": null,
+            "shutdown": true,
+            "switchportMode": null,
+            "accessVlan": null
+          }
+        ],
+        "vlans": [],
+        "routes": []
+      },
+      {
+        "id": "R1",
+        "deviceType": "ROUTER",
+        "hostname": "R1",
+        "interfaces": [
+          {
+            "name": "GigabitEthernet0/0",
+            "ipAddress": null,
+            "subnetMask": null,
+            "shutdown": true,
+            "switchportMode": null,
+            "accessVlan": null
+          }
+        ],
+        "vlans": [],
+        "routes": []
+      },
+      {
+        "id": "PC2",
+        "deviceType": "PC",
+        "hostname": "PC2",
+        "interfaces": [
+          {
+            "name": "GigabitEthernet0/0",
+            "ipAddress": null,
+            "subnetMask": null,
+            "shutdown": true,
+            "switchportMode": null,
+            "accessVlan": null
+          }
+        ],
+        "vlans": [],
+        "routes": []
+      }
+    ],
+    "links": [],
+    "progress": [],
+    "recentCommands": [],
+    "contextTruncated": false
+  },
+  "facts": [
+    {
+      "evidenceId": "fact-r12-r1-g00",
+      "kind": "INTERFACE",
+      "deviceId": "R1",
+      "interface": "GigabitEthernet0/0",
+      "sourceRevision": 12,
+      "observation": "administratively down",
+      "confidenceClass": "OBSERVED",
+      "scope": "PC1-PC2",
+      "provenance": {
+        "source": "SNAPSHOT",
+        "reference": "devices.R1.interfaces.GigabitEthernet0/0.shutdown",
+        "version": "context-v1"
+      }
+    }
+  ],
+  "allowedCommands": [
+    {
+      "commandId": "show-r1-interfaces",
+      "deviceId": "R1",
+      "mode": "PRIVILEGED_EXEC",
+      "command": "show ip interface brief"
+    }
+  ],
+  "history": [],
+  "versions": {
+    "contextSchemaVersion": "1.0.0",
+    "simulatorVersion": "2.1.0",
+    "diagnosticVersion": "diagnostics-v1",
+    "promptVersion": "prompt-v1",
+    "policyVersion": "policy-v1",
+    "modelVersion": "fake-v1",
+    "priceVersion": "fake-price-v1",
+    "appCommit": "0000000000000000000000000000000000000000"
+  }
+}

@@ -3,14 +3,14 @@
    ========================================= */
 
 :root {
-  --doc-primary: #1e40af;
+  --doc-primary: var(--color-primary-hover);
   /* Navy/Blue */
-  --doc-primary-hover: #1e3a8a;
-  --doc-bg: var(--bg-color, #ffffff);
-  --doc-card-bg: #ffffff;
-  --doc-text-main: #1e293b;
-  --doc-text-sub: #64748b;
-  --doc-border: #e2e8f0;
+  --doc-primary-hover: var(--color-primary-hover);
+  --doc-bg: var(--bg-color, var(--color-surface));
+  --doc-card-bg: var(--color-surface);
+  --doc-text-main: var(--color-foreground);
+  --doc-text-sub: var(--color-muted-foreground);
+  --doc-border: var(--color-border);
 }
 
 .doc-container {
@@ -24,7 +24,7 @@
 }
 
 /* Loading State */
-.doc-loading {
+:where(.doc-container) .doc-loading {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -33,7 +33,7 @@
   color: var(--doc-text-sub);
 }
 
-.spinner {
+:where(.doc-container) .spinner {
   animation: spin 1s linear infinite;
   margin-bottom: 1rem;
   color: var(--doc-primary);
@@ -50,26 +50,26 @@
 }
 
 /* Header */
-.doc-header {
+:where(.doc-container) .doc-header {
   text-align: left;
   margin-bottom: 3rem;
 }
 
-.doc-header h1 {
+:where(.doc-container) .doc-header h1 {
   font-size: 24px;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--color-foreground);
   margin-bottom: 0.5rem;
   letter-spacing: -0.025em;
 }
 
-.doc-header p {
+:where(.doc-container) .doc-header p {
   font-size: 15px;
   color: var(--doc-text-sub);
 }
 
 /* Controls (Search & Filters) */
-.doc-controls {
+:where(.doc-container) .doc-controls {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
@@ -79,14 +79,14 @@
   flex-wrap: wrap;
 }
 
-.doc-search-wrapper {
+:where(.doc-container) .doc-search-wrapper {
   position: relative;
   width: 100%;
   flex: 1;
   max-width: 600px;
 }
 
-.search-icon {
+:where(.doc-container) .search-icon {
   position: absolute;
   left: 1rem;
   top: 50%;
@@ -94,31 +94,37 @@
   color: var(--doc-text-sub);
 }
 
-.doc-search-wrapper input {
+:where(.doc-container) .doc-search-wrapper input {
   width: 100%;
   padding: 0.75rem 1rem 0.75rem 2.75rem;
   border-radius: 8px;
   border: none;
-  background-color: #f1f5f9;
+  background-color: var(--color-muted);
   font-size: 0.95rem;
-  transition: all 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease,
+    opacity 0.2s ease;
   outline: none;
 }
 
-.doc-search-wrapper input:focus {
+:where(.doc-container) .doc-search-wrapper input:focus {
   background-color: var(--doc-card-bg);
   border-color: var(--doc-primary);
   box-shadow: 0 0 0 4px rgba(30, 64, 175, 0.1);
 }
 
-.doc-filters {
+:where(.doc-container) .doc-filters {
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
 }
 
-.doc-filters .filter-btn,
-.filter-btn {
+:where(.doc-container) .doc-filters .filter-btn,
+:where(.doc-container) .filter-btn {
   padding: 0.5rem 1.25rem;
   border-radius: 6px;
   border: 1px solid var(--doc-border);
@@ -130,28 +136,34 @@
   box-shadow:
     0 1px 3px rgba(0, 0, 0, 0.08),
     0 1px 2px rgba(0, 0, 0, 0.04);
-  transition: all 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease,
+    opacity 0.2s ease;
 }
 
-.doc-filters .filter-btn:hover,
-.filter-btn:hover {
-  background-color: #f1f5f9;
+:where(.doc-container) .doc-filters .filter-btn:hover,
+:where(.doc-container) .filter-btn:hover {
+  background-color: var(--color-muted);
   color: var(--doc-text-main);
   box-shadow:
     0 3px 6px rgba(0, 0, 0, 0.1),
     0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
-.doc-filters .filter-btn.active,
-.filter-btn.active {
+:where(.doc-container) .doc-filters .filter-btn.active,
+:where(.doc-container) .filter-btn.active {
   background-color: var(--doc-primary);
-  color: #ffffff;
+  color: var(--color-on-primary);
   border-color: var(--doc-primary);
   box-shadow: 0 2px 6px rgba(30, 64, 175, 0.35);
 }
 
 /* Sections */
-.doc-section {
+:where(.doc-container) .doc-section {
   margin-bottom: 3rem;
 }
 
@@ -166,24 +178,24 @@
   gap: 0.5rem;
 }
 
-.pin-icon {
+:where(.doc-container) .pin-icon {
   color: var(--doc-primary);
 }
 
 /* Pinned Grid */
-.pinned-grid {
+:where(.doc-container) .pinned-grid {
   display: grid;
   grid-template-columns: 1fr;
   gap: 1.5rem;
 }
 
 @media (min-width: 768px) {
-  .pinned-grid {
+  :where(.doc-container) .pinned-grid {
     grid-template-columns: 1fr 1fr;
   }
 }
 
-.pinned-card {
+:where(.doc-container) .pinned-card {
   background-color: var(--doc-card-bg);
   border: 1px solid var(--doc-border);
   border-radius: 6px;
@@ -198,63 +210,69 @@
     border-color 0.2s ease;
 }
 
-.pinned-card:hover {
+:where(.doc-container) .pinned-card:hover {
   transform: translateY(-2px);
-  border-color: #cbd5e1;
+  border-color: var(--color-border);
   box-shadow: 0 10px 22px rgba(71, 85, 105, 0.16);
 }
 
-.pinned-info {
+:where(.doc-container) .pinned-info {
   display: flex;
   align-items: center;
   gap: 1rem;
 }
 
-.pinned-name {
+:where(.doc-container) .pinned-name {
   font-weight: 600;
   font-size: 1rem;
-  color: #1e293b;
+  color: var(--color-foreground);
 }
 
-.pinned-actions {
+:where(.doc-container) .pinned-actions {
   display: flex;
   align-items: center;
   gap: 1rem;
 }
 
-.pinned-size {
+:where(.doc-container) .pinned-size {
   font-size: 0.85rem;
   color: var(--doc-text-sub);
 }
 
-.download-btn-icon {
+:where(.doc-container) .download-btn-icon {
   color: var(--doc-text-sub);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0.5rem;
   background-color: transparent;
-  transition: all 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease,
+    opacity 0.2s ease;
 }
 
-.download-btn-icon:hover {
+:where(.doc-container) .download-btn-icon:hover {
   color: var(--doc-primary);
 }
 
 /* All Resources List */
-.section-header-row {
+:where(.doc-container) .section-header-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1rem;
 }
 
-.item-count {
+:where(.doc-container) .item-count {
   font-size: 0.85rem;
   color: var(--doc-text-sub);
 }
 
-.doc-list-container {
+:where(.doc-container) .doc-list-container {
   overflow: hidden;
   background-color: var(--doc-card-bg);
   border: 1px solid var(--doc-border);
@@ -262,9 +280,9 @@
   box-shadow: var(--doc-card-shadow);
 }
 
-.list-header {
+:where(.doc-container) .list-header {
   display: flex;
-  background-color: #ffffff;
+  background-color: var(--color-surface);
   padding: 1rem 1.5rem;
   border-bottom: 1px solid var(--doc-border);
   font-size: 0.75rem;
@@ -273,16 +291,16 @@
   letter-spacing: 0.05em;
 }
 
-.col-name {
+:where(.doc-container) .col-name {
   flex: 3;
 }
 
-.col-size {
+:where(.doc-container) .col-size {
   flex: 1;
   text-align: right;
 }
 
-.list-row {
+:where(.doc-container) .list-row {
   display: flex;
   padding: 1.25rem 1.5rem;
   border-bottom: 1px solid var(--doc-border);
@@ -290,73 +308,79 @@
   transition: background-color 0.2s ease;
 }
 
-.list-row:last-child {
+:where(.doc-container) .list-row:last-child {
   border-bottom: none;
 }
 
-.list-row:hover {
-  background-color: #ffffff;
+:where(.doc-container) .list-row:hover {
+  background-color: var(--color-surface);
 }
 
-.cell-flex {
+:where(.doc-container) .cell-flex {
   display: flex;
   align-items: center;
   gap: 1.25rem;
 }
 
-.cell-flex-end {
+:where(.doc-container) .cell-flex-end {
   display: flex;
   align-items: center;
   justify-content: flex-end;
   gap: 2rem;
 }
 
-.type-icon-wrapper {
+:where(.doc-container) .type-icon-wrapper {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 40px;
   height: 40px;
   border-radius: 6px;
-  background-color: #f1f5f9;
+  background-color: var(--color-muted);
 }
 
-.item-details {
+:where(.doc-container) .item-details {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
 }
 
-.item-title {
+:where(.doc-container) .item-title {
   font-weight: 600;
   font-size: 0.95rem;
-  color: #0f172a;
+  color: var(--color-foreground);
 }
 
-.item-meta {
+:where(.doc-container) .item-meta {
   font-size: 0.8rem;
   color: var(--doc-text-sub);
 }
 
-.item-size {
+:where(.doc-container) .item-size {
   font-size: 0.9rem;
   color: var(--doc-text-main);
   font-weight: 500;
 }
 
-.row-download-btn {
+:where(.doc-container) .row-download-btn {
   color: var(--doc-text-sub);
   background-color: transparent;
-  transition: all 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease,
+    opacity 0.2s ease;
   display: flex;
   align-items: center;
 }
 
-.row-download-btn:hover {
+:where(.doc-container) .row-download-btn:hover {
   color: var(--doc-primary);
 }
 
-.empty-state {
+:where(.doc-container) .empty-state {
   padding: 3rem;
   text-align: center;
   color: var(--doc-text-sub);
@@ -364,7 +388,7 @@
 }
 
 /* Pagination */
-.doc-pagination {
+:where(.doc-container) .doc-pagination {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -373,42 +397,48 @@
   padding-top: 1rem;
 }
 
-.pagination-btn {
+:where(.doc-container) .pagination-btn {
   padding: 0.5rem 1rem;
   border-radius: 6px;
-  border: 1px solid var(--doc-border, #e2e8f0);
-  background-color: #ffffff;
-  color: var(--doc-text-main, #1e293b);
+  border: 1px solid var(--doc-border, var(--color-border));
+  background-color: var(--color-surface);
+  color: var(--doc-text-main, var(--color-foreground));
   font-size: 0.9rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease,
+    opacity 0.2s ease;
 }
 
-.pagination-btn:hover:not(:disabled) {
-  background-color: #f1f5f9;
-  color: var(--doc-primary, #1e40af);
-  border-color: var(--doc-primary, #1e40af);
+:where(.doc-container) .pagination-btn:hover:not(:disabled) {
+  background-color: var(--color-muted);
+  color: var(--doc-primary, var(--color-primary-hover));
+  border-color: var(--doc-primary, var(--color-primary-hover));
 }
 
-.pagination-btn.active {
-  background-color: var(--doc-primary, #1e40af);
-  color: #ffffff;
-  border-color: var(--doc-primary, #1e40af);
+:where(.doc-container) .pagination-btn.active {
+  background-color: var(--doc-primary, var(--color-primary-hover));
+  color: var(--color-on-primary);
+  border-color: var(--doc-primary, var(--color-primary-hover));
 }
 
-.pagination-btn:disabled {
-  color: var(--doc-text-sub, #64748b);
+:where(.doc-container) .pagination-btn:disabled {
+  color: var(--doc-text-sub, var(--color-muted-foreground));
   cursor: not-allowed;
   opacity: 0.5;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .pinned-card {
+  :where(.doc-container) .pinned-card {
     transition: none;
   }
 
-  .pinned-card:hover {
+  :where(.doc-container) .pinned-card:hover {
     transform: none;
     box-shadow: var(--doc-card-shadow);
   }

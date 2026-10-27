@@ -1,4 +1,5 @@
 import React from 'react';
+import '../styles/Exam.css';
 import { Routes, Route, Navigate } from 'react-router-dom';
 
 // Import các màn hình trong phân hệ Kiểm tra & Đánh giá

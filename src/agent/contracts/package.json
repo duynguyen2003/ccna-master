@@ -1,0 +1,13 @@
+{
+  "name": "@ccna/agent-contracts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "commonjs",
+  "main": "./aiLabContract.js",
+  "exports": {
+    ".": "./aiLabContract.js"
+  },
+  "dependencies": {
+    "zod": "^4.3.6"
+  }
+}

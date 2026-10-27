@@ -1,0 +1,31 @@
+[project]
+name = "ccna-ai-service"
+version = "0.1.0"
+description = "Internal AI Lab Assistant service with fake and local Gemini adapters"
+requires-python = ">=3.11,<3.12"
+dependencies = [
+  "fastapi==0.162.0",
+  "httpx==0.28.1",
+  "jsonschema==4.26.0",
+  "PyJWT==2.15.1",
+  "pydantic==2.14.1",
+  "uvicorn==0.54.0",
+]
+
+[dependency-groups]
+dev = ["pytest==9.1.1", "ruff==0.17.2"]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+pythonpath = ["."]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "ASYNC"]

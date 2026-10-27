@@ -1,0 +1,12 @@
+.route-error-state {
+  width: min(100%, 640px);
+  margin: 48px auto;
+  padding: 24px;
+}
+
+.route-error-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 20px;
+}

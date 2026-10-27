@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import '../styles/Labs.css';
 import { useSearchParams } from 'react-router-dom';
 import {
   Download,
@@ -19,6 +20,7 @@ import {
 } from 'lucide-react';
 import { api, BACKEND_URL } from '../../../services/Api.js';
 import { useAuth } from '../../../context/AuthContext';
+import Dialog from '../../../components/ui/Dialog';
 import HeartbeatLoader from '../../../components/ui/HeartbeatLoader';
 import { useToast } from '../../../components/ui/Toast';
 import CliLabWorkspace from '../components/CliLabWorkspace';
@@ -56,6 +58,7 @@ const LabGuideModal = ({ lab, onClose, onComplete, isGuestView, onGuestBlocked }
   const [isZoomed, setIsZoomed] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const closeTimer = useRef(null);
+  const dialogRef = useRef(null);
   const totalSteps = lab.steps?.length || 0;
 
   const requestClose = useCallback(() => {
@@ -79,23 +82,41 @@ const LabGuideModal = ({ lab, onClose, onComplete, isGuestView, onGuestBlocked }
   );
 
   useEffect(() => {
-    document.addEventListener('keydown', handleKey);
+    const previous = document.activeElement;
+    const dialog = dialogRef.current;
+    dialog.showModal();
+    dialog.querySelector('button')?.focus();
     document.body.style.overflow = 'hidden';
     return () => {
-      document.removeEventListener('keydown', handleKey);
+      dialog.close();
+      if (previous?.isConnected) previous.focus();
       document.body.style.overflow = '';
     };
-  }, [handleKey]);
+  }, []);
 
   // Đổi handler bàn phím khi bắt đầu animation không được hủy timer đóng.
-  useEffect(() => () => {
-    if (closeTimer.current) window.clearTimeout(closeTimer.current);
-  }, []);
+  useEffect(
+    () => () => {
+      if (closeTimer.current) window.clearTimeout(closeTimer.current);
+    },
+    []
+  );
 
   const currentStep = lab.steps?.[step];
 
   return (
-    <div className={`lab-modal-overlay ${isClosing ? 'is-closing' : ''}`} onClick={requestClose}>
+    <dialog
+      ref={dialogRef}
+      aria-label={`Hướng dẫn lab: ${lab.title}`}
+      className={`lab-guide-dialog lab-modal-overlay ${isClosing ? 'is-closing' : ''}`}
+      onClick={(event) => {
+        if (event.target === event.currentTarget) requestClose();
+      }}
+      onCancel={(event) => {
+        event.preventDefault();
+        handleKey({ key: 'Escape' });
+      }}
+    >
       <div className="lab-guide-mobile-fallback" role="status">
         <div className="cli-mobile-fallback-card">
           <div className="cli-mobile-fallback-icon">
@@ -117,7 +138,13 @@ const LabGuideModal = ({ lab, onClose, onComplete, isGuestView, onGuestBlocked }
       >
         <div className="lab-modal-topbar">
           <div className="lab-modal-dots">
-            <span className="dot-red" onClick={requestClose} title="Đóng" />
+            <button
+              type="button"
+              className="dot-red"
+              onClick={requestClose}
+              title="Đóng"
+              aria-label="Đóng hướng dẫn lab"
+            />
             <span className="dot-yellow" />
             <span className="dot-green" />
           </div>
@@ -125,7 +152,12 @@ const LabGuideModal = ({ lab, onClose, onComplete, isGuestView, onGuestBlocked }
             <Terminal size={13} style={{ marginRight: 6 }} />
             cisco-lab - {lab.title}
           </span>
-          <button className="lab-modal-close" onClick={requestClose}>
+          <button
+            type="button"
+            className="lab-modal-close"
+            onClick={requestClose}
+            aria-label="Đóng hướng dẫn lab"
+          >
             <X size={16} />
           </button>
         </div>
@@ -137,7 +169,9 @@ const LabGuideModal = ({ lab, onClose, onComplete, isGuestView, onGuestBlocked }
                 <Network size={13} /> Sơ đồ mạng (Topology)
               </div>
               {lab.topologyImgUrl ? (
-                <div
+                <button
+                  type="button"
+                  aria-label="Phóng to sơ đồ mạng"
                   className="lab-topology-img-wrap"
                   style={{
                     marginTop: '8px',
@@ -147,14 +181,18 @@ const LabGuideModal = ({ lab, onClose, onComplete, isGuestView, onGuestBlocked }
                     cursor: 'zoom-in',
                   }}
                   onClick={() => setIsZoomed(true)}
-                  title="Click để phóng to sơ đồ mạng"
+                  title="Phóng to sơ đồ mạng"
                 >
                   <img
                     src={lab.topologyImgUrl}
                     alt="Topology"
-                    style={{ width: '100%', display: 'block' }}
+                    style={{ width: '100%', height: 'auto', display: 'block' }}
+                    width={640}
+                    height={360}
+                    loading="lazy"
+                    decoding="async"
                   />
-                </div>
+                </button>
               ) : (
                 <pre className="lab-topology-pre">{lab.topology || 'Không có sơ đồ'}</pre>
               )}
@@ -213,10 +251,10 @@ const LabGuideModal = ({ lab, onClose, onComplete, isGuestView, onGuestBlocked }
             <div
               className="lab-sidebar-section"
               style={{
-                background: 'rgba(37,99,235,0.1)',
+                background: 'rgba(56, 98, 152, 0.1)',
                 padding: '10px',
                 borderRadius: '8px',
-                border: '1px solid rgba(37,99,235,0.3)',
+                border: '1px solid rgba(56, 98, 152, 0.3)',
                 marginTop: 'auto',
                 marginBottom: '10px',
               }}
@@ -241,7 +279,9 @@ const LabGuideModal = ({ lab, onClose, onComplete, isGuestView, onGuestBlocked }
                   lineHeight: 1.5,
                 }}
               >
-                Guest chỉ được xem thông tin hướng dẫn. Đăng nhập để tải file và thực hành lab.
+                {isGuestView
+                  ? 'Đăng nhập để tải file và thực hành lab.'
+                  : 'Thực hành trong file lab, rồi kiểm tra kết quả trước khi xác nhận hoàn thành.'}
               </p>
             </div>
 
@@ -324,25 +364,17 @@ const LabGuideModal = ({ lab, onClose, onComplete, isGuestView, onGuestBlocked }
 
       {/* Zoom Overlay */}
       {isZoomed && (
-        <div className="lab-topology-zoom-overlay" onClick={() => setIsZoomed(false)}>
-          <div className="lab-topology-zoom-container" onClick={(e) => e.stopPropagation()}>
-            <button
-              className="lab-topology-zoom-close"
-              onClick={() => setIsZoomed(false)}
-              title="Đóng"
-            >
-              <X size={20} />
-            </button>
-            <img
-              src={lab.topologyImgUrl}
-              alt="Topology Zoomed"
-              className="lab-topology-zoom-img"
-              onClick={() => setIsZoomed(false)}
-            />
-          </div>
-        </div>
+        <Dialog title="Sơ đồ mạng" onClose={() => setIsZoomed(false)}>
+          <img
+            src={lab.topologyImgUrl}
+            alt={`Sơ đồ mạng: ${lab.title}`}
+            width={960}
+            height={640}
+            style={{ width: '100%', height: 'auto' }}
+          />
+        </Dialog>
       )}
-    </div>
+    </dialog>
   );
 };
 
@@ -362,7 +394,15 @@ const LabCard = ({ lab, isCompleted, onSelect, onStartCli, isGuestView, onGuestB
   return (
     <div className="lab-card">
       <div className="lab-card-img-wrap">
-        <img src={lab.imageUrl} alt={lab.title} className="lab-card-img" />
+        <img
+          src={lab.imageUrl}
+          alt={lab.title}
+          className="lab-card-img"
+          width={640}
+          height={360}
+          loading="lazy"
+          decoding="async"
+        />
         <div style={{ position: 'absolute', top: 12, right: 12, display: 'flex', gap: '8px' }}>
           {isCompleted && (
             <span
@@ -584,6 +624,7 @@ export const Labs = () => {
         <div className="labs-search-wrap">
           <Search size={16} className="labs-search-icon" />
           <input
+            aria-label="Tìm bài lab"
             type="text"
             className="labs-search-input"
             placeholder="Tìm kiếm bài lab..."
@@ -598,6 +639,7 @@ export const Labs = () => {
           <button
             key={cat}
             onClick={() => setFilter(cat)}
+            aria-pressed={filter.toLowerCase() === cat.toLowerCase()}
             className={`filter-btn ${filter.toLowerCase() === cat.toLowerCase() ? 'active' : ''}`}
           >
             {cat}
@@ -611,7 +653,11 @@ export const Labs = () => {
         <div className="labs-empty" role="alert">
           <Terminal size={40} />
           <p>{loadError}</p>
-          <button type="button" className="lab-btn-primary" onClick={() => setReloadKey((key) => key + 1)}>
+          <button
+            type="button"
+            className="lab-btn-primary"
+            onClick={() => setReloadKey((key) => key + 1)}
+          >
             Thử tải lại
           </button>
         </div>

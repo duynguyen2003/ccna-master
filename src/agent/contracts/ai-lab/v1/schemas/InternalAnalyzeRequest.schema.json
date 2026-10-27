@@ -1,0 +1,964 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "contractVersion": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "requestId": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+    },
+    "callId": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+    },
+    "contextHash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "leaseVersion": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "deadlineAt": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+    },
+    "providerConfigId": {
+      "type": "string",
+      "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+    },
+    "context": {
+      "type": "object",
+      "properties": {
+        "sourceRevision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "lab": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^[\\s\\S]{1,120}$"
+            },
+            "title": {
+              "type": "string",
+              "pattern": "^[\\s\\S]{1,200}$"
+            },
+            "objective": {
+              "type": "string",
+              "pattern": "^[\\s\\S]{1,4000}$"
+            },
+            "commandProfile": {
+              "type": "string",
+              "const": "ccna-network-v2"
+            },
+            "simulatorVersion": {
+              "type": "string",
+              "pattern": "^[\\s\\S]{1,40}$"
+            },
+            "publicMetadataProvenance": {
+              "type": "string",
+              "enum": [
+                "ATTEMPT_SNAPSHOT",
+                "CAPTURED_AT_AI_REQUEST",
+                "FEEDBACK_SNAPSHOT"
+              ]
+            }
+          },
+          "required": [
+            "id",
+            "title",
+            "objective",
+            "commandProfile",
+            "simulatorVersion",
+            "publicMetadataProvenance"
+          ],
+          "additionalProperties": false
+        },
+        "devices": {
+          "minItems": 1,
+          "maxItems": 24,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+              },
+              "deviceType": {
+                "type": "string",
+                "enum": [
+                  "ROUTER",
+                  "SWITCH",
+                  "PC"
+                ]
+              },
+              "hostname": {
+                "type": "string",
+                "pattern": "^[\\s\\S]{1,63}$"
+              },
+              "interfaces": {
+                "minItems": 1,
+                "maxItems": 24,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "pattern": "^(?:(?:GigabitEthernet|FastEthernet)[0-9]+\\/[0-9]+|Loopback[0-9]+)$"
+                    },
+                    "ipAddress": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "pattern": "^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "subnetMask": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "0.0.0.0",
+                            "128.0.0.0",
+                            "192.0.0.0",
+                            "224.0.0.0",
+                            "240.0.0.0",
+                            "248.0.0.0",
+                            "252.0.0.0",
+                            "254.0.0.0",
+                            "255.0.0.0",
+                            "255.128.0.0",
+                            "255.192.0.0",
+                            "255.224.0.0",
+                            "255.240.0.0",
+                            "255.248.0.0",
+                            "255.252.0.0",
+                            "255.254.0.0",
+                            "255.255.0.0",
+                            "255.255.128.0",
+                            "255.255.192.0",
+                            "255.255.224.0",
+                            "255.255.240.0",
+                            "255.255.248.0",
+                            "255.255.252.0",
+                            "255.255.254.0",
+                            "255.255.255.0",
+                            "255.255.255.128",
+                            "255.255.255.192",
+                            "255.255.255.224",
+                            "255.255.255.240",
+                            "255.255.255.248",
+                            "255.255.255.252",
+                            "255.255.255.254",
+                            "255.255.255.255"
+                          ]
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "shutdown": {
+                      "type": "boolean"
+                    },
+                    "switchportMode": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "access",
+                            "trunk"
+                          ]
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "accessVlan": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 4094
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "ipAddress",
+                    "subnetMask",
+                    "shutdown",
+                    "switchportMode",
+                    "accessVlan"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "vlans": {
+                "maxItems": 64,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "vlanId": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 4094
+                    },
+                    "name": {
+                      "type": "string",
+                      "pattern": "^[\\s\\S]{1,32}$"
+                    }
+                  },
+                  "required": [
+                    "vlanId",
+                    "name"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "routes": {
+                "maxItems": 128,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "network": {
+                      "type": "string",
+                      "pattern": "^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$"
+                    },
+                    "mask": {
+                      "type": "string",
+                      "enum": [
+                        "0.0.0.0",
+                        "128.0.0.0",
+                        "192.0.0.0",
+                        "224.0.0.0",
+                        "240.0.0.0",
+                        "248.0.0.0",
+                        "252.0.0.0",
+                        "254.0.0.0",
+                        "255.0.0.0",
+                        "255.128.0.0",
+                        "255.192.0.0",
+                        "255.224.0.0",
+                        "255.240.0.0",
+                        "255.248.0.0",
+                        "255.252.0.0",
+                        "255.254.0.0",
+                        "255.255.0.0",
+                        "255.255.128.0",
+                        "255.255.192.0",
+                        "255.255.224.0",
+                        "255.255.240.0",
+                        "255.255.248.0",
+                        "255.255.252.0",
+                        "255.255.254.0",
+                        "255.255.255.0",
+                        "255.255.255.128",
+                        "255.255.255.192",
+                        "255.255.255.224",
+                        "255.255.255.240",
+                        "255.255.255.248",
+                        "255.255.255.252",
+                        "255.255.255.254",
+                        "255.255.255.255"
+                      ]
+                    },
+                    "nextHop": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "pattern": "^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "protocol": {
+                      "type": "string",
+                      "enum": [
+                        "C",
+                        "S",
+                        "O",
+                        "D"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "network",
+                    "mask",
+                    "nextHop",
+                    "protocol"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "id",
+              "deviceType",
+              "hostname",
+              "interfaces",
+              "vlans",
+              "routes"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "links": {
+          "maxItems": 96,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+              },
+              "a": {
+                "type": "object",
+                "properties": {
+                  "deviceId": {
+                    "type": "string",
+                    "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+                  },
+                  "interface": {
+                    "type": "string",
+                    "pattern": "^(?:(?:GigabitEthernet|FastEthernet)[0-9]+\\/[0-9]+|Loopback[0-9]+)$"
+                  }
+                },
+                "required": [
+                  "deviceId",
+                  "interface"
+                ],
+                "additionalProperties": false
+              },
+              "b": {
+                "type": "object",
+                "properties": {
+                  "deviceId": {
+                    "type": "string",
+                    "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+                  },
+                  "interface": {
+                    "type": "string",
+                    "pattern": "^(?:(?:GigabitEthernet|FastEthernet)[0-9]+\\/[0-9]+|Loopback[0-9]+)$"
+                  }
+                },
+                "required": [
+                  "deviceId",
+                  "interface"
+                ],
+                "additionalProperties": false
+              },
+              "enabled": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "id",
+              "a",
+              "b",
+              "enabled"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "progress": {
+          "maxItems": 64,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "taskId": {
+                "type": "string",
+                "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+              },
+              "title": {
+                "type": "string",
+                "pattern": "^[\\s\\S]{1,200}$"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "completed",
+                  "in_progress",
+                  "not_started"
+                ]
+              },
+              "hint": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^[\\s\\S]{1,500}$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "taskId",
+              "title",
+              "status",
+              "hint"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "recentCommands": {
+          "maxItems": 12,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "deviceId": {
+                "type": "string",
+                "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+              },
+              "command": {
+                "type": "string",
+                "pattern": "^[\\s\\S]{1,500}$"
+              },
+              "output": {
+                "type": "string",
+                "pattern": "^[\\s\\S]{1,2000}$"
+              },
+              "sourceRevision": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "deviceId",
+              "command",
+              "output",
+              "sourceRevision"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "contextTruncated": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "sourceRevision",
+        "lab",
+        "devices",
+        "links",
+        "progress",
+        "recentCommands",
+        "contextTruncated"
+      ],
+      "additionalProperties": false
+    },
+    "request": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "message": {
+              "type": "string",
+              "pattern": "^[\\s\\S]{1,2000}$"
+            },
+            "selectedDeviceId": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "target": {
+              "type": "null"
+            },
+            "taskId": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "intent": {
+              "type": "string",
+              "const": "NEXT_STEP"
+            }
+          },
+          "required": [
+            "message",
+            "selectedDeviceId",
+            "target",
+            "taskId",
+            "intent"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "message": {
+              "type": "string",
+              "pattern": "^[\\s\\S]{1,2000}$"
+            },
+            "selectedDeviceId": {
+              "type": "string",
+              "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+            },
+            "target": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "deviceId": {
+                      "type": "string",
+                      "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+                    }
+                  },
+                  "required": [
+                    "deviceId"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "ipv4": {
+                      "type": "string",
+                      "pattern": "^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$"
+                    }
+                  },
+                  "required": [
+                    "ipv4"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            },
+            "taskId": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "intent": {
+              "type": "string",
+              "const": "DIAGNOSE"
+            }
+          },
+          "required": [
+            "message",
+            "selectedDeviceId",
+            "target",
+            "taskId",
+            "intent"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "message": {
+              "type": "string",
+              "pattern": "^[\\s\\S]{1,2000}$"
+            },
+            "selectedDeviceId": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "target": {
+              "type": "null"
+            },
+            "taskId": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "intent": {
+              "type": "string",
+              "const": "EXPLAIN_CONCEPT"
+            }
+          },
+          "required": [
+            "message",
+            "selectedDeviceId",
+            "target",
+            "taskId",
+            "intent"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "message": {
+              "type": "string",
+              "pattern": "^[\\s\\S]{1,2000}$"
+            },
+            "selectedDeviceId": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "target": {
+              "type": "null"
+            },
+            "taskId": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "intent": {
+              "type": "string",
+              "const": "LAB_REVIEW"
+            }
+          },
+          "required": [
+            "message",
+            "selectedDeviceId",
+            "target",
+            "taskId",
+            "intent"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "policy": {
+      "type": "object",
+      "properties": {
+        "effectiveHintLevel": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3
+        },
+        "maxProviderCalls": {
+          "type": "number",
+          "const": 1
+        },
+        "maxInputTokens": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 6000
+        },
+        "maxOutputTokens": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 800
+        },
+        "maxReasoningTokens": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "maxCostMicros": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "effectiveHintLevel",
+        "maxProviderCalls",
+        "maxInputTokens",
+        "maxOutputTokens",
+        "maxReasoningTokens",
+        "maxCostMicros"
+      ],
+      "additionalProperties": false
+    },
+    "facts": {
+      "maxItems": 64,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "evidenceId": {
+            "type": "string",
+            "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "INTERFACE",
+              "ROUTE",
+              "VLAN",
+              "LINK",
+              "TRACE",
+              "PUBLIC_TASK"
+            ]
+          },
+          "deviceId": {
+            "type": "string",
+            "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+          },
+          "interface": {
+            "type": "string",
+            "pattern": "^(?:(?:GigabitEthernet|FastEthernet)[0-9]+\\/[0-9]+|Loopback[0-9]+)$"
+          },
+          "sourceRevision": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "observation": {
+            "type": "string",
+            "pattern": "^[\\s\\S]{1,1000}$"
+          },
+          "confidenceClass": {
+            "type": "string",
+            "enum": [
+              "OBSERVED",
+              "INFERRED"
+            ]
+          },
+          "scope": {
+            "type": "string",
+            "pattern": "^[\\s\\S]{1,200}$"
+          },
+          "provenance": {
+            "type": "object",
+            "properties": {
+              "source": {
+                "type": "string",
+                "enum": [
+                  "SNAPSHOT",
+                  "DIAGNOSTIC",
+                  "TOOL"
+                ]
+              },
+              "reference": {
+                "type": "string",
+                "pattern": "^[\\s\\S]{1,200}$"
+              },
+              "version": {
+                "type": "string",
+                "pattern": "^[\\s\\S]{1,80}$"
+              }
+            },
+            "required": [
+              "source",
+              "reference",
+              "version"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "evidenceId",
+          "kind",
+          "sourceRevision",
+          "observation",
+          "confidenceClass",
+          "scope",
+          "provenance"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "allowedCommands": {
+      "maxItems": 32,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "commandId": {
+            "type": "string",
+            "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+          },
+          "deviceId": {
+            "type": "string",
+            "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "USER_EXEC",
+              "PRIVILEGED_EXEC",
+              "GLOBAL_CONFIG",
+              "INTERFACE_CONFIG",
+              "VLAN_CONFIG"
+            ]
+          },
+          "command": {
+            "type": "string",
+            "pattern": "^[\\s\\S]{1,500}$"
+          }
+        },
+        "required": [
+          "commandId",
+          "deviceId",
+          "mode",
+          "command"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "history": {
+      "maxItems": 6,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "USER",
+              "ASSISTANT"
+            ]
+          },
+          "text": {
+            "type": "string",
+            "pattern": "^[\\s\\S]{1,6000}$"
+          },
+          "sourceRevision": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "role",
+          "text",
+          "sourceRevision"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "versions": {
+      "type": "object",
+      "properties": {
+        "contextSchemaVersion": {
+          "type": "string",
+          "const": "1.0.0"
+        },
+        "simulatorVersion": {
+          "type": "string",
+          "pattern": "^[\\s\\S]{1,40}$"
+        },
+        "diagnosticVersion": {
+          "type": "string",
+          "pattern": "^[\\s\\S]{1,80}$"
+        },
+        "promptVersion": {
+          "type": "string",
+          "pattern": "^[\\s\\S]{1,80}$"
+        },
+        "policyVersion": {
+          "type": "string",
+          "pattern": "^[\\s\\S]{1,80}$"
+        },
+        "modelVersion": {
+          "type": "string",
+          "pattern": "^[\\s\\S]{1,120}$"
+        },
+        "priceVersion": {
+          "type": "string",
+          "pattern": "^[\\s\\S]{1,80}$"
+        },
+        "appCommit": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        }
+      },
+      "required": [
+        "contextSchemaVersion",
+        "simulatorVersion",
+        "diagnosticVersion",
+        "promptVersion",
+        "policyVersion",
+        "modelVersion",
+        "priceVersion",
+        "appCommit"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "contractVersion",
+    "requestId",
+    "callId",
+    "contextHash",
+    "leaseVersion",
+    "deadlineAt",
+    "providerConfigId",
+    "context",
+    "request",
+    "policy",
+    "facts",
+    "allowedCommands",
+    "history",
+    "versions"
+  ],
+  "additionalProperties": false,
+  "$id": "urn:ccna:ai-lab:v1:InternalAnalyzeRequest"
+}

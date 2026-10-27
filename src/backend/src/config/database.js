@@ -25,6 +25,10 @@ const initializeDatabase = () => {
         process.env.DATABASE_URL || 'postgresql://postgres:123456@localhost:5432/netmastery_db',
       connectionTimeoutMillis: 5000,
       query_timeout: 5000,
+      // adapter-pg serializes DateTime parameters as UTC wall time and strips
+      // timestamptz offsets on reads. Keep each pooled session in UTC so SQL
+      // predicates, stored leases and JS dates describe the same instant.
+      options: '-c timezone=UTC',
     });
     const adapter = new PrismaPg(pool, { disposeExternalPool: true });
     prismaInstance = new PrismaClient({ adapter, log: ['error'] });

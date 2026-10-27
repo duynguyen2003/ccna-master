@@ -1,6 +1,6 @@
-# 🚀 CCNA Master - Nền tảng học và luyện thi CCNA chuyên nghiệp
+# 🚀 NetMaster - Nền tảng học và luyện thi CCNA chuyên nghiệp
 
-**CCNA Master** là một ứng dụng web toàn diện được thiết kế để hỗ trợ sinh viên và kỹ sư mạng trong quá trình chinh phục chứng chỉ CCNA (Cisco Certified Network Associate). Hệ thống tích hợp lộ trình học tập bài bản, ngân hàng câu hỏi trắc nghiệm thông minh, và các công cụ thực hành Lab hiện đại.
+**NetMaster** là một ứng dụng web toàn diện được thiết kế để hỗ trợ sinh viên và kỹ sư mạng trong quá trình chinh phục chứng chỉ CCNA (Cisco Certified Network Associate). Hệ thống tích hợp lộ trình học tập bài bản, ngân hàng câu hỏi trắc nghiệm thông minh, và các công cụ thực hành Lab hiện đại.
 
 Mã nguồn được chia thành pnpm workspace: `src/frontend/src` chứa React theo chức năng, `src/backend/src` chứa API, `src/backend/prisma` chứa schema/migration, `src/shared` chứa hợp đồng và engine mô phỏng dùng chung, `src/storage/uploads` chứa tệp tải lên. Các lệnh `pnpm start`, `pnpm server`, `pnpm build`, `pnpm test` tiếp tục chạy tại root; build frontend nằm ở `src/frontend/build`. Xem [cấu trúc và quy tắc import](docs/project-structure.md).
 
@@ -9,6 +9,7 @@ Mã nguồn được chia thành pnpm workspace: `src/frontend/src` chứa React
 ## ✨ Tính năng nổi bật
 
 ### 👨‍🎓 Dành cho Học viên
+
 - **Lộ trình học tập (Curriculum)**: Chia thành các Module và bài học chi tiết theo chuẩn Cisco.
 - **Theo dõi tiến độ**: Ghi lại lịch sử xem video và tiến độ học tập hàng ngày bằng biểu đồ trực quan.
 - **Hệ thống thi trắc nghiệm**: Ngân hàng câu hỏi phong phú, chấm điểm tức thì và xem lại giải thích đáp án.
@@ -16,11 +17,13 @@ Mã nguồn được chia thành pnpm workspace: `src/frontend/src` chứa React
 - **Bộ công cụ (Network Tools)**: Subnet Calculator, VLSM, Tra cứu Cisco CLI, Tra cứu Port & Protocol.
 
 ### 🛡️ Bảo mật & Hệ thống
+
 - **Xác thực đa dạng**: Đăng nhập bằng tài khoản hoặc Google OAuth 2.0.
 - **Bảo mật nâng cao**: Sử dụng JWT (JSON Web Token), mã hóa mật khẩu Bcrypt, bảo vệ Header với Helmet và giới hạn tần suất yêu cầu (Rate Limiting).
 - **Quản lý phiên làm việc**: Tính năng Quên mật khẩu & Khôi phục mật khẩu qua Email tự động.
 
 ### ⚙️ Dành cho Quản trị viên (Admin Panel)
+
 - **Quản lý nội dung**: CRUD (Thêm, Sửa, Xóa mềm) Khóa học, Bài học, Bài thi và Bài Lab.
 - **Thống kê người dùng**: Biểu đồ hoạt động và báo cáo kết quả học tập của toàn bộ hệ thống.
 - **Log hệ thống**: Theo dõi các hoạt động quan trọng của Admin.
@@ -30,13 +33,17 @@ Mã nguồn được chia thành pnpm workspace: `src/frontend/src` chứa React
 ## 🛠️ Công nghệ sử dụng
 
 ### Frontend
+
 - **React.js 18**
-- **Tailwind CSS** (Styling)
+- **CSS theo component** (Styling)
 - **Lucide React** (Icons)
 - **Recharts** (Biểu đồ thống kê)
 - **TanStack Query** (Quản lý trạng thái API)
 
+Giao diện học viên dùng thương hiệu **NetMaster**, có sáng/tối và tách code/CSS theo route. Host cần SPA fallback cho BrowserRouter; link hash cũ vẫn được chuyển sang URL mới. Xem [kết quả cải thiện UI và số đo production](docs/ui-ux/student-ui-audit.md) và [quy tắc UI](docs/ui-ux/student-ui-guidelines.md).
+
 ### Backend
+
 - **Node.js & Express.js**
 - **Prisma ORM** (Quản lý Database)
 - **PostgreSQL** (Hệ quản trị CSDL)
@@ -48,12 +55,15 @@ Mã nguồn được chia thành pnpm workspace: `src/frontend/src` chứa React
 ## 🚀 Hướng dẫn cài đặt
 
 ### 1. Yêu cầu hệ thống
+
 - **Node.js** 22.12+ (nhánh 22) hoặc 24+.
 - **pnpm** 10.33.4 (được khóa trong `package.json`).
 - **PostgreSQL** (Đang chạy trên máy hoặc qua Docker)
 
 ### 2. Cài đặt Dependencies
+
 Mở terminal tại thư mục gốc của dự án và chạy:
+
 ```bash
 corepack enable pnpm
 pnpm install --frozen-lockfile
@@ -71,7 +81,9 @@ Chạy kiểm tra bằng `pnpm run test:cli`, `pnpm run test:learning`, `pnpm ru
 `pnpm test --watchAll=false --runInBand` và `pnpm run build`.
 
 ### 3. Cấu hình biến môi trường
+
 Tạo file `.env` tại thư mục gốc (dựa trên mẫu `.env.example`) và điền các thông tin sau:
+
 ```env
 DATABASE_URL="postgresql://user:password@localhost:5432/db_name"
 JWT_SECRET="<secret ngẫu nhiên riêng, ít nhất 32 ký tự>"
@@ -82,7 +94,9 @@ EMAIL_PASS="your-app-password"
 ```
 
 ### 4. Khởi tạo Database
+
 Với database mới, chạy các migration đã lưu trong Git:
+
 ```bash
 pnpm exec prisma generate
 pnpm run db:deploy
@@ -94,7 +108,9 @@ Docker Compose chạy migration trong service `migrate` riêng; backend khởi �
 `developer` triển khai Vercel preview, `main` triển khai production với secrets riêng theo GitHub Environment.
 
 ### 5. Chạy ứng dụng
+
 Mở hai terminal song song:
+
 - **Terminal 1 (Backend)**: `pnpm run server`
 - **Terminal 2 (Frontend)**: `pnpm start`
 
@@ -108,26 +124,26 @@ Lệnh kiểm tra đối chiếu icon và alias với thư viện gốc; Node v�
 ---
 
 ## 📂 Cấu trúc thư mục chính
+
 ```text
 ccna-master/
-├── prisma/             # Định nghĩa Schema Database
-├── public/             # Tài sản tĩnh (Images, HTML)
 ├── src/
-│   ├── Backend/        # Toàn bộ mã nguồn Backend (MVC)
-│   │   ├── config/     # Cấu hình DB, JWT, Email...
-│   │   ├── controllers/# Xử lý logic nghiệp vụ
-│   │   ├── middleware/ # Lớp bảo vệ (Auth, Rate Limit...)
-│   │   ├── routes/     # Định nghĩa các API endpoints
-│   │   └── validation/ # Schema xác thực dữ liệu (Zod)
-│   ├── components/     # Giao diện người dùng (React Components)
-│   ├── context/        # Quản lý trạng thái Auth, Toast...
-│   ├── services/       # Lớp gọi API từ Frontend
-│   └── css/            # Các file định dạng giao diện
+│   ├── frontend/       # React, public assets và production build
+│   │   └── src/        # Trang theo tính năng, component, context, service và style
+│   ├── backend/
+│   │   ├── src/        # API, controller, middleware và domain
+│   │   └── prisma/     # Schema và migration database
+│   ├── agent/          # Node worker, Python service và hợp đồng AI Lab
+│   ├── shared/         # Engine mô phỏng và hợp đồng dùng chung
+│   ├── scripts/        # Công cụ phát triển và vận hành
+│   └── storage/        # Tệp tải lên tại máy chủ
+├── docs/               # Tài liệu kỹ thuật, task AI và audit UI
 └── .env                # Biến môi trường (Không commit)
 ```
 
 ---
 
 ## 👨‍💻 Tác giả
+
 - **Tên**: [Tên của bạn]
 - **Đồ án**: Tốt nghiệp khóa [Năm] - Ngành Công nghệ thông tin.

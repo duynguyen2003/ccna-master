@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import BrandLogo from '../../branding/BrandLogo';
 import '../styles/Footer.css';
 
 const COL_COURSES = [
@@ -15,9 +16,7 @@ const COL_RESOURCES = [
   { label: 'Tra cứu Port & Giao thức', to: '/tools/ports' },
 ];
 
-const COL_ABOUT = [
-  { label: 'Câu hỏi thường gặp (FAQ)', to: '/?section=faq' },
-];
+const COL_ABOUT = [{ label: 'Câu hỏi thường gặp (FAQ)', to: '/?section=faq' }];
 
 const NavColumn = ({ title, links }) => (
   <div className="footer__col">
@@ -42,11 +41,8 @@ const Footer = () => {
       <div className="footer__inner">
         <div className="footer__grid">
           <div className="footer__col">
-            <Link to="/" className="footer__brand-logo" aria-label="NetMastery - Trang chủ">
-              <div className="footer__brand-icon">
-                <span className="material-icons-round">router</span>
-              </div>
-              <span className="footer__brand-name">NetMastery</span>
+            <Link to="/" className="footer__brand-logo" aria-label="NetMaster - Trang chủ">
+              <BrandLogo className="footer__brand" inverse />
             </Link>
             <p className="footer__brand-slogan">
               Nền tảng học và luyện thi CCNA thực chiến. Từ nền tảng đến kỹ sư mạng chuyên nghiệp.
@@ -55,7 +51,7 @@ const Footer = () => {
 
           <NavColumn title="Khóa học" links={COL_COURSES} />
           <NavColumn title="Tài nguyên" links={COL_RESOURCES} />
-          <NavColumn title="Về NetMastery" links={COL_ABOUT} />
+          <NavColumn title="Về NetMaster" links={COL_ABOUT} />
         </div>
       </div>
 
@@ -63,7 +59,7 @@ const Footer = () => {
 
       <div className="footer__bottom">
         <p className="footer__copyright">
-          &copy; {currentYear} <strong>NetMastery</strong>. All rights reserved. Đồ án tốt nghiệp —
+          &copy; {currentYear} <strong>NetMaster</strong>. All rights reserved. Đồ án tốt nghiệp —
           Nền tảng học CCNA trực tuyến.
         </p>
         <p className="footer__made-with">

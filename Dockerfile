@@ -10,6 +10,8 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY src/frontend/package.json ./src/frontend/package.json
 COPY src/backend/package.json ./src/backend/package.json
 COPY src/shared/package.json ./src/shared/package.json
+COPY src/agent/package.json ./src/agent/package.json
+COPY src/agent/contracts/package.json ./src/agent/contracts/package.json
 COPY src/backend/prisma ./src/backend/prisma
 COPY prisma.config.ts ./prisma.config.ts
 COPY src/scripts/prisma-postinstall.cjs ./src/scripts/prisma-postinstall.cjs
@@ -26,6 +28,7 @@ ENV CI=false
 ENV GENERATE_SOURCEMAP=false
 COPY src/frontend ./src/frontend
 COPY src/shared ./src/shared
+COPY src/agent/contracts ./src/agent/contracts
 RUN pnpm run build
 
 FROM nginx:1.27-alpine AS frontend
@@ -39,6 +42,8 @@ FROM dependencies AS backend
 ENV NODE_ENV=production
 ENV PORT=5000
 COPY src/backend/src ./src/backend/src
+COPY src/agent ./src/agent
+COPY docs/ai-lab-assistant/ops/OPS-00-live.json ./docs/ai-lab-assistant/ops/OPS-00-live.json
 COPY src/shared ./src/shared
 COPY src/storage/uploads ./src/storage/uploads
 EXPOSE 5000

@@ -113,14 +113,14 @@ export const LearningPathMap = ({
           <defs>
             {/* Gradient cho đường hoàn thành */}
             <linearGradient id="lp-gradient-completed" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#10b981" />
-              <stop offset="100%" stopColor="#059669" />
+              <stop offset="0%" stopColor="var(--lp-gradient-completed-start)" />
+              <stop offset="100%" stopColor="var(--lp-gradient-completed-end)" />
             </linearGradient>
 
             {/* Gradient cho đường đang hoạt động */}
             <linearGradient id="lp-gradient-active" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#3b82f6" />
-              <stop offset="100%" stopColor="#2563eb" />
+              <stop offset="0%" stopColor="var(--lp-gradient-active-start)" />
+              <stop offset="100%" stopColor="var(--lp-gradient-active-end)" />
             </linearGradient>
           </defs>
 

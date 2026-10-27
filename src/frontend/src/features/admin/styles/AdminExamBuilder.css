@@ -51,11 +51,11 @@
 }
 
 .exam-builder-step.active {
-  color: #3b82f6;
+  color: var(--color-primary-gradient-start);
 }
 
 .exam-builder-step.active span {
-  background-color: #3b82f6;
+  background-color: var(--color-primary-gradient-start);
   color: #fff;
 }
 
@@ -229,9 +229,9 @@
 
 .exam-builder-type-card.active {
   border-style: solid;
-  border-color: #93c5fd;
+  border-color: var(--color-primary-tint);
   background: #ffffff;
-  box-shadow: 0 10px 20px rgba(59, 130, 246, 0.08);
+  box-shadow: 0 10px 20px rgb(var(--brand-primary-rgb) / 0.08);
 }
 
 .exam-builder-type-card:disabled {
@@ -388,8 +388,8 @@
 }
 
 .exam-builder-answer-item.correct {
-  border-color: #93c5fd;
-  background: #eff6ff;
+  border-color: var(--color-primary-tint);
+  background: var(--color-muted);
 }
 
 .exam-builder-explanation {
@@ -416,7 +416,7 @@
 
 .exam-builder-explanation strong {
   font-size: 16px;
-  color: #1d4ed8;
+  color: var(--color-primary-hover);
 }
 
 .exam-builder-explanation p {
@@ -476,7 +476,7 @@
 
 .efb-card-blue {
   background: linear-gradient(160deg, #f0f7ff 0%, #ffffff 70%);
-  border-color: #bfdbfe;
+  border-color: var(--color-primary-border);
 }
 
 .efb-card-orange {
@@ -509,7 +509,7 @@
   margin-left: auto;
   font-size: 11px;
   font-weight: 700;
-  color: #2563eb;
+  color: var(--color-primary);
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -634,8 +634,8 @@
   gap: 10px;
   font-size: 12px;
   color: #475569;
-  background: #eff6ff;
-  border: 1px solid #dbeafe;
+  background: var(--color-muted);
+  border: 1px solid var(--color-primary-soft);
   border-radius: 6px;
   padding: 8px 12px;
 }
@@ -1022,7 +1022,7 @@
 }
 
 .efb-bg-blue {
-  background: #2563eb !important;
+  background: var(--color-primary) !important;
 }
 
 .efb-bg-orange {
@@ -1035,12 +1035,12 @@
 }
 
 .efb-type-icon-blue {
-  background: #dbeafe;
-  color: #2563eb;
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
 }
 
 .efb-type-icon-cyan {
-  background: #e0f2fe;
+  background: var(--color-primary-pale);
   color: #0284c7;
 }
 

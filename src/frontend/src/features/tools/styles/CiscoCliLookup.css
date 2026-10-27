@@ -3,51 +3,52 @@
   max-width: 1200px;
   margin: 0 auto;
   font-family: var(--system-ui);
-  color: #1a202c;
+  color: var(--color-foreground);
 }
 
 /* Header & Breadcrumb */
-.cli-breadcrumb {
+:where(.cli-lookup-wrapper) .cli-breadcrumb {
   display: flex;
   align-items: center;
   gap: 8px;
   font-size: 14px;
   font-weight: 600;
-  color: #64748b;
+  color: var(--color-muted-foreground);
   margin-bottom: 24px;
 }
 
-.cli-breadcrumb-link {
+:where(.cli-lookup-wrapper) .cli-breadcrumb-link {
   display: flex;
   align-items: center;
   gap: 4px;
-  color: #64748b;
+  color: var(--color-muted-foreground);
   text-decoration: none;
   transition: color 0.2s;
 }
 
-.cli-breadcrumb-link:hover {
-  color: #0284c7;
+:where(.cli-lookup-wrapper) .cli-breadcrumb-link:hover {
+  color: var(--color-primary);
 }
 
-.cli-breadcrumb-sep {
+:where(.cli-lookup-wrapper) .cli-breadcrumb-sep {
   font-size: 16px;
-  color: #cbd5e1;
+  color: var(--color-muted-foreground);
 }
 
-.cli-breadcrumb-current {
-  color: #0f172a;
+:where(.cli-lookup-wrapper) .cli-breadcrumb-current {
+  color: var(--color-foreground);
 }
 
-.cli-header {
+:where(.cli-lookup-wrapper) .cli-header {
   margin-bottom: 32px;
   text-align: center;
 }
 
-.cli-header-icon {
+:where(.cli-lookup-wrapper) .cli-header-icon {
   width: 64px;
   height: 64px;
-  background-color: var(--navy-50);
+  background-color: var(--navy-50, #e7e9ef);
+  color: var(--navy-700, #152845);
   border-radius: 8px;
   display: flex;
   align-items: center;
@@ -55,99 +56,111 @@
   margin: 0 auto 16px auto;
 }
 
-.cli-header-icon .material-icons-round {
+:where(.cli-lookup-wrapper) .cli-header-icon .app-icon {
   font-size: 32px;
 }
 
-.cli-title {
+:where(.cli-lookup-wrapper) .cli-title {
   font-size: 24px;
   font-weight: 800;
-  color: #111827;
+  color: var(--color-foreground);
   letter-spacing: -0.5px;
   margin: 0 0 8px 0;
 }
 
-.cli-desc {
+:where(.cli-lookup-wrapper) .cli-desc {
   font-size: 15px;
-  color: #4b5563;
+  color: var(--color-muted-foreground);
   margin: 0;
 }
 
 /* Category Pills & Search Bar */
-.cli-controls {
+:where(.cli-lookup-wrapper) .cli-controls {
   display: flex;
   flex-direction: column;
   gap: 16px;
   margin-bottom: 24px;
 }
 
-.cli-categories {
+:where(.cli-lookup-wrapper) .cli-categories {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
 }
 
-.cli-category-pill {
+:where(.cli-lookup-wrapper) .cli-category-pill {
   padding: 8px 16px;
   border-radius: 6px;
   font-size: 13px;
   font-weight: 600;
-  border: 1px solid #e2e8f0;
-  background: #fff;
-  color: #475569;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-muted-foreground);
   cursor: pointer;
-  transition: all 0.2s;
+  transition:
+    background-color 0.2s,
+    color 0.2s,
+    border-color 0.2s,
+    box-shadow 0.2s,
+    transform 0.2s,
+    opacity 0.2s;
 }
 
-.cli-category-pill:hover {
-  background: #ffffff;
-  border-color: #cbd5e1;
+:where(.cli-lookup-wrapper) .cli-category-pill:hover {
+  background: var(--color-surface);
+  border-color: var(--color-border);
 }
 
-.cli-category-pill.active {
-  background: #111827;
-  border-color: #111827;
-  color: #fff;
+:where(.cli-lookup-wrapper) .cli-category-pill.active {
+  background: var(--color-primary);
+  border-color: var(--color-muted);
+  color: var(--color-on-primary);
 }
 
-.cli-search-box {
+:where(.cli-lookup-wrapper) .cli-search-box {
   position: relative;
   width: 100%;
 }
 
-.cli-search-icon {
+:where(.cli-lookup-wrapper) .cli-search-icon {
   position: absolute;
   left: 14px;
   top: 50%;
   transform: translateY(-50%);
-  color: #9ca3af;
+  color: var(--color-muted-foreground);
   font-size: 20px;
 }
 
-.cli-search-input {
+:where(.cli-lookup-wrapper) .cli-search-input {
   width: 100%;
   padding: 14px 44px;
   border-radius: 6px;
-  border: 1px solid #e5e7eb;
-  background: #fff;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
   font-size: 15px;
-  color: #1f2937;
+  color: var(--color-foreground);
   outline: none;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  transition: all 0.2s;
+  transition:
+    background-color 0.2s,
+    color 0.2s,
+    border-color 0.2s,
+    box-shadow 0.2s,
+    transform 0.2s,
+    opacity 0.2s;
 }
 
-.cli-search-input:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+:where(.cli-lookup-wrapper) .cli-search-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgb(var(--brand-primary-rgb) / 0.1);
 }
 
-.cli-search-clear {
+:where(.cli-lookup-wrapper) .cli-search-clear {
   position: absolute;
   right: 14px;
   top: 50%;
   transform: translateY(-50%);
-  color: #9ca3af;
+  color: var(--color-muted-foreground);
   background: none;
   border: none;
   cursor: pointer;
@@ -161,25 +174,25 @@
     color 0.2s;
 }
 
-.cli-search-clear:hover {
-  background: #f1f5f9;
-  color: #475569;
+:where(.cli-lookup-wrapper) .cli-search-clear:hover {
+  background: var(--color-muted);
+  color: var(--color-muted-foreground);
 }
 
-.cli-search-clear .material-icons-round {
+:where(.cli-lookup-wrapper) .cli-search-clear .app-icon {
   font-size: 18px;
 }
 
 /* Command Card */
-.cli-list {
+:where(.cli-lookup-wrapper) .cli-list {
   display: flex;
   flex-direction: column;
   gap: 24px;
 }
 
-.cli-card {
-  background: #fff;
-  border: 1px solid #e2e8f0;
+:where(.cli-lookup-wrapper) .cli-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   padding: 24px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
@@ -188,26 +201,26 @@
     box-shadow 0.2s;
 }
 
-.cli-card:hover {
+:where(.cli-lookup-wrapper) .cli-card:hover {
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.04);
 }
 
-.cli-card-header {
+:where(.cli-lookup-wrapper) .cli-card-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 12px;
 }
 
-.cli-command-title {
+:where(.cli-lookup-wrapper) .cli-command-title {
   font-family: var(--system-ui);
   font-size: 20px;
   font-weight: 700;
-  color: #111827;
+  color: var(--color-foreground);
   margin: 0;
 }
 
-.cli-card-badge {
+:where(.cli-lookup-wrapper) .cli-card-badge {
   background: #e0e7ff;
   color: #4f46e5;
   padding: 4px 10px;
@@ -217,15 +230,15 @@
   text-transform: uppercase;
 }
 
-.cli-command-desc {
+:where(.cli-lookup-wrapper) .cli-command-desc {
   font-size: 14px;
-  color: #4b5563;
+  color: var(--color-muted-foreground);
   margin: 0 0 16px 0;
   line-height: 1.5;
 }
 
 /* Terminal Box */
-.cli-terminal {
+:where(.cli-lookup-wrapper) .cli-terminal {
   position: relative;
   background: #1e1e1e;
   border-radius: 8px;
@@ -234,7 +247,7 @@
   margin-bottom: 16px;
 }
 
-.cli-terminal pre {
+:where(.cli-lookup-wrapper) .cli-terminal pre {
   margin: 0;
   color: #a3b8cc;
   font-family: var(--system-ui);
@@ -245,13 +258,13 @@
 }
 
 /* Copy Button Overlay in Terminal */
-.cli-copy-btn {
+:where(.cli-lookup-wrapper) .cli-copy-btn {
   position: absolute;
   top: 8px;
   right: 8px;
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #94a3b8;
+  color: var(--color-muted-foreground);
   border-radius: 6px;
   padding: 4px 8px;
   font-size: 11px;
@@ -260,28 +273,34 @@
   align-items: center;
   gap: 4px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition:
+    background-color 0.2s,
+    color 0.2s,
+    border-color 0.2s,
+    box-shadow 0.2s,
+    transform 0.2s,
+    opacity 0.2s;
 }
 
-.cli-copy-btn:hover {
+:where(.cli-lookup-wrapper) .cli-copy-btn:hover {
   background: rgba(255, 255, 255, 0.2);
-  color: #fff;
+  color: var(--color-on-primary);
 }
 
-.cli-copy-btn.copied {
+:where(.cli-lookup-wrapper) .cli-copy-btn.copied {
   background: rgba(16, 185, 129, 0.2);
-  border-color: #10b981;
+  border-color: var(--color-success);
   color: #34d399;
 }
 
 /* Related Commands */
-.cli-related {
+:where(.cli-lookup-wrapper) .cli-related {
   font-size: 13px;
-  color: #94a3b8;
+  color: var(--color-muted-foreground);
 }
 
-.cli-related-link {
-  color: #3b82f6;
+:where(.cli-lookup-wrapper) .cli-related-link {
+  color: var(--color-primary);
   text-decoration: underline;
   cursor: pointer;
   margin-left: 4px;
@@ -290,61 +309,78 @@
   font-weight: 500;
 }
 
-.cli-related-link:hover {
-  color: #2563eb;
+:where(.cli-lookup-wrapper) .cli-related-link:hover {
+  color: var(--color-primary);
 }
 
 /* Load More */
-.cli-load-more {
+:where(.cli-lookup-wrapper) .cli-load-more {
   text-align: center;
   margin-top: 32px;
 }
 
-.btn-load-more {
-  background: #fff;
-  border: 1px solid #cbd5e1;
+:where(.cli-lookup-wrapper) .btn-load-more {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   padding: 12px 24px;
   border-radius: 6px;
   font-size: 14px;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--color-foreground);
   cursor: pointer;
-  transition: all 0.2s;
+  transition:
+    background-color 0.2s,
+    color 0.2s,
+    border-color 0.2s,
+    box-shadow 0.2s,
+    transform 0.2s,
+    opacity 0.2s;
 }
 
-.btn-load-more:hover {
-  background: #ffffff;
-  border-color: #94a3b8;
+:where(.cli-lookup-wrapper) .btn-load-more:hover {
+  background: var(--color-surface);
+  border-color: var(--color-border);
 }
 
 /* Empty State */
-.cli-empty-state {
+:where(.cli-lookup-wrapper) .cli-empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 64px 24px;
   text-align: center;
-  background: #fff;
+  background: var(--color-surface);
   border-radius: 8px;
-  border: 1px dashed #cbd5e1;
+  border: 1px dashed var(--color-border);
 }
 
-.cli-empty-icon {
+:where(.cli-lookup-wrapper) .cli-empty-icon {
   font-size: 48px;
-  color: #cbd5e1;
+  color: var(--color-muted-foreground);
   margin-bottom: 16px;
 }
 
-.cli-empty-title {
+:where(.cli-lookup-wrapper) .cli-empty-title {
   font-size: 18px;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--color-foreground);
   margin: 0 0 8px 0;
 }
 
-.cli-empty-desc {
+:where(.cli-lookup-wrapper) .cli-empty-desc {
   font-size: 14px;
-  color: #64748b;
+  color: var(--color-muted-foreground);
   margin: 0;
+}
+
+:where(.cli-lookup-wrapper) .cli-terminal pre,
+:where(.cli-lookup-wrapper) .cli-terminal .cli-copy-btn {
+  color: var(--hero-muted);
+}
+:where(.cli-lookup-wrapper) .cli-terminal .cli-copy-btn:hover {
+  color: var(--hero-foreground);
+}
+:where(.cli-lookup-wrapper) .cli-terminal pre {
+  font-family: Consolas, ui-monospace, monospace;
 }

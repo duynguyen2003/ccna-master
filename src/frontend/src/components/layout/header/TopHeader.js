@@ -1,8 +1,12 @@
-import React, { useState, useRef, useEffect } from 'react';
+import AppIcon from '../../ui/AppIcon';
+import React, { useCallback, useState, useRef, useEffect } from 'react';
+import '../styles/TopHeader.css';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
 import api, { API_URL } from '../../../services/Api';
 import GuestSectionTabs from './GuestSectionTabs';
+import BrandLogo from '../../branding/BrandLogo';
+import ThemeToggle from '../../ui/ThemeToggle';
 
 const NOTCH_NAV_ITEMS = [
   { id: 'home-how-it-works', label: 'Cách học' },
@@ -130,7 +134,7 @@ const TopHeader = () => {
   const notchContainerRef = useRef(null);
 
   // Đo kích thước: Thu lại = row.offsetWidth + padding. Mở = min(560px, window.innerWidth - capWidth - margin)
-  const getCollapsedWidth = () => {
+  const getCollapsedWidth = useCallback(() => {
     if (!rowRef.current) return null;
     const isMobile = window.innerWidth <= 640;
     const padding = isMobile ? 8 : 30;
@@ -138,14 +142,14 @@ const TopHeader = () => {
     const maxAvailable = window.innerWidth - capWidth - (isMobile ? 12 : 32);
     const measured = Math.round(rowRef.current.offsetWidth + padding);
     return Math.min(measured, Math.max(80, maxAvailable));
-  };
+  }, []);
 
-  const getExpandedWidth = () => {
+  const getExpandedWidth = useCallback(() => {
     const isMobile = window.innerWidth <= 640;
     const capWidth = isMobile ? 48 : 88;
     const screenMargin = isMobile ? 16 : 40;
     return Math.min(560, window.innerWidth - capWidth - screenMargin);
-  };
+  }, []);
 
   // Mở tìm kiếm: thêm class open, đo mở rộng width, delay 0.12s focus vào input
   const handleOpenSearch = () => {
@@ -158,7 +162,7 @@ const TopHeader = () => {
   };
 
   // Đóng: nhấn Esc, bấm ra ngoài khối, hoặc bấm nút Esc
-  const handleCloseSearch = () => {
+  const handleCloseSearch = useCallback(() => {
     setIsOpen(false);
     setIsSearchFocused(false);
     setSearchTerm('');
@@ -168,7 +172,7 @@ const TopHeader = () => {
     setTimeout(() => {
       searchTriggerBtnRef.current?.focus({ preventScroll: true });
     }, 50);
-  };
+  }, [getCollapsedWidth]);
 
   // Thiết lập ban đầu và lắng nghe resize, document.fonts.ready
   useEffect(() => {
@@ -207,7 +211,7 @@ const TopHeader = () => {
       cancelAnimationFrame(frame1);
       window.removeEventListener('resize', handleResize);
     };
-  }, [isOpen]);
+  }, [isOpen, getCollapsedWidth, getExpandedWidth]);
 
   // Cập nhật lại width khi tai thỏ vừa xuất hiện sau khi cuộn qua hero, hoặc đóng lại khi cuộn lên đầu trang
   useEffect(() => {
@@ -217,7 +221,7 @@ const TopHeader = () => {
     } else if (isOpen) {
       handleCloseSearch();
     }
-  }, [isScrolledPastHero, isOpen]);
+  }, [isScrolledPastHero, isOpen, getCollapsedWidth, getExpandedWidth, handleCloseSearch]);
 
   // Đóng khi click ngoài hoặc nhấn Esc
   useEffect(() => {
@@ -249,7 +253,7 @@ const TopHeader = () => {
       document.removeEventListener('mousedown', handleClickOutside);
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isOpen]);
+  }, [isOpen, handleCloseSearch]);
 
   // Xây dựng chỉ mục tìm kiếm khi focus ô nhập liệu lần đầu tiên (Lazy indexing)
   const handleSearchFocus = async () => {
@@ -343,21 +347,25 @@ const TopHeader = () => {
   return (
     <header className="header">
       <Link to="/" className="header-left" style={{ textDecoration: 'none', color: 'inherit' }}>
-        <div className="logo-icon">
-          <span className="material-icons-round">router</span>
-        </div>
-        <div className="logo-text">
-          <span className="logo-title">NetMastery</span>
-          <span className="logo-subtitle">HỌC MẠNG ĐỂ ĐI LÀM</span>
-        </div>
+        <BrandLogo className="header-brand" />
       </Link>
 
       <div
         className={`header-center ${isHomePage && !isAuthenticated && isScrolledPastHero ? 'is-hidden' : ''}`}
       >
-        <div className="search-box" ref={searchRef}>
-          <span className="material-icons-round search-icon">search</span>
+        <div
+          className="search-box"
+          ref={searchRef}
+          onKeyDown={(event) => {
+            if (event.key === 'Escape') {
+              setIsSearchFocused(false);
+              event.stopPropagation();
+            }
+          }}
+        >
+          <AppIcon name={'search'} className="app-icon search-icon" />
           <input
+            aria-label="Tìm khóa học, bài học và lab"
             className="search-input"
             placeholder="Tìm khóa học, bài học, lab..."
             type="text"
@@ -372,7 +380,7 @@ const TopHeader = () => {
               onClick={() => setSearchTerm('')}
               aria-label="Xóa tìm kiếm"
             >
-              <span className="material-icons-round">close</span>
+              <AppIcon name={'close'} className="app-icon" />
             </button>
           )}
 
@@ -380,45 +388,48 @@ const TopHeader = () => {
             <div className="search-results-dropdown">
               {isIndexingLoading ? (
                 <div className="search-dropdown-message">
-                  <span className="material-icons-round spin">sync</span>
+                  <AppIcon name={'sync'} className="app-icon spin" />
                   <span>Đang chuẩn bị dữ liệu tìm kiếm...</span>
                 </div>
               ) : searchTerm.trim() === '' ? (
                 <div className="search-dropdown-message info">
-                  <span className="material-icons-round">search</span>
+                  <AppIcon name={'search'} className="app-icon" />
                   <span>Tìm kiếm nhanh bài học, khóa học hoặc bài thực hành lab...</span>
                 </div>
               ) : filteredResults.length > 0 ? (
                 <div className="search-results-list">
                   {filteredResults.map((item) => (
-                    <div
+                    <Link
+                      to={item.url}
                       key={`${item.type}-${item.id}`}
                       className="search-result-item"
                       onClick={() => {
-                        navigate(item.url);
                         setSearchTerm('');
                         setIsSearchFocused(false);
                       }}
                     >
                       <div className={`search-result-icon-wrapper ${item.type}`}>
-                        <span className="material-icons-round">
-                          {item.type === 'course'
-                            ? 'school'
-                            : item.type === 'lesson'
-                              ? 'play_circle_outline'
-                              : 'terminal'}
-                        </span>
+                        <AppIcon
+                          name={
+                            item.type === 'course'
+                              ? 'school'
+                              : item.type === 'lesson'
+                                ? 'play_circle_outline'
+                                : 'terminal'
+                          }
+                          className="app-icon"
+                        />
                       </div>
                       <div className="search-result-info">
                         <div className="search-result-item-title">{item.title}</div>
                         <div className="search-result-item-subtitle">{item.subtitle}</div>
                       </div>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               ) : (
                 <div className="search-dropdown-message empty">
-                  <span className="material-icons-round">sentiment_dissatisfied</span>
+                  <AppIcon name={'sentiment_dissatisfied'} className="app-icon" />
                   <span>Không tìm thấy kết quả cho "{searchTerm}"</span>
                 </div>
               )}
@@ -428,16 +439,13 @@ const TopHeader = () => {
       </div>
 
       <div className="header-right">
+        <ThemeToggle />
         {isAuthenticated ? (
           <>
             {/* Đã đăng nhập: Hiện link + notification + avatar */}
             <Link className="nav-link" to="/roadmap">
               Khóa học của tôi
             </Link>
-            <button className="icon-btn">
-              <span className="material-icons-round">notifications</span>
-              <span className="badge"></span>
-            </button>
 
             {/* Avatar + Dropdown */}
             <div className="user-menu" ref={dropdownRef}>
@@ -445,6 +453,11 @@ const TopHeader = () => {
                 className="user-menu-trigger"
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                 aria-label="Menu người dùng"
+                aria-expanded={isDropdownOpen}
+                aria-controls="user-menu-items"
+                onKeyDown={(event) => {
+                  if (event.key === 'Escape') setIsDropdownOpen(false);
+                }}
               >
                 {user?.avatarUrl ? (
                   <img
@@ -462,6 +475,9 @@ const TopHeader = () => {
                       fallback.innerText = getInitials(user?.fullName);
                       e.target.parentElement.appendChild(fallback);
                     }}
+                    width={80}
+                    height={80}
+                    decoding="async"
                   />
                 ) : (
                   <div className="avatar avatar-initials">{getInitials(user?.fullName)}</div>
@@ -470,7 +486,16 @@ const TopHeader = () => {
 
               {/* Dropdown Menu */}
               {isDropdownOpen && (
-                <div className="user-dropdown">
+                <div
+                  className="user-dropdown"
+                  id="user-menu-items"
+                  onKeyDown={(event) => {
+                    if (event.key === 'Escape') {
+                      setIsDropdownOpen(false);
+                      dropdownRef.current?.querySelector('button')?.focus();
+                    }
+                  }}
+                >
                   <div className="user-dropdown-header">
                     <div className="user-dropdown-name">{user?.fullName || 'Người dùng'}</div>
                     <div className="user-dropdown-email">{user?.email}</div>
@@ -481,14 +506,14 @@ const TopHeader = () => {
                     className="user-dropdown-item"
                     onClick={() => setIsDropdownOpen(false)}
                   >
-                    <span className="material-icons-round">person</span>
+                    <AppIcon name={'person'} className="app-icon" />
                     Hồ sơ cá nhân
                   </Link>
                   <button
                     className="user-dropdown-item user-dropdown-logout"
                     onClick={handleLogout}
                   >
-                    <span className="material-icons-round">logout</span>
+                    <AppIcon name={'logout'} className="app-icon" />
                     Đăng xuất
                   </button>
                 </div>
@@ -499,9 +524,7 @@ const TopHeader = () => {
           <>
             {/* Chưa đăng nhập: Hiện nút Đăng nhập & Đăng ký */}
             <Link to="/login" className="header-login-btn">
-              <span className="material-icons-round" style={{ fontSize: 18 }}>
-                login
-              </span>
+              <AppIcon name={'login'} className="app-icon" style={{ fontSize: 18 }} />
               Đăng nhập
             </Link>
             <Link to="/register" className="header-register-btn">
@@ -568,16 +591,15 @@ const TopHeader = () => {
                 aria-label="Mở tìm kiếm"
                 title="Tìm kiếm"
               >
-                <span className="material-icons-round">search</span>
+                <AppIcon name={'search'} className="app-icon" />
               </button>
             </div>
 
             {/* .field: Ô tìm kiếm trượt hiện ra (delay 0.12s khi mở) */}
             <div className="field">
-              <span className="material-icons-round field-icon" aria-hidden="true">
-                search
-              </span>
+              <AppIcon name={'search'} className="app-icon field-icon" aria-hidden="true" />
               <input
+                aria-label="Tìm khóa học, bài học và lab"
                 ref={notchSearchInputRef}
                 type="text"
                 className="field-input"
@@ -597,7 +619,7 @@ const TopHeader = () => {
                   }}
                   aria-label="Xóa từ khóa"
                 >
-                  <span className="material-icons-round">close</span>
+                  <AppIcon name={'close'} className="app-icon" />
                 </button>
               )}
               <button
@@ -616,44 +638,47 @@ const TopHeader = () => {
               <div className="notch-search-results-dropdown">
                 {isIndexingLoading ? (
                   <div className="search-dropdown-message">
-                    <span className="material-icons-round spin">sync</span>
+                    <AppIcon name={'sync'} className="app-icon spin" />
                     <span>Đang chuẩn bị dữ liệu tìm kiếm...</span>
                   </div>
                 ) : searchTerm.trim() === '' ? (
                   <div className="search-dropdown-message info">
-                    <span className="material-icons-round">search</span>
+                    <AppIcon name={'search'} className="app-icon" />
                     <span>Tìm kiếm nhanh bài học, khóa học hoặc bài thực hành lab...</span>
                   </div>
                 ) : filteredResults.length > 0 ? (
                   <div className="search-results-list">
                     {filteredResults.map((item) => (
-                      <div
+                      <Link
+                        to={item.url}
                         key={`notch-${item.type}-${item.id}`}
                         className="search-result-item"
                         onClick={() => {
-                          navigate(item.url);
                           handleCloseSearch();
                         }}
                       >
                         <div className={`search-result-icon-wrapper ${item.type}`}>
-                          <span className="material-icons-round">
-                            {item.type === 'course'
-                              ? 'school'
-                              : item.type === 'lesson'
-                                ? 'play_circle_outline'
-                                : 'terminal'}
-                          </span>
+                          <AppIcon
+                            name={
+                              item.type === 'course'
+                                ? 'school'
+                                : item.type === 'lesson'
+                                  ? 'play_circle_outline'
+                                  : 'terminal'
+                            }
+                            className="app-icon"
+                          />
                         </div>
                         <div className="search-result-info">
                           <div className="search-result-item-title">{item.title}</div>
                           <div className="search-result-item-subtitle">{item.subtitle}</div>
                         </div>
-                      </div>
+                      </Link>
                     ))}
                   </div>
                 ) : (
                   <div className="search-dropdown-message empty">
-                    <span className="material-icons-round">sentiment_dissatisfied</span>
+                    <AppIcon name={'sentiment_dissatisfied'} className="app-icon" />
                     <span>Không tìm thấy kết quả cho "{searchTerm}"</span>
                   </div>
                 )}

@@ -16,7 +16,7 @@ const PlanLimitsInfo = ({ stats, loading = false }) => {
       current: stats?.totalCourses || 0,
       max: FREE_PLAN.max_courses,
       unit: '',
-      color: '#3b82f6',
+      color: '#386298',
     },
     {
       label: 'Dung lượng',

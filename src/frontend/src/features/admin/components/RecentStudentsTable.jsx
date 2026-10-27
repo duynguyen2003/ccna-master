@@ -2,7 +2,7 @@
 import React from 'react';
 import { Users } from 'lucide-react';
 
-const COLORS = ['#3b82f6', '#22c55e', '#f59e0b', '#a855f7', '#ef4444'];
+const COLORS = ['#386298', '#22c55e', '#f59e0b', '#a855f7', '#ef4444'];
 
 const RecentStudentsTable = ({ students, loading = false }) => {
   if (loading) {

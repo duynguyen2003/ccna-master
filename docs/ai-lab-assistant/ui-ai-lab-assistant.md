@@ -2,6 +2,8 @@
 
 Tài liệu này liệt kê phần giao diện cần bổ sung khi tích hợp AI vào lab, dựa trên cấu trúc hiện tại của `src/frontend/src/features/labs/components/CliLabWorkspace.js` (1.254 dòng).
 
+**Cập nhật ADR-01 ngày 19/10/2026:** R1 đã chốt API bất đồng bộ, lịch sử/cancel/delete và recovery theo [ADR-001](adr/ADR-001-async-api.md), sử dụng [contract v1](../../src/agent/contracts/ai-lab/v1/README.md). Các mục dưới đây là backlog UI, chưa phải tính năng đã triển khai.
+
 ## 0. Hiện trạng UI có thể tái dùng
 
 | Thành phần hiện có | Vị trí / tên trong code | Dùng cho AI như thế nào |
@@ -95,16 +97,17 @@ Trong `src/frontend/src/features/admin/pages/Labs.js`:
 
 ---
 
-## E. Chưa cần làm ở bản đầu
+## E. Luồng bất đồng bộ bắt buộc ở R1
 
-Các mục dưới đây chỉ cần nếu chọn kiến trúc bất đồng bộ đầy đủ trong tài liệu kế hoạch. Nếu giữ luồng đồng bộ gọn thì bỏ qua:
+Các mục dưới đây dùng trong luồng R1 đã chốt; triển khai theo FE-02 và các endpoint backend tương ứng:
 
 - Lịch sử chat có phân trang cursor
 - Xóa hội thoại / đặt lại hội thoại
 - Hủy request đang chạy
 - Polling nhiều bước và nhiều tab
 - Xử lý `recoveryEpoch`, `AI_RECOVERY_RECONFIRM`
-- Chat tự do không giới hạn ý định
+
+Chat tự do không giới hạn ý định vẫn ngoài R1. Mục A có thể cải thiện nút cũ trong giai đoạn chuyển tiếp; khi tích hợp `LAB_REVIEW` phải đi qua request/quota chung, không mở thêm đường gọi model có phí trực tiếp.
 
 ---
 

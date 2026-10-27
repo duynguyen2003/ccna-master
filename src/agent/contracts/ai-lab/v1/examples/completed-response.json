@@ -1,0 +1,70 @@
+{
+  "contractVersion": "1.0.0",
+  "data": {
+    "requestId": "7ea5187b-5dd0-42c7-960a-8106fcfb439d",
+    "conversationId": "9506ee20-d092-462e-888f-078338aef96e",
+    "conversationEpoch": 1,
+    "recoveryEpoch": "recovery-test-v1",
+    "intent": "DIAGNOSE",
+    "sourceRevision": 12,
+    "currentRevision": 13,
+    "stale": true,
+    "sourceProvenance": "LIVE_SNAPSHOT",
+    "quota": {
+      "remaining": 17,
+      "reserved": 1,
+      "resetAt": "2026-10-20T00:00:00Z"
+    },
+    "serverTime": "2026-10-19T05:00:00Z",
+    "status": "COMPLETED",
+    "responseMode": "LLM",
+    "result": {
+      "messageId": "b5988e7c-ff06-4efa-9e06-8efa64166e37",
+      "answer": {
+        "summary": "Cổng liên quan đang bị tắt bằng cấu hình.",
+        "claimType": "SUPPORTED_FINDING",
+        "evidenceIds": [
+          "fact-r12-r1-g00"
+        ],
+        "nextSteps": [
+          {
+            "text": "Kiểm tra trạng thái cổng trên R1.",
+            "commandId": "show-r1-interfaces"
+          }
+        ],
+        "verification": "Đối chiếu trạng thái cổng rồi kiểm tra lại kết nối.",
+        "hintLevel": 2
+      },
+      "evidence": [
+        {
+          "evidenceId": "fact-r12-r1-g00",
+          "kind": "INTERFACE",
+          "deviceId": "R1",
+          "interface": "GigabitEthernet0/0",
+          "sourceRevision": 12,
+          "observation": "administratively down",
+          "confidenceClass": "OBSERVED",
+          "scope": "PC1-PC2"
+        }
+      ],
+      "commands": [
+        {
+          "commandId": "show-r1-interfaces",
+          "deviceId": "R1",
+          "mode": "PRIVILEGED_EXEC",
+          "command": "show ip interface brief"
+        }
+      ],
+      "versions": {
+        "contextSchemaVersion": "1.0.0",
+        "simulatorVersion": "2.1.0",
+        "diagnosticVersion": "diagnostics-v1",
+        "promptVersion": "prompt-v1",
+        "policyVersion": "policy-v1",
+        "modelVersion": "fake-v1",
+        "priceVersion": "fake-price-v1",
+        "appCommit": "0000000000000000000000000000000000000000"
+      }
+    }
+  }
+}

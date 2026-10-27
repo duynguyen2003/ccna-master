@@ -13,23 +13,23 @@
 
 ### 1.1. Tổng công việc
 
-| Phase | Mục tiêu | Số task | Giờ thấp | Giờ cao |
-|---|---|---:|---:|---:|
-| P0 | Chốt sản phẩm, lab, contract và điều kiện vận hành | 5 | 29 | 48 |
-| P1 | Nền tảng đầy đủ và alpha nội bộ | 15 | 124 | 188 |
-| P2 | Model thật, trải nghiệm, tải shared IP và pilot kín | 11 | 98 | 152 |
-| P3 | Củng cố chất lượng và phát hành R1 | 9 | 70 | 108 |
-| **R1 tổng** | **P0 + P1 + P2 + P3** | **40** | **321** | **496** |
-| **R1 gồm 25% dự phòng** | | | **401,25** | **620** |
-| P4 | R2 agent chỉ đọc, tính riêng | 7 | 58 | 92 |
+| Phase                   | Mục tiêu                                            | Số task |   Giờ thấp | Giờ cao |
+| ----------------------- | --------------------------------------------------- | ------: | ---------: | ------: |
+| P0                      | Chốt sản phẩm, lab, contract và điều kiện vận hành  |       5 |         29 |      48 |
+| P1                      | Nền tảng đầy đủ và alpha nội bộ                     |      15 |        124 |     188 |
+| P2                      | Model thật, trải nghiệm, tải shared IP và pilot kín |      11 |         98 |     152 |
+| P3                      | Củng cố chất lượng và phát hành R1                  |       9 |         70 |     108 |
+| **R1 tổng**             | **P0 + P1 + P2 + P3**                               |  **40** |    **321** | **496** |
+| **R1 gồm 25% dự phòng** |                                                     |         | **401,25** | **620** |
+| P4                      | R2 agent chỉ đọc, tính riêng                        |       7 |         58 |      92 |
 
 ### 1.2. Lịch suy ra từ giờ công
 
-| Khả năng làm mỗi tuần | R1, gồm dự phòng | Cách sử dụng |
-|---|---|---|
-| 15 giờ | Khoảng 27–42 tuần | Phù hợp làm thêm bên cạnh công việc chính |
-| **25 giờ** | **Khoảng 17–25 tuần** | **Giả định cơ sở của kế hoạch** |
-| 35 giờ | Khoảng 12–18 tuần | Chỉ dùng nếu thực tế duy trì được giờ tập trung này |
+| Khả năng làm mỗi tuần | R1, gồm dự phòng      | Cách sử dụng                                        |
+| --------------------- | --------------------- | --------------------------------------------------- |
+| 15 giờ                | Khoảng 27–42 tuần     | Phù hợp làm thêm bên cạnh công việc chính           |
+| **25 giờ**            | **Khoảng 17–25 tuần** | **Giả định cơ sở của kế hoạch**                     |
+| 35 giờ                | Khoảng 12–18 tuần     | Chỉ dùng nếu thực tế duy trì được giờ tập trung này |
 
 Tại 25 giờ/tuần, kịch bản trung tâm khoảng **21 tuần**. Đây là forecast để phân bổ nguồn lực, không phải cam kết ngày phát hành. Sau P0 và hai tuần triển khai đầu, cập nhật bằng throughput thực tế và công việc còn lại.
 
@@ -64,16 +64,16 @@ Sơ đồ thể hiện phụ thuộc kỹ thuật, không có nghĩa một ngư�
 
 ### 2.1. Gợi ý nhịp 21 tuần cơ sở
 
-| Tuần tham chiếu | Trọng tâm | Demo/bằng chứng cuối giai đoạn |
-|---|---|---|
-| 1–2 | P0; kiểm kê hạ tầng; chốt ba lab; skeleton contract | Chạy golden fixtures và mô phỏng luồng người học trên wireframe |
-| 3–5 | Schema, auth snapshot, reservation, request lifecycle | 20 retry chỉ tạo một request; người khác bị chặn |
-| 6–8 | Worker/Python fake, diagnostics, panel/hook, CI | Browser reload vẫn lấy đúng kết quả; không giữ khóa lab lúc chờ |
-| 9–10 | Hoàn tất alpha, prompts và provider adapter thật, eval lần 1 | Báo cáo chất lượng/chi phí theo model configuration |
-| 11–15 | Privacy, feedback/events, E2E, tải shared IP, backup; mời pilot khi đạt G2 | Luồng thật trên staging, có kill switch và budget |
-| 16–17 | Quan sát pilot và sửa lỗi; làm test/ops độc lập | Báo cáo 14 ngày, chỉ rõ sample size và lỗi còn lại |
-| 18–19 | Fault tests, eval mở rộng, xác nhận lại capacity sau sửa lỗi, rollback/restore | Bộ release evidence đạt ngưỡng R1 |
-| 20–21 | Canary, mở cohort dần, hỗ trợ, tổng kết | Quyết định mở rộng/giữ cohort; backlog R2 cập nhật |
+| Tuần tham chiếu | Trọng tâm                                                                      | Demo/bằng chứng cuối giai đoạn                                  |
+| --------------- | ------------------------------------------------------------------------------ | --------------------------------------------------------------- |
+| 1–2             | P0; kiểm kê hạ tầng; chốt ba lab; skeleton contract                            | Chạy golden fixtures và mô phỏng luồng người học trên wireframe |
+| 3–5             | Schema, auth snapshot, reservation, request lifecycle                          | 20 retry chỉ tạo một request; người khác bị chặn                |
+| 6–8             | Worker/Python fake, diagnostics, panel/hook, CI                                | Browser reload vẫn lấy đúng kết quả; không giữ khóa lab lúc chờ |
+| 9–10            | Hoàn tất alpha, prompts và provider adapter thật, eval lần 1                   | Báo cáo chất lượng/chi phí theo model configuration             |
+| 11–15           | Privacy, feedback/events, E2E, tải shared IP, backup; mời pilot khi đạt G2     | Luồng thật trên staging, có kill switch và budget               |
+| 16–17           | Quan sát pilot và sửa lỗi; làm test/ops độc lập                                | Báo cáo 14 ngày, chỉ rõ sample size và lỗi còn lại              |
+| 18–19           | Fault tests, eval mở rộng, xác nhận lại capacity sau sửa lỗi, rollback/restore | Bộ release evidence đạt ngưỡng R1                               |
+| 20–21           | Canary, mở cohort dần, hỗ trợ, tổng kết                                        | Quyết định mở rộng/giữ cohort; backlog R2 cập nhật              |
 
 Tuần tham chiếu có thể dịch trong dải 17–25 tuần. Không đặt ngày cụ thể khi chưa biết giờ làm và thời điểm bắt đầu. Nếu AI hỗ trợ giúp hoàn thành sớm, dùng số liệu task thực tế để forecast lại thay vì hứa giảm toàn bộ lịch ngay từ đầu.
 
@@ -81,30 +81,38 @@ Tuần tham chiếu có thể dịch trong dải 17–25 tuần. Không đặt n
 
 ### DISC-01 · Kiểm kê nền tảng · 4–6 giờ
 
+- **Trạng thái 19/10/2026:** [x] Hoàn thành kiểm kê. [Baseline và bằng chứng](baseline/DISC-01-platform-baseline.md) · [ADR-000](adr/ADR-000-platform-baseline.md) · [7 issue cần theo dõi](baseline/DISC-01-blockers.md). Các phần chưa xác minh được ghi rõ và có gate xử lý; chưa xác nhận stack đủ điều kiện pilot. DISC-02 được bỏ qua theo yêu cầu; task tiếp theo: DISC-03.
 - **Vai trò:** SO/SE. **Phụ thuộc:** không. **Đầu ra:** baseline matrix local/main/staging/production, commit đang chạy, migration status, topology proxy và secrets inventory chỉ tên key.
 - **Phạm vi/file:** README kế hoạch, ADR nền tảng, `.github/workflows/ci-cd.yml`, `compose*.yaml`, `docs/operations.md` để đối chiếu; không tự triển khai production trong task kiểm kê.
 - **Nghiệm thu:** phân biệt rõ thay đổi local chưa deploy; lập issue cho blocker auth/migration/backup/proxy. Không dùng “CI main từng xanh” làm bằng chứng stack hiện tại đã sẵn sàng.
 
 ### DISC-02 · Khám phá người học và xác nhận PRD · 5–8 giờ
 
+- **Trạng thái 19/10/2026:** **BỎ QUA theo yêu cầu người dùng**. Chưa thực hiện 3–5 quan sát/phỏng vấn, chưa có baseline học tập hoặc kết luận về ba vướng mắc thực tế. PRD hiện có tiếp tục là giả thuyết thiết kế, chưa được xác nhận bằng nghiên cứu người học; không tính DISC-02 là hoàn thành nghiệm thu.
 - **Vai trò:** PM. **Phụ thuộc:** DISC-01. **Đầu ra:** 3–5 cuộc quan sát/phỏng vấn ngắn, top ba vướng mắc, baseline và lịch pilot.
 - **Phạm vi/file:** tài liệu 01 và `research/` khi triển khai; nguồn tuyển người học và thông báo dữ liệu.
 - **Nghiệm thu:** xác định người học mục tiêu, hành trình ưu tiên, metric và AC-01…AC-16; giả thuyết chưa có dữ liệu phải được ghi rõ, không viết như sự thật.
 
 ### DISC-03 · Chứng nhận ba lab và fixtures đầu tiên · 10–16 giờ
 
+- **Trạng thái 19/10/2026:** [x] Hoàn thành chứng nhận kỹ thuật local cho `AI-IPV4-01`, `AI-ROUTE-01`, `AI-VLAN-01`: mỗi lab hai cấu hình đúng, sáu lỗi và lời giải/repair chạy qua engine thật. [Hồ sơ và bằng chứng](labs/DISC-03-certified-labs.md) · [Issue nguồn/capability](labs/DISC-03-source-issues.md). Bộ chứng nhận 31/31 đạt; chưa publish hoặc có review CCNA độc lập. Task tiếp theo: ADR-01.
+- **Điều chỉnh phụ thuộc 19/10/2026:** người dùng đã yêu cầu bỏ qua DISC-02; có thể chuẩn bị/chứng nhận lab dựa trên PRD hiện có như giả định thiết kế. Việc chứng nhận kỹ thuật không thay thế bằng chứng nghiên cứu người học hoặc nghiệm thu pilot.
 - **Vai trò:** PM/SE; reviewer CCNA nếu có. **Phụ thuộc:** DISC-02. **Đầu ra:** ba lab IPv4/interface, route và VLAN; mỗi lab có golden solution, tối thiểu năm lỗi và hai cấu hình đúng.
-- **Phạm vi/file:** fixtures mới trong `ai-service/evals/` và Node test fixtures; đối chiếu `networkEngine`, `gradingEngine`, command catalog. Nội dung cần sửa được ghi issue riêng.
+- **Phạm vi/file:** fixtures mới trong `src/agent/python/evals/` và Node test fixtures; đối chiếu `networkEngine`, `gradingEngine`, command catalog. Nội dung cần sửa được ghi issue riêng.
 - **Nghiệm thu:** golden actions chạy đúng simulator/grader; có case cổng unused shutdown và default route hợp lệ; giữ private rubric ngoài provider fixtures. AC-01/03/09.
 
 ### ADR-01 · Chốt contract và các invariant · 6–10 giờ
 
+- **Trạng thái 19/10/2026:** [x] Hoàn thành thiết kế ADR-001…007 và [contract v1.0.0](../../src/agent/contracts/ai-lab/v1/README.md): 17 JSON Schema, fixtures chung frontend/Node/Python, state machine, error map và [threat review](../../src/agent/contracts/ai-lab/v1/threat-scenarios.md). Async/ownership đã chốt; transaction/quota race/auth runtime vẫn thuộc BE/QA tiếp theo. Chưa có endpoint AI hay provider có phí. Task tiếp theo: OPS-00.
 - **Vai trò:** SO/SE. **Phụ thuộc:** DISC-01, DISC-03. **Đầu ra:** ADR-001…007, schema public/internal, state machine và threat scenarios.
-- **Phạm vi/file:** `contracts/ai-lab/v1/`, tài liệu 02, fixtures valid/invalid; chọn envelope lỗi thống nhất.
+- **Phạm vi/file:** `src/agent/contracts/ai-lab/v1/`, tài liệu 02, fixtures valid/invalid; chọn envelope lỗi thống nhất.
 - **Nghiệm thu:** rà trường hợp retry, quota race, dispatch unknown, revoke, delete, stale; FE/Node/Python dùng cùng schema. Không còn quyết định mâu thuẫn về sync/async hoặc ownership.
 
 ### OPS-00 · Chốt ngân sách và khả năng triển khai · 4–8 giờ
 
+- **Trạng thái 22/10/2026:** [x] Hoàn thành **nhánh local/fake, 0 USD theo lựa chọn người dùng**. [ADR-008](adr/ADR-008-local-fake-deployment.md) · [Budget, môi trường và bằng chứng](ops/OPS-00-local-fake.md) · [Worksheet](ops/OPS-00-budget.json). Cluster PostgreSQL riêng đã kiểm identity/restart/ghi/rollback/SCRAM; chưa có migration ứng dụng. Task tiếp theo: BE-01 trên DB thử riêng.
+- **Điều chỉnh phạm vi:** dùng fake cho P1, không gọi provider kể cả free tier. Người dùng có Gemini nhưng RPM/TPM/RPD còn chưa xác minh; chưa thuê host/staging cloud. Các điều kiện gọi model thật và G0 đầy đủ dưới đây vẫn mở, không tính nhánh local là nghiệm thu pilot.
+- **Yêu cầu sau đó 22/10/2026:** [ADR-009](adr/ADR-009-local-live-gemini.md) cho phép Gemini thật trên nút giải thích kết quả local với budget có thực thi; smoke thật đã đạt. Đây là ngoại lệ local, không đánh dấu các BE/PY/AI/OPS hoặc G0/G1/G2 đầy đủ hoàn thành; giới hạn tài khoản vẫn chưa xác minh.
 - **Vai trò:** SO/PM. **Phụ thuộc:** DISC-01, ADR-01. **Đầu ra:** host/region, provider shortlist, budget pilot/ngày/tháng, giờ hỗ trợ và người nhận cảnh báo.
 - **Phạm vi/file:** ADR deployment và worksheet ngân sách; lưu tên secrets, không ghi giá trị vào Git.
 - **Nghiệm thu:** có cap hữu hạn trước gọi model thật; biết limit RPM/TPM của tài khoản sẽ dùng; chọn được staging tách dữ liệu/key production. G0 hoàn thành.
@@ -113,48 +121,56 @@ Tuần tham chiếu có thể dịch trong dải 17–25 tuần. Không đặt n
 
 ### BE-01 · Schema, migrations và indices · 8–12 giờ
 
+- **Trạng thái 23/10/2026:** [x] Hoàn thành local: 11 model R1, migration bổ sung và metadata nullable, 34/34 kiểm DB mới/nâng cấp; 25 bảng domain cũ giữ nguyên dữ liệu, schema diff rỗng và client cũ đọc/ghi được. Có gate CI và kiểm backup/restore local. [Hồ sơ nghiệm thu](baseline/BE-01-storage.md). Chưa áp migration DB ứng dụng/production; endpoint và quota/worker runtime ở các task tiếp theo. **Tiếp theo: BE-02.**
 - **Vai trò:** SE. **Phụ thuộc:** ADR-01. **File:** `src/backend/prisma/schema.prisma`, migration mới, Node integration fixtures.
 - **Thực hiện:** conversation/request/message/provider call/quota/reservation/adjustment/execution slots/runtime policy/feedback/outbox; indexes và partial unique active request; migration metadata lab nullable.
 - **Nghiệm thu:** DB mới migrate deploy được; upgrade DB có dữ liệu giữ nguyên rows; constraints chặn duplicate; verify schema diff; rollback code cũ vẫn chạy. AC-05/06/12.
 
 ### BE-02 · Quyền và snapshot attempt · 8–12 giờ
 
-- **Vai trò:** SE. **Phụ thuộc:** BE-01, DISC-03. **File:** `src/backend/src/ai/access.js`, `snapshot.js`, integration với `attemptAccess.js` và controller.
+- **Trạng thái 23/10/2026:** [x] Hoàn thành nền local: guard AI đã mount, metadata/feedback tích hợp start/submit, snapshot/provenance và kiểm quyền trên DB/HTTP thật. 7 integration + 6 unit tests đạt. [Bằng chứng và giới hạn kết nối](baseline/BE-02-access-snapshot.md). Tiếp theo BE-03; chưa có admission API hoặc browser E2E.
+- **Vai trò:** SE. **Phụ thuộc:** BE-01, DISC-03. **File:** `src/agent/node/access.js`, `snapshot.js`, integration với `attemptAccess.js` và controller.
 - **Thực hiện:** Bearer header riêng cho AI, active user/sessionVersion, membership, cohort, conversation owner/epoch; chụp metadata/state/progress an toàn và provenance cho legacy; xử lý tương thích envelope lỗi auth hiện có.
 - **Nghiệm thu:** outsider/removed member bị 404; account locked bị 401; owner lab không đọc chat member; snapshot không đổi khi lab/state thay đổi; transaction ngắn. AC-04/06.
 
 ### BE-03 · Admission, idempotency và quota transaction · 12–18 giờ
 
+- **Trạng thái 23/10/2026:** [x] Hoàn thành admission local: POST/GET request, capabilities/quota, canonical replay, recovery epoch và atomic reservation/outbox. 20 request cùng ID qua hai Node process chỉ tạo một request; quota race/fault rollback đạt. [Bằng chứng và cấu hình](baseline/BE-03-admission.md). Worker/settlement tiếp tục BE-04; chưa bật production hoặc UI hội thoại.
 - **Vai trò:** SE/SO. **Phụ thuộc:** BE-01, BE-02, OPS-00. **File:** `ai/requests.js`, `quota.js`, `reservations.js`, `routes/aiLab.js`, controller.
 - **Thực hiện:** canonical payload hash; replay trước stale check; recovery epoch khi mất ledger sau restore; reserve units/cost; global/user buckets; one active request/user; error schema.
 - **Nghiệm thu:** 20 requests cùng ID qua hai replica tạo một request; key khác vượt quota bị từ chối; khác payload cùng key trả 409; không âm bucket; DB quota lỗi không gọi provider. AC-05/07/14.
 
 ### BE-04 · Worker, dispatch permit và receipt · 12–18 giờ
 
+- **Trạng thái 23/10/2026:** [x] Hoàn thành worker local/fake: claim/heartbeat/fence/reaper, shared slots, service auth, permit một lần, receipt/settlement/reconcile và cancel. Hai process cùng PostgreSQL kiểm crash/race/rollback; CLI hoạt động khi fake ngủ. [Bằng chứng và giới hạn](baseline/BE-04-worker.md). Chưa bật provider thật hoặc migrate DB ứng dụng; tiếp theo BE-05.
 - **Vai trò:** SE. **Phụ thuộc:** BE-03. **File:** `workers/aiWorker.js`, `ai/dispatch.js`, `receipts.js`, `leases.js`, `routes/aiInternal.js`.
 - **Thực hiện:** queue claim, heartbeat/fence, reaper, grant/cancel permit, receipt idempotent, reconcile known/unknown; provider call outside transaction.
 - **Nghiệm thu:** worker chết trước dispatch được phục hồi an toàn; chết sau permit không gọi lại model; late worker không overwrite; receipt duplicate settle một lần; CLI không chờ lock trong thời gian model fake ngủ. AC-05/08/14.
 
 ### BE-05 · Context allowlist và output verifier · 10–14 giờ
 
+- **Trạng thái 26/10/2026:** [x] Hoàn thành local/fake: lọc snapshot, che dữ liệu nhạy cảm, lịch sử đúng chủ/attempt/epoch, giới hạn bytes/ngân sách input, evidence quan sát và lệnh đọc kiểm qua parser. Kiểm output trước giữ text, giữ accounting khi loại câu trả lời. 121 unit/contract, 34 storage và 35 DB/HTTP đạt. [Báo cáo dễ hiểu và giới hạn](baseline/BE-05-context-output.md). Chưa có tokenizer/provider thật, lịch sử CLI đầy đủ hoặc quy tắc nguyên nhân SIM-01; tiếp theo SIM-01 và PY-01/PY-02.
 - **Vai trò:** SE/SO. **Phụ thuộc:** BE-02, ADR-01. **File:** `ai/context.js`, `redaction.js`, `evidence.js`, contract fixtures.
 - **Thực hiện:** public projection, token/byte cap, history cùng owner/epoch, evidence provenance, output schema và command catalog validation.
 - **Nghiệm thu:** canary secrets/rubric/actor ID không xuất hiện ở Python/provider boundary; unknown evidence/command bị chặn; nội dung câu hỏi/CLI không thể thêm tool hoặc quyền. AC-01/02/06.
 
 ### SIM-01 · Diagnostics của ba lab R1 · 12–18 giờ
 
+- **Trạng thái 26/10/2026:** [x] Hoàn thành kỹ thuật local/fake với catalog `sim01-r1-v1`, quy tắc cổng/link/IP/subnet/route/VLAN và probe clone qua simulator thật. 24 ca DISC-03 cùng ca sửa lỗi/âm tính/mơ hồ đạt; SIM-01 36/36, tổng unit/contract 158/158, storage 34/34, HTTP/DB 36/36. Verifier chỉ nhận kết luận chẩn đoán mạnh đúng mẫu/phạm vi/bằng chứng Node. [Báo cáo và giới hạn](baseline/SIM-01-diagnostics.md). Chưa review CCNA độc lập, model/browser/load; tiếp theo PY-01/PY-02.
 - **Vai trò:** SE + reviewer domain. **Phụ thuộc:** DISC-03, BE-05. **File:** `ai/diagnostics/`, simulator test fixtures; tái sử dụng network engine.
 - **Thực hiện:** rule interface, subnet, route, VLAN; clone-only trace, rules có version; trạng thái observed/inferred/unsupported.
 - **Nghiệm thu:** đúng positive/negative/ambiguous fixtures; unused port không thành root cause; default route được xét; trước/sau phân tích state/hash và score giống nhau. AC-01/09.
 
 ### PY-01 · Python service, môi trường tái lập và health · 5–8 giờ
 
-- **Vai trò:** SE. **Phụ thuộc:** ADR-01. **File:** `ai-service/pyproject.toml`, lockfile, `app/main.py`, config/security, Dockerfile.
+- **Trạng thái 26/10/2026:** [x] Hoàn thành local/fake: Python 3.11/FastAPI, uv.lock, strict config, JWT tương thích Node, body/stream/deadline/capacity limits và health. Fake chỉ ACK sau claim/receipt ở Node; không bật worker transport hoặc model thật. 149 test Python, clean install và 270 hồi quy Node đạt. [Báo cáo dễ hiểu](baseline/PY-01-service.md). Chưa chạy image Docker/CI mới; tiếp theo PY-02.
+- **Vai trò:** SE. **Phụ thuộc:** ADR-01. **File:** `src/agent/python/pyproject.toml`, lockfile, `app/main.py`, config/security, Dockerfile.
 - **Thực hiện:** chọn runtime Python và dependency versions đã kiểm; strict config; service auth; input/body limits; liveness/readiness; fake adapter.
 - **Nghiệm thu:** clean install từ lockfile; không key thì readiness AI báo degraded/disabled đúng; không log secret; test internal auth/size/deadline; không public port ngoài yêu cầu vận hành.
 
 ### PY-02 · Provider adapter và output contract · 8–12 giờ
 
+- **Trạng thái 26/10/2026:** [x] Hoàn thành kỹ thuật local: worker transport Python, fake/Gemini, preflight toàn prompt/schema trước claim, Pydantic parity, usage nullable và receipt-only retry. Ngân sách dùng chung ledger với luồng local cũ. Một lượt Gemini thật hoàn tất qua worker/Python/PostgreSQL; 250 Python, 274 hồi quy Node, 34 storage và 42 HTTP/DB đạt. [Báo cáo dễ hiểu](baseline/PY-02-provider.md), [phạm vi live local](adr/ADR-010-python-local-gemini.md). Chưa nghiệm thu chất lượng model, UI hội thoại hoặc pilot.
 - **Vai trò:** SE. **Phụ thuộc:** PY-01, BE-04, BE-05. **File:** `app/adapters/`, `schemas/`, receipt client và tests.
 - **Thực hiện:** interface provider-neutral, fake provider, claim permit trước call, retry=0, deadlines, usage nullable, receipt retry riêng; model config server-side.
 - **Nghiệm thu:** valid/invalid fixtures qua cả Zod/Pydantic; timeout/429/malformed/usage missing có mapping rõ; hai lần cùng permit không dispatch hai call; không nhận endpoint URL từ user. AC-07/14.
@@ -398,15 +414,15 @@ Một tuần nên có một demo học viên hoặc vận hành nhìn được, 
 
 ## 10. Quản lý thay đổi và rủi ro lịch
 
-| Trigger | Hành động PM/SO | Tác động kế hoạch |
-|---|---|---|
-| Effort thực tế hai tuần vượt ước lượng >25% | Tính lại remaining work / throughput thực | Điều chỉnh ngày, không giảm gate quyền/chi phí |
-| Lab thiếu nội dung đúng/capability | Tạm đóng lab đó, sửa fixtures/nội dung | Giảm số lab pilot hoặc thêm task engine có effort riêng |
-| Provider/model không đạt quality | Đổi cấu hình, nội dung hoặc phạm vi câu hỏi | Chưa mở public; rerun eval theo version |
-| Shared-IP vẫn 429 dưới tải hợp lệ | Rà proxy/edge policy + benchmark | Chặn pilot lớp học đến khi có phương án đạt |
-| Không có ngân sách/host phù hợp | Dùng fake provider xây phần độc lập, chốt lựa chọn | Live pilot chờ điều kiện thực, không giả định chi phí 0 |
-| Pilot dùng ít, chưa đủ evidence | Kéo dài quan sát hoặc tuyển bổ sung | Không suy ra D7/chất lượng từ mẫu chưa đủ |
-| Một người quá tải vận hành | Giữ cohort nhỏ, giảm tốc độ feature | Ưu tiên reliability và nội dung hơn mở thêm lab |
-| Yêu cầu thanh toán/RAG/voice chen vào | Viết PRD nhỏ + effort + dependency trước | Tạo release riêng, tránh âm thầm làm R1 phình scope |
+| Trigger                                     | Hành động PM/SO                                    | Tác động kế hoạch                                       |
+| ------------------------------------------- | -------------------------------------------------- | ------------------------------------------------------- |
+| Effort thực tế hai tuần vượt ước lượng >25% | Tính lại remaining work / throughput thực          | Điều chỉnh ngày, không giảm gate quyền/chi phí          |
+| Lab thiếu nội dung đúng/capability          | Tạm đóng lab đó, sửa fixtures/nội dung             | Giảm số lab pilot hoặc thêm task engine có effort riêng |
+| Provider/model không đạt quality            | Đổi cấu hình, nội dung hoặc phạm vi câu hỏi        | Chưa mở public; rerun eval theo version                 |
+| Shared-IP vẫn 429 dưới tải hợp lệ           | Rà proxy/edge policy + benchmark                   | Chặn pilot lớp học đến khi có phương án đạt             |
+| Không có ngân sách/host phù hợp             | Dùng fake provider xây phần độc lập, chốt lựa chọn | Live pilot chờ điều kiện thực, không giả định chi phí 0 |
+| Pilot dùng ít, chưa đủ evidence             | Kéo dài quan sát hoặc tuyển bổ sung                | Không suy ra D7/chất lượng từ mẫu chưa đủ               |
+| Một người quá tải vận hành                  | Giữ cohort nhỏ, giảm tốc độ feature                | Ưu tiên reliability và nội dung hơn mở thêm lab         |
+| Yêu cầu thanh toán/RAG/voice chen vào       | Viết PRD nhỏ + effort + dependency trước           | Tạo release riêng, tránh âm thầm làm R1 phình scope     |
 
 Việc tạo kế hoạch này chưa tạo GitHub Issues, chưa commit/push, chưa mua dịch vụ hoặc triển khai. Backlog đã đủ cụ thể để bắt đầu DISC-01 và chuyển từng task thành issue khi bước vào triển khai.

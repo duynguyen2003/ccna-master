@@ -7,7 +7,7 @@ export const FREE_PLAN = {
 };
 
 export const DASHBOARD_COLORS = {
-  blue: '#3b82f6',
+  blue: '#386298',
   green: '#22c55e',
   orange: '#f59e0b',
   purple: '#a855f7',
@@ -16,7 +16,7 @@ export const DASHBOARD_COLORS = {
 };
 
 export const CHART_GRADIENTS = {
-  blue: ['#3b82f6', 'rgba(59, 130, 246, 0.1)'],
+  blue: ['#386298', 'rgba(56, 98, 152, 0.1)'],
   green: ['#22c55e', 'rgba(34, 197, 94, 0.1)'],
   orange: ['#f59e0b', 'rgba(245, 158, 11, 0.1)'],
 };

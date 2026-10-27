@@ -6,7 +6,7 @@ Ngày bàn giao: 10/09/2026. Nguồn yêu cầu: `coure.md`. Phạm vi lượt t
 
 Nâng cấp trang `/roadmap` thành bản đồ hành trình CCNA, kết nối dữ liệu thật của backend đã có trong repository. Người học phải nhận biết chặng hiện tại, tiến độ, nội dung còn thiếu và lý do khóa; chuyển liền mạch từ bản đồ sang course, lesson, Lab và quay lại sau khi lưu tiến độ.
 
-Đọc tài liệu này, `coure.md`, `Agent.md` và source được dẫn bên dưới trước khi sửa. Ghi kế hoạch vào `todo.md`, triển khai từng giai đoạn, kiểm tra và ghi kết quả. Ưu tiên hợp đồng backend thực tế khi ví dụ trong `coure.md` khác source. Các JSON minh họa bên dưới là tài liệu contract, không phải dữ liệu để hardcode trong UI.
+Đọc tài liệu này, `Agent.md` và source được dẫn bên dưới trước khi sửa. Bản nháp yêu cầu `coure.md` đã được gỡ; những trích dẫn còn lại trong báo cáo là ghi nhận lịch sử. Ghi kế hoạch vào `todo.md`, triển khai từng giai đoạn, kiểm tra và ghi kết quả. Ưu tiên hợp đồng backend thực tế khi ví dụ cũ khác source. Các JSON minh họa bên dưới là tài liệu contract, không phải dữ liệu để hardcode trong UI.
 
 Backend đã xử lý nghiệp vụ. Frontend chỉ gửi thao tác hợp lệ và trình bày kết quả đã được server xác nhận. Không thêm thao tác “hoàn thành cả khóa học” bằng state local hoặc gửi tùy ý XP/status khóa học.
 

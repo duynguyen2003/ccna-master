@@ -1,5 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const { randomUUID } = require('node:crypto');
 
 test(
   'Learning Path HTTP + PostgreSQL contracts, authorization, concurrency and rollback',
@@ -38,6 +39,16 @@ test(
     const patchModule = (moduleId, body = { completed: true }, user = 0) =>
       request(`/learning/modules/${moduleId}/progress`, { method: 'PATCH', body, user });
     const progress = (body, user = 0) => request('/users/progress', { method: 'POST', body, user });
+    const videoInput = (lessonId, patch = {}) => ({
+      lessonId,
+      sessionId: randomUUID(),
+      sessionStartedAt: new Date(Date.now() - 11000).toISOString(),
+      sequence: 1,
+      sessionWatchedSeconds: 11,
+      lastPosition: 11,
+      capturedAt: new Date().toISOString(),
+      ...patch,
+    });
     const getPath = async (user = 0) => {
       const result = await request('/learning/learning-path', { user });
       assert.equal(result.status, 200, JSON.stringify(result.body));
@@ -264,6 +275,50 @@ test(
         }
       );
 
+      await t.test(
+        'lean video access agrees with roadmap and ignores forged course summaries',
+        async () => {
+          const forged = await prisma.userProgress.create({
+            data: {
+              userId: userIds[1],
+              courseId: 'lp-c1',
+              status: 'COMPLETED',
+              progressPercent: 100,
+            },
+          });
+          try {
+            const path = await getPath(1);
+            for (const lesson of lessons) {
+              const course = path.courses.find((c) =>
+                c.modules.some((m) => m.lessons.some((l) => l.id === lesson.id))
+              );
+              const module = course?.modules.find((m) => m.lessons.some((l) => l.id === lesson.id));
+              const expected = !module ? 404 : course.canAccess && module.canAccess ? 200 : 403;
+              assertStatus(
+                await request('/users/progress/video', {
+                  method: 'POST',
+                  user: 1,
+                  body: videoInput(lesson.id, { sessionWatchedSeconds: 0 }),
+                }),
+                expected
+              );
+            }
+            await prisma.course.update({ where: { id: 'lp-c1' }, data: { status: 'DRAFT' } });
+            assertStatus(
+              await request('/users/progress/video', {
+                method: 'POST',
+                user: 1,
+                body: videoInput(lessons[0].id),
+              }),
+              404
+            );
+          } finally {
+            await prisma.course.update({ where: { id: 'lp-c1' }, data: { status: 'PUBLISHED' } });
+            await prisma.userProgress.delete({ where: { id: forged.id } });
+          }
+        }
+      );
+
       await t.test('inactive account is rejected even with a valid JWT', async () => {
         await prisma.user.update({ where: { id: userIds[1] }, data: { isActive: false } });
         assertStatus(await request('/learning/learning-path', { user: 1 }), 401);
@@ -486,8 +541,12 @@ test(
           );
           assert.equal(
             (await prisma.user.findUnique({ where: { id: userIds[0] } })).totalStudyTime,
-            5
+            0
           );
+          const profile = await request('/users/profile');
+          assertStatus(profile, 200);
+          assert.equal(profile.body.data.totalStudyTime, 5);
+          assert.equal(profile.body.data.stats.totalStudyTime, 5);
           const delayedStart = new Date(Date.now() - 20 * 60 * 1000);
           const delayed = {
             ...body,
@@ -550,6 +609,104 @@ test(
             }),
             400
           );
+        }
+      );
+
+      await t.test(
+        'concurrent video retries credit the batch once without completing the lesson',
+        async () => {
+          const body = videoInput(lessons[2].id);
+          const key = { userId_lessonId: { userId: userIds[0], lessonId: lessons[2].id } };
+          const before = await prisma.videoProgress.findUnique({ where: key });
+          const responses = await Promise.all(
+            Array.from({ length: 8 }, () =>
+              request('/users/progress/video', { method: 'POST', body })
+            )
+          );
+          responses.forEach((response) => assertStatus(response, 200));
+          const after = await prisma.videoProgress.findUnique({ where: key });
+          assert.equal(after.watchedSeconds, before.watchedSeconds + 11);
+          assert.equal(after.isCompleted, false);
+          assert.equal(
+            await prisma.videoProgressSession.count({
+              where: {
+                userId: userIds[0],
+                lessonId: lessons[2].id,
+                sessionId: body.sessionId,
+              },
+            }),
+            1
+          );
+          const totals = await prisma.studyLog.aggregate({
+            where: { userId: userIds[0] },
+            _sum: { duration: true },
+          });
+          assert.equal(totals._sum.duration, after.watchedSeconds);
+        }
+      );
+
+      await t.test(
+        'a study-log failure rolls back the video and session before a safe retry',
+        async () => {
+          const body = videoInput(lessons[2].id);
+          const key = { userId_lessonId: { userId: userIds[0], lessonId: lessons[2].id } };
+          const before = await prisma.videoProgress.findUnique({ where: key });
+          try {
+            await prisma.$executeRawUnsafe(
+              "CREATE FUNCTION lp_test_reject_study() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'private study log failure'; END; $$"
+            );
+            await prisma.$executeRawUnsafe(
+              'CREATE TRIGGER lp_test_reject_study BEFORE INSERT OR UPDATE ON study_logs FOR EACH ROW EXECUTE FUNCTION lp_test_reject_study()'
+            );
+            const failed = await request('/users/progress/video', { method: 'POST', body });
+            assertStatus(failed, 500);
+            assert.doesNotMatch(JSON.stringify(failed.body), /private study|Prisma|study_logs/);
+            assert.deepEqual(await prisma.videoProgress.findUnique({ where: key }), before);
+            assert.equal(
+              await prisma.videoProgressSession.count({ where: { sessionId: body.sessionId } }),
+              0
+            );
+          } finally {
+            await prisma.$executeRawUnsafe(
+              'DROP TRIGGER IF EXISTS lp_test_reject_study ON study_logs'
+            );
+            await prisma.$executeRawUnsafe('DROP FUNCTION IF EXISTS lp_test_reject_study()');
+          }
+          assertStatus(await request('/users/progress/video', { method: 'POST', body }), 200);
+          assert.equal(
+            (await prisma.videoProgress.findUnique({ where: key })).watchedSeconds,
+            before.watchedSeconds + 11
+          );
+        }
+      );
+
+      await t.test(
+        'profile and admin totals sum historical seconds before rounding and ignore the old cache',
+        async () => {
+          await prisma.user.update({ where: { id: userIds[1] }, data: { totalStudyTime: 999 } });
+          const empty = await request('/users/profile', { user: 1 });
+          assertStatus(empty, 200);
+          assert.equal(empty.body.data.stats.totalStudyTime, 0);
+          await prisma.studyLog.createMany({
+            data: [2, 40].map((days) => ({
+              userId: userIds[1],
+              date: new Date(Date.now() - days * 86400000),
+              duration: 35,
+            })),
+          });
+          const profile = await request('/users/profile/me', { user: 1 });
+          assertStatus(profile, 200);
+          assert.equal(profile.body.data.totalStudyTime, 1);
+          assert.equal(profile.body.data.stats.totalStudyTime, 1);
+          const admin = await prisma.user.findUnique({ where: { id: userIds[3] } });
+          const token = jwt.sign(
+            { id: admin.id, sessionVersion: admin.sessionVersion },
+            process.env.JWT_SECRET,
+            { expiresIn: '5m' }
+          );
+          const detail = await request(`/admin/users/${userIds[1]}`, { token });
+          assertStatus(detail, 200);
+          assert.equal(detail.body.totalStudyTime, 1);
         }
       );
 

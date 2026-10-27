@@ -111,7 +111,15 @@ export default function FileUploadField({
       {selectedFile || preview ? (
         <div className="file-upload__item" aria-live="polite">
           {preview ? (
-            <img className="file-upload__preview" src={preview} alt="Xem trước tệp đã chọn" />
+            <img
+              className="file-upload__preview"
+              src={preview}
+              alt="Xem trước tệp đã chọn"
+              width={640}
+              height={360}
+              loading="lazy"
+              decoding="async"
+            />
           ) : (
             <span className="file-upload__file-icon" aria-hidden="true">
               {selectedFile?.type.startsWith('image/') ? (

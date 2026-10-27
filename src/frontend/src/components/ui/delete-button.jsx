@@ -7,6 +7,7 @@ import {
   useMotionValue,
   useReducedMotion,
   useTransform,
+  useIsPresent,
 } from 'motion/react';
 import { cn } from '../../lib/utils';
 import './delete-button.css';
@@ -17,7 +18,7 @@ const WALL_TOP = 6;
 const WALL_TOP_OPEN = 13.5;
 const WALL_BASE = 20;
 
-const HOLD = { deleted: 1400, kept: 500 };
+const HOLD = { deleted: 1400, kept: 500, error: 3000 };
 
 const EASE = [0.32, 0.72, 0, 1];
 const EASE_LID = [0.34, 1.1, 0.64, 1];
@@ -83,23 +84,35 @@ const circleMotion = {
   shown: { opacity: 1, scale: 1, transition: IN },
 };
 
-function Circle({
-  label,
-  onClick,
-  className,
-  sizeConfig,
-  children,
-}) {
+function Circle({ label, onClick, className, sizeConfig, buttonRef, disabled, children }) {
   const reduced = useReducedMotion() ?? false;
+  const isPresent = useIsPresent();
+  useEffect(() => {
+    // Reopening during the exit transition can mount/enable the panel later
+    // than the parent's open effect. Focus when this button is interactive.
+    if (isPresent && !disabled) buttonRef?.current?.focus();
+  }, [isPresent, disabled, buttonRef]);
 
   return (
-    <motion.div className="flex" variants={reduced ? undefined : circleMotion}>
+    <motion.div
+      className="rare-delete-circle-wrap"
+      variants={
+        reduced
+          ? {
+              hidden: { opacity: 1, scale: 1, transition: INSTANT },
+              shown: { opacity: 1, scale: 1, transition: INSTANT },
+            }
+          : circleMotion
+      }
+    >
       <motion.button
+        ref={buttonRef}
         type="button"
         aria-label={label}
         onClick={onClick}
-        whileHover={reduced ? undefined : { scale: 1.08 }}
-        whileTap={reduced ? undefined : { scale: 0.85 }}
+        disabled={disabled || !isPresent}
+        whileHover={reduced || disabled ? undefined : { scale: 1.08 }}
+        whileTap={reduced || disabled ? undefined : { scale: 0.85 }}
         transition={PRESS}
         className={cn('rare-delete-circle', className)}
       >
@@ -121,7 +134,7 @@ export function DeleteButton({
   onConfirm,
   onCancel,
   size = 'md',
-  accentColor = '#dc2626',
+  accentColor = 'var(--color-danger)',
   title = 'Xóa',
   disabled = false,
   className,
@@ -130,15 +143,15 @@ export function DeleteButton({
 }) {
   const reduced = useReducedMotion() ?? false;
   const [open, setOpen] = useState(false);
-  const [status, setStatus] = useState('idle'); // 'idle' | 'deleted' | 'kept'
+  const [status, setStatus] = useState('idle');
+  const [pending, setPending] = useState(false);
   const containerRef = useRef(null);
   const triggerRef = useRef(null);
+  const confirmRef = useRef(null);
+  const busyRef = useRef(false);
 
   const sizeConfig = SIZES[size] || SIZES.md;
-  const timing = useCallback(
-    (transition) => (reduced ? INSTANT : transition),
-    [reduced]
-  );
+  const timing = useCallback((transition) => (reduced ? INSTANT : transition), [reduced]);
 
   const top = useMotionValue(WALL_TOP);
   const wall = useTransform(top, (y) => WALL_BASE - y);
@@ -146,20 +159,14 @@ export function DeleteButton({
   const settle = useMotionValue(1);
 
   useEffect(() => {
-    const walls = animate(
-      top,
-      open ? WALL_TOP_OPEN : WALL_TOP,
-      reduced ? INSTANT : WALL
-    );
+    const walls = animate(top, open ? WALL_TOP_OPEN : WALL_TOP, reduced ? INSTANT : WALL);
     return () => walls.stop();
   }, [open, reduced, top]);
 
   useEffect(() => {
+    if (status === 'idle' || reduced) settle.set(1);
     if (status === 'idle') return;
-    const nudge =
-      status === 'kept' && !reduced
-        ? animate(settle, [1, 0.88, 1], SETTLE)
-        : null;
+    const nudge = status === 'kept' && !reduced ? animate(settle, [1, 0.88, 1], SETTLE) : null;
     const done = setTimeout(() => setStatus('idle'), HOLD[status]);
     return () => {
       nudge?.stop();
@@ -169,21 +176,40 @@ export function DeleteButton({
 
   const resolve = useCallback(
     (next) => {
+      if (busyRef.current) return;
       setOpen(false);
       setStatus(next);
       triggerRef.current?.focus();
-      if (next === 'deleted') {
-        onConfirm?.();
-      } else {
-        onCancel?.();
-      }
+      onCancel?.();
     },
-    [onConfirm, onCancel]
+    [onCancel]
   );
+
+  const remove = async () => {
+    if (busyRef.current || disabled) return;
+    busyRef.current = true;
+    setPending(true);
+    try {
+      await onConfirm?.();
+      setStatus('deleted');
+    } catch {
+      setStatus('error');
+    } finally {
+      busyRef.current = false;
+      setPending(false);
+      setOpen(false);
+    }
+  };
+
+  // Restore focus after React has re-enabled the trigger on async completion.
+  useEffect(() => {
+    if (!pending && (status === 'deleted' || status === 'error')) triggerRef.current?.focus();
+  }, [pending, status]);
 
   // Close on clicking outside
   useEffect(() => {
     if (!open) return;
+    confirmRef.current?.focus();
     const handleClickOutside = (e) => {
       if (containerRef.current && !containerRef.current.contains(e.target)) {
         resolve('kept');
@@ -199,18 +225,18 @@ export function DeleteButton({
       data-slot="delete-button"
       data-state={open ? 'open' : 'closed'}
       data-status={status}
-      className={cn(
-        'rare-delete-container',
-        `size-${size}`,
-        open && 'is-open',
-        className
-      )}
+      className={cn('rare-delete-container', `size-${size}`, open && 'is-open', className)}
       style={style}
+      initial={false}
       animate={{ width: open ? sizeConfig.tile + sizeConfig.panel : sizeConfig.tile }}
       transition={timing(WIDTH)}
       onKeyDown={(event) => {
-        if (event.key === 'Escape' && open) resolve('kept');
+        if (event.key === 'Escape' && open) {
+          event.stopPropagation();
+          resolve('kept');
+        }
       }}
+      onClick={(event) => event.stopPropagation()}
       {...props}
     >
       <motion.button
@@ -219,10 +245,10 @@ export function DeleteButton({
         title={open ? 'Hủy' : title}
         aria-label={title}
         aria-expanded={open}
-        disabled={disabled}
+        disabled={disabled || pending}
         onClick={(e) => {
           e.stopPropagation();
-          if (disabled) return;
+          if (disabled || busyRef.current) return;
           if (open) return resolve('kept');
           setStatus('idle');
           setOpen(true);
@@ -240,7 +266,7 @@ export function DeleteButton({
               height={sizeConfig.binSize}
               stroke={accentColor}
               strokeWidth="2.5"
-              initial={{ opacity: 0, scale: 0.6 }}
+              initial={reduced ? false : { opacity: 0, scale: 0.6 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.6 }}
               transition={timing(SWAP)}
@@ -260,9 +286,9 @@ export function DeleteButton({
               height={sizeConfig.binSize}
               stroke="currentColor"
               strokeWidth="2"
-              className="overflow-visible"
+              className="rare-delete-bin"
               style={{ scale: settle }}
-              initial={{ opacity: 0 }}
+              initial={reduced ? false : { opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={timing(SWAP)}
@@ -297,41 +323,56 @@ export function DeleteButton({
           border: 0,
         }}
       >
-        {status === 'deleted' ? 'Deleted' : status === 'kept' ? 'Kept' : ''}
+        {pending
+          ? 'Đang xóa'
+          : status === 'deleted'
+            ? 'Đã xóa'
+            : status === 'kept'
+              ? 'Đã hủy'
+              : status === 'error'
+                ? 'Không xóa được. Vui lòng thử lại.'
+                : ''}
       </span>
 
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            key="panel"
-            style={{ width: sizeConfig.panel }}
-            className="rare-delete-panel"
-            variants={reduced ? undefined : panelMotion}
-            initial="hidden"
-            animate="shown"
-            exit="hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <span aria-hidden="true" className="rare-delete-notch" />
-            <Circle
-              label="Xác nhận xóa"
-              className="btn-confirm"
-              sizeConfig={sizeConfig}
-              onClick={() => resolve('deleted')}
-            >
-              <path d="M4 12.5 9.5 18 20 7" stroke="currentColor" />
-            </Circle>
-            <Circle
-              label="Hủy thao tác"
-              className="btn-cancel"
-              sizeConfig={sizeConfig}
-              onClick={() => resolve('kept')}
-            >
-              <path d="M6 6 18 18M18 6 6 18" stroke="currentColor" />
-            </Circle>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <motion.div
+        role="group"
+        aria-label="Xác nhận xóa"
+        aria-hidden={!open}
+        style={{ width: sizeConfig.panel, pointerEvents: open ? 'auto' : 'none' }}
+        className="rare-delete-panel"
+        variants={
+          reduced
+            ? {
+                hidden: { opacity: 0, x: 0, transition: INSTANT },
+                shown: { opacity: 1, x: 0, transition: INSTANT },
+              }
+            : panelMotion
+        }
+        initial={false}
+        animate={open ? 'shown' : 'hidden'}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <span aria-hidden="true" className="rare-delete-notch" />
+        <Circle
+          label="Xác nhận xóa"
+          className="btn-confirm"
+          sizeConfig={sizeConfig}
+          buttonRef={confirmRef}
+          disabled={disabled || pending || !open}
+          onClick={remove}
+        >
+          <path d="M4 12.5 9.5 18 20 7" stroke="currentColor" />
+        </Circle>
+        <Circle
+          label="Hủy thao tác"
+          className="btn-cancel"
+          sizeConfig={sizeConfig}
+          disabled={disabled || pending || !open}
+          onClick={() => resolve('kept')}
+        >
+          <path d="M6 6 18 18M18 6 6 18" stroke="currentColor" />
+        </Circle>
+      </motion.div>
     </motion.div>
   );
 }

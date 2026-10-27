@@ -3,7 +3,7 @@
 // ==========================================
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["driverAdapters"]
+  previewFeatures = ["driverAdapters", "partialIndexes"]
 }
 
 datasource db {
@@ -76,6 +76,10 @@ model User {
   videoProgressSessions VideoProgressSession[]
   studyLogs             StudyLog[]
   labAttempts           LabAttempt[]
+  aiConversations       AiConversation[]
+  aiRequests            AiRequest[]
+  aiFeedback            AiFeedback[]
+  aiPoliciesUpdated     AiRuntimePolicy[]
 
   @@map("users")
 }
@@ -233,6 +237,16 @@ model LabAttempt {
   user     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   lab      Lab          @relation(fields: [labId], references: [id], onDelete: Cascade)
   commands LabCommand[]
+
+  publicMetadata           Json?               @map("public_metadata")
+  publicMetadataProvenance AiSourceProvenance? @map("public_metadata_provenance")
+  publicMetadataCapturedAt DateTime?           @map("public_metadata_captured_at") @db.Timestamptz(3)
+  feedbackRevision         Int?                @map("feedback_revision")
+  feedbackRecordedAt       DateTime?           @map("feedback_recorded_at") @db.Timestamptz(3)
+  safeFeedbackSnapshot     Json?               @map("safe_feedback_snapshot")
+  feedbackProvenance       AiSourceProvenance? @map("feedback_provenance")
+  aiConversations          AiConversation[]
+  aiRequests               AiRequest[]
 
   @@index([userId, labId, status])
   @@map("lab_attempts")
@@ -513,4 +527,330 @@ model StudyLog {
 
   @@unique([userId, date])
   @@map("study_logs")
+}
+
+// AI R1 storage. SQL checks and delete-retention rules are documented by BE-01.
+enum AiRequestStatus {
+  QUEUED
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+  EXPIRED
+  REVOKED
+  DELETED
+  OUTCOME_UNKNOWN
+}
+
+enum AiResponseMode {
+  NONE
+  LLM
+  DETERMINISTIC
+}
+
+enum AiIntent {
+  NEXT_STEP
+  DIAGNOSE
+  EXPLAIN_CONCEPT
+  LAB_REVIEW
+}
+
+enum AiSourceProvenance {
+  LIVE_SNAPSHOT
+  FEEDBACK_SNAPSHOT
+  LEGACY_FEEDBACK
+  CAPTURED_AT_ATTEMPT_START
+  CAPTURED_AT_AI_REQUEST
+}
+
+enum AiMessageRole {
+  USER
+  ASSISTANT
+}
+
+enum AiProviderCallState {
+  PLANNED
+  DISPATCHED
+  RECEIVED
+  KNOWN_FAILURE
+  OUTCOME_UNKNOWN
+}
+
+enum AiUsageStatus {
+  PENDING
+  FINAL
+  UNRESOLVED
+  ESTIMATED
+}
+
+enum AiQuotaScope {
+  USER_MINUTE
+  USER_DAY
+  GLOBAL_DAY
+  GLOBAL_MONTH
+}
+
+enum AiReservationStatus {
+  RESERVED
+  SETTLED
+  RELEASED
+  UNRESOLVED
+}
+
+model AiConversation {
+  id         String    @id @default(uuid()) @db.Uuid
+  userId     Int?      @map("user_id")
+  attemptId  String?   @map("attempt_id") @db.Uuid
+  ownerKey   String    @map("owner_key") @db.VarChar(160)
+  epoch      Int       @default(0)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt  DateTime? @map("deleted_at") @db.Timestamptz(3)
+  purgeAfter DateTime? @map("purge_after") @db.Timestamptz(3)
+
+  // Detach nullable identity only after cancel/purge; no silent account cascade.
+  user     User?       @relation(fields: [userId], references: [id], onDelete: Restrict)
+  attempt  LabAttempt? @relation(fields: [attemptId], references: [id], onDelete: Restrict)
+  requests AiRequest[]
+  messages AiMessage[]
+
+  @@unique([userId, attemptId])
+  @@unique([id, userId, attemptId])
+  @@index([deletedAt, purgeAfter])
+  @@map("ai_conversations")
+}
+
+model AiRequest {
+  id                        String             @id @default(uuid()) @db.Uuid
+  userId                    Int?               @map("user_id")
+  attemptId                 String?            @map("attempt_id") @db.Uuid
+  conversationId            String?            @map("conversation_id") @db.Uuid
+  ownerKey                  String             @map("owner_key") @db.VarChar(160)
+  conversationEpoch         Int                @map("conversation_epoch")
+  recoveryEpoch             String             @map("recovery_epoch") @db.VarChar(80)
+  clientRequestId           String             @map("client_request_id") @db.Uuid
+  payloadHash               String             @map("payload_hash") @db.Char(64)
+  status                    AiRequestStatus    @default(QUEUED)
+  responseMode              AiResponseMode     @default(NONE) @map("response_mode")
+  intent                    AiIntent
+  requestedHintLevel        Int?               @map("requested_hint_level")
+  effectiveHintLevel        Int                @default(1) @map("effective_hint_level")
+  sourceRevision            Int?               @map("source_revision")
+  sourceProvenance          AiSourceProvenance @map("source_provenance")
+  snapshot                  Json?
+  contextHash               String             @map("context_hash") @db.Char(64)
+  versions                  Json
+  sessionVersionAtAdmission Int                @map("session_version_at_admission")
+  maxCostMicros             BigInt             @map("max_cost_micros")
+  deadlineAt                DateTime           @map("deadline_at") @db.Timestamptz(3)
+  leaseOwner                String?            @map("lease_owner") @db.VarChar(160)
+  leaseVersion              Int                @default(0) @map("lease_version")
+  leaseExpiresAt            DateTime?          @map("lease_expires_at") @db.Timestamptz(3)
+  heartbeatAt               DateTime?          @map("heartbeat_at") @db.Timestamptz(3)
+  errorCode                 String?            @map("error_code") @db.VarChar(80)
+  createdAt                 DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt                 DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
+  startedAt                 DateTime?          @map("started_at") @db.Timestamptz(3)
+  finishedAt                DateTime?          @map("finished_at") @db.Timestamptz(3)
+  purgedAt                  DateTime?          @map("purged_at") @db.Timestamptz(3)
+
+  user           User?             @relation(fields: [userId], references: [id], onDelete: Restrict)
+  attempt        LabAttempt?       @relation(fields: [attemptId], references: [id], onDelete: Restrict)
+  conversation   AiConversation?   @relation(fields: [conversationId, userId, attemptId], references: [id, userId, attemptId], onDelete: Restrict, onUpdate: Restrict)
+  messages       AiMessage[]
+  providerCalls  AiProviderCall[]
+  reservations   AiReservation[]
+  executionSlots AiExecutionSlot[]
+
+  @@unique([userId, clientRequestId])
+  @@unique([ownerKey, clientRequestId])
+  @@unique([id, conversationId, conversationEpoch])
+  @@unique([id, contextHash])
+  // Use PostgreSQL's canonical enum predicate so migrate diff remains empty.
+  @@unique([userId], map: "ai_requests_one_active_user", where: raw("(status = ANY (ARRAY['QUEUED'::\"AiRequestStatus\", 'RUNNING'::\"AiRequestStatus\"]))"))
+  @@index([status, createdAt])
+  @@index([userId, createdAt])
+  @@index([conversationId, conversationEpoch, createdAt])
+  @@index([status, leaseExpiresAt])
+  @@map("ai_requests")
+}
+
+model AiMessage {
+  id               String        @id @default(uuid()) @db.Uuid
+  conversationId   String        @map("conversation_id") @db.Uuid
+  epoch            Int
+  requestId        String        @map("request_id") @db.Uuid
+  role             AiMessageRole
+  content          String?       @db.Text
+  structuredAnswer Json?         @map("structured_answer")
+  sourceRevision   Int?          @map("source_revision")
+  evidenceRefs     Json?         @map("evidence_refs")
+  evidenceSnapshot Json?         @map("evidence_snapshot")
+  createdAt        DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  conversation AiConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  request      AiRequest      @relation(fields: [requestId, conversationId, epoch], references: [id, conversationId, conversationEpoch], onDelete: Restrict, onUpdate: Restrict)
+  feedback     AiFeedback[]
+
+  @@unique([requestId, role])
+  @@index([conversationId, epoch, createdAt, id])
+  @@map("ai_messages")
+}
+
+model AiProviderCall {
+  id                String              @id @default(uuid()) @db.Uuid
+  requestId         String              @map("request_id") @db.Uuid
+  stepIndex         Int                 @default(0) @map("step_index")
+  contextHash       String              @map("context_hash") @db.Char(64)
+  provider          String              @db.VarChar(40)
+  model             String              @db.VarChar(120)
+  priceVersion      String              @map("price_version") @db.VarChar(80)
+  state             AiProviderCallState @default(PLANNED)
+  leaseVersion      Int                 @map("lease_version")
+  providerRequestId String?             @map("provider_request_id") @db.VarChar(200)
+  inputTokens       Int?                @map("input_tokens")
+  outputTokens      Int?                @map("output_tokens")
+  reasoningTokens   Int?                @map("reasoning_tokens")
+  maxCostMicros     BigInt              @map("max_cost_micros")
+  costMicros        BigInt?             @map("cost_micros")
+  usageStatus       AiUsageStatus       @default(PENDING) @map("usage_status")
+  currency          String              @default("USD") @db.Char(3)
+  receiptHash       String?             @map("receipt_hash") @db.Char(64)
+  receiptPayload    Json?               @map("receipt_payload")
+  analyzeInput      Json?               @map("analyze_input")
+  receiptExpiresAt  DateTime?           @map("receipt_expires_at") @db.Timestamptz(3)
+  suppressionReason String?             @map("suppression_reason") @db.VarChar(80)
+  finishReason      String?             @map("finish_reason") @db.VarChar(80)
+  createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
+  dispatchedAt      DateTime?           @map("dispatched_at") @db.Timestamptz(3)
+  receivedAt        DateTime?           @map("received_at") @db.Timestamptz(3)
+
+  request        AiRequest           @relation(fields: [requestId, contextHash], references: [id, contextHash], onDelete: Restrict, onUpdate: Restrict)
+  adjustments    AiUsageAdjustment[]
+  executionSlots AiExecutionSlot[]
+
+  @@unique([requestId, stepIndex])
+  @@unique([id, requestId])
+  @@index([usageStatus, createdAt])
+  @@index([receiptExpiresAt])
+  @@map("ai_provider_calls")
+}
+
+model AiQuotaBucket {
+  id             String          @id @default(uuid()) @db.Uuid
+  scopeType      AiQuotaScope    @map("scope_type")
+  // Include environment and a pseudonymous owner key, never email/credential.
+  scopeKey       String          @map("scope_key") @db.VarChar(200)
+  windowStart    DateTime        @map("window_start") @db.Timestamptz(3)
+  windowEnd      DateTime        @map("window_end") @db.Timestamptz(3)
+  limitUnits     Int             @default(0) @map("limit_units")
+  usedUnits      Int             @default(0) @map("used_units")
+  reservedUnits  Int             @default(0) @map("reserved_units")
+  limitMicros    BigInt          @default(0) @map("limit_micros")
+  spentMicros    BigInt          @default(0) @map("spent_micros")
+  reservedMicros BigInt          @default(0) @map("reserved_micros")
+  reservations   AiReservation[]
+
+  @@unique([scopeType, scopeKey, windowStart])
+  @@index([windowEnd])
+  @@map("ai_quota_buckets")
+}
+
+model AiReservation {
+  id                String              @id @default(uuid()) @db.Uuid
+  requestId         String              @map("request_id") @db.Uuid
+  bucketId          String              @map("bucket_id") @db.Uuid
+  units             Int                 @default(0)
+  costMicros        BigInt              @map("cost_micros")
+  status            AiReservationStatus @default(RESERVED)
+  settlementKey     String?             @unique @map("settlement_key") @db.VarChar(200)
+  settledUnits      Int?                @map("settled_units")
+  unitUsed          Int?                @map("unit_used")
+  settledCostMicros BigInt?             @map("settled_cost_micros")
+  createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
+  settledAt         DateTime?           @map("settled_at") @db.Timestamptz(3)
+
+  request AiRequest     @relation(fields: [requestId], references: [id], onDelete: Restrict)
+  bucket  AiQuotaBucket @relation(fields: [bucketId], references: [id], onDelete: Restrict)
+
+  @@unique([requestId, bucketId])
+  @@index([status, createdAt])
+  @@map("ai_reservations")
+}
+
+model AiUsageAdjustment {
+  id             String         @id @default(uuid()) @db.Uuid
+  providerCallId String         @map("provider_call_id") @db.Uuid
+  idempotencyKey String         @unique @map("idempotency_key") @db.VarChar(200)
+  deltaMicros    BigInt         @map("delta_micros")
+  reason         String         @db.VarChar(80)
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  providerCall   AiProviderCall @relation(fields: [providerCallId], references: [id], onDelete: Restrict)
+
+  @@index([providerCallId, createdAt])
+  @@map("ai_usage_adjustments")
+}
+
+model AiRuntimePolicy {
+  environment      String            @id @db.VarChar(40)
+  version          Int               @default(1)
+  admissionEnabled Boolean           @default(false) @map("admission_enabled")
+  dispatchEnabled  Boolean           @default(false) @map("dispatch_enabled")
+  eligibilityRules Json              @default("{}") @map("eligibility_rules")
+  limits           Json              @default("{}")
+  providerConfigId String?           @map("provider_config_id") @db.VarChar(80)
+  updatedAt        DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
+  updatedBy        Int?              @map("updated_by")
+  updater          User?             @relation(fields: [updatedBy], references: [id], onDelete: SetNull)
+  executionSlots   AiExecutionSlot[]
+
+  @@map("ai_runtime_policies")
+}
+
+model AiExecutionSlot {
+  environment  String    @db.VarChar(40)
+  slotNumber   Int       @map("slot_number")
+  requestId    String?   @unique @map("request_id") @db.Uuid
+  callId       String?   @unique @map("call_id") @db.Uuid
+  leaseVersion Int       @default(0) @map("lease_version")
+  acquiredAt   DateTime? @map("acquired_at") @db.Timestamptz(3)
+  expiresAt    DateTime? @map("expires_at") @db.Timestamptz(3)
+
+  policy  AiRuntimePolicy @relation(fields: [environment], references: [environment], onDelete: Restrict)
+  request AiRequest?      @relation(fields: [requestId], references: [id], onDelete: Restrict)
+  call    AiProviderCall? @relation(fields: [callId, requestId], references: [id, requestId], onDelete: Restrict, onUpdate: Restrict)
+
+  @@id([environment, slotNumber])
+  @@index([expiresAt])
+  @@map("ai_execution_slots")
+}
+
+model AiFeedback {
+  id              String    @id @default(uuid()) @db.Uuid
+  messageId       String    @map("message_id") @db.Uuid
+  userId          Int       @map("user_id")
+  helpful         Boolean
+  reasonCode      String?   @map("reason_code") @db.VarChar(80)
+  optionalComment String?   @map("optional_comment") @db.VarChar(500)
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  message         AiMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId])
+  @@map("ai_feedback")
+}
+
+model AiEventOutbox {
+  eventId       String    @id @default(uuid()) @map("event_id") @db.Uuid
+  type          String    @db.VarChar(80)
+  version       Int       @default(1)
+  payload       Json
+  occurredAt    DateTime  @default(now()) @map("occurred_at") @db.Timestamptz(3)
+  exportedAt    DateTime? @map("exported_at") @db.Timestamptz(3)
+  retryCount    Int       @default(0) @map("retry_count")
+  nextAttemptAt DateTime  @default(now()) @map("next_attempt_at") @db.Timestamptz(3)
+
+  @@index([nextAttemptAt, eventId], map: "ai_event_outbox_pending_idx", where: raw("exported_at IS NULL"))
+  @@map("ai_event_outbox")
 }

@@ -1,0 +1,14 @@
+{
+  "contractVersion": "1.0.0",
+  "clientRequestId": "e1975f55-815c-4da2-ae4b-2699b2e427e6",
+  "intent": "DIAGNOSE",
+  "message": "Vì sao PC1 chưa ping được PC2?",
+  "selectedDeviceId": "PC1",
+  "target": {
+    "deviceId": "PC2"
+  },
+  "requestedHintLevel": 2,
+  "expectedRevision": 12,
+  "conversationEpoch": 1,
+  "recoveryEpoch": "recovery-test-v1"
+}

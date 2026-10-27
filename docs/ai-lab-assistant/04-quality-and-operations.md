@@ -21,6 +21,8 @@ Các ngưỡng dưới đây là mục tiêu khởi điểm cho một sản ph�
 
 CI dùng provider fake cho tính tái lập và không phát sinh tiền. Kết quả fake pass không chứng minh chất lượng model thật. Eval live chạy job riêng có ngân sách, secrets được bảo vệ và artifact chỉ chứa fixture synthetic hoặc dữ liệu đã được phép sử dụng.
 
+**Đã có từ ADR-01 ngày 19/10/2026:** `pnpm check:ai:contracts`, `pnpm test:ai:contracts`, Python JSON Schema validator và frontend contract test chạy cùng [fixtures v1](../../src/agent/contracts/ai-lab/v1/README.md). Đây là kiểm structural schema cùng binding/state helpers; không thay DB race/HTTP auth/worker fault hoặc provider eval. FastAPI/Pydantic service vẫn thuộc PY-01.
+
 ## 2. Test matrix trọng yếu
 
 Mỗi hàng là một nhóm test có thể mở thành nhiều case; tên ID giữ ổn định trong báo cáo nghiệm thu.
@@ -195,7 +197,11 @@ Cấu hình proxy ảnh hưởng cách Express xác định IP; cần xác minh 
 
 ## 6. Mô hình chi phí và hạn mức tài chính
 
+**Quyết định OPS-00 ngày 22/10/2026:** người dùng chọn local/fake và **0 USD**; cap pilot/ngày/tháng/eval đều 0, 0 external calls kể cả free tier. [Worksheet có kiểm offline và phương án triển khai](ops/OPS-00-local-fake.md), [ADR-008](adr/ADR-008-local-fake-deployment.md). Gemini là ứng viên tương lai; quota tài khoản và runtime budget enforcement chưa được xác minh/triển khai. Các ví dụ và policy live bên dưới không cấp quyền gọi thật.
+
 ### 6.1. Công thức
+
+**Yêu cầu tiếp theo cùng ngày:** [ADR-009](adr/ADR-009-local-live-gemini.md) ghi ngoại lệ Gemini thật cho giải thích kết quả local: 0,05 USD/ngày, 0,10 USD/tháng/toàn ledger, tối đa 20 reservations, timeout không tự hoàn dự phòng. [Policy](ops/OPS-00-live.json) đã được thực thi trên máy; khác worksheet 0 USD lịch sử. Không áp ngoại lệ này cho R1/pilot/production hoặc suy ra quota account từ một smoke thành công.
 
 ```text
 N_requests = MAU_AI × active_days_per_month × requests_per_active_day
@@ -345,6 +351,8 @@ Release manifest ghi git commit, Node/Python image digests, migration IDs, contr
 Health: API readiness kiểm DB/core dependencies; worker readiness kiểm DB/lease loop; Python readiness kiểm config/internal connectivity cần thiết. Provider outage làm AI degraded, không khiến orchestrator restart toàn lab API liên tục. Liveness chỉ báo process sống, không gọi provider trả phí.
 
 ## 10. Release gates và stop conditions
+
+**Tiến độ 22/10/2026:** nhánh OPS-00 local/fake được chọn để tiếp tục xây P1 bằng DB thử riêng và fake provider. G0 đầy đủ chưa đạt: DISC-02 bị bỏ qua, staging ứng dụng và giới hạn tài khoản model thật chưa xác minh. Không mở pilot dựa trên smoke DB hoặc worksheet 0 USD.
 
 | Gate | Điều kiện bắt buộc | Bằng chứng |
 |---|---|---|

@@ -2,7 +2,11 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const engine = require('@ccna/shared/simulation/networkEngine');
 const { transmit, aclAllows } = require('@ccna/shared/simulation/networkPackets');
-const { routeTable, layer2Path, spanningTree } = require('@ccna/shared/simulation/networkProtocols');
+const {
+  routeTable,
+  layer2Path,
+  spanningTree,
+} = require('@ccna/shared/simulation/networkProtocols');
 const { topologySchema, parseCliLabConfig } = require('../validation/cliLabSchema');
 const { gradeAttempt } = require('@ccna/shared/simulation/gradingEngine');
 const { withAttempt, mayAccess } = require('./attemptAccess');
@@ -174,8 +178,13 @@ test('EIGRP golden solution forms multicast/static neighbors, installs D routes 
   const grade = gradeAttempt(state, eigrpLab.gradingSpec);
   assert.equal(grade.score, 100);
   assert.equal(grade.passed, true);
-  assert.equal(state.eigrpNeighbors['R1:GigabitEthernet1/12>R2:GigabitEthernet1/12'].mode, 'STATIC');
-  assert.ok(routeTable(state, 'R1').some((route) => route.protocol === 'D' && route.network === '4.0.0.0'));
+  assert.equal(
+    state.eigrpNeighbors['R1:GigabitEthernet1/12>R2:GigabitEthernet1/12'].mode,
+    'STATIC'
+  );
+  assert.ok(
+    routeTable(state, 'R1').some((route) => route.protocol === 'D' && route.network === '4.0.0.0')
+  );
   const output = engine.execute(state, {
     type: 'command',
     deviceId: 'R1',
@@ -419,7 +428,7 @@ test('attempt access checks owner, member and revocation; DB lock precedes read'
     (e) => e.status === 404
   );
 });
-test('LLM integration keeps deterministic feedback and has timeout/error fallback', async () => {
+test('legacy direct provider cannot bypass the controlled local Gemini path', async () => {
   const f = {
     score: 0,
     checks: [{ passed: false, message: 'Missing route', hint: 'Inspect routing table' }],
@@ -430,16 +439,10 @@ test('LLM integration keeps deterministic feedback and has timeout/error fallbac
     LAB_AI_MODEL: 'test',
   };
   assert.equal((await explainFeedback(f, {})).provider, 'deterministic');
-  let request;
-  const r = await explainFeedback(f, config, async (url, req) => {
-    request = req;
-    return {
-      ok: true,
-      json: async () => ({ choices: [{ message: { content: 'Kiểm tra route về.' } }] }),
-    };
-  });
-  assert.equal(r.provider, 'configured');
-  assert.equal(JSON.parse(request.body).messages.length, 2);
+  const r = await explainFeedback(f, config, () =>
+    assert.fail('legacy provider must not dispatch')
+  );
+  assert.equal(r.provider, 'deterministic');
   assert.equal(f.score, 0);
   assert.equal(
     (

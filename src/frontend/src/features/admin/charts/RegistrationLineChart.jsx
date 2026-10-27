@@ -50,8 +50,8 @@ const RegistrationLineChart = ({ data, loading = false }) => {
         <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
           <defs>
             <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1} />
-              <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+              <stop offset="5%" stopColor="#386298" stopOpacity={0.1} />
+              <stop offset="95%" stopColor="#386298" stopOpacity={0} />
             </linearGradient>
           </defs>
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
@@ -73,11 +73,11 @@ const RegistrationLineChart = ({ data, loading = false }) => {
           <Area
             type="monotone"
             dataKey="value"
-            stroke="#3b82f6"
+            stroke="#386298"
             strokeWidth={3}
             fillOpacity={1}
             fill="url(#colorValue)"
-            dot={{ r: 4, fill: '#3b82f6', strokeWidth: 2, stroke: '#fff' }}
+            dot={{ r: 4, fill: '#386298', strokeWidth: 2, stroke: '#fff' }}
             activeDot={{ r: 6, strokeWidth: 0 }}
           />
         </AreaChart>

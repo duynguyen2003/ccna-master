@@ -1,8 +1,22 @@
 {
-  "short_name": "NetMastery",
-  "name": "NetMastery - Học Mạng Để Đi Làm",
+  "short_name": "NetMaster",
+  "name": "NetMaster — Học và thực hành CCNA",
+  "icons": [
+    {
+      "src": "brand/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "brand/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "theme_color": "#386298",
+  "background_color": "#f8fafc"
 }

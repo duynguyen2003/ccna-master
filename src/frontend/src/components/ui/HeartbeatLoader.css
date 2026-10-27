@@ -1,5 +1,5 @@
 .heartbeat-loader {
-  --heartbeat-accent: var(--blue-primary, #2563eb);
+  --heartbeat-accent: var(--blue-primary, var(--color-primary));
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -9,7 +9,7 @@
   width: 100%;
   min-height: 60vh;
   padding: 32px 12px;
-  color: var(--text-muted, #64748b);
+  color: var(--text-muted, var(--color-muted-foreground));
   text-align: center;
   font-family: var(--system-ui, sans-serif);
   font-size: 14px;
@@ -18,7 +18,7 @@
 .heartbeat-loader--fullscreen {
   min-height: 100vh;
   min-height: 100dvh;
-  background: var(--bg-color, #fff);
+  background: var(--bg-color, var(--color-surface));
 }
 
 .heartbeat-loader--compact {
@@ -28,8 +28,8 @@
 }
 
 .heartbeat-loader--dark {
-  --heartbeat-accent: #60a5fa;
-  color: #cbd5e1;
+  --heartbeat-accent: var(--color-primary);
+  color: var(--color-muted-foreground);
   background: #0b0b0c;
 }
 
