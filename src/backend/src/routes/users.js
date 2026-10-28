@@ -23,6 +23,7 @@ router.post(
 
 // Thống kê thời gian học theo khoảng (week/month/quarter)
 router.get('/stats/study-time', verifyToken, userController.getStudyTimeStats);
+router.get('/stats/activity-calendar', verifyToken, userController.getActivityCalendar);
 
 // Học viên lưu ghi chú cá nhân
 

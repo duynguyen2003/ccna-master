@@ -1,0 +1,159 @@
+:root {
+  --modal-open-dur: 250ms;
+  --modal-close-dur: 150ms;
+  --modal-scale: 0.96;
+  --modal-scale-close: 0.96;
+  --modal-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+.t-modal {
+  transform-origin: center;
+  transform: scale(var(--modal-scale));
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform var(--modal-open-dur) var(--modal-ease),
+    opacity var(--modal-open-dur) var(--modal-ease);
+  will-change: transform, opacity;
+}
+.t-modal.is-open {
+  transform: scale(1);
+  opacity: 1;
+  pointer-events: auto;
+}
+.t-modal.is-closing {
+  transform: scale(var(--modal-scale-close));
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform var(--modal-close-dur) var(--modal-ease),
+    opacity var(--modal-close-dur) var(--modal-ease);
+}
+.activity-date-picker {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.activity-date-picker__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  font: inherit;
+  color: var(--color-foreground);
+  background: var(--color-surface);
+  cursor: pointer;
+}
+.activity-date-dialog {
+  width: min(350px, calc(100vw - 32px));
+  color: var(--color-foreground);
+  background: var(--color-surface);
+  border-color: var(--color-border);
+}
+.activity-date-dialog .ui-dialog-panel {
+  padding: 18px;
+}
+.activity-date-dialog .ui-dialog-header {
+  align-items: center;
+  margin-bottom: 10px;
+}
+.activity-date-dialog .ui-dialog-header h2 {
+  font-size: 16px;
+}
+.activity-date-dialog .ui-dialog-close {
+  width: 36px;
+  height: 36px;
+  flex-basis: 36px;
+  color: var(--color-foreground);
+  background: var(--color-surface);
+}
+.activity-date-picker__navigation {
+  display: grid;
+  grid-template-columns: 40px 1fr 40px;
+  align-items: center;
+  margin-bottom: 10px;
+  gap: 4px;
+}
+.activity-date-dialog button {
+  font: inherit;
+  font-size: 13px;
+  color: var(--color-foreground);
+  background: var(--color-surface);
+  cursor: pointer;
+}
+.activity-date-picker__navigation button {
+  display: grid;
+  place-items: center;
+  min-height: 40px;
+  border: 0;
+  border-radius: 7px;
+}
+.activity-date-picker__month-label {
+  font-weight: 600 !important;
+}
+.activity-date-picker__weekdays,
+.activity-date-picker__days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 3px;
+  text-align: center;
+}
+.activity-date-picker__weekdays {
+  font-size: 11px;
+  color: var(--color-muted-foreground);
+  margin-bottom: 6px;
+}
+.activity-date-picker__days button {
+  aspect-ratio: 1;
+  border: 0;
+  border-radius: 7px;
+}
+.activity-date-dialog button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.activity-date-picker__days button[aria-pressed='true'] {
+  color: var(--color-on-primary);
+  background: var(--color-primary);
+  font-weight: 600;
+}
+.activity-date-dialog button:not(:disabled):not([aria-pressed='true']):hover {
+  background: var(--color-muted);
+}
+.activity-date-dialog button:focus-visible,
+.activity-date-picker__trigger:focus-visible {
+  outline: 2px solid var(--color-ring);
+  outline-offset: 2px;
+}
+.activity-date-picker__months {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+.activity-date-picker__months button {
+  min-height: 42px;
+  border: 1px solid var(--color-border);
+  border-radius: 7px;
+}
+.activity-date-picker__actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px solid var(--color-border);
+}
+.activity-date-picker__actions button {
+  min-height: 40px;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 7px;
+  color: var(--color-primary);
+}
+@media (prefers-reduced-motion: reduce) {
+  .t-modal {
+    transition: none !important;
+  }
+}

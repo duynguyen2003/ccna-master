@@ -1,6 +1,7 @@
 const bcrypt = require('bcrypt');
 const { getPrisma } = require('../config/database');
 const { adminActionLogger } = require('../middleware/logging');
+const { getActivityCalendar } = require('../profile/activityCalendar');
 const prisma = getPrisma();
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -271,6 +272,15 @@ module.exports.getProfileMe = async (req, res, next) => {
         },
       },
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports.getActivityCalendar = async (req, res, next) => {
+  try {
+    const data = await getActivityCalendar(prisma, req.user.id, req.query);
+    res.set('Cache-Control', 'private, no-store').json({ data });
   } catch (error) {
     next(error);
   }

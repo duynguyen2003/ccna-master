@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { HighlightedTerminalText, INTERFACE_OUTPUT } from './HeroTerminalPreview';
 
 const help = 'Lệnh minh họa: show ip interface brief, show version, help, clear.';
@@ -12,6 +12,12 @@ const answers = {
 export default function HeroTerminal() {
   const [command, setCommand] = useState('');
   const [history, setHistory] = useState([]);
+  const outputRef = useRef(null);
+  const inputRef = useRef(null);
+  useEffect(() => {
+    const output = outputRef.current;
+    if (output) output.scrollTop = output.scrollHeight;
+  }, [history]);
   const submit = (event) => {
     event.preventDefault();
     const text = command.trim().toLowerCase();
@@ -26,6 +32,7 @@ export default function HeroTerminal() {
         },
       ]);
     setCommand('');
+    inputRef.current?.focus({ preventScroll: true });
   };
   return (
     <>
@@ -33,6 +40,7 @@ export default function HeroTerminal() {
         Thử <code>show ip interface brief</code> để xem trạng thái cổng.
       </p>
       <div
+        ref={outputRef}
         className="hero-terminal-output"
         role="log"
         aria-label="Kết quả terminal minh họa"
@@ -49,6 +57,7 @@ export default function HeroTerminal() {
           R1#
         </label>
         <input
+          ref={inputRef}
           id="hero-command"
           aria-label="Lệnh terminal minh họa"
           value={command}

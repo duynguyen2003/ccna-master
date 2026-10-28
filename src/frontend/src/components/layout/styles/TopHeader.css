@@ -1175,12 +1175,12 @@
 [data-theme='dark'] .field-esc-btn:hover,
 .dark .field-esc-btn:hover {
   background: rgba(255, 255, 255, 0.16);
-  color: var(--color-on-primary);
+  color: var(--color-foreground);
 }
 
 [data-theme='dark'] .field-input,
 .dark .field-input {
-  color: var(--color-on-primary);
+  color: var(--color-foreground);
 }
 
 [data-theme='dark'] .field-icon,

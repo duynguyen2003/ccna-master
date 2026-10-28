@@ -128,9 +128,11 @@ export default function DropdownSelect({
     if (!trigger || typeof window === 'undefined') return;
 
     const rect = trigger.getBoundingClientRect();
+    const computed = window.getComputedStyle(trigger);
     const margin = 8;
     const gap = 6;
-    const width = Math.min(rect.width, window.innerWidth - margin * 2);
+    const minimumWidth = parseFloat(computed.getPropertyValue('--app-select-menu-min-width')) || 0;
+    const width = Math.min(Math.max(rect.width, minimumWidth), window.innerWidth - margin * 2);
     const rightLimit = window.innerWidth - width - margin;
     const alignToRight = rect.left > rightLimit;
     const left = Math.max(margin, Math.min(rect.left, rightLimit));
@@ -147,10 +149,16 @@ export default function DropdownSelect({
       ? Math.max(margin, rect.top - gap - Math.min(estimatedHeight, maxHeight))
       : Math.min(rect.bottom + gap, window.innerHeight - maxHeight - margin);
 
-    const computed = window.getComputedStyle(trigger);
     const readThemeValue = (name, fallback) => computed.getPropertyValue(name).trim() || fallback;
     const resolvedBackground = computed.backgroundColor;
     const theme = {
+      // The menu is portalled to body, so CSS inheritance from the trigger's
+      // feature scope stops here. Carry its resolved typography with the theme.
+      fontFamily: computed.fontFamily,
+      fontSize: computed.fontSize,
+      fontWeight: computed.fontWeight,
+      lineHeight: computed.lineHeight,
+      letterSpacing: computed.letterSpacing,
       '--app-select-menu-bg':
         resolvedBackground && resolvedBackground !== 'rgba(0, 0, 0, 0)'
           ? resolvedBackground

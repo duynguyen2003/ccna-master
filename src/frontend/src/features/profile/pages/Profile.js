@@ -11,7 +11,6 @@ import {
   FileText,
   MonitorPlay,
   ChevronRight,
-  Flame,
   BarChart2,
   Loader2,
 } from 'lucide-react';
@@ -26,10 +25,11 @@ import {
   CartesianGrid,
   Tooltip,
 } from 'recharts';
-import { api, API_URL } from '../../../services/Api.js';
+import { api } from '../../../services/Api.js';
 import { useAuth } from '../../../context/AuthContext';
 import HeartbeatLoader from '../../../components/ui/HeartbeatLoader';
 import StatusAlert from '../../../components/ui/StatusAlert';
+import ActivityCalendar from '../components/ActivityCalendar';
 
 export default function Profile() {
   const { token } = useAuth();
@@ -122,52 +122,7 @@ export default function Profile() {
     <div className="app profile-page">
       <div className="container">
         <div className="profile-grid">
-          {/* Row 0: Header Card */}
-          <div className="profile-header">
-            <div className="user-profile-info">
-              <div className="user-avatar-circle">
-                {profile.avatarUrl ? (
-                  <img
-                    src={
-                      profile.avatarUrl.startsWith('http')
-                        ? profile.avatarUrl
-                        : `${API_URL.replace('/api', '')}${profile.avatarUrl.startsWith('/') ? '' : '/'}${profile.avatarUrl}`
-                    }
-                    alt="avatar"
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                      e.target.parentElement.innerText =
-                        profile.fullName?.charAt(0).toUpperCase() || 'U';
-                    }}
-                    width={80}
-                    height={80}
-                    decoding="async"
-                  />
-                ) : (
-                  profile.fullName?.charAt(0).toUpperCase() || 'U'
-                )}
-              </div>
-              <div className="user-details">
-                <h1>Xin chào, {profile.fullName} 👋</h1>
-                <p>Học viên CCNA • Level {profile.level || 1}</p>
-                <div className="user-streak">
-                  <Flame size={14} />
-                  {profile.streak || 0} ngày streak
-                </div>
-              </div>
-            </div>
-
-            <div className="header-progress">
-              <p className="header-progress-label">Tiến độ tổng thể</p>
-              <div className="header-progress-value">{profile.totalProgress || 0}%</div>
-              <div className="header-progress-bar">
-                <div
-                  className="header-progress-fill"
-                  style={{ width: `${profile.totalProgress || 0}%` }}
-                ></div>
-              </div>
-            </div>
-          </div>
+          <ActivityCalendar />
 
           {/* Row 1: 4 Metric Cards */}
           <div className="metric-card">
@@ -263,7 +218,9 @@ export default function Profile() {
               <Activity size={20} />
               <h2>Điểm kiểm tra theo tuần</h2>
             </div>
-            <div className="chart-container">
+            <div
+              className={`chart-container${weeklyScores?.length ? '' : ' chart-container--empty'}`}
+            >
               {weeklyScores && weeklyScores.length > 0 ? (
                 <ResponsiveContainer
                   width="100%"
@@ -341,24 +298,13 @@ export default function Profile() {
             </details>
           )}
           <div className="section-card span-2">
-            <div
-              className="card-title"
-              style={{ justifyContent: 'space-between', alignItems: 'center' }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div className="card-title study-card-title">
+              <div className="card-title__heading">
                 <BarChart2 size={20} />
                 <h2>Thời gian học</h2>
               </div>
               {/* Period Tabs */}
-              <div
-                style={{
-                  display: 'flex',
-                  gap: '4px',
-                  background: 'var(--color-muted)',
-                  borderRadius: '8px',
-                  padding: '3px',
-                }}
-              >
+              <div className="study-periods" role="group" aria-label="Khoảng thời gian học">
                 {[
                   { key: 'week', label: 'Tuần' },
                   { key: 'month', label: 'Tháng' },
@@ -366,30 +312,18 @@ export default function Profile() {
                 ].map(({ key, label }) => (
                   <button
                     key={key}
+                    type="button"
                     aria-pressed={studyPeriod === key}
                     onClick={() => setStudyPeriod(key)}
-                    style={{
-                      padding: '4px 12px',
-                      borderRadius: '6px',
-                      border: 'none',
-                      cursor: 'pointer',
-                      fontSize: '0.78rem',
-                      fontWeight: studyPeriod === key ? 700 : 400,
-                      background: studyPeriod === key ? 'var(--color-on-primary)' : 'transparent',
-                      color:
-                        studyPeriod === key
-                          ? 'var(--color-primary)'
-                          : 'var(--color-muted-foreground)',
-                      boxShadow: studyPeriod === key ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-                      transition: 'all 0.15s',
-                    }}
                   >
                     {label}
                   </button>
                 ))}
               </div>
             </div>
-            <div className="chart-container">
+            <div
+              className={`chart-container${studyChartLoading || studyChartData.length ? '' : ' chart-container--empty'}`}
+            >
               {studyChartLoading ? (
                 <div
                   style={{
@@ -495,7 +429,7 @@ export default function Profile() {
                     case 'LESSON_COMPLETED':
                       icon = <MonitorPlay size={20} />;
                       badge = 'Bài học';
-                      badgeColor = '#e4edf6';
+                      badgeColor = 'var(--color-primary-soft)';
                       reviewPath = '/roadmap';
                       break;
                     case 'LAB_COMPLETED':
@@ -514,41 +448,42 @@ export default function Profile() {
                     default:
                       icon = <Activity size={20} />;
                       badge = 'Hoạt động';
-                      badgeColor = 'var(--color-muted-foreground)';
+                      badgeColor = 'var(--color-muted)';
                       reviewPath = null;
                   }
 
                   return (
                     <div className="activity-item" key={act.id}>
-                      <div className="activity-left">
-                        <div className="activity-icon">{icon}</div>
-                        <div className="activity-text">
-                          <h3>{act.title}</h3>
-                          <p style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <span
-                              style={{
-                                fontSize: '0.72rem',
-                                fontWeight: 700,
-                                padding: '1px 8px',
-                                borderRadius: '9999px',
-                                background: badgeColor,
-                                color: 'var(--color-foreground)',
-                              }}
-                            >
-                              {badge}
-                            </span>
+                      <div className="activity-icon" aria-hidden="true">
+                        {icon}
+                      </div>
+                      <h3 className="activity-title">{act.title}</h3>
+                      <div className="activity-meta">
+                        <span className="activity-badge" style={{ background: badgeColor }}>
+                          {badge}
+                        </span>
+                        <time className="activity-time" dateTime={act.createdAt}>
+                          <span>
+                            {new Date(act.createdAt).toLocaleTimeString('vi-VN', {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </span>
+                          <span>
                             {new Date(act.createdAt).toLocaleDateString('vi-VN', {
                               day: '2-digit',
                               month: '2-digit',
                               year: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit',
                             })}
-                          </p>
-                        </div>
+                          </span>
+                        </time>
                       </div>
                       {reviewPath && (
-                        <button className="btn-secondary" onClick={() => navigate(reviewPath)}>
+                        <button
+                          type="button"
+                          className="btn-secondary activity-review"
+                          onClick={() => navigate(reviewPath)}
+                        >
                           Xem lại
                         </button>
                       )}

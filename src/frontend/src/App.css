@@ -24,16 +24,6 @@
   --blue-500: var(--color-primary);
   --blue-400: var(--color-primary);
 
-  --slate-50: var(--color-muted);
-  --slate-100: var(--color-muted);
-  --slate-200: var(--color-muted);
-  --slate-300: var(--color-muted);
-  --slate-400: var(--color-muted);
-  --slate-500: var(--color-muted);
-  --slate-600: var(--color-muted);
-  --slate-800: var(--color-muted);
-  --slate-900: var(--color-muted);
-
   --white: var(--color-surface);
   --system-ui:
     -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;

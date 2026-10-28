@@ -453,8 +453,8 @@ export const Home = () => {
             </h1>
           </div>
           <p className="landing-hero__description">
-            Từ bài học nền tảng đến lab cấu hình và bài thi thử, bạn có thể học và tự kiểm tra trong
-            cùng một nền tảng. Phù hợp cho người mới bắt đầu học mạng.
+            Từ bài học nền tảng đến lab cấu hình và bài thi thử. Phù hợp cho người mới bắt đầu học
+            mạng.
           </p>
           <div className="landing-hero__actions">
             <Link to="/roadmap" className="landing-button landing-button--primary">
@@ -484,22 +484,24 @@ export const Home = () => {
               </div>
               <span>CCNA</span>
             </div>
-            {demoOpen ? (
-              <Suspense fallback={<p>Đang mở terminal…</p>}>
-                <HeroTerminal />
-              </Suspense>
-            ) : (
-              <>
-                <HeroTerminalPreview />
-                <button
-                  type="button"
-                  className="hero-demo-button"
-                  onClick={() => setDemoOpen(true)}
-                >
-                  Thử CLI
-                </button>
-              </>
-            )}
+            <div className="hero-terminal-body">
+              {demoOpen ? (
+                <Suspense fallback={<p>Đang mở terminal…</p>}>
+                  <HeroTerminal />
+                </Suspense>
+              ) : (
+                <>
+                  <HeroTerminalPreview />
+                  <button
+                    type="button"
+                    className="hero-demo-button"
+                    onClick={() => setDemoOpen(true)}
+                  >
+                    Thử CLI
+                  </button>
+                </>
+              )}
+            </div>
             <Link to="/exam/testing-center" className="hero-exam-badge">
               <ClipboardCheck size={17} aria-hidden="true" />
               Luyện thi CCNA
@@ -622,10 +624,6 @@ export const Home = () => {
                     style={{
                       textDecoration: 'none',
                       color: 'inherit',
-                      backgroundImage: `linear-gradient(180deg, rgba(15, 23, 42, 0.42), rgba(15, 23, 42, 0.74)), url(${JSON.stringify(course.backgroundImage)})`,
-                      backgroundSize: 'cover',
-                      backgroundPosition: 'center',
-                      backgroundRepeat: 'no-repeat',
                       '--course-bg-image': `url(${JSON.stringify(course.backgroundImage)})`,
                     }}
                     id={`home-course-card-${course.courseId}`}

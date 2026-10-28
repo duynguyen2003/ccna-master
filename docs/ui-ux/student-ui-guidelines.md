@@ -4,10 +4,44 @@ Tài liệu này hướng dẫn sửa UI trên hệ React/CSS hiện có. Danh s
 
 ## Nền tảng đã triển khai ngày 27/10/2026
 
+- Cập nhật28/10: profile dùng `ActivityCalendar` thay card chào mừng đầu trang.
+  API lịch riêng tổng hợp completion bài/lab theo ngày Việt Nam và lần hoàn
+  thành đầu tiên; không lấy feed10sự kiện/30ngày để dựng một năm. Giữ một điểm
+  Tab cho lịch với phím mũi tên, date picker/danh sách ngày cho cách đọc thay
+  thế, cuộn ngang trong card và phản hồi lỗi/retry độc lập. Ngày thiếu lịch sử
+  ghi “chưa ghi nhận”; không biến nó thành0 hoặc suy ngược từ tổng tiến độ.
+  Theo yêu cầu mới, riêng heatmap giữ thang xanh F8: `#ebedf0`, `#9be9a8`,
+  `#40c463`, `#30a14e`, `#216e39` ở cả hai theme; ô ngày trống là `#ededed`.
+  “Xem theo ngày” mở bằng accordion có animation, phân trang5ngày và dùng lịch
+  chọn ngày riêng (Dialog chung, chọn tháng/năm, keyboard/focus). Mobile dùng
+  tiêu đề16px, tổng12px, bốn metric thành2cột với số20px; giữ reduced motion.
+  Các section bên dưới dùng heading16px desktop/15px mobile, nội dung rỗng
+  13px/12px và nút gọn. Menu DropdownSelect portalled phải mang typography
+  đã resolve từ trigger; heatmap đặt menu tối thiểu168px để nhãn không bị bó.
+  Thẻ biểu đồ rỗng co về90px cho vùng nội dung, biểu đồ có dữ liệu giữ260px.
+  Trên mobile, hàng tuần/tháng đặt dưới tiêu đề và empty-state wide xếp dọc
+  để nút hành động giữ đủ chiều ngang.
+  Item hoạt động có dữ liệu dùng grid: desktop icon/tên và metadata/nút;
+  mobile icon và tên ở hàng trên, metadata cùng nút Xem lại ở hàng dưới.
+  Nhãn và nút không ngắt dòng; thời gian/ngày là hai phần nguyên vẹn được
+  phép chuyển hàng khi cần. Tên dài được xuống dòng đầy đủ. Nút cao44px;
+  nền nhãn dùng token primary-soft/success-bg/warning-bg/muted theo loại.
+  Xem [phân tích và triển khai heatmap](../rea/f8-profile-activity-heatmap.md).
 - Thương hiệu hiển thị là **NetMaster**. Stack là React 18, CSS theo component, SVG Lucide qua wrapper; video dùng react-youtube. Motion 13.2.0 được giữ cho animation sidebar cũ theo yêu cầu; react-player, tailwind-merge và Tailwind trực tiếp không còn dùng.
 - Route mới dùng React.lazy/RouteContent và import CSS tại module sở hữu. Home tải trực tiếp; admin có entry riêng. Giữ trạng thái tải/lỗi và guard trước khi tải module cần quyền.
 - Font học viên là **Be Vietnam Pro** (400–900, display=swap, có fallback hệ thống), đã đối chiếu F8 bằng REA và computed style. Dùng var(--system-ui); giữ monospace cho CLI/code và không đổi font admin. Không thêm lại icon font Google hoặc Inter.
 - Banner Home giữ typewriter, dùng topology SVG và terminal minh họa trên nền tối; mobile có bản sơ đồ/cổng rút gọn. Giữ Thử CLI lazy-load, trạng thái có chữ bên cạnh màu, kết quả dài cuộn ngang bằng bàn phím và badge đến trang thi thử. Packet dừng khi bật giảm chuyển động.
+- Preview và CLI dùng chung vùng thân terminal:152px desktop/168px ở≤480px;
+  lịch sử flex có min-height/min-width0 và cuộn nội bộ, input/nút chạy không co.
+  Giữ kích thước hero từ preview tới CLI rỗng/nhiều lệnh/clear; không tăng chiều
+  cao cả banner theo log. Tự cuộn tới kết quả mới, trả focus về input sau submit;
+  pre vẫn focus/cuộn ngang được để đọc chuỗi dài mà không làm tràn trang.
+  Card chừa44px padding đáy để hàng nhập lệnh cách badge thi thử16px (hover14px);
+  khoảng trống này cố định ở cả preview/CLI, giữ nút44px và kiểu badge nổi.
+- Hero thu gọn28/10: desktop min-height360px, padding24–40px; heading28–38px,
+  mô tả14–15px và CTA14px/cao44px. Mobile padding20×16px, heading24–28px;
+  terminal12px desktop/11px mobile, giảm margin và padding riêng của hero.
+  Giữ chiều cao theo nội dung, không cắt chữ hoặc scale toàn khối để làm nhỏ.
 - Tiêu đề typewriter chừa chỗ bằng các câu đo ẩn trong cùng ô grid, giữ ngoài h1/aria-hidden. Khi đổi câu, font hoặc breakpoint, kiểm chiều cao qua cả chu kỳ để không đẩy nội dung bên dưới; không đặt chiều cao cứng rồi cắt chữ.
 - Thanh học tiếp dùng LearningResumeBanner/useLearningPath và cache chung theo user. Home đặt thanh sau hero; Layout chỉ đặt dưới header ở /roadmap, không render hai lần. Ẩn trên các route khác. Chiều ngang bằng hero (tối đa 1360px; cùng gutter/breakpoint), căn giữa; chiều cao desktop khoảng 65px, nút tối thiểu 44px. Hover/focus nâng nhẹ và đổ bóng; animation cuộn thuộc wrapper để không ghi đè transform hover. Lấy phần trăm/quyền truy cập/nextLessonId/streak từ API; không tạo bộ tính tiến độ thứ hai. Link phải chứa cả course và lesson; bài tiếp không hợp lệ thì về khóa học. Xem [phân tích F8 và ánh xạ dữ liệu](f8-typography-progress.md).
 - Màu chủ đạo là **rgb(56,98,152) / #386298**. Dùng brand-primary và nhóm token primary/hover/gradient/tint; theme tối dùng tint cùng họ màu cho độ tương phản. Không thêm lại blue #2563eb/#3b82f6 vào nút/viền/link mới. Màu trạng thái vẫn có vai trò riêng.
@@ -97,3 +131,7 @@ Lượt audit đầu tiên đã loại gợi ý font cho trẻ em. Kết quả p
 - Khi cần xem UI bằng fixture, giữ API/auth giả trong harness riêng; không thêm đường bỏ qua đăng nhập vào sản phẩm.
 
 Tham chiếu: [W3C Keyboard](https://www.w3.org/WAI/WCAG22/Understanding/keyboard.html), [W3C Contrast](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html), [W3C Target Size](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html).
+
+## Kiểm chứng Home và hồ sơ
+
+Xem [báo cáo bản thay đổi](home-profile-release.md) cho phạm vi và kiểm chứng của banner, Home và heatmap.
