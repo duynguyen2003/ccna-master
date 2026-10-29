@@ -3,12 +3,12 @@
    ============================================================ */
 
 /* ── CSS Variables ─────────────────────────────────────────── */
-:root {
+.footer {
   --footer-bg: #181821;
   --footer-border: #2a2a38;
-  --footer-text-primary: var(--color-on-primary);
+  --footer-text-primary: var(--hero-foreground);
   --footer-text-muted: #a9b3bb;
-  --footer-text-subtle: #5a6370;
+  --footer-text-subtle: #9ba8b8;
   --footer-link-hover: #1d9bf0;
   /* Cisco Blue */
   --footer-divider: #2a2a38;
@@ -157,7 +157,7 @@
 }
 
 .footer__made-with span {
-  color: var(--color-danger);
+  color: #fda4af;
 }
 
 /* ── Responsive: Tablet (2 cột) ────────────────────────────── */

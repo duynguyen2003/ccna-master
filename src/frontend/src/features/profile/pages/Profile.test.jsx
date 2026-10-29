@@ -7,7 +7,7 @@ import { api } from '../../../services/Api';
 jest.mock('react-router-dom', () => ({ useNavigate: () => jest.fn() }));
 jest.mock('../../../context/AuthContext', () => ({ useAuth: () => ({ token: 'synthetic' }) }));
 jest.mock('../../../services/Api', () => ({
-  api: { getUserProfile: jest.fn(), getStudyTimeStats: jest.fn() },
+  api: { getUserProfile: jest.fn(), getStudyTimeStats: jest.fn(), getActivityCalendar: jest.fn() },
   API_URL: '/api',
 }));
 const profile = {
@@ -22,6 +22,16 @@ const profile = {
 beforeEach(() => {
   jest.resetAllMocks();
   api.getStudyTimeStats.mockResolvedValue([]);
+  api.getActivityCalendar.mockResolvedValue({
+    from: '2026-10-28',
+    to: '2026-10-28',
+    days: [],
+    total: 0,
+    activeDays: 0,
+    levels: [0, 1, 3, 5, 8],
+    historyCompleteness: 'unknown',
+    availableYears: [2026],
+  });
 });
 
 test('shows a recoverable profile error instead of an empty page', async () => {
@@ -29,7 +39,10 @@ test('shows a recoverable profile error instead of an empty page', async () => {
   render(<Profile />);
   expect(await screen.findByRole('alert')).toHaveTextContent('Không tải được hồ sơ');
   fireEvent.click(screen.getByRole('button', { name: 'Thử lại', exact: true }));
-  expect(await screen.findByRole('heading', { name: /Xin chào, Học viên/ })).toBeInTheDocument();
+  expect(
+    await screen.findByRole('heading', { name: 'Hoạt động học tập', level: 1 })
+  ).toBeInTheDocument();
+  expect(screen.queryByText(/Xin chào/)).not.toBeInTheDocument();
   expect(api.getUserProfile).toHaveBeenCalledTimes(2);
   expect(screen.queryByText('/ 50')).not.toBeInTheDocument();
 });

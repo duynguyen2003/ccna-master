@@ -31,6 +31,7 @@ test('shows the interface details, supports help and clears the terminal log', (
     within(log).getByRole('group', { name: 'Kết quả show ip interface brief' })
   ).toHaveAttribute('tabindex', '0');
   expect(log).toHaveTextContent('GigabitEthernet0/0');
+  expect(input).toHaveFocus();
 
   fireEvent.change(input, { target: { value: 'help' } });
   fireEvent.click(run);
@@ -39,4 +40,5 @@ test('shows the interface details, supports help and clears the terminal log', (
   fireEvent.click(run);
   expect(log).toBeEmptyDOMElement();
   expect(input).toHaveValue('');
+  expect(input).toHaveFocus();
 });

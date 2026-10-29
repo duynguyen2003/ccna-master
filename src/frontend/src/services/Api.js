@@ -332,6 +332,12 @@ export const api = {
     return json.data;
   },
 
+  getActivityCalendar: async (token, filters, options = {}) => {
+    const query = new URLSearchParams(filters);
+    const json = await apiFetch(`/users/stats/activity-calendar?${query}`, token, options);
+    return json.data;
+  },
+
   getUserProgress: async (token) => {
     const json = await safeApiFetch('/users/progress', token, { data: [] });
     const raw = json.data || [];
