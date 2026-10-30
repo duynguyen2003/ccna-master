@@ -22,6 +22,9 @@
 /backups/
 /.tmp/
 
+# local database schema export; source schema and migrations stay tracked
+/db_schema_dump.prisma
+
 # misc
 .vercel
 .DS_Store
@@ -37,6 +40,17 @@ pnpm-debug.log*
 # local development notes
 /todo.md
 /lessons.md
+/REA.md
+/skill.md
+/Agent.md
+/docs/rea/
 
 /src/backend/src/generated/prisma
 .playwright-mcp/
+
+# Python agent environments and caches
+**/.venv/
+**/__pycache__/
+**/.pytest_cache/
+**/.ruff_cache/
+*.pyc
