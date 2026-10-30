@@ -2,6 +2,12 @@
 
 Tài liệu cho `prompt-thiet-ke-lai-ui-lab-cisco.md`. Checklist triển khai, bằng chứng kiểm thử và điểm review nằm ở phần “Thiết kế lại UI lab Cisco” đầu `todo.md`.
 
+Cập nhật 29/10/2026: ưu tiên ổn định thực hành cá nhân. Giao diện đã bỏ mục
+“Cùng thực hành” cùng các thao tác mời/gỡ/vào phiên và bỏ nút “Ưu tiên CLI”.
+Topology và terminal dùng một bố cục cố định; thanh phiên giữ Thành tích và Trợ lý AI.
+Không đưa hai tính năng đã hoãn vào thiết kế/triển khai mới. API và dữ liệu phân quyền
+phiên hiện có được giữ lại, không thay đổi hay xóa trong đợt tinh gọn giao diện này.
+
 ## Ranh giới component và state
 
 | Thành phần | Đầu vào chính | Trách nhiệm |

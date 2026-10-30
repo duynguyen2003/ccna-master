@@ -13,6 +13,13 @@ PY tiếp theo triển khai trong `src/agent/python`. Báo cáo task vẫn ở b
 
 ## 1. Cách sử dụng bộ kế hoạch
 
+**Cập nhật28/10/2026:** UX-01 → FE-01 → FE-02 đã hoàn thành triển khai và kiểm
+local/fake: [thiết kế](baseline/UX-01-assistant-design.md),
+[giao diện và kết nối async](baseline/FE-01-02-browser.md). Code UI/hook/API ở
+`src/agent/browser`, chỉ có bridge trong frontend. Đã nối history/feedback và
+kiểm phục hồi/đổi tài khoản; worker/provider/cohort vẫn theo cấu hình hiện có,
+chưa mở pilot. BE-06, BE-08 và các gate QA/OPS vẫn là task riêng.
+
 **Cập nhật PY-02 ngày 26/10/2026:** [worker và Python đã gọi Gemini thật](baseline/PY-02-provider.md)
 trên DB thử riêng bằng một câu hỏi tổng hợp. Có preflight token đầy đủ, Pydantic
 giữ schema chung, receipt retry riêng và ledger chi phí dùng chung. 250 Python,
