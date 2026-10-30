@@ -6,6 +6,12 @@ const { verifyToken, checkRole } = require('../middleware/auth');
 
 router.use(verifyToken);
 router.use(checkRole(['ADMIN']));
+router.use(
+  '/labs/:id/ai',
+  require('@ccna/agent/routes/adminLab')(require('../config/database').getPrisma(), {
+    environment: process.env.AI_ENVIRONMENT || 'local',
+  })
+);
 
 // Admin Stats & Logs
 router.get('/stats', adminController.getStats);

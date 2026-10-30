@@ -438,20 +438,13 @@ test('legacy direct provider cannot bypass the controlled local Gemini path', as
     LAB_AI_KEY: 'test',
     LAB_AI_MODEL: 'test',
   };
-  assert.equal((await explainFeedback(f, {})).provider, 'deterministic');
-  const r = await explainFeedback(f, config, () =>
-    assert.fail('legacy provider must not dispatch')
-  );
-  assert.equal(r.provider, 'deterministic');
+  for (const env of [{}, config]) {
+    await assert.rejects(
+      explainFeedback(f, env, () => assert.fail('legacy provider must not dispatch')),
+      { status: 503, code: 'LOCAL_LIVE_DISABLED' }
+    );
+  }
   assert.equal(f.score, 0);
-  assert.equal(
-    (
-      await explainFeedback(f, config, async () => {
-        throw new Error('offline');
-      })
-    ).provider,
-    'deterministic'
-  );
 });
 
 module.exports = { definition, network, commands };

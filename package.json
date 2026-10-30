@@ -12,6 +12,8 @@
     "start": "pnpm --dir src/frontend start",
     "server": "node src/backend/src/Server.js",
     "ai:worker": "node src/agent/workers/aiWorker.js",
+    "ai:python": "node src/agent/scripts/start-python.cjs",
+    "ai:admin:enable": "node src/agent/scripts/enable-admin-test.cjs",
     "build": "pnpm --dir src/frontend build",
     "test": "pnpm --dir src/frontend test",
     "check:icons": "node src/scripts/check-icons.cjs",

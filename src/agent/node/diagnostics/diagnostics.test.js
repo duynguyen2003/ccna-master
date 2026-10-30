@@ -7,7 +7,7 @@ const { transmit } = require('@ccna/shared/simulation/networkPackets');
 const { labs } = require('../../fixtures/labs/disc03');
 const { captureSnapshot } = require('../snapshot');
 const { projectContext, fitBoundary } = require('../context');
-const { runtimeConfig } = require('../workerConfig');
+const { provider: testProvider } = require('../../tests/helpers/fakeProvider.cjs');
 const { verifyOutput } = require('../outputVerifier');
 const { diagnose, diagnosticAnswer, VERSION, CATALOG } = require('./index');
 const { snapshotSupport } = require('./capabilities');
@@ -20,7 +20,7 @@ const apply = (state, actions) =>
     return result.state;
   }, state);
 function preparedFor(lab, state, requestProbe = lab.probes[0]) {
-  const provider = runtimeConfig({}).providers['local-fake-v1'];
+  const provider = testProvider;
   const snapshot = captureSnapshot({
     id: randomUUID(),
     lab,

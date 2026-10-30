@@ -831,7 +831,7 @@ model AiFeedback {
   userId          Int       @map("user_id")
   helpful         Boolean
   reasonCode      String?   @map("reason_code") @db.VarChar(80)
-  optionalComment String?   @map("optional_comment") @db.VarChar(500)
+  optionalComment String?   @map("optional_comment") @db.VarChar(1000)
   createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
   message         AiMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)

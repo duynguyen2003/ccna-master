@@ -7,11 +7,14 @@ assert.equal(process.env.LAB_AI_MODE, 'deterministic');
 const express = require('express');
 const { getPrisma } = require('../../../backend/src/config/database');
 const config = require('./worker-config.cjs')();
+// The isolated peer explicitly injects its synthetic test provider into HTTP wiring.
+require('../workerConfig').runtimeConfig = () => config;
 const db = getPrisma();
 const queue = require('../leases').leases(db, config);
 const permits = require('../dispatch').dispatch(db, config);
 const results = require('../receipts').receipts(db, config);
-const { createWorker, fakePrepare, fakeAnalyze } = require('../../workers/aiWorker');
+const { createWorker } = require('../../workers/aiWorker');
+const { fakePrepare, fakeAnalyze } = require('../../tests/helpers/fakeWorker.cjs');
 const app = express();
 app.use('/internal/v1/ai', require('../../routes/aiInternal')(db, config));
 app.use(express.json());

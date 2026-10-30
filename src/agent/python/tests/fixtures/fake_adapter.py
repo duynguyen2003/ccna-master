@@ -1,5 +1,7 @@
-from .contracts import binding, validate
-from .errors import ServiceError
+"""Test double; not registered by the service launcher."""
+
+from app.contracts import binding, validate
+from app.errors import ServiceError
 
 FAKE_VERSIONS = {
     "contextSchemaVersion": "1.0.0",
@@ -12,7 +14,7 @@ FAKE_VERSIONS = {
 
 class FakeAdapter:
     def accepts(self, payload):
-        if payload["providerConfigId"] != "local-fake-v1" or any(
+        if payload["providerConfigId"] != "local-gemini-v1" or any(
             payload["versions"].get(key) != value for key, value in FAKE_VERSIONS.items()
         ):
             raise ServiceError("AI_DISABLED")

@@ -51,6 +51,7 @@ app.use(
       }
     },
     credentials: true,
+    exposedHeaders: ['X-AI-Contract-Version', 'Retry-After', 'Location'],
   })
 );
 // Separate service authentication and a bounded parser for private AI callbacks.

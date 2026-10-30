@@ -14,6 +14,7 @@ Object.assign(process.env, {
   AI_SERVICE_SECRET: 'be05-service-secret-at-least-32-characters',
 });
 const express = require('express');
+const { schemas } = require('@ccna/shared/aiLabContract');
 const engine = require('@ccna/shared/simulation/networkEngine');
 const { getPrisma, disconnectDatabase } = require('../../backend/src/config/database');
 const { labs } = require('../fixtures/labs/disc03');
@@ -24,7 +25,8 @@ const { dispatch } = require('./dispatch');
 const { receipts } = require('./receipts');
 const { leases } = require('./leases');
 const { serviceAuth } = require('./serviceAuth');
-const { createWorker, fakeAnalyze } = require('../workers/aiWorker');
+const { createWorker } = require('../workers/aiWorker');
+const { fakeAnalyze } = require('../tests/helpers/fakeWorker.cjs');
 
 test('BE-05 actual worker boundary, private history and rejected-output accounting', async (t) => {
   const db = getPrisma();
@@ -37,6 +39,12 @@ test('BE-05 actual worker boundary, private history and rejected-output accounti
   const auth = serviceAuth(config.auth);
   const app = express();
   app.use('/internal/v1/ai', require('../routes/aiInternal')(db, config));
+  app.use(express.json());
+  app.use(
+    '/api/lab-attempts/:attemptId/ai',
+    require('./middleware').aiAccessMiddleware(db, config.environment, 'fe02-http-test-only'),
+    require('../routes/aiLab')(db, config)
+  );
   const server = await new Promise((resolve) => {
     const instance = app.listen(0, '127.0.0.1', () => resolve(instance));
   });
@@ -389,6 +397,217 @@ test('BE-05 actual worker boundary, private history and rejected-output accounti
             saved.data.receiptHash
           );
         }
+      }
+    );
+    await t.test('FE-02 private HTTP history, signed cursors and owner-only feedback', async () => {
+      const jwt = require('jsonwebtoken');
+      const first = await user();
+      const second = await user();
+      const a = await attempt(first);
+      await db.labAttempt.update({ where: { id: a.id }, data: { members: [second.id] } });
+      await complete(first, a, 'FIRST_PRIVATE_QUESTION');
+      await complete(first, a, 'SECOND_PRIVATE_QUESTION');
+      await complete(second, a, 'MEMBER_PRIVATE_QUESTION');
+      const url = `http://127.0.0.1:${server.address().port}/api/lab-attempts/${a.id}/ai`;
+      const headers = (principal) => ({
+        Authorization: `Bearer ${jwt.sign(principal, 'fe02-http-test-only', { expiresIn: 3600 })}`,
+        'Content-Type': 'application/json',
+        'X-AI-Contract-Version': '1.0.0',
+      });
+      const firstPage = await fetch(`${url}/messages?limit=1`, { headers: headers(first) });
+      assert.equal(firstPage.status, 200);
+      assert.match(firstPage.headers.get('cache-control'), /private, no-store/);
+      const page = (await firstPage.json()).data;
+      assert.equal(page.items.length, 1);
+      assert.ok(page.nextCursor);
+      const older = await fetch(
+        `${url}/messages?limit=1&cursor=${encodeURIComponent(page.nextCursor)}`,
+        { headers: headers(first) }
+      );
+      assert.equal(older.status, 200);
+      assert.notEqual((await older.json()).data.items[0].messageId, page.items[0].messageId);
+      const otherPage = await fetch(`${url}/messages`, { headers: headers(second) });
+      const otherText = JSON.stringify(await otherPage.json());
+      assert.ok(otherText.includes('MEMBER_PRIVATE_QUESTION'));
+      assert.ok(!otherText.includes('FIRST_PRIVATE_QUESTION'));
+      assert.ok(!otherText.includes('SECOND_PRIVATE_QUESTION'));
+      const cross = await fetch(`${url}/messages?cursor=${encodeURIComponent(page.nextCursor)}`, {
+        headers: headers(second),
+      });
+      assert.equal(cross.status, 400);
+      const tampered = await fetch(
+        `${url}/messages?cursor=${encodeURIComponent(page.nextCursor + 'x')}`,
+        { headers: headers(first) }
+      );
+      assert.equal(tampered.status, 400);
+      assert.equal(
+        (await fetch(`${url}/messages?limit=51`, { headers: headers(first) })).status,
+        400
+      );
+      const messageId = page.items[0].messageId;
+      assert.equal(page.items[0].role, 'ASSISTANT');
+      for (const helpful of [true, false]) {
+        const response = await fetch(`${url}/messages/${messageId}/feedback`, {
+          method: 'POST',
+          headers: headers(first),
+          body: JSON.stringify({
+            contractVersion: '1.0.0',
+            helpful,
+            reasonCode: helpful ? null : 'TOO_VAGUE',
+            comment: 'x'.repeat(1000),
+          }),
+        });
+        assert.equal(response.status, 200);
+        assert.equal((await response.json()).data.helpful, helpful);
+      }
+      assert.equal(await db.aiFeedback.count({ where: { messageId, userId: first.id } }), 1);
+      assert.equal(
+        (await db.aiFeedback.findFirst({ where: { messageId } })).optionalComment.length,
+        1000
+      );
+      assert.equal(
+        (
+          await fetch(`${url}/messages/${messageId}/feedback`, {
+            method: 'POST',
+            headers: headers(second),
+            body: JSON.stringify({ contractVersion: '1.0.0', helpful: true, reasonCode: null }),
+          })
+        ).status,
+        404
+      );
+      await db.labAttempt.update({ where: { id: a.id }, data: { members: [] } });
+      assert.equal((await fetch(`${url}/messages`, { headers: headers(second) })).status, 404);
+      await db.user.update({ where: { id: first.id }, data: { sessionVersion: { increment: 1 } } });
+      assert.equal((await fetch(`${url}/messages`, { headers: headers(first) })).status, 401);
+    });
+    await t.test(
+      'reset conversation purges only its owner, fences old epochs and preserves dispatched accounting',
+      async () => {
+        const { conversationService } = require('./conversation');
+        const conversations = conversationService(db, config);
+        const first = await user();
+        const second = await user();
+        const a = await attempt(first);
+        await db.labAttempt.update({ where: { id: a.id }, data: { members: [second.id] } });
+        await complete(first, a, 'OWNER_RESET_PRIVATE');
+        await complete(second, a, 'MEMBER_MUST_REMAIN');
+        const convo = await db.aiConversation.findUnique({
+          where: { userId_attemptId: { userId: first.id, attemptId: a.id } },
+        });
+        const active = await question(first, a, 'PENDING_RESET_PRIVATE');
+        const claimed = await queue.claim('reset_worker');
+        assert.equal(claimed.id, active.id);
+        const input = await permits.plan(
+          active.id,
+          'reset_worker',
+          claimed.leaseVersion,
+          await prepare(claimed)
+        );
+        await send(input, 'claim', binding(input));
+        const spentBefore = await db.aiProviderCall.aggregate({ _sum: { costMicros: true } });
+        await assert.rejects(conversations.reset(second, a.id, convo.id, 0), {
+          code: 'AI_CONVERSATION_CHANGED',
+        });
+        const jwt = require('jsonwebtoken');
+        const headers = {
+          Authorization: `Bearer ${jwt.sign(first, 'fe02-http-test-only', { expiresIn: 3600 })}`,
+          'Content-Type': 'application/json',
+        };
+        const endpoint = `http://127.0.0.1:${server.address().port}/api/lab-attempts/${a.id}/ai/conversations/${convo.id}`;
+        const invalid = await fetch(endpoint, {
+          method: 'DELETE',
+          headers,
+          body: JSON.stringify({
+            contractVersion: '1.0.0',
+            conversationEpoch: 0,
+            userId: second.id,
+          }),
+        });
+        assert.equal(invalid.status, 400);
+        const response = await fetch(endpoint, {
+          method: 'DELETE',
+          headers,
+          body: JSON.stringify({ contractVersion: '1.0.0', conversationEpoch: 0 }),
+        });
+        assert.equal(response.status, 200);
+        const deleted = schemas.DeleteConversationResponse.parse(await response.json());
+        assert.equal(deleted.data.deleted, true);
+        assert.equal(deleted.data.conversationEpoch, 1);
+        assert.equal(await db.aiMessage.count({ where: { conversationId: convo.id } }), 0);
+        const purged = await db.aiRequest.findUnique({ where: { id: active.id } });
+        assert.equal(purged.status, 'DELETED');
+        assert.equal(purged.snapshot, null);
+        assert.ok(purged.purgedAt);
+        assert.equal(await db.aiMessage.count({ where: { content: 'MEMBER_MUST_REMAIN' } }), 1);
+        await assert.rejects(conversations.reset(first, a.id, convo.id, 0), {
+          code: 'AI_CONVERSATION_CHANGED',
+        });
+        const reservations = await db.aiReservation.findMany({ where: { requestId: active.id } });
+        assert.ok(
+          reservations.every((entry) => entry.unitUsed === 0 && entry.status === 'UNRESOLVED')
+        );
+        const receipt = {
+          ...binding(input),
+          versions: input.versions,
+          providerRequestId: 'late-reset-receipt',
+          outcome: 'KNOWN_FAILURE',
+          finishReason: 'TEST_RESET',
+          output: null,
+          usage: { status: 'FINAL', inputTokens: 2, outputTokens: 3, reasoningTokens: 0 },
+        };
+        await send(input, 'receipt', receipt);
+        assert.equal(
+          (await db.aiRequest.findUnique({ where: { id: active.id } })).status,
+          'DELETED'
+        );
+        assert.equal(await db.aiMessage.count({ where: { conversationId: convo.id } }), 0);
+        const spentAfter = await db.aiProviderCall.aggregate({ _sum: { costMicros: true } });
+        assert.equal(spentAfter._sum.costMicros - spentBefore._sum.costMicros, 5n);
+        await complete(first, a, 'NEW_EPOCH_QUESTION', 1);
+        const page = await conversations.history(first, a.id);
+        assert.equal(page.data.conversationEpoch, 1);
+        assert.ok(!JSON.stringify(page).includes('OWNER_RESET_PRIVATE'));
+      }
+    );
+
+    await t.test(
+      'admin lab switch uses current DB role, preserves cohort/budget and reports real aggregates',
+      async () => {
+        const { adminLabService } = require('./admin');
+        const admin = await user();
+        const ordinary = await user();
+        await db.user.update({ where: { id: admin.id }, data: { role: 'ADMIN' } });
+        const service = adminLabService(db, config);
+        await assert.rejects(service.read({ ...ordinary, role: 'ADMIN' }, lab.id), {
+          code: 'AI_NOT_ELIGIBLE',
+        });
+        const original = await db.aiRuntimePolicy.findUnique({
+          where: { environment: config.environment },
+        });
+        const before = await service.read(admin, lab.id);
+        assert.ok(before.requests > 0);
+        assert.match(before.costMicros, /^\d+$/);
+        assert.ok(before.unhelpful >= 1);
+        const disabled = await service.update(admin, lab.id, {
+          enabled: false,
+          version: before.version,
+        });
+        assert.equal((await service.read(admin, lab.id)).enabled, false);
+        const a = await attempt(ordinary);
+        await assert.rejects(question(ordinary, a), { code: 'AI_NOT_ELIGIBLE' });
+        await assert.rejects(
+          service.update(admin, lab.id, { enabled: true, version: before.version }),
+          { code: 'AI_STALE_CONTEXT' }
+        );
+        await service.update(admin, lab.id, { enabled: true, version: disabled.version });
+        const after = await db.aiRuntimePolicy.findUnique({
+          where: { environment: config.environment },
+        });
+        assert.deepEqual(after.limits, original.limits);
+        assert.equal(after.version, original.version);
+        assert.deepEqual(after.eligibilityRules.userIds, original.eligibilityRules.userIds);
+        assert.deepEqual(after.eligibilityRules.labIds, original.eligibilityRules.labIds);
+        assert.equal(after.providerConfigId, original.providerConfigId);
       }
     );
   } finally {

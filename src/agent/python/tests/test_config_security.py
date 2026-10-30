@@ -24,6 +24,12 @@ def test_defaults_disable_ai_and_do_not_consume_application_or_provider_credenti
     [
         {"AI_PYTHON_MODE": "live"},
         {"AI_PYTHON_MODE": "fake"},
+        {
+            "AI_PYTHON_MODE": "fake",
+            "AI_SERVICE_SECRET": SECRET,
+            "AI_PYTHON_ENVIRONMENT": "local",
+            "GEMINI_API_KEY": "synthetic-key",
+        },
         {"AI_PYTHON_PORT": "1.5"},
         {"AI_PYTHON_PORT": "65536"},
         {"AI_PYTHON_MAX_BODY_BYTES": "65537"},
@@ -50,6 +56,15 @@ def test_secret_is_not_in_settings_repr(settings):
     assert SECRET not in repr(settings)
     with pytest.raises(ValueError):
         dataclasses.replace(settings, max_concurrent=True)
+
+
+def test_only_gemini_allows_the_bounded_55_second_execution_window(settings):
+    live = dataclasses.replace(settings, mode="gemini", environment="local", max_request_ms=55000)
+    assert live.max_request_ms == 55000
+    with pytest.raises(ValueError, match="^AI_PYTHON_CONFIGURATION_INVALID$"):
+        dataclasses.replace(live, max_request_ms=55001)
+    with pytest.raises(ValueError, match="^AI_PYTHON_CONFIGURATION_INVALID$"):
+        dataclasses.replace(settings, mode="off", max_request_ms=30001)
 
 
 @pytest.mark.parametrize(

@@ -1,14 +1,21 @@
 const { verifyOutput } = require('./outputVerifier');
-const { fakeInputTokens } = require('./context');
 const { VERSION: diagnosticVersion } = require('./diagnostics/catalog');
 const localBudget = require('./localGeminiBudget');
 function runtimeConfig(env = process.env) {
   let local = false;
+  let appGemini = false;
   try {
     const url = new URL(env.DATABASE_URL);
     local =
+      ['postgres:', 'postgresql:'].includes(url.protocol) &&
       url.hostname === '127.0.0.1' &&
       /^\/ai_lab_(local|be01_(fresh|upgrade)_[a-f0-9]+)$/.test(url.pathname);
+    appGemini =
+      ['postgres:', 'postgresql:'].includes(url.protocol) &&
+      env.AI_WORKER_MODE === 'app-gemini' &&
+      env.AI_ENVIRONMENT === 'admin-test' &&
+      Boolean(env.GEMINI_API_KEY?.trim()) &&
+      (!env.GEMINI_MODEL || env.GEMINI_MODEL === localBudget.policy.model);
   } catch {
     /* No implicit database fallback for the worker. */
   }
@@ -26,9 +33,10 @@ function runtimeConfig(env = process.env) {
       .map((key) => env[key])
       .filter(Boolean),
     enabled:
-      ['fake', 'python-fake', 'python-gemini'].includes(env.AI_WORKER_MODE) &&
       env.NODE_ENV !== 'production' &&
-      local,
+      Boolean(env.GEMINI_API_KEY?.trim()) &&
+      (!env.GEMINI_MODEL || env.GEMINI_MODEL === localBudget.policy.model) &&
+      ((env.AI_WORKER_MODE === 'python-gemini' && local) || appGemini),
     auth: {
       secret: env.AI_SERVICE_SECRET,
       issuer: 'ccna-node',
@@ -38,9 +46,14 @@ function runtimeConfig(env = process.env) {
     providers: {
       'local-gemini-v1': {
         provider: 'gemini',
-        dispatchEnabled: env.AI_WORKER_MODE === 'python-gemini',
+        dispatchEnabled:
+          env.NODE_ENV !== 'production' &&
+          Boolean(env.GEMINI_API_KEY?.trim()) &&
+          (!env.GEMINI_MODEL || env.GEMINI_MODEL === localBudget.policy.model) &&
+          ((env.AI_WORKER_MODE === 'python-gemini' && local) || appGemini),
         responseMode: 'LLM',
         inputBudgetOwner: 'python-preflight',
+        executionWindowMs: 55000,
         localLedgerFile: localBudget.ledgerFile,
         versions: {
           contextSchemaVersion: '1.0.0',
@@ -57,23 +70,6 @@ function runtimeConfig(env = process.env) {
           output: localBudget.policy.outputIncludingThinkingMicroUsdPerMillionTokens,
           reasoning: localBudget.policy.outputIncludingThinkingMicroUsdPerMillionTokens,
         },
-        validateOutput: verifyOutput,
-      },
-      'local-fake-v1': {
-        provider: 'fake',
-        responseMode: 'DETERMINISTIC',
-        versions: {
-          contextSchemaVersion: '1.0.0',
-          diagnosticVersion,
-          promptVersion: 'fake-be04',
-          modelVersion: 'fake-be04',
-          priceVersion: 'fake-zero-v1',
-        },
-        caps: { maxInputTokens: 6000, maxOutputTokens: 800, maxReasoningTokens: 0 },
-        prices: { input: 0, output: 0, reasoning: 0 },
-        // Fake-only synthetic token budget, not a provider tokenizer.
-        // PY-02 must count the full provider prompt/schema before a live call.
-        measureInput: fakeInputTokens,
         validateOutput: verifyOutput,
       },
     },

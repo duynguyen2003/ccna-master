@@ -23,7 +23,7 @@ const { serviceAuth } = require('./serviceAuth');
 const { service } = require('./requests');
 const { receipts } = require('./receipts');
 const { dispatch } = require('./dispatch');
-const { fakePrepare } = require('../workers/aiWorker');
+const { fakePrepare } = require('../tests/helpers/fakeWorker.cjs');
 const { schemas, parseRequestResource } = require('@ccna/shared/aiLabContract');
 const { labs } = require('../fixtures/labs/disc03');
 

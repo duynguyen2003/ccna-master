@@ -130,7 +130,6 @@ test(
       const modes = live
         ? [['gemini', 'good']]
         : [
-            ['fake', 'good'],
             ['gemini', 'good'],
             ['gemini', 'invalid-output'],
             ['gemini', 'overlong-output'],
@@ -139,7 +138,7 @@ test(
           ];
       for (const [mode, vendor] of modes) {
         await t.test(`${mode}/${vendor}${live ? ' live' : ''}`, async () => {
-          const providerId = mode === 'fake' ? 'local-fake-v1' : 'local-gemini-v1';
+          const providerId = 'local-gemini-v1';
           const provider = config.providers[providerId];
           if (mode === 'gemini' && !live) {
             const file = path.join(directory, `budget-${vendor}.json`);
@@ -151,7 +150,7 @@ test(
             userDay: 100,
             globalDayMicros: 50000,
             globalMonthMicros: 100000,
-            maxCostMicros: mode === 'fake' ? 20 : 5800,
+            maxCostMicros: 5800,
             globalConcurrency: 2,
             versions: { ...provider.versions, appCommit: '0'.repeat(40) },
           };
