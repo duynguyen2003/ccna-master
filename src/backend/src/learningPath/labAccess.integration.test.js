@@ -6,8 +6,9 @@ test(
   { skip: process.env.LEARNING_PATH_INTEGRATION !== '1', timeout: 90000 },
   async (t) => {
     const target = new URL(process.env.DATABASE_URL);
-    assert.equal(target.hostname, '127.0.0.1');
-    assert.match(target.pathname, /^\/ai_lab_be01_.*_test$/);
+    assert.ok(['postgres:', 'postgresql:'].includes(target.protocol));
+    assert.ok(['127.0.0.1', 'localhost', '[::1]'].includes(target.hostname));
+    assert.match(target.pathname, /^\/(?:ai_lab_be01_.*|netmastery)_test$/);
     const app = require('../Server');
     const { getPrisma, disconnectDatabase } = require('../config/database');
     const { createAccessToken } = require('../security/session');
@@ -208,8 +209,13 @@ test(
         }
       );
     } finally {
-      await new Promise((resolve) => server.close(resolve));
-      await disconnectDatabase();
+      try {
+        await db.course.deleteMany({ where: { id: { in: ['la-first', 'la-next'] } } });
+        await db.user.deleteMany({ where: { id: { in: users.map((user) => user.id) } } });
+      } finally {
+        await new Promise((resolve) => server.close(resolve));
+        await disconnectDatabase();
+      }
     }
   }
 );
