@@ -2,6 +2,7 @@ import { appPrompt, appConfirm, appAlert } from '../../../utils/appDialog';
 import React, { useState, useEffect, useContext, useRef, useCallback, useMemo } from 'react';
 import CliLabConfigEditor from '../components/labs/CliLabConfigEditor';
 import LabAccessPolicyEditor from '../components/labs/LabAccessPolicyEditor';
+import AiLabSettings from '../components/labs/AiLabSettings';
 import {
   ArrowLeft,
   Plus,
@@ -33,6 +34,7 @@ const LAB_TABS = [
   { id: 'content', label: 'Nội dung & Các bước' },
   { id: 'simulation', label: 'CLI Simulation' },
   { id: 'media', label: 'Tài nguyên & Công cụ' },
+  { id: 'ai', label: 'Trợ lý AI' },
 ];
 
 const LAB_TYPE_OPTIONS = [
@@ -655,6 +657,11 @@ const Labs = () => {
           {error ? <div className="labm-form-error-banner">{error}</div> : null}
 
           <div className="labm-editor-scroll">
+            {activeTab === 'ai' && (
+              <div className="labm-tab-panel">
+                <AiLabSettings token={token} labId={editingLabId} />
+              </div>
+            )}
             {activeTab === 'basic' ? (
               <div className="labm-tab-panel">
                 <div className="acm-field">

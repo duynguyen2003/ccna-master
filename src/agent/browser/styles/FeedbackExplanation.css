@@ -1,0 +1,36 @@
+.ai-feedback-explanation {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+.ai-feedback-explanation > button {
+  justify-self: start;
+  min-height: 44px;
+}
+.ai-feedback-explanation__answer {
+  padding: 14px;
+  border-left: 3px solid var(--text-accent);
+  background: var(--surface-secondary);
+  border-radius: 0 8px 8px 0;
+  font:
+    400 14px/1.75 'Be Vietnam Pro',
+    sans-serif;
+}
+.ai-feedback-explanation__answer > strong {
+  font-size: 13px;
+  color: var(--text-accent);
+}
+.ai-feedback-explanation__answer > p {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  margin: 8px 0;
+}
+.ai-feedback-explanation__answer > small,
+.ai-feedback-explanation__meta {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.ai-feedback-explanation__error {
+  color: var(--text-danger);
+  font-size: 13px;
+}

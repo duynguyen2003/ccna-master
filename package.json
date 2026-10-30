@@ -25,6 +25,7 @@
     "check:ai:python": "uv run --directory src/agent/python --frozen ruff check app tests",
     "check:ai:fixtures": "node src/agent/scripts/generate-ai-lab-fixtures.cjs --check",
     "test:ai:contracts": "node --test src/agent/node/contract.test.js",
+    "test:ai:browser": "node --test src/agent/tests/browser/*.test.mjs",
     "test:ai:context": "node --test src/agent/node/context.test.js",
     "test:ai:diagnostics": "node --test src/agent/node/diagnostics/diagnostics.test.js",
     "test:ai:local": "node --test src/agent/node/localGemini.test.js",
@@ -46,7 +47,7 @@
     "import:lab:eigrp01": "node src/scripts/import-eigrp01.cjs",
     "labs:foundation:add": "node src/scripts/add-foundation-labs.cjs",
     "prisma:generate": "prisma generate",
-    "format": "prettier --write \"src/frontend/src/**/*.{js,jsx,css,json}\" \"src/backend/src/**/*.js\" \"src/agent/**/*.{js,cjs,mjs,ts,md}\" \"src/agent/{package.json,contracts/package.json}\" \"src/shared/**/*.{js,json}\" \"src/scripts/**/*.{js,cjs}\"",
+    "format": "prettier --write \"src/frontend/src/**/*.{js,jsx,css,json}\" \"src/backend/src/**/*.js\" \"src/agent/**/*.{js,jsx,cjs,mjs,ts,css,md}\" \"src/agent/{package.json,contracts/package.json,browser/package.json}\" \"src/shared/**/*.{js,json}\" \"src/scripts/**/*.{js,cjs}\"",
     "postinstall": "node src/scripts/prisma-postinstall.cjs",
     "check:boundaries": "node src/scripts/check-boundaries.cjs"
   },

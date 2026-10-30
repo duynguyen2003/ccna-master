@@ -43,6 +43,26 @@ test('names the dialog, contains keyboard focus and restores focus on dismissal'
   expect(trigger).toHaveFocus();
 });
 
+test('focus loop includes disclosure summaries and keyboard-scrollable history', () => {
+  render(
+    <Dialog title="Trợ lý lab" onClose={jest.fn()}>
+      <details>
+        <summary>Dữ liệu trợ giúp</summary>
+        <p>Nội dung riêng tư.</p>
+      </details>
+      <section tabIndex={0} aria-label="Lịch sử">
+        Câu trả lời
+      </section>
+    </Dialog>
+  );
+  const close = screen.getByRole('button', { name: 'Đóng hộp thoại' });
+  fireEvent.keyDown(close, { key: 'Tab', shiftKey: true });
+  const history = screen.getByRole('region', { name: 'Lịch sử' });
+  expect(history).toHaveFocus();
+  fireEvent.keyDown(history, { key: 'Tab' });
+  expect(close).toHaveFocus();
+});
+
 test('opt-in exit keeps the modal until its own animation ends and closes only once', () => {
   jest.useFakeTimers();
   try {

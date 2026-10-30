@@ -65,13 +65,14 @@ const getCourseMetadata = (code) =>
 
 // ─── Core Fetch ─────────────────────────────────────────────────────────────
 const apiFetch = async (endpoint, token, options = {}) => {
+  const { suppressGlobalError, ...fetchOptions } = options;
   const headers = {
     'Content-Type': 'application/json',
     ...(token && { Authorization: `Bearer ${token}` }),
     ...options.headers,
   };
 
-  const response = await fetch(`${API_URL}${endpoint}`, { ...options, headers });
+  const response = await fetch(`${API_URL}${endpoint}`, { ...fetchOptions, headers });
   const data = await response.json().catch(() => ({}));
 
   if (response.status === 401) {
@@ -87,7 +88,7 @@ const apiFetch = async (endpoint, token, options = {}) => {
   }
 
   if (!response.ok) {
-    if (response.status >= 500) {
+    if (response.status >= 500 && !suppressGlobalError) {
       window.dispatchEvent(
         new CustomEvent('api_error', { detail: 'Lỗi máy chủ (500). Vui lòng thử lại sau.' })
       );
@@ -307,15 +308,8 @@ export const api = {
     ).data,
   cliReplay: async (token, id, sequence) =>
     (await apiFetch(`/lab-attempts/${id}/replay?sequence=${sequence}`, token)).data,
-  cliMembers: async (token, id, userId, remove = false) =>
-    (
-      await apiFetch(`/lab-attempts/${id}/members`, token, {
-        method: 'POST',
-        body: JSON.stringify({ userId, remove }),
-      })
-    ).data,
-  cliExplain: async (token, id) =>
-    (await apiFetch(`/lab-attempts/${id}/explain`, token, { method: 'POST' })).data,
+  cliExplain: async (token, id, options = {}) =>
+    (await apiFetch(`/lab-attempts/${id}/explain`, token, { ...options, method: 'POST' })).data,
   cliAchievements: async (token) => (await apiFetch('/lab-attempts/achievements', token)).data,
 
   // ── Resources ─────────────────────────────────────────────────────────────

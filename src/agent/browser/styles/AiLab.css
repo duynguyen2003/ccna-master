@@ -1,0 +1,646 @@
+.cli-lab-theme.ai-lab-root {
+  position: absolute;
+  inset: 0 0 0 auto;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  width: min(var(--ai-lab-panel-width, 440px), 100%);
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+  border-left: 1px solid var(--border-subtle);
+  background: var(--surface-primary);
+  color: var(--text-primary);
+  box-shadow: -12px 0 32px rgb(0 0 0 / 16%);
+  font:
+    400 15px/1.7 'Be Vietnam Pro',
+    var(--system-ui, sans-serif);
+}
+.ai-lab-root *,
+.ai-lab-dialog * {
+  box-sizing: border-box;
+}
+.ai-lab-root :is(h2, h3, p) {
+  margin: 0;
+}
+.ai-lab-root h2 {
+  font-size: 17px;
+  line-height: 1.4;
+  font-weight: 700;
+}
+.ai-lab-root h3 {
+  font-size: 20px;
+  line-height: 1.5;
+  font-weight: 650;
+}
+.ai-lab-root.ai-lab-root :is(button, select, textarea) {
+  min-width: 0;
+  max-width: 100%;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 9px 12px;
+  color: var(--text-primary);
+  background: var(--surface-primary);
+  font: inherit;
+  font-size: 13px;
+}
+.ai-lab-root button {
+  min-height: 44px;
+  cursor: pointer;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease;
+}
+.ai-lab-root button:hover:not(:disabled) {
+  background: var(--surface-muted);
+  border-color: var(--border-strong);
+}
+.ai-lab-root button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.ai-lab-root :is(button, select, textarea, summary, pre, [tabindex]):focus-visible {
+  outline: 2px solid var(--text-accent);
+  outline-offset: 3px;
+}
+.ai-lab-root :is(p, li, h3) {
+  overflow-wrap: anywhere;
+}
+.ai-lab-root svg {
+  flex: 0 0 auto;
+  vertical-align: middle;
+}
+.ai-lab-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.ai-lab-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 20px 10px;
+}
+.ai-lab-resize {
+  position: absolute;
+  z-index: 3;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 10px;
+  cursor: ew-resize;
+  touch-action: none;
+  border-left: 3px solid transparent;
+}
+.ai-lab-resize:hover,
+.ai-lab-resize:focus-visible,
+.ai-lab-resize[data-resizing] {
+  border-left-color: var(--text-accent);
+}
+.ai-lab-tools > div {
+  display: grid;
+  gap: 8px;
+  padding-top: 8px;
+}
+.ai-lab-width-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.ai-lab-advanced > summary {
+  cursor: pointer;
+  min-height: 32px;
+  align-content: center;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+.ai-lab-advanced .ai-lab-options {
+  padding-top: 8px;
+}
+.ai-lab-context-help {
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  background: var(--surface-secondary);
+  font-size: 13px;
+}
+.ai-lab-context-help button {
+  margin-top: 8px;
+}
+.ai-lab-reset-confirm {
+  padding: 12px 20px;
+  background: var(--surface-secondary);
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 13px;
+}
+.ai-lab-reset-confirm button {
+  margin: 10px 8px 0 0;
+}
+.ai-lab-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+.ai-lab-avatar,
+.ai-lab-empty__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-accent);
+  color: var(--text-accent);
+  border-radius: 12px;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+}
+.ai-lab-quota {
+  color: var(--text-secondary);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.ai-lab-root.ai-lab-root .ai-lab-close {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.ai-lab-info {
+  padding: 0 20px 12px;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+.ai-lab-info summary,
+.ai-lab-evidence summary {
+  cursor: pointer;
+  min-height: 32px;
+  align-content: center;
+}
+.ai-lab-info details p {
+  padding: 8px 0 4px;
+  line-height: 1.7;
+}
+.ai-lab-history {
+  flex: 1 1 auto;
+  min-height: 100px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  padding: 24px 20px;
+  scroll-padding: 16px;
+}
+.ai-lab-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100%;
+  padding: 12px 0 24px;
+  text-align: center;
+}
+.ai-lab-empty__icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  margin-bottom: 16px;
+}
+.ai-lab-empty h3 {
+  margin-bottom: 22px;
+}
+.ai-lab-suggestions {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  max-width: 340px;
+}
+.ai-lab-suggestions button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+}
+.ai-lab-suggestions button span {
+  flex: 1;
+}
+.ai-lab-suggestions svg {
+  color: var(--text-accent);
+}
+.ai-lab-message {
+  margin-bottom: 28px;
+  min-width: 0;
+}
+.ai-lab-message--user {
+  margin-left: 40px;
+  padding: 12px 16px;
+  border-radius: 16px 16px 4px 16px;
+  background: var(--surface-muted);
+}
+.ai-lab-message__meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.ai-lab-message__meta strong {
+  color: var(--text-primary);
+  font-size: 13px;
+}
+.ai-lab-message__meta > span:last-child {
+  margin-left: auto;
+}
+.ai-lab-message__meta .ai-lab-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+}
+.ai-lab-prose,
+.ai-lab-message--user p,
+.ai-lab-steps p,
+.ai-lab-verification p {
+  white-space: pre-wrap;
+}
+.ai-lab-stale {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  border-left: 3px solid var(--text-warning);
+  background: var(--surface-secondary);
+  color: var(--text-warning);
+  font-size: 12px;
+}
+.ai-lab-evidence {
+  margin-top: 16px;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+.ai-lab-evidence ul,
+.ai-lab-steps {
+  margin: 12px 0;
+  padding-left: 22px;
+}
+.ai-lab-evidence li,
+.ai-lab-steps li {
+  margin-block: 12px;
+  padding-left: 4px;
+}
+.ai-lab-evidence li span {
+  display: block;
+  margin-top: 6px;
+}
+.ai-lab-steps-title {
+  margin-top: 20px !important;
+  font-size: 13px;
+}
+.ai-lab-steps li::marker {
+  color: var(--text-accent);
+  font-weight: 650;
+}
+.ai-lab-command {
+  min-width: 0;
+  margin: 12px 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--surface-secondary);
+}
+.ai-lab-command > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 2px 10px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.ai-lab-command > div > span {
+  overflow-wrap: anywhere;
+}
+.ai-lab-command button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ai-lab-root .ai-lab-command button {
+  border: 0;
+  background: transparent;
+  padding: 6px;
+  flex-shrink: 0;
+}
+.ai-lab-command pre {
+  overflow-x: auto;
+  white-space: pre;
+  margin: 0;
+  padding: 14px;
+  background: var(--surface-terminal);
+  color: #e7f0f8;
+  font:
+    13px/1.7 Consolas,
+    monospace;
+}
+.ai-lab-command > span:not(:empty) {
+  display: block;
+  font-size: 12px;
+  padding: 6px 10px;
+}
+.ai-lab-verification {
+  margin-block: 18px;
+  padding: 12px 14px;
+  border-left: 3px solid var(--text-accent);
+  border-radius: 0 8px 8px 0;
+  background: var(--surface-secondary);
+}
+.ai-lab-verification strong {
+  display: block;
+  font-size: 12px;
+  margin-bottom: 4px;
+  color: var(--text-accent);
+}
+.ai-lab-muted {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.ai-lab-feedback {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 12px;
+}
+.ai-lab-root .ai-lab-feedback > button {
+  padding: 6px 10px;
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+.ai-lab-feedback form {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+}
+.ai-lab-root label {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.ai-lab-feedback label {
+  flex: 1 1 160px;
+}
+.ai-lab-status:not(:empty),
+.ai-lab-error,
+.ai-lab-root > .ai-lab-muted {
+  padding: 12px 20px;
+  font-size: 13px;
+}
+.ai-lab-status {
+  color: var(--text-secondary);
+  background: var(--surface-secondary);
+}
+.ai-lab-status:empty {
+  display: none;
+}
+.ai-lab-error {
+  color: var(--text-danger);
+  border-top: 1px solid var(--border-subtle);
+  background: var(--bg-danger);
+}
+.ai-lab-error button {
+  margin: 8px 8px 0 0;
+}
+.ai-lab-composer {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+  min-height: 0;
+  padding: 12px 20px 16px;
+  border-top: 1px solid var(--border-subtle);
+  background: var(--surface-primary);
+  overflow: hidden;
+  max-height: 55%;
+}
+.ai-lab-composer fieldset {
+  border: 0;
+  margin: 0;
+  padding: 3px;
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow-y: auto;
+}
+.ai-lab-intents {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px;
+  background: var(--surface-secondary);
+  border-radius: 10px;
+}
+.ai-lab-root .ai-lab-intents button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: transparent;
+  border-color: transparent;
+  padding: 6px 4px;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+.ai-lab-root button[aria-pressed='true'] {
+  border-color: var(--text-accent);
+  background: var(--bg-accent);
+  color: var(--text-accent);
+}
+.ai-lab-root .ai-lab-intents button[aria-pressed='true'] {
+  background: var(--surface-primary);
+  color: var(--text-accent);
+  border-color: var(--border-subtle);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 6%);
+}
+.ai-lab-device-fields,
+.ai-lab-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.ai-lab-root select {
+  width: 100%;
+  min-height: 44px;
+}
+.ai-lab-root.ai-lab-root textarea {
+  display: block;
+  width: 100%;
+  resize: vertical;
+  min-height: 88px;
+  max-height: 180px;
+  line-height: 1.6;
+  font-size: 15px;
+}
+.ai-lab-root textarea::placeholder {
+  color: var(--text-subtle);
+  opacity: 1;
+}
+.ai-lab-composer__actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  flex-shrink: 0;
+}
+.ai-lab-composer__actions > span {
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.ai-lab-root.ai-lab-root .ai-lab-send {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: var(--brand-primary, #386298);
+  border-color: var(--brand-primary, #386298);
+  color: #fff;
+  font-weight: 600;
+  padding-inline: 16px;
+}
+.ai-lab-root.ai-lab-root .ai-lab-send:hover:not(:disabled) {
+  background: #2d507e;
+  border-color: #2d507e;
+}
+.ai-lab-validation {
+  margin-top: 8px !important;
+  color: var(--text-danger);
+  font-size: 12px;
+}
+.ai-lab-root.ai-lab-root .ai-lab-new {
+  position: sticky;
+  align-self: center;
+  bottom: 0;
+  margin-top: -44px;
+  z-index: 1;
+  border-radius: 24px;
+  background: var(--surface-primary);
+  box-shadow: 0 3px 12px rgb(0 0 0 / 15%);
+}
+.ui-dialog.ai-lab-dialog {
+  box-sizing: border-box;
+  font-family: 'Be Vietnam Pro', var(--system-ui, sans-serif);
+  background: var(--surface-primary);
+  color: var(--text-primary);
+  border-color: var(--border-subtle);
+  border-width: 0;
+  width: min(100vw, 560px);
+  max-width: 100vw;
+  height: 100dvh;
+  max-height: 100dvh;
+  margin: 0 0 0 auto;
+  border-radius: 0;
+  padding: 0;
+}
+.ai-lab-dialog .ui-dialog-panel {
+  min-height: 0;
+  height: 100%;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.ai-lab-dialog .ui-dialog-header {
+  flex: 0 0 auto;
+  padding: 12px 16px;
+  margin: 0;
+}
+.ai-lab-dialog .ui-dialog-close {
+  width: 44px;
+  height: 44px;
+  flex-basis: 44px;
+  color: var(--text-primary);
+  background: var(--surface-secondary);
+  border-color: var(--border-subtle);
+}
+.ai-lab-dialog .ui-dialog-header h2 {
+  font-size: 17px;
+  line-height: 1.4;
+}
+.cli-lab-theme.ai-lab-root--modal {
+  position: relative;
+  inset: auto;
+  width: 100%;
+  height: auto;
+  flex: 1;
+  border: 0;
+  box-shadow: none;
+}
+.ai-lab-root--modal .ai-lab-header {
+  padding: 0 16px;
+}
+.ai-lab-root--modal .ai-lab-heading {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.ai-lab-root--modal .ai-lab-quota {
+  margin-left: auto;
+}
+.ai-lab-root.ai-lab-root--modal :is(select, textarea) {
+  font-size: 16px;
+}
+@media (max-width: 480px) {
+  .ai-lab-history {
+    padding: 20px 16px;
+  }
+  .ai-lab-composer {
+    padding: 12px 16px max(16px, env(safe-area-inset-bottom));
+  }
+  .ai-lab-info {
+    padding-inline: 16px;
+  }
+  .ai-lab-empty h3 {
+    font-size: 18px;
+  }
+  .ai-lab-options,
+  .ai-lab-device-fields {
+    gap: 8px;
+  }
+}
+@media (max-height: 600px) {
+  .ai-lab-composer {
+    max-height: 65%;
+  }
+  .ai-lab-empty {
+    padding-block: 8px;
+  }
+  .ai-lab-empty__icon {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ai-lab-root button {
+    transition: none;
+  }
+}
