@@ -163,6 +163,7 @@ module.exports.submitAttempt = handle(async (req, res) => {
   const data = await withAttempt(prisma, req.params.attemptId, req.user.id, async (tx, a) => {
     if (a.userId !== req.user.id) throw fail(403, 'Chỉ chủ phiên được nộp bài');
     if (a.status !== 'IN_PROGRESS') throw fail(409, 'Phiên đã kết thúc');
+    await learningPathService.assertLabAccess(tx, req.user.id, a.lab);
     const result = gradeAttempt(a.deviceState, definitionOf(a).gradingSpec);
     const updated = await tx.labAttempt.update({
       where: { id: a.id },

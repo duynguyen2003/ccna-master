@@ -1665,3 +1665,31 @@
   border-radius: 50%;
   background: #ff5f56;
 }
+.labs-page .lab-access-lock {
+  margin-top: 12px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--color-muted-foreground);
+}
+.labs-page .lab-access-lock p {
+  margin: 0 0 6px;
+}
+.labs-page .lab-access-lock a {
+  display: block;
+  color: var(--color-primary);
+  overflow-wrap: anywhere;
+}
+.labs-page .lab-access-lock small {
+  display: block;
+  margin-top: 4px;
+}
+.labs-page .lab-card-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+.labs-page .lab-access-mode {
+  display: block;
+  margin: 6px 0;
+  color: var(--color-primary);
+  font-size: 12px;
+}

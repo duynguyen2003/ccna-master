@@ -44,6 +44,7 @@
     "restore": "node src/scripts/restore.cjs",
     "bench:cli": "node src/backend/src/simulation/benchmark.js",
     "import:lab:eigrp01": "node src/scripts/import-eigrp01.cjs",
+    "labs:foundation:add": "node src/scripts/add-foundation-labs.cjs",
     "prisma:generate": "prisma generate",
     "format": "prettier --write \"src/frontend/src/**/*.{js,jsx,css,json}\" \"src/backend/src/**/*.js\" \"src/agent/**/*.{js,cjs,mjs,ts,md}\" \"src/agent/{package.json,contracts/package.json}\" \"src/shared/**/*.{js,json}\" \"src/scripts/**/*.{js,cjs}\"",
     "postinstall": "node src/scripts/prisma-postinstall.cjs",

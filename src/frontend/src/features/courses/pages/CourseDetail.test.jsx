@@ -51,3 +51,19 @@ test('exposes module expansion and lesson navigation as native keyboard controls
   expect(module).toHaveAttribute('aria-expanded', 'false');
   expect(screen.queryByRole('link', { name: /Quan sát gói tin/ })).not.toBeInTheDocument();
 });
+
+test('locked lesson in the course list exposes a reason and has no navigable href', async () => {
+  const courses = await api.getCourses();
+  courses[0].modules[0].lessons.push({
+    id: 12,
+    title: 'Bài chưa mở',
+    canAccess: false,
+    lockedReason: 'Xem ít nhất 70% bài trước.',
+  });
+  render(<CourseDetail />);
+  fireEvent.click(await screen.findByRole('button', { name: /Nền tảng mạng và IPv4/ }));
+  const locked = screen.getByRole('link', { name: /Bài chưa mở.*70%/ });
+  expect(locked).toHaveAttribute('aria-disabled', 'true');
+  expect(locked).not.toHaveAttribute('href');
+  expect(locked).toHaveAttribute('title', 'Xem ít nhất 70% bài trước.');
+});

@@ -228,9 +228,14 @@
     color 0.2s ease;
 }
 
-.ls-section-btn:hover {
+.ls-section-btn:hover:not([aria-disabled='true']) {
   background: var(--color-background);
   color: var(--color-foreground);
+}
+
+.ls-section-btn[aria-disabled='true'] {
+  cursor: not-allowed;
+  color: var(--color-muted-foreground);
 }
 
 .ls-section-btn.active {

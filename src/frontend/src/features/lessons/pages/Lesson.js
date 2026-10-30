@@ -13,6 +13,7 @@ import {
   Map,
   Clock,
   X,
+  Lock,
 } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import api from '../../../services/Api';
@@ -59,6 +60,28 @@ const loadModuleLessons = (module, token) => {
   return hasContent ? Promise.resolve(embedded) : api.getLessonsByModule(token, module.id);
 };
 
+// Explicit server permissions win. The fallback supports metadata-only lists
+// and uses saved progress, never the current video playhead.
+const canOpenLesson = (lessons, lessonId, progress = {}) => {
+  const index = lessons.findIndex((lesson) => lesson.id === lessonId);
+  if (index < 0) return false;
+  if (typeof lessons[index].canAccess === 'boolean') return lessons[index].canAccess;
+  return lessons
+    .slice(0, index)
+    .every(
+      (lesson) =>
+        lesson.completed ||
+        progress[lesson.id]?.completed ||
+        ((lesson.hasVideo || lesson.videoUrl) &&
+          Math.max(lesson.progressPercent || 0, progress[lesson.id]?.savedPercent || 0) >= 70)
+    );
+};
+const lockedLessonError = (lesson) =>
+  Object.assign(
+    new Error(lesson?.lockedReason || 'Hoàn thành điều kiện của bài trước để mở bài học này.'),
+    { code: 'LESSON_LOCKED', status: 403 }
+  );
+
 const Lesson = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -80,6 +103,13 @@ const Lesson = () => {
   const [lessons, setLessons] = useState([]);
   const [selectedLessonId, setSelectedLessonId] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [lessonError, setLessonError] = useState(null);
+  const [accessRefreshFailed, setAccessRefreshFailed] = useState(false);
+  const learningOwnerRef = useRef(null);
+  learningOwnerRef.current = `${token || ''}:${courseId || ''}`;
+  const activeModuleRef = useRef(null);
+  const accessReadSeqRef = useRef(0);
+  activeModuleRef.current = activeModule?.id;
   const [noteContent, setNoteContent] = useState('');
   const [noteLoad, setNoteLoad] = useState({ lessonId: null, status: 'loading' });
   const [noteAttempt, setNoteAttempt] = useState(0);
@@ -127,6 +157,9 @@ const Lesson = () => {
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
+    setLessonError(null);
+    setAccessRefreshFailed(false);
+    accessReadSeqRef.current++;
     setCourse(null);
     setModules([]);
     setActiveModule(null);
@@ -167,6 +200,7 @@ const Lesson = () => {
               played: (item.progressPercent || 0) / 100,
               playedSeconds: 0,
               completed: item.status === 'COMPLETED',
+              savedPercent: item.progressPercent || 0,
             };
             const current = lastSyncRef.current[item.lessonId];
             lastSyncRef.current[item.lessonId] = {
@@ -219,11 +253,16 @@ const Lesson = () => {
             if (foundModule) {
               targetModule = foundModule;
               targetLessonId = parsedLessonId;
-            }
+            } else throw new Error('Không tìm thấy bài học trong khóa học này.');
           }
+
+          if (targetModule.canAccess === false) throw lockedLessonError(targetModule);
 
           const moduleLessons = await loadModuleLessons(targetModule, token);
           if (cancelled) return;
+          const initialId = targetLessonId || moduleLessons?.[0]?.id;
+          if (initialId && !canOpenLesson(moduleLessons, initialId))
+            throw lockedLessonError(moduleLessons.find((lesson) => lesson.id === initialId));
           setModules(courseModules);
           setActiveModule(targetModule);
           setLessons(moduleLessons || []);
@@ -235,7 +274,7 @@ const Lesson = () => {
           }
         }
       } catch (error) {
-        if (!cancelled) console.error('Error initializing lesson view:', error);
+        if (!cancelled) setLessonError(error);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -269,28 +308,50 @@ const Lesson = () => {
     );
 
     if (foundModule) {
+      const rejectLocked = (lesson) => {
+        setLessonError(lockedLessonError(lesson));
+        setSelectedLessonId(null);
+      };
       if (
         foundModule.id === activeModule?.id &&
         lessons.some((item) => item.id === parsedLessonId)
       ) {
+        if (!canOpenLesson(lessons, parsedLessonId, lessonProgress)) {
+          rejectLocked(lessons.find((lesson) => lesson.id === parsedLessonId));
+          return;
+        }
+        setLessonError(null);
         setSelectedLessonId(parsedLessonId);
         return;
       }
       const selectTargetLesson = async () => {
         try {
           setLoading(true);
-          const moduleLessons = await loadModuleLessons(foundModule, token);
+          // Module permissions may change after completing the current one.
+          // Revalidate cross-module URLs instead of trusting the initial list.
+          const moduleLessons = await api.getLessonsByModule(token, foundModule.id);
           if (cancelled) return;
+          if (!canOpenLesson(moduleLessons, parsedLessonId, lessonProgress)) {
+            rejectLocked(moduleLessons.find((lesson) => lesson.id === parsedLessonId));
+            return;
+          }
+          setLessonError(null);
           setActiveModule(foundModule);
           setLessons(moduleLessons);
           setSelectedLessonId(parsedLessonId);
         } catch (err) {
-          if (!cancelled) console.error('Error shifting to target lesson:', err);
+          if (!cancelled) {
+            setLessonError(err);
+            setSelectedLessonId(null);
+          }
         } finally {
           if (!cancelled) setLoading(false);
         }
       };
       selectTargetLesson();
+    } else {
+      setLessonError(new Error('Không tìm thấy bài học trong khóa học này.'));
+      setSelectedLessonId(null);
     }
     return () => {
       cancelled = true;
@@ -388,7 +449,7 @@ const Lesson = () => {
   }, []);
 
   const selectedLesson = useMemo(
-    () => lessons.find((lesson) => lesson.id === selectedLessonId) ?? lessons[0],
+    () => lessons.find((lesson) => lesson.id === selectedLessonId),
     [lessons, selectedLessonId]
   );
   const selectedLessonTitle = formatLessonTitle(selectedLesson?.title);
@@ -404,7 +465,9 @@ const Lesson = () => {
     return timestamps.sort((first, second) => first.seconds - second.seconds);
   }, [noteContent]);
 
-  const completedCount = lessons.filter((lesson) => lessonProgress[lesson.id]?.completed).length;
+  const completedCount = lessons.filter(
+    (lesson) => lesson.completed || lessonProgress[lesson.id]?.completed
+  ).length;
   const progressPercent = lessons.length ? (completedCount / lessons.length) * 100 : 0;
 
   const updateLessonCompletion = (lessonId, completed) => {
@@ -414,9 +477,34 @@ const Lesson = () => {
   };
 
   const handleSelectLesson = (lessonId) => {
+    if (!canOpenLesson(lessons, lessonId, lessonProgress)) return;
+    setLessonError(null);
     setSelectedLessonId(lessonId);
     if (isCompact) {
       setLeftOpen(false);
+    }
+  };
+
+  const refreshLessonAccess = async (moduleId = activeModule?.id) => {
+    const owner = learningOwnerRef.current;
+    const sequence = ++accessReadSeqRef.current;
+    try {
+      const updated = await api.getLessonsByModule(token, moduleId);
+      if (
+        learningOwnerRef.current !== owner ||
+        activeModuleRef.current !== moduleId ||
+        sequence !== accessReadSeqRef.current
+      )
+        return;
+      if (Array.isArray(updated)) setLessons(updated);
+      setAccessRefreshFailed(false);
+    } catch {
+      if (
+        learningOwnerRef.current === owner &&
+        activeModuleRef.current === moduleId &&
+        sequence === accessReadSeqRef.current
+      )
+        setAccessRefreshFailed(true);
     }
   };
 
@@ -451,11 +539,13 @@ const Lesson = () => {
         [lessonId]: { ...current[lessonId], completed: true },
       }));
       if (lastSyncRef.current[lessonId]) lastSyncRef.current[lessonId].completed = true;
+      if (!lessonProgress[lessonId]?.completed) refreshLessonAccess();
     }
   };
 
   const scheduleProgressSync = (lessonId, state) => {
     if (!token || !(course?.id || courseId)) return;
+    const scheduledOwner = learningOwnerRef.current;
     const sync = (lastSyncRef.current[lessonId] ||= {
       percent: 0,
       completed: false,
@@ -472,16 +562,19 @@ const Lesson = () => {
     };
 
     const sendPending = () => {
+      if (learningOwnerRef.current !== scheduledOwner) return;
       if (sync.inFlight || sync.completed || !sync.pending || Date.now() < sync.nextRetryAt) return;
       const pending = sync.pending;
       if (
         !pending.completed &&
+        !(sync.percent < 70 && pending.percent >= 70) &&
         (pending.percent < sync.percent + 10 || Date.now() - sync.time < 5000)
       ) {
         return;
       }
       sync.pending = null;
       sync.inFlight = true;
+      const owner = learningOwnerRef.current;
       setLessonSaveStatus((current) => ({ ...current, [lessonId]: 'saving' }));
       api
         .updateUserProgress(token, {
@@ -492,13 +585,21 @@ const Lesson = () => {
           status: pending.completed ? 'COMPLETED' : 'ACTIVE',
         })
         .then((response) => {
+          if (learningOwnerRef.current !== owner) return;
           const wasCompleted = sync.completed;
-          sync.percent = Math.max(sync.percent, response?.data?.progressPercent || pending.percent);
+          const previousPercent = sync.percent;
+          sync.percent = Math.max(sync.percent, response?.data?.progressPercent ?? 0);
           sync.completed = response?.data?.status === 'COMPLETED';
           sync.time = Date.now();
           sync.retries = 0;
           sync.nextRetryAt = 0;
           setLessonSaveStatus((current) => ({ ...current, [lessonId]: 'saved' }));
+          setLessonProgress((current) => ({
+            ...current,
+            [lessonId]: { ...current[lessonId], savedPercent: sync.percent },
+          }));
+          if ((previousPercent < 70 && sync.percent >= 70) || (!wasCompleted && sync.completed))
+            refreshLessonAccess();
           if (response?.transition?.changed) {
             storeTransitionEvent(response.transition, user?.id);
           }
@@ -512,6 +613,7 @@ const Lesson = () => {
           }
         })
         .catch((error) => {
+          if (learningOwnerRef.current !== owner) return;
           console.error('Không lưu được tiến độ bài học:', error);
           sync.pending = {
             percent: Math.max(sync.pending?.percent || 0, pending.percent),
@@ -554,7 +656,7 @@ const Lesson = () => {
       lastSyncRef.current[lessonId].completed = true;
     }
     scheduleProgressSync(lessonId, {
-      percent: Math.round(played * 100),
+      percent: Math.floor(played * 100),
       completed: Boolean(state.eligibleCompletion),
     });
   };
@@ -574,7 +676,7 @@ const Lesson = () => {
 
   const currentProgress = lessonProgress[selectedLessonId]?.played || 0;
   const isNextDisabled =
-    !hasNext || (!lessonProgress[selectedLessonId]?.completed && currentProgress < 0.7);
+    !hasNext || !canOpenLesson(lessons, lessons[currentIndex + 1]?.id, lessonProgress);
   const activeProgress = lessonProgress[selectedLessonId] || {};
   const activeMetrics = videoMetrics[selectedLessonId] || {};
   const displayedPosition = activeMetrics.playedSeconds ?? activeProgress.playedSeconds ?? 0;
@@ -586,13 +688,15 @@ const Lesson = () => {
   const resumePosition = Math.max(0, activeMetrics.lastPosition || 0);
   const progressSaveFailed =
     activeMetrics.saveStatus === 'error' || lessonSaveStatus[selectedLessonId] === 'error';
-  const nextDisabledReason = !hasNext
-    ? 'Đây là bài cuối cùng trong chương.'
-    : !lessonProgress[selectedLessonId]?.completed && !selectedLesson?.videoUrl
-      ? 'Đánh dấu đã đọc xong để mở bài tiếp theo.'
-      : !lessonProgress[selectedLessonId]?.completed && currentProgress < 0.7
-        ? 'Xem ít nhất 70% video để mở bài tiếp theo.'
-        : '';
+  const nextDisabledReason = accessRefreshFailed
+    ? 'Chưa cập nhật được quyền mở bài. Vui lòng thử lại.'
+    : !hasNext
+      ? 'Đây là bài cuối cùng trong chương.'
+      : !lessonProgress[selectedLessonId]?.completed && !selectedLesson?.videoUrl
+        ? 'Đánh dấu đã đọc xong để mở bài tiếp theo.'
+        : !lessonProgress[selectedLessonId]?.completed && currentProgress < 0.7
+          ? 'Xem ít nhất 70% video để mở bài tiếp theo.'
+          : 'Đang xác nhận tiến độ để mở bài tiếp theo.';
   const progressStatusText = progressSaveFailed
     ? 'Lưu tiến độ chưa thành công.'
     : !token
@@ -653,7 +757,7 @@ const Lesson = () => {
     return <HeartbeatLoader label="Đang tải nội dung bài học..." />;
   }
 
-  if (!selectedLesson) {
+  if (lessonError || !selectedLesson) {
     return (
       <div className="lesson-error-container">
         <div className="lesson-error-card">
@@ -666,10 +770,11 @@ const Lesson = () => {
               decoding="async"
             />
           </div>
-          <h2 className="lesson-error-title">Không tìm thấy bài học</h2>
+          <h2 className="lesson-error-title">
+            {lessonError?.status === 403 ? 'Bài học chưa được mở khóa' : 'Không tìm thấy bài học'}
+          </h2>
           <p className="lesson-error-desc">
-            Xin lỗi, chúng tôi không thể tìm thấy nội dung bài học này hoặc bài học chưa được cập
-            nhật.
+            {lessonError?.message || 'Nội dung bài học này chưa được cập nhật.'}
           </p>
           <div className="lesson-error-actions">
             <button className="btn-map-2" onClick={() => navigate('/roadmap')}>
@@ -743,7 +848,8 @@ const Lesson = () => {
             <div className="ls-section-list">
               {lessons.map((lesson) => {
                 const isActive = lesson.id === selectedLessonId;
-                const isCompleted = lessonProgress[lesson.id]?.completed;
+                const isLocked = !canOpenLesson(lessons, lesson.id, lessonProgress);
+                const isCompleted = lesson.completed || lessonProgress[lesson.id]?.completed;
                 const lessonDuration =
                   isActive && displayedDuration > 0
                     ? formatVideoTime(displayedDuration)
@@ -756,9 +862,18 @@ const Lesson = () => {
                       className={`ls-section-btn ${isActive ? 'active' : ''}`}
                       onClick={() => handleSelectLesson(lesson.id)}
                       aria-current={isActive ? 'page' : undefined}
+                      aria-disabled={isLocked}
+                      aria-describedby={isLocked ? `lesson-lock-${lesson.id}` : undefined}
+                      title={
+                        isLocked
+                          ? lesson.lockedReason || 'Hoàn thành điều kiện của bài trước.'
+                          : undefined
+                      }
                     >
                       <div className="ls-section-btn-icon">
-                        {isCompleted ? (
+                        {isLocked ? (
+                          <Lock size={16} aria-hidden="true" />
+                        ) : isCompleted ? (
                           <CheckCircle size={16} color="var(--color-success)" />
                         ) : isActive ? (
                           <Play size={16} fill="currentColor" />
@@ -776,6 +891,11 @@ const Lesson = () => {
                         </span>
                       </div>
                     </button>
+                    {isLocked && (
+                      <span className="sr-only" id={`lesson-lock-${lesson.id}`}>
+                        {lesson.lockedReason || 'Hoàn thành điều kiện của bài trước để mở bài này.'}
+                      </span>
+                    )}
                   </div>
                 );
               })}
@@ -987,6 +1107,11 @@ const Lesson = () => {
               Bài {currentIndex + 1}/{lessons.length}
             </strong>
             {isNextDisabled && <span id="lc-next-help">{nextDisabledReason}</span>}
+            {accessRefreshFailed && (
+              <button type="button" onClick={() => refreshLessonAccess()}>
+                Thử lại
+              </button>
+            )}
           </div>
           <button
             type="button"

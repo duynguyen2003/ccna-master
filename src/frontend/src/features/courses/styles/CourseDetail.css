@@ -563,3 +563,7 @@
   color: var(--hero-foreground);
   background: rgb(0 0 0 / 0.5);
 }
+.cdp-lesson-item[aria-disabled='true'] {
+  cursor: not-allowed;
+  color: var(--color-muted-foreground);
+}

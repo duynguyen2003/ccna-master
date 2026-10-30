@@ -45,19 +45,26 @@ const CourseDetail = () => {
   }, [courseId]);
 
   useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setCourse(null);
+    setError(null);
     const fetchCourse = async () => {
       try {
         const allCourses = await api.getCourses(token);
         const found = allCourses.find((c) => c.id === courseId);
         if (!found) throw new Error('Không tìm thấy khóa học này.');
-        setCourse(found);
+        if (!cancelled) setCourse(found);
       } catch (err) {
-        setError(err.message || 'Không thể tải dữ liệu khóa học.');
+        if (!cancelled) setError(err.message || 'Không thể tải dữ liệu khóa học.');
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
     fetchCourse();
+    return () => {
+      cancelled = true;
+    };
   }, [courseId, token]);
 
   if (loading) {
@@ -213,7 +220,11 @@ const CourseDetail = () => {
 
                 {course.modules?.map((module, idx) => {
                   const st = MODULE_STATUS[module.status] || MODULE_STATUS.locked;
-                  const isLocked = module.status === 'locked';
+                  const isLocked =
+                    course.canAccess === false ||
+                    course.learningStatus === 'locked' ||
+                    module.canAccess === false ||
+                    module.status === 'locked';
                   const isNavigable = isAuthenticated && !isLocked;
                   const isCompleted = module.status === 'completed';
 
@@ -291,30 +302,46 @@ const CourseDetail = () => {
                       {/* Lesson List (Accordion Content) */}
                       {isExpanded && module.lessons && module.lessons.length > 0 && (
                         <div className="cdp-lesson-list" id={`module-lessons-${module.id}`}>
-                          {module.lessons.map((lesson, lIdx) => (
-                            <Link
-                              key={lesson.id}
-                              className="cdp-lesson-item"
-                              to={`/lesson?course=${courseId}&lesson=${lesson.id}`}
-                            >
-                              <div className="cdp-lesson-item-left">
-                                <AppIcon name={'play_circle'} className="app-icon" />
-                                <span className="cdp-lesson-item-title">
-                                  {lesson.sectionNumber
-                                    ? `${lesson.sectionNumber}. `
-                                    : `${lIdx + 1}. `}
-                                  {lesson.title}
-                                </span>
-                              </div>
-                              <div className="cdp-lesson-item-right">
-                                {lesson.videoDuration && (
-                                  <span className="cdp-lesson-duration">
-                                    {lesson.videoDuration}
+                          {module.lessons.map((lesson, lIdx) => {
+                            const locked = lesson.canAccess === false;
+                            const LessonLink = locked ? 'span' : Link;
+                            return (
+                              <LessonLink
+                                key={lesson.id}
+                                className="cdp-lesson-item"
+                                {...(locked
+                                  ? {
+                                      role: 'link',
+                                      'aria-disabled': true,
+                                      tabIndex: 0,
+                                      title: lesson.lockedReason,
+                                      'aria-label': `${lesson.title}. ${lesson.lockedReason || 'Bài học chưa được mở khóa.'}`,
+                                    }
+                                  : { to: `/lesson?course=${courseId}&lesson=${lesson.id}` })}
+                              >
+                                <div className="cdp-lesson-item-left">
+                                  {locked ? (
+                                    <Lock size={16} aria-hidden="true" />
+                                  ) : (
+                                    <AppIcon name={'play_circle'} className="app-icon" />
+                                  )}
+                                  <span className="cdp-lesson-item-title">
+                                    {lesson.sectionNumber
+                                      ? `${lesson.sectionNumber}. `
+                                      : `${lIdx + 1}. `}
+                                    {lesson.title}
                                   </span>
-                                )}
-                              </div>
-                            </Link>
-                          ))}
+                                </div>
+                                <div className="cdp-lesson-item-right">
+                                  {lesson.videoDuration && (
+                                    <span className="cdp-lesson-duration">
+                                      {lesson.videoDuration}
+                                    </span>
+                                  )}
+                                </div>
+                              </LessonLink>
+                            );
+                          })}
                         </div>
                       )}
                     </div>

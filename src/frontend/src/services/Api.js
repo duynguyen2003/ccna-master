@@ -130,13 +130,15 @@ const mapLesson = (lesson) => ({
   sectionNumber: lesson.sectionNumber || null,
   videoDuration: lesson.videoDuration || null,
   orderIndex: lesson.orderIndex,
+  canAccess: lesson.canAccess,
+  lockedReason: lesson.lockedReason,
+  hasVideo: lesson.hasVideo,
 });
 
 const mapModule = (module, idx, isStarted) => ({
   ...module,
-  // Backend trả về status (completed, active, locked).
-  // Nếu chưa ghi danh thì khóa toàn bộ.
-  status: isStarted ? module.status || (idx === 0 ? 'active' : 'locked') : 'locked',
+  // Preserve the server gate, including an accessible module before enrollment.
+  status: module.status || (isStarted && idx === 0 ? 'active' : 'locked'),
   lessonCount: module._count?.lessons || module.lessons?.length || 0,
   lessons: (module.lessons || []).map(mapLesson),
 });
@@ -234,7 +236,7 @@ export const api = {
   // ── Courses ───────────────────────────────────────────────────────────────
 
   getCourses: async (token) => {
-    const json = await safeApiFetch('/learning/courses', token, { data: [] });
+    const json = await safeApiFetch('/learning/courses?view=learning', token, { data: [] });
     const courses = json.data?.courses || json.data || [];
     return courses.map(mapCourse);
   },
@@ -245,19 +247,19 @@ export const api = {
   },
 
   getModulesByCourse: async (token, courseId) => {
-    const json = await safeApiFetch(`/learning/courses/${courseId}/modules`, token, { data: [] });
+    const json = await apiFetch(`/learning/courses/${courseId}/modules?view=learning`, token);
     return json.data || [];
   },
 
   getLessonsByModule: async (token, moduleId) => {
-    const json = await safeApiFetch(`/learning/modules/${moduleId}/lessons`, token, { data: [] });
+    const json = await apiFetch(`/learning/modules/${moduleId}/lessons?view=learning`, token);
     return json.data || [];
   },
 
   // ── Labs ──────────────────────────────────────────────────────────────────
 
   getLabs: async (token) => {
-    const json = await apiFetch('/learning/labs?limit=100', token);
+    const json = await apiFetch('/learning/labs?limit=100&view=learning', token);
     const labs = json.data?.labs || json.data || [];
     return labs.map(mapLab);
   },

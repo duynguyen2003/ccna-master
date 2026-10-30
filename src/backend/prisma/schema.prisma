@@ -208,6 +208,7 @@ model Lab {
   gradingSpec      Json?      @map("grading_spec")
   courseId         String?    @map("course_id") @db.VarChar(10)
   moduleId         String?    @map("module_id") @db.VarChar(10)
+  accessPolicy     Json?      @map("access_policy")
   createdAt        DateTime   @default(now()) @map("created_at")
   deletedAt        DateTime?  @map("deleted_at")
 
