@@ -44,8 +44,6 @@
     "import:lab:eigrp01": "node src/scripts/import-eigrp01.cjs",
     "prisma:generate": "prisma generate",
     "format": "prettier --write \"src/frontend/src/**/*.{js,jsx,css,json}\" \"src/backend/src/**/*.js\" \"src/agent/**/*.{js,cjs,mjs,ts,md}\" \"src/agent/{package.json,contracts/package.json}\" \"src/shared/**/*.{js,json}\" \"src/scripts/**/*.{js,cjs}\"",
-    "ui:review:build": "node ../lab-ui-review/build.cjs",
-    "ui:review:serve": "node ../lab-ui-review/serve.cjs",
     "postinstall": "node src/scripts/prisma-postinstall.cjs",
     "check:boundaries": "node src/scripts/check-boundaries.cjs"
   },
