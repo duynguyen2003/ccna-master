@@ -142,7 +142,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-on-primary);
+  color: var(--hero-foreground);
   margin-bottom: 2rem;
   position: relative;
   overflow: hidden;
@@ -228,9 +228,14 @@
     color 0.2s ease;
 }
 
-.ls-section-btn:hover {
+.ls-section-btn:hover:not([aria-disabled='true']) {
   background: var(--color-background);
   color: var(--color-foreground);
+}
+
+.ls-section-btn[aria-disabled='true'] {
+  cursor: not-allowed;
+  color: var(--color-muted-foreground);
 }
 
 .ls-section-btn.active {
@@ -872,7 +877,7 @@
   right: 0;
   background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
   padding: 1rem;
-  color: var(--color-on-primary);
+  color: var(--hero-foreground);
 }
 
 .vp-title {
@@ -958,11 +963,11 @@
 }
 
 .lc-alert-box.warning .lc-alert-title {
-  color: #b45309;
+  color: var(--color-warning);
 }
 
 .lc-alert-box.warning .lc-alert-text {
-  color: #92400e;
+  color: var(--color-warning);
 }
 
 /* IMPORTANT - Purple */
@@ -990,7 +995,7 @@
 }
 
 .lc-alert-box.caution .lc-alert-text {
-  color: #991b1b;
+  color: var(--color-danger);
 }
 
 .lc-alert-title {
@@ -1363,7 +1368,7 @@
 .rs-discussion-btn {
   width: 100%;
   padding: 0.5rem;
-  background: #4f46e5;
+  background: var(--color-primary);
   color: var(--color-on-primary);
   border: none;
   border-radius: 0.25rem;
@@ -1489,7 +1494,7 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  background: #0056d2;
+  background: var(--color-primary);
   color: var(--color-on-primary);
   border: none;
   padding: 0.85rem 2.25rem;
@@ -1507,7 +1512,7 @@
 }
 
 .btn-map-2:hover {
-  background: #0046a8;
+  background: var(--color-primary-hover);
   transform: translateY(-2px);
 }
 
@@ -1518,7 +1523,7 @@
   justify-content: center;
   gap: 0.5rem;
   background: var(--color-surface);
-  color: #0056d2;
+  color: var(--color-primary);
   border: 1px solid var(--color-border);
   padding: 0.85rem 2.25rem;
   border-radius: 6px;

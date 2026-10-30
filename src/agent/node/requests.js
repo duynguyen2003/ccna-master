@@ -8,6 +8,14 @@ const { clock } = require('./lifecycle');
 const hash = (v) => createHash('sha256').update(v).digest('hex');
 function service(prisma, config) {
   const { environment, recoveryEpoch, ownerSecret } = config;
+  const requireProvider = (policy) => {
+    const provider = config.providers?.[policy.providerConfigId];
+    if (
+      config.enabled === false ||
+      (config.providers && (!provider || provider.dispatchEnabled === false))
+    )
+      throw fail('AI_DISABLED');
+  };
   const checked = (principal, attemptId, fn) => {
     if (
       !/^[A-Za-z][A-Za-z0-9_-]{0,79}$/.test(recoveryEpoch || '') ||
@@ -92,6 +100,7 @@ function service(prisma, config) {
           if (old.payloadHash !== payloadHash) throw fail('AI_IDEMPOTENCY_CONFLICT');
           return resource(tx, old, c);
         }
+        requireProvider(c.policy);
         if (body.recoveryEpoch !== recoveryEpoch) throw fail('AI_RECOVERY_RECONFIRM');
         let conversation = await tx.aiConversation.findUnique({
           where: { userId_attemptId: { userId: principal.id, attemptId } },
@@ -175,6 +184,7 @@ function service(prisma, config) {
     },
     info(principal, attemptId, quotaOnly = false) {
       return checked(principal, attemptId, async (tx, c) => {
+        requireProvider(c.policy);
         if (quotaOnly)
           return {
             contractVersion: VERSION,

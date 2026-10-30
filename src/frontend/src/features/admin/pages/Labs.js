@@ -1,10 +1,11 @@
 import { appPrompt, appConfirm, appAlert } from '../../../utils/appDialog';
 import React, { useState, useEffect, useContext, useRef, useCallback, useMemo } from 'react';
 import CliLabConfigEditor from '../components/labs/CliLabConfigEditor';
+import LabAccessPolicyEditor from '../components/labs/LabAccessPolicyEditor';
+import AiLabSettings from '../components/labs/AiLabSettings';
 import {
   ArrowLeft,
   Plus,
-  Trash2,
   FileCode2,
   Eye,
   Pencil,
@@ -33,6 +34,7 @@ const LAB_TABS = [
   { id: 'content', label: 'Nội dung & Các bước' },
   { id: 'simulation', label: 'CLI Simulation' },
   { id: 'media', label: 'Tài nguyên & Công cụ' },
+  { id: 'ai', label: 'Trợ lý AI' },
 ];
 
 const LAB_TYPE_OPTIONS = [
@@ -120,6 +122,7 @@ const createInitialFormData = () => ({
   objective: '',
   courseId: '',
   moduleId: '',
+  accessPolicy: { mode: 'LESSONS', lessonIds: [], requiredForCompletion: true },
   toolsText: '',
   filePka: null,
   thumbnailImg: null,
@@ -175,6 +178,7 @@ const mapLabToFormData = (lab) => {
     objective: String(lab?.objective || ''),
     courseId: String(lab?.courseId || ''),
     moduleId: String(lab?.moduleId || ''),
+    accessPolicy: lab?.accessPolicy || null,
     toolsText: normalizeToolsToText(lab?.tools),
     filePka: null,
     thumbnailImg: null,
@@ -312,6 +316,8 @@ const Labs = () => {
   const [error, setError] = useState('');
   const [cliConfigValidation, setCliConfigValidation] = useState({ valid: true, errors: [] });
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [moduleLoadError, setModuleLoadError] = useState('');
+  const [moduleRetry, setModuleRetry] = useState(0);
 
   const [selectedLabForView, setSelectedLabForView] = useState(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
@@ -356,25 +362,35 @@ const Labs = () => {
   }, [fetchCourses]);
 
   useEffect(() => {
+    let cancelled = false;
     const fetchModules = async () => {
       if (!formData.courseId) {
         setCourseModules([]);
+        setLoadingModules(false);
+        setModuleLoadError('');
         return;
       }
       try {
         setLoadingModules(true);
+        setModuleLoadError('');
         const res = await adminApi.getModules(token, formData.courseId);
-        setCourseModules(res.data || []);
+        if (!cancelled) setCourseModules(res.data || []);
       } catch (fetchError) {
         console.error('Failed to load modules', fetchError);
-        setCourseModules([]);
+        if (!cancelled) {
+          setCourseModules([]);
+          setModuleLoadError('Không tải được danh sách bài học.');
+        }
       } finally {
-        setLoadingModules(false);
+        if (!cancelled) setLoadingModules(false);
       }
     };
 
     fetchModules();
-  }, [formData.courseId, token]);
+    return () => {
+      cancelled = true;
+    };
+  }, [formData.courseId, token, moduleRetry]);
 
   const resetFormState = useCallback(() => {
     setFormData(createInitialFormData());
@@ -511,6 +527,14 @@ const Labs = () => {
     setError('');
 
     try {
+      if (
+        formData.status === 'PUBLISHED' &&
+        formData.accessPolicy?.mode === 'LESSONS' &&
+        !formData.accessPolicy.lessonIds.length
+      ) {
+        setActiveTab('basic');
+        throw new Error('Chọn ít nhất một bài tiên quyết trước khi xuất bản.');
+      }
       if (formData.labType === 'CLI_SIMULATION') {
         if (!formData.courseId) {
           setActiveTab('basic');
@@ -551,6 +575,7 @@ const Labs = () => {
 
       payload.append('courseId', formData.courseId);
       payload.append('moduleId', formData.moduleId);
+      payload.append('accessPolicy', JSON.stringify(formData.accessPolicy));
 
       if (formData.filePka) payload.append('filePka', formData.filePka);
       if (formData.thumbnailImg) payload.append('thumbnailImg', formData.thumbnailImg);
@@ -632,6 +657,11 @@ const Labs = () => {
           {error ? <div className="labm-form-error-banner">{error}</div> : null}
 
           <div className="labm-editor-scroll">
+            {activeTab === 'ai' && (
+              <div className="labm-tab-panel">
+                <AiLabSettings token={token} labId={editingLabId} />
+              </div>
+            )}
             {activeTab === 'basic' ? (
               <div className="labm-tab-panel">
                 <div className="acm-field">
@@ -704,7 +734,18 @@ const Labs = () => {
                     <CustomSelect
                       value={formData.courseId}
                       onChange={(value) =>
-                        setFormData((prev) => ({ ...prev, courseId: value, moduleId: '' }))
+                        setFormData((prev) => ({
+                          ...prev,
+                          courseId: value,
+                          moduleId: '',
+                          accessPolicy: prev.accessPolicy
+                            ? {
+                                ...prev.accessPolicy,
+                                lessonIds: [],
+                                ...(!value ? { requiredForCompletion: false } : {}),
+                              }
+                            : null,
+                        }))
                       }
                       options={[
                         { value: '', label: '-- Không chọn --' },
@@ -717,18 +758,26 @@ const Labs = () => {
                   </div>
 
                   <div className={`acm-field ${!formData.courseId ? 'labm-field-muted' : ''}`}>
-                  <span>
-                    Module{' '}
-                    {loadingModules ? (
-                      <small className="admin-inline-loading">
-                        <Loader2 size={12} className="acm-spin" aria-hidden="true" /> Đang tải...
-                      </small>
-                    ) : null}
-                  </span>
+                    <span>
+                      Module{' '}
+                      {loadingModules ? (
+                        <small className="admin-inline-loading">
+                          <Loader2 size={12} className="acm-spin" aria-hidden="true" /> Đang tải...
+                        </small>
+                      ) : null}
+                    </span>
                     <div className={!formData.courseId ? 'labm-select-disabled' : ''}>
                       <CustomSelect
                         value={formData.moduleId}
-                        onChange={(value) => setFormData((prev) => ({ ...prev, moduleId: value }))}
+                        onChange={(value) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            moduleId: value,
+                            accessPolicy: prev.accessPolicy
+                              ? { ...prev.accessPolicy, lessonIds: [] }
+                              : null,
+                          }))
+                        }
                         options={[
                           { value: '', label: '-- Không chọn --' },
                           ...courseModules.map((moduleItem) => ({
@@ -744,6 +793,16 @@ const Labs = () => {
                     ) : null}
                   </div>
                 </div>
+                <LabAccessPolicyEditor
+                  value={formData.accessPolicy}
+                  courseId={formData.courseId}
+                  moduleId={formData.moduleId}
+                  modules={courseModules}
+                  loading={loadingModules}
+                  error={moduleLoadError}
+                  onRetry={() => setModuleRetry((n) => n + 1)}
+                  onChange={(accessPolicy) => setFormData((prev) => ({ ...prev, accessPolicy }))}
+                />
               </div>
             ) : null}
 

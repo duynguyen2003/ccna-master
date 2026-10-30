@@ -226,6 +226,98 @@ test(
       );
 
       await t.test(
+        'lesson content, URL metadata and mutations share sequential gates for students and admin learner view',
+        async () => {
+          const videoUrl = 'https://www.youtube.com/watch?v=synthetic';
+          const secret = 'LOCKED_LESSON_BODY_CANARY';
+          await prisma.lesson.update({ where: { id: lessons[0].id }, data: { videoUrl } });
+          await prisma.lesson.update({
+            where: { id: lessons[1].id },
+            data: { contentHtml: secret },
+          });
+          const third = await prisma.lesson.create({
+            data: {
+              moduleId: 'lp-m1',
+              title: 'Third reading',
+              orderIndex: 3,
+              contentHtml: 'THIRD_BODY_CANARY',
+            },
+          });
+          const list = () => request('/learning/modules/lp-m1/lessons?view=learning', { user: 2 });
+          try {
+            const initial = await list();
+            assertStatus(initial, 200);
+            assert.deepEqual(
+              initial.body.data.map((l) => l.canAccess),
+              [true, false, false]
+            );
+            assert.equal(initial.body.data[0].videoUrl, videoUrl);
+            assert.doesNotMatch(
+              JSON.stringify(initial.body),
+              /LOCKED_LESSON_BODY_CANARY|THIRD_BODY_CANARY/
+            );
+            assert.equal(initial.body.data[1].contentHtml, null);
+            assertStatus(await request('/learning/modules/lp-m2/lessons', { user: 2 }), 403);
+            assertStatus(await request('/learning/courses/lp-c2/modules', { user: 2 }), 403);
+            assertStatus(await finishLesson(1, 2), 403);
+            assertStatus(
+              await request('/users/progress/video', {
+                user: 2,
+                method: 'POST',
+                body: videoInput(lessons[1].id),
+              }),
+              403
+            );
+            assertStatus(await finishLesson(0, 2, { status: 'ACTIVE', progressPercent: 69 }), 200);
+            assert.equal((await list()).body.data[1].canAccess, false);
+            assertStatus(await finishLesson(0, 2, { status: 'ACTIVE', progressPercent: 70 }), 200);
+            const opened = await list();
+            assert.deepEqual(
+              opened.body.data.map((l) => l.canAccess),
+              [true, true, false]
+            );
+            assert.equal(opened.body.data[1].contentHtml, secret);
+            assertStatus(await finishLesson(1, 2, { status: 'ACTIVE', progressPercent: 70 }), 200);
+            assert.equal((await list()).body.data[2].canAccess, false); // Readings need completion.
+            assertStatus(await finishLesson(1, 2), 200);
+            assert.equal((await list()).body.data[2].canAccess, true);
+            const catalog = await request('/learning/courses?view=learning', { user: 2 });
+            assertStatus(catalog, 200);
+            assert.doesNotMatch(JSON.stringify(catalog.body), /LOCKED_LESSON_BODY_CANARY|youtube/);
+            assert.equal(catalog.body.data.find((c) => c.id === 'lp-c2').canAccess, false);
+            await prisma.user.update({ where: { id: userIds[2] }, data: { role: 'ADMIN' } });
+            const editor = await request('/learning/modules/lp-m2/lessons', { user: 2 });
+            assertStatus(editor, 200);
+            assertStatus(
+              await request('/learning/modules/lp-m2/lessons?view=learning', { user: 2 }),
+              403
+            );
+            assertStatus(
+              await request('/learning/courses/lp-c2/modules?view=learning', { user: 2 }),
+              403
+            );
+            assert.ok(
+              !(await request('/learning/courses?view=learning', { user: 2 })).body.data.some(
+                (c) => c.id === 'lp-draft'
+              )
+            );
+          } finally {
+            await prisma.user.update({ where: { id: userIds[2] }, data: { role: 'STUDENT' } });
+            await prisma.userProgress.deleteMany({ where: { userId: userIds[2] } });
+            await prisma.lesson.delete({ where: { id: third.id } });
+            await prisma.lesson.update({
+              where: { id: lessons[0].id },
+              data: { videoUrl: lessons[0].videoUrl },
+            });
+            await prisma.lesson.update({
+              where: { id: lessons[1].id },
+              data: { contentHtml: lessons[1].contentHtml },
+            });
+          }
+        }
+      );
+
+      await t.test(
         'nonexistent/deleted content is rejected; module/course relation cannot be spoofed',
         async () => {
           assertStatus(await patchModule('missing'), 404);
@@ -293,7 +385,13 @@ test(
                 c.modules.some((m) => m.lessons.some((l) => l.id === lesson.id))
               );
               const module = course?.modules.find((m) => m.lessons.some((l) => l.id === lesson.id));
-              const expected = !module ? 404 : course.canAccess && module.canAccess ? 200 : 403;
+              const expected = !module
+                ? 404
+                : course.canAccess &&
+                    module.canAccess &&
+                    module.lessons.find((item) => item.id === lesson.id).canAccess
+                  ? 200
+                  : 403;
               assertStatus(
                 await request('/users/progress/video', {
                   method: 'POST',

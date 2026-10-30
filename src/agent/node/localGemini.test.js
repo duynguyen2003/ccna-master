@@ -61,8 +61,10 @@ test('live mode is explicit, legacy URL never dispatches, and production/test st
     { ...config, GEMINI_MODEL: 'other' },
     { ...config, GEMINI_API_KEY: '' },
   ]) {
-    const result = await explainFeedback(feedback, env, () => assert.fail('must not fetch'));
-    assert.equal(result.provider, 'deterministic');
+    await assert.rejects(
+      explainFeedback(feedback, env, () => assert.fail('must not fetch')),
+      { status: 503, code: 'LOCAL_LIVE_DISABLED' }
+    );
   }
 });
 
@@ -136,16 +138,18 @@ test('Gemini call counts full request, validates JSON, records usage including t
 test('oversized token preflight never generates and keeps a conservative commitment', async (t) => {
   const file = sandbox(t);
   let calls = 0;
-  const result = await explainFeedback(
-    feedback,
-    config,
-    async () => {
-      calls++;
-      return response({ totalTokens: 6001 });
-    },
-    { ledgerFile: file }
+  await assert.rejects(
+    explainFeedback(
+      feedback,
+      config,
+      async () => {
+        calls++;
+        return response({ totalTokens: 6001 });
+      },
+      { ledgerFile: file }
+    ),
+    { status: 503, code: 'INPUT_TOKEN_LIMIT' }
   );
-  assert.equal(result.reason, 'INPUT_TOKEN_LIMIT');
   assert.equal(calls, 1);
   assert.equal(budget.readBudget(file).calls[0].reservedMicroUsd, 3800);
 });
@@ -154,7 +158,7 @@ for (const scenario of ['429', 'network', 'timeout', 'invalid', 'truncated', 'no
   test(`provider ${scenario}: no generation retry or fabricated success/usage`, async (t) => {
     const file = sandbox(t);
     let calls = 0;
-    const result = await explainFeedback(
+    const pending = explainFeedback(
       feedback,
       config,
       async (url) => {
@@ -171,9 +175,17 @@ for (const scenario of ['429', 'network', 'timeout', 'invalid', 'truncated', 'no
       },
       { ledgerFile: file }
     );
+    if (scenario === 'no-usage') {
+      assert.equal((await pending).provider, 'gemini');
+    } else {
+      await assert.rejects(pending, (error) => {
+        assert.equal(error.status, scenario === '429' ? 429 : 503);
+        assert.ok(!error.message.includes(config.GEMINI_API_KEY));
+        assert.equal(error.explanation, undefined);
+        return true;
+      });
+    }
     assert.equal(calls, 2);
-    assert.ok(!JSON.stringify(result).includes(config.GEMINI_API_KEY));
-    assert.equal(result.provider, scenario === 'no-usage' ? 'gemini' : 'deterministic');
     assert.equal(budget.readBudget(file).calls[0].reservedMicroUsd, 3800);
     if (scenario === 'no-usage') assert.equal(budget.readBudget(file).calls[0].usage, null);
   });
@@ -181,22 +193,24 @@ for (const scenario of ['429', 'network', 'timeout', 'invalid', 'truncated', 'no
 
 test('overspending usage trips persistent circuit and stops subsequent requests', async (t) => {
   const file = sandbox(t);
-  const result = await explainFeedback(
-    feedback,
-    config,
-    async (url) => {
-      if (url.endsWith(':countTokens')) return response({ totalTokens: 200 });
-      const body = validBody();
-      body.usageMetadata = {
-        promptTokenCount: 200,
-        candidatesTokenCount: 801,
-        totalTokenCount: 1001,
-      };
-      return response(body);
-    },
-    { ledgerFile: file }
+  await assert.rejects(
+    explainFeedback(
+      feedback,
+      config,
+      async (url) => {
+        if (url.endsWith(':countTokens')) return response({ totalTokens: 200 });
+        const body = validBody();
+        body.usageMetadata = {
+          promptTokenCount: 200,
+          candidatesTokenCount: 801,
+          totalTokenCount: 1001,
+        };
+        return response(body);
+      },
+      { ledgerFile: file }
+    ),
+    { status: 503, code: 'USAGE_EXCEEDS_RESERVATION' }
   );
-  assert.equal(result.reason, 'USAGE_EXCEEDS_RESERVATION');
   assert.equal(budget.readBudget(file).circuitOpen, true);
   assert.throws(() => budget.reserve(file), { code: 'LOCAL_CIRCUIT_OPEN' });
 });

@@ -92,6 +92,155 @@ const deferred = () => {
   return { promise, resolve };
 };
 
+const gatedLessons = () => [
+  {
+    id: 11,
+    title: 'Video mở đầu',
+    hasVideo: true,
+    videoUrl: 'https://youtu.be/example',
+    contentHtml: '',
+    canAccess: true,
+  },
+  {
+    id: 12,
+    title: 'Bài đọc thứ hai',
+    hasVideo: false,
+    videoUrl: null,
+    contentHtml: null,
+    canAccess: false,
+    lockedReason: 'Xem ít nhất 70% video mở đầu.',
+  },
+  {
+    id: 13,
+    title: 'Bài thứ ba',
+    hasVideo: false,
+    videoUrl: null,
+    contentHtml: null,
+    canAccess: false,
+    lockedReason: 'Xem ít nhất 70% video mở đầu.',
+  },
+];
+
+test('sidebar and Next remain locked through 69.99%, pending save and pending permission refresh', async () => {
+  const lessons = gatedLessons();
+  const save = deferred();
+  const access = deferred();
+  api.getModulesByCourse.mockResolvedValue([
+    { id: 2, title: 'Chương 1', canAccess: true, lessons },
+  ]);
+  api.updateUserProgress
+    .mockResolvedValueOnce({ data: { progressPercent: 69, status: 'ACTIVE' } })
+    .mockReturnValueOnce(save.promise);
+  api.getLessonsByModule.mockReturnValue(access.promise);
+  render(<Lesson />);
+  await screen.findByTestId('video-player');
+  fireEvent.click(screen.getByRole('button', { name: 'Mở hoặc đóng nội dung chương' }));
+  const second = screen.getByRole('button', { name: /Bài đọc thứ hai/ });
+  const third = screen.getByRole('button', { name: /Bài thứ ba/ });
+  expect(second).toHaveAttribute('aria-disabled', 'true');
+  fireEvent.click(second);
+  expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Video mở đầu');
+  await act(async () =>
+    mockVideoProps.onProgressChange({ played: 0.6999, playedSeconds: 83, loadedSeconds: 120 })
+  );
+  expect(api.updateUserProgress).toHaveBeenLastCalledWith(
+    'token',
+    expect.objectContaining({ progressPercent: 69 })
+  );
+  await act(async () =>
+    mockVideoProps.onProgressChange({ played: 0.7, playedSeconds: 84, loadedSeconds: 120 })
+  );
+  expect(api.updateUserProgress).toHaveBeenCalledTimes(2); // Threshold bypasses the 10%/5s throttle.
+  expect(second).toHaveAttribute('aria-disabled', 'true');
+  await act(async () => save.resolve({ data: { progressPercent: 70, status: 'ACTIVE' } }));
+  expect(second).toHaveAttribute('aria-disabled', 'true');
+  const updated = lessons.map((l) =>
+    l.id === 12 ? { ...l, canAccess: true, contentHtml: 'Nội dung bài đọc', lockedReason: null } : l
+  );
+  await act(async () => access.resolve(updated));
+  expect(second).toHaveAttribute('aria-disabled', 'false');
+  expect(third).toHaveAttribute('aria-disabled', 'true');
+  fireEvent.click(third);
+  expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Video mở đầu');
+  fireEvent.click(second);
+  expect(
+    await screen.findByRole('heading', { level: 1, name: 'Bài đọc thứ hai' })
+  ).toBeInTheDocument();
+});
+
+test('locked lesson deep link never mounts the player or loads a private note', async () => {
+  mockSearchParams = new URLSearchParams('course=1&lesson=12');
+  api.getModulesByCourse.mockResolvedValue([
+    { id: 2, title: 'Chương 1', canAccess: true, lessons: gatedLessons() },
+  ]);
+  render(<Lesson />);
+  expect(
+    await screen.findByRole('heading', { name: 'Bài học chưa được mở khóa' })
+  ).toBeInTheDocument();
+  expect(screen.getByText('Xem ít nhất 70% video mở đầu.')).toBeInTheDocument();
+  expect(screen.queryByTestId('video-player')).not.toBeInTheDocument();
+  expect(api.getUserNote).not.toHaveBeenCalled();
+});
+
+test('changing the URL to a locked lesson closes the current lesson', async () => {
+  api.getModulesByCourse.mockResolvedValue([
+    { id: 2, title: 'Chương 1', canAccess: true, lessons: gatedLessons() },
+  ]);
+  const view = render(<Lesson />);
+  await screen.findByTestId('video-player');
+  mockSearchParams = new URLSearchParams('course=1&lesson=12');
+  view.rerender(<Lesson />);
+  expect(
+    await screen.findByRole('heading', { name: 'Bài học chưa được mở khóa' })
+  ).toBeInTheDocument();
+  expect(screen.queryByTestId('video-player')).not.toBeInTheDocument();
+});
+
+test('cross-module URL revalidates a stale locked module with the server', async () => {
+  api.getModulesByCourse.mockResolvedValue([
+    { id: 2, title: 'Chương 1', canAccess: true, lessons: gatedLessons() },
+    {
+      id: 3,
+      title: 'Chương 2',
+      canAccess: false,
+      lessons: [{ id: 21, title: 'Bài mới', canAccess: false }],
+    },
+  ]);
+  api.getLessonsByModule.mockResolvedValue([
+    { id: 21, title: 'Bài vừa mở', contentHtml: 'Nội dung mới', videoUrl: '', canAccess: true },
+  ]);
+  const view = render(<Lesson />);
+  await screen.findByTestId('video-player');
+  mockSearchParams = new URLSearchParams('course=1&lesson=21');
+  view.rerender(<Lesson />);
+  expect(await screen.findByRole('heading', { level: 1, name: 'Bài vừa mở' })).toBeInTheDocument();
+  expect(api.getLessonsByModule).toHaveBeenCalledWith('token', 3);
+});
+
+test('permission refresh failure stays locked and can be retried without another progress write', async () => {
+  const lessons = gatedLessons();
+  api.getModulesByCourse.mockResolvedValue([
+    { id: 2, title: 'Chương 1', canAccess: true, lessons },
+  ]);
+  api.updateUserProgress.mockResolvedValue({ data: { progressPercent: 70, status: 'ACTIVE' } });
+  api.getLessonsByModule
+    .mockRejectedValueOnce(new Error('offline'))
+    .mockResolvedValueOnce(
+      lessons.map((l) => (l.id === 12 ? { ...l, canAccess: true, contentHtml: 'Bài đọc' } : l))
+    );
+  render(<Lesson />);
+  await screen.findByTestId('video-player');
+  await act(async () =>
+    mockVideoProps.onProgressChange({ played: 0.7, playedSeconds: 84, loadedSeconds: 120 })
+  );
+  expect(screen.getByRole('button', { name: 'Tiếp theo', exact: true })).toBeDisabled();
+  fireEvent.click(await screen.findByRole('button', { name: 'Thử lại', exact: true }));
+  await waitFor(() =>
+    expect(screen.getByRole('button', { name: 'Tiếp theo', exact: true })).toBeEnabled()
+  );
+  expect(api.updateUserProgress).toHaveBeenCalledTimes(1);
+});
+
 test('text-only lesson waits for server confirmation before enabling the next lesson', async () => {
   let confirmCompletion;
   api.getCourses.mockResolvedValue([{ id: '1', code: 'CCNA' }]);

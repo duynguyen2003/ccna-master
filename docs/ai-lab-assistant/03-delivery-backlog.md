@@ -177,19 +177,25 @@ Tuần tham chiếu có thể dịch trong dải 17–25 tuần. Không đặt n
 
 ### UX-01 · Wireframe và copy trạng thái · 5–8 giờ
 
+- **Trạng thái28/10:** [x] Hoàn thành local. [Wireframe, copy và walkthrough](baseline/UX-01-assistant-design.md), [bằng chứng giao diện](baseline/FE-01-02-browser.md).
+
 - **Vai trò:** PM/SE. **Phụ thuộc:** DISC-02, ADR-01. **File:** design notes + UI mock trong môi trường local khi triển khai.
 - **Thực hiện:** desktop/mobile, empty/pending/stale/offline/quota/fallback, hint policy, thông báo dữ liệu, feedback.
 - **Nghiệm thu:** walkthrough năm tình huống: lần đầu, lỗi mạng, lab nhóm, đổi account, provider down; người đọc hiểu khi nào câu trả lời dựa trên cấu hình cũ. AC-04/07/13.
 
 ### FE-01 · Panel và components · 8–12 giờ
 
-- **Vai trò:** SE. **Phụ thuộc:** UX-01. **File:** `src/frontend/src/features/ai-lab/`, CSS theo lab tokens.
+- **Trạng thái28/10:** [x] Hoàn thành local/fake; [báo cáo](baseline/FE-01-02-browser.md).
+
+- **Vai trò:** SE. **Phụ thuộc:** UX-01. **File:** `src/agent/browser/`, CSS theo lab tokens; bridge trong frontend theo Agent.md.
 - **Thực hiện:** panel lazy-load, message/evidence, hint card, code copy, feedback; semantic HTML, focus handling.
 - **Nghiệm thu:** render bằng fake responses; Markdown không chạy HTML/script; bật panel không phá terminal sizing; loading riêng; không auto-scroll khi đọc lịch sử. AC-08/13.
 
 ### FE-02 · Hook, API và phục hồi request · 10–16 giờ
 
-- **Vai trò:** SE. **Phụ thuộc:** FE-01, BE-03, PY-02. **File:** `useAiLabAssistant.js`, `Api.js`, `CliLabWorkspace.js`, component tests.
+- **Trạng thái28/10:** [x] Hoàn thành tích hợp contract v1 local/fake; [báo cáo](baseline/FE-01-02-browser.md). Không có nghĩa đã mở pilot/provider thật.
+
+- **Vai trò:** SE. **Phụ thuộc:** FE-01, BE-03, PY-02. **File:** `src/agent/browser/`, bridge/`CliLabWorkspace.js`, router AI và `node/conversation.js`, tests.
 - **Thực hiện:** stable clientRequestId, 202/poll/backoff, by-client-id recovery, cache scope user/auth/attempt/epoch, cancel và history cursor.
 - **Nghiệm thu:** reload nhận lại kết quả; retry cùng ID; response user A tới muộn không hiện cho B; đóng panel dừng poll; terminal dùng độc lập. AC-04/05/06/08.
 

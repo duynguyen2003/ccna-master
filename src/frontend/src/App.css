@@ -102,12 +102,12 @@ select {
 
 .btn-secondary {
   background-color: var(--navy-800);
-  color: var(--color-on-primary);
+  color: var(--hero-foreground);
   border: 1px solid var(--slate-600);
 }
 
 .btn-secondary:hover {
-  background-color: var(--color-muted-foreground);
+  background-color: var(--navy-700);
 }
 
 /* Badges */
@@ -123,7 +123,7 @@ select {
 
 .badge-red {
   background: var(--color-danger-bg);
-  color: #991b1b;
+  color: var(--color-danger);
 }
 
 .badge-yellow {

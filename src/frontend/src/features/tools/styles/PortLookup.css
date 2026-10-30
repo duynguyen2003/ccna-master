@@ -122,20 +122,20 @@
 }
 
 :where(.port-lookup-wrapper) .score-pill.correct {
-  background-color: rgba(16, 185, 129, 0.2);
-  color: #34d399;
+  background-color: var(--color-success-bg);
+  color: var(--color-success);
   border-color: rgba(16, 185, 129, 0.4);
 }
 
 :where(.port-lookup-wrapper) .score-pill.wrong {
-  background-color: rgba(239, 68, 68, 0.2);
-  color: #f87171;
+  background-color: var(--color-danger-bg);
+  color: var(--color-danger);
   border-color: rgba(239, 68, 68, 0.4);
 }
 
 :where(.port-lookup-wrapper) .score-pill.skipped {
-  background-color: rgba(255, 255, 255, 0.1);
-  color: #d1d5db;
+  background-color: var(--color-muted);
+  color: var(--color-muted-foreground);
 }
 
 :where(.port-lookup-wrapper) .score-pill .app-icon {

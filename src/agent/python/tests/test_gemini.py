@@ -353,6 +353,41 @@ def test_gemini_readiness_without_key_or_opt_in_is_disabled(live_settings):
     assert SECRET not in repr(live_settings) and live_settings.api_key not in repr(live_settings)
 
 
+def test_trace_separates_provider_headers_body_and_node_callbacks(
+    live_payload, live_settings, node, caplog
+):
+    live_settings = dataclasses.replace(live_settings, trace_timings=True)
+
+    async def provider(request):
+        if request.url.path.endswith(":countTokens"):
+            return httpx.Response(200, json={"totalTokens": 500})
+        return httpx.Response(200, json=response_body())
+
+    with client(live_settings, node, provider) as app:
+        response = app.post(ANALYZE_PATH, json=live_payload, headers=headers_for(live_payload))
+        assert response.status_code == 200
+    phases = {
+        json.loads(record.message)["phase"]
+        for record in caplog.records
+        if record.name == "ai.timings"
+    }
+    assert {
+        "google.countTokens.headers",
+        "google.countTokens.body",
+        "google.countTokens.total",
+        "google.generateContent.headers",
+        "google.generateContent.body",
+        "google.generateContent.total",
+        "prepare",
+        "claim",
+        "generate",
+        "validate_receipt",
+        "receipt",
+    } <= phases
+    assert live_settings.api_key not in caplog.text
+    assert live_payload["request"]["message"] not in caplog.text
+
+
 def test_previous_prompt_version_is_rejected_before_preflight_or_claim(
     live_payload, live_settings, node
 ):

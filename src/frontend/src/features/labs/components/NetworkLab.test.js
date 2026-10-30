@@ -67,27 +67,29 @@ test('feedback explains with Gemini provenance and renders model text without HT
   });
   render(<CliLabWorkspace lab={{ id: 1 }} />);
   fireEvent.click(await screen.findByText('Giải thích kết quả'));
-  expect(await screen.findByText('Gemini · gemini-3.5-flash-lite')).toBeInTheDocument();
+  expect(await screen.findByText('Giải thích từ AI')).toBeInTheDocument();
   expect(screen.getByText(explanation)).toBeInTheDocument();
   expect(screen.queryByRole('img', { name: 'model-injected' })).not.toBeInTheDocument();
-  expect(api.cliExplain).toHaveBeenCalledWith('test', 'test-attempt');
+  expect(api.cliExplain).toHaveBeenCalledWith(
+    'test',
+    'test-attempt',
+    expect.objectContaining({ signal: expect.anything() })
+  );
 });
 
-test('feedback fallback remains visibly different from a Gemini response', async () => {
+test('feedback provider errors never produce a synthetic explanation', async () => {
   api.startCliLabAttempt.mockResolvedValue({
     ...example(),
     score: 0,
     feedback: { checks: [{ passed: false, message: 'Missing route' }] },
   });
-  api.cliExplain.mockResolvedValue({
-    explanation: 'Kiểm tra bảng định tuyến.',
-    provider: 'deterministic',
-    unavailable: true,
-    reason: 'LOCAL_BUDGET_EXHAUSTED',
-  });
+  api.cliExplain.mockRejectedValue(new Error('Trợ lý AI chưa khả dụng. Hãy thử lại sau.'));
   render(<CliLabWorkspace lab={{ id: 1 }} />);
   fireEvent.click(await screen.findByText('Giải thích kết quả'));
-  expect(await screen.findByText(/AI chưa khả dụng, đang dùng gợi ý có sẵn/)).toBeInTheDocument();
+  expect(
+    await screen.findByText('Không kết nối được AI. Kiểm tra mạng rồi thử lại.')
+  ).toBeInTheDocument();
+  expect(screen.queryByText(/đang dùng gợi ý có sẵn/)).not.toBeInTheDocument();
   expect(screen.queryByText('Gemini · gemini-3.5-flash-lite')).not.toBeInTheDocument();
 });
 test('admin topology editor adds/removes nodes and synchronizes JSON', () => {
@@ -103,6 +105,27 @@ test('admin topology editor adds/removes nodes and synchronizes JSON', () => {
   fireEvent.click(screen.getByRole('button', { name: 'Chọn ROUTER1' }));
   fireEvent.click(screen.getByText('Xóa thiết bị đã chọn'));
   expect(current.devices).toHaveLength(4);
+});
+
+test('waiting for AI explanation does not lock the terminal', async () => {
+  let resolve;
+  const pending = new Promise((done) => {
+    resolve = done;
+  });
+  api.startCliLabAttempt.mockResolvedValue({
+    ...example(),
+    feedback: { checks: [{ passed: false, message: 'Missing route' }] },
+  });
+  api.cliExplain.mockReturnValue(pending);
+  render(<CliLabWorkspace lab={{ id: 1 }} />);
+  fireEvent.click(await screen.findByRole('button', { name: 'Giải thích kết quả' }));
+  expect(screen.getByRole('button', { name: 'Đang giải thích…' })).toHaveAttribute(
+    'aria-busy',
+    'true'
+  );
+  expect(screen.getByRole('button', { name: /Terminal Router/ })).toBeEnabled();
+  resolve({ provider: 'gemini', explanation: 'Kiểm tra đường về.' });
+  await screen.findByText('Kiểm tra đường về.');
 });
 test('topology editor reports incomplete JSON instead of crashing', () => {
   render(

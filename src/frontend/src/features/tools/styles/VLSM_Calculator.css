@@ -129,7 +129,7 @@
   background: linear-gradient(135deg, #0e1b2e 0%, #162236 100%);
   border-radius: 8px;
   padding: 24px 26px;
-  color: var(--color-on-primary);
+  color: var(--hero-foreground);
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
@@ -197,7 +197,7 @@
   height: 32px;
   border-radius: 6px;
   background: rgba(96, 165, 250, 0.15);
-  color: var(--color-primary);
+  color: var(--color-primary-tint);
   font-size: 13px;
   font-weight: 800;
   display: flex;
@@ -210,7 +210,7 @@
   display: block;
   font-size: 13px;
   font-weight: 700;
-  color: var(--color-on-primary);
+  color: var(--hero-foreground);
   margin-bottom: 3px;
 }
 
@@ -598,7 +598,7 @@
   justify-content: space-between;
   padding: 20px 28px;
   background: linear-gradient(135deg, #0e1b2e 0%, #1a2942 100%);
-  color: var(--color-on-primary);
+  color: var(--hero-foreground);
 }
 
 :where(.vlsm-wrapper) .vlsm-results-header-left h2 {
@@ -611,7 +611,7 @@
   font-size: 10px;
   letter-spacing: 0.15em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--hero-muted);
   font-weight: 600;
 }
 

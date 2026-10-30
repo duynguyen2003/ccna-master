@@ -25,6 +25,8 @@ const dto = (a, userId, deviceId) => {
     prompt: engine.prompt(a.deviceState, deviceId),
     score: a.score,
     feedback: a.feedback,
+    feedbackRevision: a.feedbackRevision,
+    feedbackRecordedAt: a.feedbackRecordedAt,
     simulatorVersion: a.simulatorVersion,
     commands: a.commands || [],
     updatedAt: a.updatedAt,
@@ -161,6 +163,7 @@ module.exports.submitAttempt = handle(async (req, res) => {
   const data = await withAttempt(prisma, req.params.attemptId, req.user.id, async (tx, a) => {
     if (a.userId !== req.user.id) throw fail(403, 'Chỉ chủ phiên được nộp bài');
     if (a.status !== 'IN_PROGRESS') throw fail(409, 'Phiên đã kết thúc');
+    await learningPathService.assertLabAccess(tx, req.user.id, a.lab);
     const result = gradeAttempt(a.deviceState, definitionOf(a).gradingSpec);
     const updated = await tx.labAttempt.update({
       where: { id: a.id },
@@ -247,7 +250,15 @@ module.exports.updateMembers = handle(async (req, res) => {
 module.exports.explainAttempt = handle(async (req, res) => {
   const a = await ownedRead(req.params.attemptId, req.user.id);
   if (!a.feedback) throw fail(400, 'Nộp bài trước để có kết quả giải thích');
-  res.json({ data: await explainFeedback(a.feedback) });
+  try {
+    res.json({ data: await explainFeedback(a.feedback) });
+  } catch (error) {
+    if (![429, 503].includes(error.status)) throw error;
+    if (error.retryAfterSeconds) res.set('Retry-After', String(error.retryAfterSeconds));
+    res
+      .status(error.status)
+      .json({ code: error.status === 429 ? error.code : 'AI_UNAVAILABLE', message: error.message });
+  }
 });
 module.exports.achievements = handle(async (req, res) => {
   const best = await prisma.labAttempt.groupBy({

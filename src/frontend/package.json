@@ -11,6 +11,7 @@
     "test": "node scripts/react-scripts.cjs test"
   },
   "dependencies": {
+    "@ccna/agent-ui": "workspace:*",
     "@ccna/shared": "workspace:*",
     "@gsap/react": "^2.1.2",
     "@react-oauth/google": "^0.13.5",

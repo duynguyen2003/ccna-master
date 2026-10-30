@@ -15,6 +15,7 @@ const layer = (filename) => {
   if (relative.startsWith('src/frontend/src/')) return 'frontend';
   if (relative.startsWith('src/backend/src/')) return 'backend';
   if (relative.startsWith('src/agent/contracts/')) return 'agent-contracts';
+  if (relative.startsWith('src/agent/browser/')) return 'agent-browser';
   if (relative.startsWith('src/agent/')) return 'agent';
   if (relative.startsWith('src/shared/')) return 'shared';
   return 'tooling';
@@ -46,7 +47,7 @@ const checkImport = (filename, request) => {
     const builtin = request.startsWith('node:') || nativeModules.has(request);
     if (builtin) {
       assert.ok(
-        !['frontend', 'shared', 'agent-contracts'].includes(issuerLayer),
+        !['frontend', 'shared', 'agent-contracts', 'agent-browser'].includes(issuerLayer),
         `${issuerLayer} must not depend on Node built-ins: ${request}`
       );
       return;
@@ -61,12 +62,23 @@ const checkImport = (filename, request) => {
         'Frontend must not import backend or agent server code'
       );
     }
+    if (issuerLayer === 'agent-browser') {
+      if (!request.startsWith('.'))
+        assert.ok(
+          ['react', 'react/jsx-runtime', '@ccna/agent-contracts'].includes(request),
+          'Agent browser UI may only use its declared browser dependencies'
+        );
+      assert.ok(
+        !['frontend', 'backend', 'agent'].includes(targetLayer),
+        'Agent browser UI must not import application or server implementation'
+      );
+    }
     if (issuerLayer === 'backend' || issuerLayer === 'agent') {
       assert.ok(targetLayer !== 'frontend', 'Backend must not import frontend code');
     }
     if (issuerLayer === 'shared' || issuerLayer === 'agent-contracts') {
       assert.ok(
-        !['frontend', 'backend', 'agent'].includes(targetLayer),
+        !['frontend', 'backend', 'agent', 'agent-browser'].includes(targetLayer),
         'Shared code and agent contracts must remain browser safe'
       );
     }

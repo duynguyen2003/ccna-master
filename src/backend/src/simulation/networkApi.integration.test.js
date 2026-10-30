@@ -320,10 +320,10 @@ test(
         const saved = process.env.LAB_AI_MODE;
         delete process.env.LAB_AI_MODE;
         try {
-          assert.equal(
-            (await request(path() + '/explain', 0, 'POST')).body.data.provider,
-            'deterministic'
-          );
+          const explanation = await request(path() + '/explain', 0, 'POST');
+          assert.equal(explanation.status, 503, JSON.stringify(explanation.body));
+          assert.equal(explanation.body.code, 'AI_UNAVAILABLE');
+          assert.equal(explanation.body.data, undefined);
         } finally {
           if (saved) process.env.LAB_AI_MODE = saved;
         }

@@ -32,6 +32,75 @@ const completed = (courseId, lessonId, extra = {}) => ({
   ...extra,
 });
 
+test('lesson gates use saved 70% video progress, completed readings and the whole preceding chain', () => {
+  const video = { ...lesson(1), hasVideo: true };
+  const reading = lesson(2);
+  const catalog = [courseOf('c1', 1, [moduleOf('m1', [video, reading, lesson(3), lesson(4)])])];
+  const gates = (rows) => buildLearningPath(catalog, rows).courses[0].modules[0].lessons;
+  assert.deepEqual(
+    gates([]).map((l) => l.canAccess),
+    [true, false, false, false]
+  );
+  const watched = (percent) => ({
+    courseId: 'c1',
+    lessonId: 1,
+    labId: null,
+    status: 'ACTIVE',
+    progressPercent: percent,
+  });
+  assert.deepEqual(
+    gates([watched(69.99)]).map((l) => l.canAccess),
+    [true, false, false, false]
+  );
+  assert.deepEqual(
+    gates([watched(70)]).map((l) => l.canAccess),
+    [true, true, false, false]
+  );
+  assert.deepEqual(
+    gates([watched(70), { ...completed('c1', 2), status: 'ACTIVE', progressPercent: 70 }]).map(
+      (l) => l.canAccess
+    ),
+    [true, true, false, false]
+  );
+  assert.deepEqual(
+    gates([watched(70), completed('c1', 2)]).map((l) => l.canAccess),
+    [true, true, true, false]
+  );
+  // A legacy completed later lesson remains reviewable but cannot bridge a gap.
+  assert.deepEqual(
+    gates([completed('c1', 3)]).map((l) => l.canAccess),
+    [true, false, true, false]
+  );
+  assert.match(gates([])[1].lockedReason, /70%/);
+  assert.match(gates([watched(70)])[2].lockedReason, /đọc xong/);
+  const path = buildLearningPath(
+    [...catalog, courseOf('c2', 2, [moduleOf('m2', [lesson(5)])])],
+    [watched(70)]
+  );
+  assert.equal(path.courses[0].completed, false);
+  assert.equal(path.courses[1].canAccess, false);
+  assert.equal(path.courses[1].modules[0].lessons[0].canAccess, false);
+});
+
+test('lessons with duplicate orderIndex use numeric ID order, matching the content API', () => {
+  const catalog = [
+    courseOf('c1', 1, [
+      moduleOf('m1', [
+        { ...lesson(10), orderIndex: 1 },
+        { ...lesson(2), orderIndex: 1 },
+      ]),
+    ]),
+  ];
+  const lessons = buildLearningPath(catalog).courses[0].modules[0].lessons;
+  assert.deepEqual(
+    lessons.map((l) => [l.id, l.canAccess]),
+    [
+      [2, true],
+      [10, false],
+    ]
+  );
+});
+
 test('statuses choose one current, clamp progress, support completed review and missing prerequisites', () => {
   const states = computeCourseStatuses([
     { id: 'a', progressPercent: 140, prerequisiteId: null },

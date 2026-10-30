@@ -1,0 +1,56 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+**/node_modules/
+.env
+.env.local
+.env.development.local
+.env.test.local
+!.env.example
+!.env.production
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+**/coverage/
+
+# production
+/build
+/src/frontend/build/
+/backups/
+/.tmp/
+
+# local database schema export; source schema and migrations stay tracked
+/db_schema_dump.prisma
+
+# misc
+.vercel
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+/.pnpm-store/
+pnpm-debug.log*
+*.log
+
+# local development notes
+/todo.md
+/lessons.md
+/REA.md
+/skill.md
+/Agent.md
+/docs/rea/
+
+/src/backend/src/generated/prisma
+.playwright-mcp/
+
+# Python agent environments and caches
+**/.venv/
+**/__pycache__/
+**/.pytest_cache/
+**/.ruff_cache/
+*.pyc

@@ -286,6 +286,8 @@ Mục tiêu: có một luồng đầy đủ chạy được nội bộ. Học vi
 
 #### UX-01 · Phác giao diện và viết chữ cho các trạng thái
 
+- **Tiến độ28/10/2026:** [x] Hoàn thành thiết kế và mock local, walkthrough5tình huống; [thiết kế/copy](baseline/UX-01-assistant-design.md). Giao diện chạy và bằng chứng ở [FE-01/FE-02](baseline/FE-01-02-browser.md).
+
 **Nhãn:** Làm bản gọn · **Giờ:** 5–8 · **Cần xong trước:** DISC-02, ADR-01
 
 - **Làm gì:** Phác màn hình cho máy tính và điện thoại, kèm câu chữ cho từng trạng thái: trống, đang chờ, “bản cũ”, mất mạng, hết lượt, dùng câu dự phòng. Viết chính sách gợi ý, thông báo cho học viên biết dữ liệu nào được gửi đi, và ô đánh giá.
@@ -295,21 +297,25 @@ Mục tiêu: có một luồng đầy đủ chạy được nội bộ. Học vi
 
 #### FE-01 · Làm khung trợ lý trên giao diện
 
+- **Tiến độ28/10/2026:** [x] Hoàn thành local/fake: panel lazy, plain text an toàn, bằng chứng, copy lệnh, mức gợi ý/feedback, focus và mobile Dialog. [Báo cáo](baseline/FE-01-02-browser.md). Không tự chạy lệnh hoặc đổi điểm.
+
 **Nhãn:** Cốt lõi · **Giờ:** 8–12 · **Cần xong trước:** UX-01
 
 - **Làm gì:** Làm khung trợ lý (chỉ tải khi mở): thẻ tin nhắn kèm bằng chứng, thẻ chọn mức gợi ý, nút sao chép lệnh, nút đánh giá. Dùng HTML đúng nghĩa, dùng được bằng bàn phím.
 - **Để làm gì:** Có phần giao diện để học viên dùng.
 - **Xong khi:** Chạy được với câu trả lời giả. Nội dung Markdown không chạy được HTML hay script. Mở khung không làm vỡ kích thước terminal. Có trạng thái chờ riêng. Không tự cuộn khi đang đọc lịch sử.
-- **File chính:** `src/frontend/src/features/ai-lab/`, CSS theo bộ màu của lab.
+- **File chính:** `src/agent/browser/`, CSS theo bộ màu của lab; frontend chỉ ghép vào workspace theo Agent.md.
 
 #### FE-02 · Nối giao diện với máy chủ
+
+- **Tiến độ28/10/2026:** [x] Hoàn thành tích hợp contract v1 local/fake: POST/poll/by-client-id, ID trước gửi, cancel/history/quota/feedback, abort theo scope và state riêng; bổ sung route history/feedback còn thiếu. [Báo cáo và phạm vi kiểm](baseline/FE-01-02-browser.md). Chưa mở model/cohort hoặc pilot.
 
 **Nhãn:** Làm bản gọn · **Giờ:** 10–16 · **Cần xong trước:** FE-01, BE-03, PY-02
 
 - **Làm gì:** Mỗi câu hỏi có một mã ổn định. Luồng: gửi, nhận “đã nhận”, hỏi lại định kỳ để lấy kết quả. Tải lại trang vẫn tìm lại được câu hỏi theo mã. Lưu tạm kết quả riêng cho từng người, từng lần làm bài. Có nút hủy và xem lịch sử theo trang.
 - **Để làm gì:** Chạy ổn khi mạng chậm, tải lại trang hay đổi tài khoản.
 - **Xong khi:** Tải lại trang vẫn nhận lại kết quả. Gửi lại cùng mã không tạo thêm yêu cầu. Câu trả lời của người A đến muộn không hiện cho người B. Đóng khung thì ngừng hỏi lại. Terminal vẫn dùng bình thường.
-- **File chính:** `useAiLabAssistant.js`, `Api.js`, `CliLabWorkspace.js`, test component.
+- **File chính:** `src/agent/browser/hooks/useAiLabAssistant.js`, controller/API riêng, `CliLabWorkspace.js` và bridge, `src/agent/node/conversation.js`, tests.
 
 #### BE-06 · Khóa đường gọi AI cũ, làm câu dự phòng chung
 
@@ -669,3 +675,12 @@ Phần này là **ý kiến của mình**, dựa trên việc đọc repo ở c�
 8. Chỉ khi thấy thật sự cần: BE-04, OPS-04, QA-04, OPS-05, OPS-06, rồi giai đoạn 4.
 
 Mình chưa ước giờ cho bản gọn. Nếu bạn muốn, mình ước giúp sau khi bạn chọn 1–2 lab đầu tiên.
+# Bổ sung UI ngày29/10/2026
+
+Checklist ở [ui-ai-lab-assistant.md](ui-ai-lab-assistant.md) đã được bổ sung phần A
+(loading/cache/lỗi/a11y riêng của giải thích), composer và thiếu dữ liệu, resize
+bằng kéo/bàn phím/nút, đặt lại hội thoại có epoch/purge/accounting, cùng tab quản
+trị AI theo lab và số liệu DB. Test doubles chỉ phục vụ kiểm offline; không bật
+lại runtime giả, không tự mở cohort hoặc thay ngân sách. Đường LAB_REVIEW đầy đủ
+và các phần retention khác ngoài thao tác đặt lại UI vẫn cần xét theo task backend
+tương ứng; không đánh dấu toàn bộ BE-06/BE-08 chỉ từ thay đổi UI này.

@@ -60,14 +60,14 @@ const TestingCenter = () => {
         const colors = [
           'var(--color-primary)',
           'var(--color-success)',
-          '#8b5cf6',
+          'var(--color-accent)',
           'var(--color-warning)',
           'var(--color-danger)',
         ];
         const bgs = [
           'var(--color-muted)',
           'var(--color-success-bg)',
-          '#f5f3ff',
+          'var(--color-accent-bg)',
           'var(--color-warning-bg)',
           'var(--color-danger-bg)',
         ];

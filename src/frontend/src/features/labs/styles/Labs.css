@@ -484,7 +484,7 @@
 .lab-modal-title-bar {
   flex: 1;
   text-align: center;
-  color: #6e7681;
+  color: var(--hero-muted);
   font-size: 0.78rem;
   font-family: var(--system-ui);
   display: flex;
@@ -495,7 +495,7 @@
 .lab-modal-close {
   background: none;
   border: none;
-  color: #6e7681;
+  color: var(--hero-muted);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -507,7 +507,7 @@
 }
 
 .lab-modal-close:hover {
-  color: var(--color-on-primary);
+  color: var(--hero-foreground);
   background: rgba(255, 255, 255, 0.08);
 }
 
@@ -721,7 +721,7 @@
 .lab-copy-btn {
   background: none;
   border: none;
-  color: #484f58;
+  color: var(--hero-muted);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -788,7 +788,7 @@
 
 .lab-nav-btn:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.1);
-  color: var(--color-on-primary);
+  color: var(--hero-foreground);
 }
 
 .lab-nav-btn:disabled {
@@ -809,7 +809,7 @@
 
 .lab-nav-btn.success {
   background: #238636;
-  color: var(--color-on-primary);
+  color: var(--hero-foreground);
   border-color: #238636;
 }
 
@@ -915,7 +915,7 @@
   right: 0;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  color: var(--color-on-primary);
+  color: var(--hero-foreground);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -1040,7 +1040,7 @@
 }
 
 .cli-workspace-header-actions button:hover:not(:disabled) {
-  color: var(--color-on-primary);
+  color: var(--hero-foreground);
   border-color: var(--color-border);
 }
 
@@ -1080,7 +1080,7 @@
   justify-content: space-between;
   gap: 14px;
   padding: 8px 14px;
-  color: #708196;
+  color: var(--hero-muted);
   background: #0d1722;
   font-size: 0.68rem;
 }
@@ -1664,4 +1664,32 @@
   height: 12px;
   border-radius: 50%;
   background: #ff5f56;
+}
+.labs-page .lab-access-lock {
+  margin-top: 12px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--color-muted-foreground);
+}
+.labs-page .lab-access-lock p {
+  margin: 0 0 6px;
+}
+.labs-page .lab-access-lock a {
+  display: block;
+  color: var(--color-primary);
+  overflow-wrap: anywhere;
+}
+.labs-page .lab-access-lock small {
+  display: block;
+  margin-top: 4px;
+}
+.labs-page .lab-card-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+.labs-page .lab-access-mode {
+  display: block;
+  margin: 6px 0;
+  color: var(--color-primary);
+  font-size: 12px;
 }

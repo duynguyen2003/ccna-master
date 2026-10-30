@@ -25,6 +25,8 @@
   --color-success-bg: #ecfdf5;
   --color-warning: #854d0e;
   --color-warning-bg: #fefce8;
+  --color-accent: #6d28d9;
+  --color-accent-bg: #f5f3ff;
   --hero-foreground: #f8fafc;
   --hero-muted: #cbd5e1;
   --hero-background: #0e1b2e;
@@ -55,6 +57,8 @@
   --color-success-bg: #12352b;
   --color-warning: #fcd34d;
   --color-warning-bg: #352b13;
+  --color-accent: #d8b4fe;
+  --color-accent-bg: #35214f;
 }
 
 /* Existing names remain aliases while components use the shared roles. */
