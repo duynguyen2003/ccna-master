@@ -14,8 +14,8 @@ const COURSE_GRADIENTS = {
     gradient: 'linear-gradient(135deg, #2d4e7a, #7395be)',
     color: 'var(--color-primary-hover)',
   },
-  SRWE: { gradient: 'linear-gradient(135deg, #6d28d9, #7c3aed)', color: '#6d28d9' },
-  ENSA: { gradient: 'linear-gradient(135deg, #7c3aed, #a855f7)', color: '#7c3aed' },
+  SRWE: { gradient: 'linear-gradient(135deg, #6d28d9, #7c3aed)', color: 'var(--color-accent)' },
+  ENSA: { gradient: 'linear-gradient(135deg, #7c3aed, #a855f7)', color: 'var(--color-accent)' },
 };
 const DEFAULT_GRADIENT = {
   gradient: 'linear-gradient(135deg, #386298, #7395be)',

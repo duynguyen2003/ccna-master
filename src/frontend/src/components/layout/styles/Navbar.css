@@ -138,7 +138,7 @@
   display: none;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  color: var(--color-on-primary);
+  color: var(--color-foreground);
   cursor: pointer;
   padding: 8px;
   border-radius: 6px;

@@ -333,7 +333,7 @@
 }
 
 .auth-motion-form .form-input::placeholder {
-  color: #a1aab8;
+  color: var(--color-muted-foreground);
   opacity: 1;
 }
 

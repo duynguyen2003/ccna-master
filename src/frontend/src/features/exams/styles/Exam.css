@@ -326,7 +326,7 @@
 :where(:is(.tc-page, .take-exam-page, .exam-result-page, .review-exam-page, .exam-dialog))
   .result-header {
   background: var(--color-muted);
-  color: var(--color-on-primary);
+  color: var(--color-foreground);
   padding: 2rem;
   text-align: center;
 }

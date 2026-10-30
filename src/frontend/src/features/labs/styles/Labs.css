@@ -484,7 +484,7 @@
 .lab-modal-title-bar {
   flex: 1;
   text-align: center;
-  color: #6e7681;
+  color: var(--hero-muted);
   font-size: 0.78rem;
   font-family: var(--system-ui);
   display: flex;
@@ -495,7 +495,7 @@
 .lab-modal-close {
   background: none;
   border: none;
-  color: #6e7681;
+  color: var(--hero-muted);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -507,7 +507,7 @@
 }
 
 .lab-modal-close:hover {
-  color: var(--color-on-primary);
+  color: var(--hero-foreground);
   background: rgba(255, 255, 255, 0.08);
 }
 
@@ -721,7 +721,7 @@
 .lab-copy-btn {
   background: none;
   border: none;
-  color: #484f58;
+  color: var(--hero-muted);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -788,7 +788,7 @@
 
 .lab-nav-btn:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.1);
-  color: var(--color-on-primary);
+  color: var(--hero-foreground);
 }
 
 .lab-nav-btn:disabled {
@@ -809,7 +809,7 @@
 
 .lab-nav-btn.success {
   background: #238636;
-  color: var(--color-on-primary);
+  color: var(--hero-foreground);
   border-color: #238636;
 }
 
@@ -915,7 +915,7 @@
   right: 0;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  color: var(--color-on-primary);
+  color: var(--hero-foreground);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -1040,7 +1040,7 @@
 }
 
 .cli-workspace-header-actions button:hover:not(:disabled) {
-  color: var(--color-on-primary);
+  color: var(--hero-foreground);
   border-color: var(--color-border);
 }
 
@@ -1080,7 +1080,7 @@
   justify-content: space-between;
   gap: 14px;
   padding: 8px 14px;
-  color: #708196;
+  color: var(--hero-muted);
   background: #0d1722;
   font-size: 0.68rem;
 }
