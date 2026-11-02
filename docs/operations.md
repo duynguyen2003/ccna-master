@@ -36,6 +36,8 @@ Ba migration: `20260901000000_baseline`, `20260922190000_add_video_progress_sess
 
 Cần `pg_dump`, `pg_restore` cùng major hoặc mới hơn server và `tar` trong PATH. Có thể đặt `PG_DUMP_BIN`, `PG_RESTORE_BIN` thành đường dẫn executable. Credentials truyền qua môi trường; không đưa password vào command line. Không commit archive/secrets.
 
+Trên Windows, script mở dump/archive bằng Node và truyền qua stdin/stdout, đặt thư mục uploads bằng `cwd`. Cách này giữ đường dẫn tiếng Việt khi công cụ native không đọc được Unicode trong tham số; file lớn được truyền trực tiếp qua file descriptor. Test vận hành kiểm cả đường dẫn backup, uploads nguồn và uploads khôi phục có tiếng Việt.
+
 1. Bật bảo trì, chặn upload/tác vụ ghi và chờ request hoàn tất. `pg_dump` nhất quán trong DB; DB và filesystem cần cửa sổ ngừng ghi chung. Với Docker, đưa đúng dữ liệu từ volume uploads vào staging dưới quyền vận hành; DB phải truy cập được từ máy chạy script. Không dùng uploads rỗng trong checkout thay cho volume thật.
 2. Đặt `DATABASE_URL`, `UPLOADS_DIR` nguồn và `BACKUP_DIR` được bảo vệ, chạy `pnpm backup`. Archive gồm `database.dump`, `uploads.tar.gz`, manifest SHA-256. Chỉ coi thành công khi exit 0 và manifest đầy đủ.
 3. Lưu bản sao khác máy, mã hóa/giới hạn quyền. Đặt lịch mỗi ngày và trước migration, giữ 7 bản ngày/4 bản tuần tùy nhu cầu; giám sát tuổi backup/lỗi tác vụ. Media Cloudinary cần backup/export riêng; script chỉ sao lưu PostgreSQL và uploads trên disk.
@@ -46,11 +48,22 @@ CI chạy `OPERATIONS_INTEGRATION=1 pnpm run test:core` với DATABASE_URL kết
 
 ## Health, proxy và sự cố
 
+AI dev cần backend, Python và worker riêng. Dùng `pnpm dev:ai`, frontend chạy bằng
+`pnpm start`; backend đã chạy thì dùng `pnpm dev:ai --existing-backend`. Launcher chờ
+readiness, từ chối cổng có sẵn và dừng cây tiến trình do nó tạo khi Ctrl+C/lỗi dịch vụ;
+không dừng backend khi dùng `--existing-backend`. Không tự bật policy hay đổi budget.
+Nếu chỉ chạy `pnpm server`, API vẫn nhận câu hỏi nhưng không có worker xử lý;
+`QUEUED` có thể chờ đến khi worker chạy lại. Worker kết thúc câu quá hạn và giải phóng
+reservation; không tự gửi lại câu cũ. Kiểm Python tại `/health/ready` cổng8001;
+HTTP200 xác nhận cấu hình, cần một câu mới để kiểm provider thật.
+
 - Liveness `/api/debug-ping`; readiness `/api/health/ready` chạy SELECT 1, trả 200/503 theo DB; Docker dùng readiness. Cấu hình monitor ngoài cho readiness, 5xx, latency và tuổi backup, chuyển cảnh báo đến kênh vận hành được chọn. Repo chưa kết nối nhà cung cấp cảnh báo.
 - `TRUST_PROXY=0` khi truy cập trực tiếp, `1` khi Nginx là đường vào duy nhất. Nếu thêm CDN/load balancer, dùng số hop hoặc subnet tin cậy đúng topology, không dùng `true`. Backend Compose chỉ publish loopback; xác minh firewall/cổng thực tế. Xem [express-rate-limit proxy guide](https://express-rate-limit.mintlify.app/guides/troubleshooting-proxy-issues).
 - Backend giới hạn thi/CLI/tiến độ theo userId, login/reset theo IP. Nginx scale giữ giới hạn Lab 4 request/giây, burst 24 theo IP; lớp dùng chung NAT vẫn có thể gặp 429 ở tầng này. Cần đo tải/đánh giá chống DoS trước khi thay chính sách edge. Đề xuất xóa giới hạn này đã bị kiểm duyệt tự động từ chối do rủi ro DoS, nên chưa áp dụng.
 - Bộ đếm backend đang ở RAM từng process; trước khi cần giới hạn toàn cụm, bổ sung store chung như Redis và test nhiều replica. Repo chưa có Redis store.
 - DB lỗi: kiểm readiness/log/kết nối/tài nguyên, dừng rollout nếu migration lỗi, đọc `prisma migrate status`; chỉ resolve khi hiểu trạng thái thực tế, không reset DB.
+- `labs.schema_version does not exist`: backend mới đang dùng DB chưa nâng cấp. Theo quy trình backup/restore trên bản sao, áp dụng `20261101000000_versioned_learning_labs` bằng `pnpm db:deploy`, regenerate Prisma rồi restart backend. Kiểm diff schema, dữ liệu cũ và `GET /api/learning/labs`; không dùng `db push` hoặc nhập lại lab để chữa thiếu cột.
+- Cảnh báo pg về `client.query()` chạy chồng trên một client có thể xuất phát từ Prisma đọc nhiều relation trong transaction. Pool Prisma dùng `PrismaPgClient` để xếp query theo từng kết nối, vẫn cho các kết nối khác chạy đồng thời và cho phép rollback sau lỗi. Không tắt cảnh báo; tái hiện bằng `node --trace-deprecation src/backend/src/Server.js`. Test `LAB_INTEGRATION=1 pnpm test:cli` kiểm hàng đợi, rollback và tái sử dụng kết nối trên DB `_test` riêng.
 - Lạm dụng tài khoản: khóa qua API admin, kiểm token cũ nhận 401, giữ audit log; đổi JWT secret nếu cần thu hồi toàn hệ thống. Không log token/password/connection URL.
 - Lỗi chấm thi: giữ snapshot/kết quả để điều tra, đóng đề với lượt mới, tái hiện trên DB test; không tự chỉnh lịch sử điểm hàng loạt.
 
@@ -61,3 +74,23 @@ Test dùng dữ liệu tổng hợp, chưa xác minh nội dung production. Ch�
 Chọn nhóm nhỏ và kênh báo lỗi/góp ý kèm mã bài/phiên bản. Đo bắt đầu học trên số đăng ký, hoàn thành bài đầu trên số bắt đầu, quay lại ngày 7 trên cohort đủ tuổi, chênh lệch điểm đầu/cuối trên đề tương đương. Dữ liệu tiến độ/điểm hỗ trợ phân tích nhưng chưa có event analytics/dashboard cohort/form góp ý riêng.
 
 Nếu thu phí, bổ sung ownership/enrollment ở backend, webhook thanh toán idempotent, quyền xem/tải media và hỗ trợ/hoàn tiền. API nội dung công khai và uploads tĩnh hiện chưa kiểm soát nội dung trả phí. Các chức năng thương mại chưa triển khai/xác minh.
+
+## EIGRP01 schema 2 / engine 3
+
+Xem [hợp đồng và rollout EIGRP01](eigrp01-grading.md). Áp dụng migration `20261101000000_versioned_learning_labs` trên bản sao trước; migration chỉ cộng thêm metadata, mốc thành tích, journal events và enum MASTERED. Regenerate Prisma trước khi chạy backend mới.
+
+Dùng `pnpm import:lab:eigrp01 --verify-only` để kiểm nội dung không ghi DB. Import thật tạo revision `(eigrp01, 3)`, không ghi đè lab cũ theo tiêu đề; khóa SRW phải tồn tại. Bản REPOSITORY sửa trong repo và tăng labVersion; admin tạo bản nháp riêng. Không chấm lại kết quả lịch sử.
+
+Hai cờ backend `LAB_LEARNING_OBSERVATIONS_ENABLED` và `LAB_MASTERY_ENABLED` mặc định 0; bật cả hai thành 1 trên staging để kiểm chính sách 80/100 trước rollout. Giá trị được chụp theo attempt. Tắt cờ chỉ đổi attempt mới; giữ engine 3 và hỗ trợ MASTERED cho attempt đã tạo. Không xóa migration/cột/enum để rollback, không đổi snapshot hoặc điểm cũ hàng loạt.
+
+Integration CLI dùng DB thử nghiệm riêng và chạy `pnpm test:cli` tuần tự; các course của test có thể ảnh hưởng điều kiện mở khóa nếu chạy nhiều file HTTP song song trên cùng DB.
+
+## AI: theo dõi trạng thái qua SSE
+
+Đợt SSE-01 dùng `AI_STATUS_STREAM_ENABLED` (mặc định `false`). Trước khi chạy code
+mới, áp dụng migration additive `20261102000000_ai_request_progress` bằng quy trình
+`pnpm db:deploy` và `pnpm prisma:generate`; khởi động lại backend sau đổi flag.
+Chạy `pnpm ai:sweeper` độc lập cạnh worker, hoặc `pnpm dev:ai` cho môi trường dev.
+Tắt flag để quay về polling; giữ các cột additive và dữ liệu lịch sử. Không gọi lại
+model hay chấm lại kết quả khi rollback. Chi tiết contract, quota, proxy, đo lường
+và kiểm thử: [SSE-01](ai-lab-assistant/SSE-01-status-stream.md).

@@ -25,14 +25,21 @@ toàn môi trường. Ledger dùng chung với các lượt live trước: tối
 toàn đợt, $0,05/ngày, $0,10/tháng và toàn đợt. Không reset ledger khi đổi mode;
 request lỗi/không rõ usage vẫn giữ mức dự phòng, không tự gửi lại generation.
 
-Sau khi dừng app, chạy lại ở các terminal riêng tại gốc repo:
+Sau khi dừng app, chạy lại ở hai terminal riêng tại gốc repo:
 
 ```sh
-pnpm server
-pnpm ai:python
-pnpm ai:worker
+pnpm dev:ai
 pnpm start
 ```
+
+`dev:ai` quản lý backend → Python → worker, chờ readiness trước mỗi giai đoạn.
+Nếu backend đang chạy, dùng `pnpm dev:ai --existing-backend`; không chạy thêm worker/Python
+thủ công cùng lúc. Ctrl+C chỉ dừng những tiến trình do launcher tạo. Các lệnh riêng
+`pnpm server`, `pnpm ai:python`, `pnpm ai:worker` vẫn dùng được để gỡ lỗi.
+Chỉ chạy `node src/backend/src/Server.js` chưa đủ để AI trả lời: HTTP nhận câu hỏi,
+worker lấy từ hàng đợi và Python mới gọi Gemini. Nếu status `QUEUED` kéo dài, kiểm tra
+worker và `http://127.0.0.1:8001/health/ready`. Readiness Python xác nhận cấu hình,
+không tự gọi model hay chứng minh provider đang đáp ứng.
 
 ## Cấu hình có thể chạy lại
 

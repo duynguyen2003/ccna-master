@@ -48,7 +48,7 @@ Tài liệu này hướng dẫn sửa UI trên hệ React/CSS hiện có. Danh s
 - Trang bài học ưu tiên video rộng và danh sách bài bên phải; điều hướng ở thanh dưới, ghi chú mở khi cần. Dùng Dialog chung cho ngăn kéo ghi chú và nội dung chương trên mobile. Giữ vùng bấm và cặp màu rõ chữ ngay cả khi nút bị khóa; không bỏ điều kiện 70%/xác nhận hoàn thành để sửa hình thức. Xem [phân tích F8 và thay đổi màn học](f8-lesson-ui.md).
 - Quyền mở bài dùng canAccess/lockedReason từ server cho sidebar, URL và link danh sách khóa học. Video đạt70% tiến độ đã lưu mới mở bài kế; bài đọc cần hoàn thành. Chờ ACK và tải quyền mới trước khi mở; không mở theo playhead cục bộ. ADMIN trong màn học dùng view=learning, ngoại lệ test AI chỉ dành cho lab. Xem [điều kiện và kết quả kiểm chứng](lesson-access-rules.md).
 - Lab có ba chế độ Tự luyện/Theo bài tiên quyết/Tổng hợp, tách điều kiện mở khỏi khóa/chương dùng để phân loại. Thẻ bị khóa hiện bài cần học và link tới đúng bài; URL không được bỏ qua quyền. Lab tùy chọn không làm giảm tiến độ khóa học. Quản trị cấu hình trong tab Thông tin cơ bản bằng dropdown và checkbox bài có tìm kiếm. Xem [policy và lab ITN nền tảng](lab-access-policies.md).
-- Bộ màu chung nằm ở [theme.css](../../src/frontend/src/styles/theme.css), gồm các vai trò ngữ nghĩa và hai theme. Dùng primary/on-primary, foreground/surface và các cặp màu phản hồi cùng nhau. ThemeProvider theo hệ thống hoặc lựa chọn đã lưu; lab giữ token scoped, admin giữ theme hiện có.
+- Bộ màu chung nằm ở [theme.css](../../src/frontend/src/styles/theme.css), gồm các vai trò ngữ nghĩa và hai theme. Dùng primary/on-primary, foreground/surface và các cặp màu phản hồi cùng nhau. Khách mới mặc định light ngay từ HTML và ThemeProvider, kể cả khi hệ điều hành dùng dark; ưu tiên lựa chọn light/dark đã lưu. Lab giữ token scoped, admin giữ theme hiện có.
 - Chữ trên nền đổi theme dùng foreground/muted-foreground hoặc cặp trạng thái;
   chữ trên nền tối cố định/ảnh phủ tối dùng hero-foreground/hero-muted.
   on-primary chỉ đi cùng nền primary, không dùng thay màu trắng chung. Cặp
@@ -146,16 +146,54 @@ Tham chiếu: [W3C Keyboard](https://www.w3.org/WAI/WCAG22/Understanding/keyboar
   browser package không được import server/provider. Chi tiết ở
   [thiết kế](../ai-lab-assistant/baseline/UX-01-assistant-design.md) và
   [báo cáo](../ai-lab-assistant/baseline/FE-01-02-browser.md).
-- Desktop ngăn phủ đúng vùng nhiệm vụ370/320px; vùng đó inert khi phủ. Không
-  thêm cột hoặc đổi kích thước/khóa terminal. Spinner lazy cũng nằm absolute.
+- Cập nhật 01/11/2026 theo yêu cầu người dùng: mở AI vẫn nhìn được nhiệm vụ.
+  Từ1280px dùng ba cột terminal/mục tiêu/AI; dưới1280px chia chiều cao cột phải.
+  Terminal vẫn thao tác được khi AI chờ phản hồi; nhiệm vụ không inert.
 - Mobile có điểm mở từ thông báo laptop; dùng Dialog chung, token lab truyền
   qua class theme trên portal. CLI vẫn giữ điều kiện máy tính; controls bị
   phủ không nằm trong thứ tự Tab. Dialog tự quản box-sizing/viewport width.
-- Chữ body13px, heading16px, nút40px/gửi và đóng44px. Dùng selector đủ scope để
-  rule cũ `.network-workspace aside button` không ghi đè màu nút trong ngăn.
+- Theo yêu cầu thu gọn mới ngày01/11: hội thoại/hướng dẫn14px, chữ phụ12px,
+  heading14px trong AI. Ô hỏi trên mobile giữ16px để tránh trình duyệt tự zoom.
+  Đã bỏ rule `.network-workspace aside button` và hover đi kèm; component tự sở
+  hữu màu nút để cả theme sáng/tối giữ đủ tương phản.
 - Plain text được escape; chỉ copy lệnh đã resolve từ contract. Nhãn nguồn,
   độ chắc chắn và revision cũ rõ ràng; không tự hỏi lại khi lab đổi. Đang đọc
   lịch sử thì giữ vị trí; load trang cũ giữ neo; lỗi lịch sử có retry riêng.
 - Metadata phục hồi chỉ gồm ID theo user/attempt trong sessionStorage, không
   lưu chat/token. Đổi scope xóa ngay draft/DOM cũ và bỏ response muộn. Dữ liệu
-  dùng để trợ giúp mở lần đầu; đánh giá đi qua endpoint kiểm quyền.
+  “AI đang xem gì” nằm trong Tùy chọn; đánh giá đi qua endpoint kiểm quyền.
+
+## Phòng thực hành — cập nhật 01/11/2026
+
+- CLI lab dùng `/labs/:id`, Back về danh sách; query `?labId=` cũ tự chuyển URL.
+  Trang lấy đúng lab qua API riêng, giữ quyền mở khóa từ server và ẩn rubric.
+  Admin preview vẫn dùng hộp thoại. Escape ở trang không thoát khỏi bài.
+- Thông tin phiên/chép mã/làm lại và tick gỡ lỗi nằm trong menu tùy chọn.
+  Làm lại cần Dialog xác nhận. Trạng thái chính là Đã lưu/Đang lưu/Đang xem lại.
+  Header gộp tên lab, trạng thái lưu và hành động trong một hàng cao tối thiểu60px.
+  Dưới1280px rút Back/Thành tích còn icon có accessible name, giữ đủ chỗ cho tên.
+- Một việc tiếp theo nổi bật; các mục tiêu thu gọn theo objective và tự gập khi xong.
+  Điểm từng việc chỉ hiện sau chấm. Không thêm câu chưa hoàn thành lặp trên từng thẻ.
+- Sơ đồ dùng ký hiệu riêng cho router/switch/PC; fit vị trí theo kích thước thật
+  của SVG, giữ mỗi đơn vị bằng một CSS pixel. Tên thiết bị13px, subnet12px,
+  cổng11px chỉ hiện khi dây đủ dài. Dây dọc đặt subnet sang bên; trạng thái ngắt
+  và STP có chữ. Chuỗi router hiển thị theo đường đi, tên không lặp; sơ đồ rộng
+  cuộn trong vùng nhận focus. Editor vẫn giữ hệ tọa độ1000×600 và kéo thả.
+  Ping/Ngắt dây nằm trên cùng toolbar với tên sơ đồ; TCP/UDP mở riêng.
+  OSPF tự ghi tick cần thiết vào nhật ký server để hội tụ.
+- Typography workspace: tiêu đề15–16px, nhiệm vụ13px, nội dung đọc14px, terminal13px,
+  nhãn/nút phụ12px. Thanh thiết bị dưới sơ đồ và sơ đồ dùng cùng trạng thái chọn.
+  Gợi ý mở ngay trong thẻ để không phủ nhiệm vụ; nút Chấm bài nằm cố định ở cuối cột.
+- Xem lại dùng slider/thao tác server, giữ chế độ chỉ đọc và Quay lại hiện tại.
+  Terminal giữ Tab/?, history và caret theo prompt; polling giống nhau không reset màn hình.
+- Rà bổ sung01/11: nhóm mục tiêu dùng `LabDisclosure` với đóng/mở hai chiều,
+  inert/aria-hidden ngay khi đóng, cleanup timer và reduced motion. Hover/press,
+  popover/panel, dấu hoàn thành, saving và AI pending có phản hồi; không thêm
+  chuyển động trang trí vào nội dung đọc. Checkbox/range/select/summary/scrollbar
+  dùng skin theo theme. Nút nguy hiểm giữ cặp màu riêng khi hover.
+- Sơ đồ nhiều hàng tính canvas theo khoảng cách và số dòng nhãn; chuỗi dài tự
+  xuống hàng, giữ bố trí nhiều hàng đã có, có grid dự phòng khi tọa độ trùng.
+  Dây song song và đường gói tin dùng cùng geometry/cổng. Kiểm cả bounds và
+  nhãn tránh nhau trong15 fixture, không chỉ chuỗi EIGRP4.
+- Hộp làm lại có theme riêng của lab và animation đóng; trả focus bằng
+  `Dialog.returnFocusRef` về summary menu, tránh focus lại nút đã bị ẩn.

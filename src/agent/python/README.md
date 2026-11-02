@@ -72,17 +72,23 @@ Node kiểm tiếp evidence, commandId, nội dung và quyền trước khi lưu
 Câu bị loại vẫn ghi chi phí. Prompt hiện viết giải thích/giả thuyết; SIM-01 của Node
 kiểm soát kết luận chẩn đoán mạnh.
 
-Prompt `gemini-r1-v2` có bốn module intent và tám ví dụ có input cấu trúc. Mỗi
+Prompt `gemini-r1-v3` có bốn module intent và tám ví dụ có input cấu trúc. Mỗi
 request gửi một ví dụ phù hợp, giữ chỗ cho context. Summary/bước/verification
 giới hạn 320/130/110 ký tự Unicode; Python kiểm lại output bằng cùng giới hạn và
 ID của input trước khi gửi receipt. Không cần commandId thì bỏ field, không gửi null.
 History khác hoặc chưa biết revision bị bỏ; history còn lại không phải bằng chứng
 trạng thái mạng. Context bị lược hoặc chẩn đoán ngoài phạm vi chỉ cho kết luận
-thiếu dữ liệu. Chi tiết và số đo token ở [PY-02, mục 8](../../../docs/ai-lab-assistant/baseline/PY-02-provider.md#8-prompt-được-bổ-sung-ngày-2710-như-thế-nào).
+thiếu dữ liệu về mạng. Riêng NEXT_STEP có taskFocus đã xác minh vẫn được hướng dẫn
+mục tiêu công khai: mức1 khái niệm, mức2 cú pháp có placeholder, mức3 lệnh từ
+recipe Node theo definition của attempt. Model không viết CLI trong prose; chỉ
+tham chiếu commandId được cấp. Không dùng trạng thái bị lược để suy đoán hoàn thành.
+Chi tiết gốc và số đo token ở [PY-02, mục 8](../../../docs/ai-lab-assistant/baseline/PY-02-provider.md#8-prompt-được-bổ-sung-ngày-2710-như-thế-nào).
 
 Module LAB_REVIEW mới là phần prompt/adapter: admission hiện thu feedback, chưa có
 đường topology đầy đủ tới worker cho intent này. Chưa mở learnerLevel hoặc nâng
-hint level tự động. Node/Python phải cùng prompt version với runtime policy.
+hint level tự động. Node/Python phải cùng prompt version. Admission ghi phiên bản
+provider đang triển khai vào yêu cầu mới; yêu cầu cũ giữ phiên bản đã chụp, không
+ghi đè policy/cohort trong DB.
 
 Worker chọn `AI_WORKER_MODE=python-gemini`, URL Python qua
 `AI_ANALYZE_URL`. Cần DB AI thử riêng trên loopback và runtime policy có cohort,
