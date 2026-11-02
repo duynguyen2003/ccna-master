@@ -15,6 +15,13 @@ const Layout = ({ children }) => {
     pathname.startsWith('/reset-password/');
   const isGuestHome = !isAuthenticated && isHomeRoute;
   const hasGraphPaperBackground = pathname !== '/roadmap' && pathname !== '/lesson';
+  if (/^\/labs\/[^/]+\/?$/.test(pathname)) {
+    return (
+      <main className="lab-practice-page" id="main-content" tabIndex={-1}>
+        {children}
+      </main>
+    );
+  }
 
   return (
     <div

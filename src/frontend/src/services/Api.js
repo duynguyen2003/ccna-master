@@ -264,6 +264,8 @@ export const api = {
     const labs = json.data?.labs || json.data || [];
     return labs.map(mapLab);
   },
+  getLab: async (token, id) =>
+    mapLab((await apiFetch(`/learning/labs/${encodeURIComponent(id)}?view=learning`, token)).data),
 
   startCliLabAttempt: async (token, labId) => {
     const json = await apiFetch(`/lab-attempts/labs/${labId}/start`, token, { method: 'POST' });

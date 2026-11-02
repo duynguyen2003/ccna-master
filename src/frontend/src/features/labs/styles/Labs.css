@@ -730,10 +730,6 @@
   transition:
     color 0.15s,
     background 0.15s;
-  opacity: 0;
-}
-
-.lab-cli-line:hover .lab-copy-btn {
   opacity: 1;
 }
 
@@ -1348,48 +1344,6 @@
   height: 340px;
   min-height: 240px;
 }
-.network-topology {
-  display: block;
-  background: #101d2b;
-  width: 100%;
-  max-height: 300px;
-  min-height: 180px;
-  touch-action: none;
-  border-bottom: 1px solid #1c2b3d;
-}
-.network-topology text {
-  fill: #d7e1eb;
-  font-size: 17px;
-}
-.network-topology line {
-  stroke-width: 4;
-}
-.network-topology .link-up {
-  stroke: #34d399;
-}
-.network-topology .link-down {
-  stroke: #f87171;
-  stroke-dasharray: 10 8;
-}
-.network-topology .link-blocked {
-  stroke: #fbbf24;
-  stroke-dasharray: 8 5;
-}
-.network-node {
-  cursor: pointer;
-  outline: none;
-}
-.network-node rect {
-  fill: #163149;
-  stroke: var(--color-muted-foreground);
-  stroke-width: 3;
-  rx: 6px;
-}
-.network-node.selected rect,
-.network-node:focus rect {
-  stroke: #67e8f9;
-  stroke-width: 5;
-}
 .network-controls {
   display: flex;
   align-items: center;
@@ -1403,9 +1357,7 @@
 .network-controls input,
 .network-controls .app-select__trigger,
 .network-controls button,
-.network-editor button,
-.network-workspace aside button,
-.network-workspace aside input {
+.network-editor button {
   background: #15283a;
   color: var(--color-muted-foreground);
   border: 1px solid #456078;
@@ -1421,13 +1373,11 @@
   border-color: #38bdf8;
   outline: none;
 }
-.network-controls button:hover:not(:disabled),
-.network-workspace aside button:hover:not(:disabled) {
+.network-controls button:hover:not(:disabled) {
   background: #1f3850;
   border-color: var(--color-primary);
 }
-.network-controls button:disabled,
-.network-workspace aside button:disabled {
+.network-controls button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }

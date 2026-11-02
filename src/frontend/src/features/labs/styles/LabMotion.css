@@ -1,0 +1,188 @@
+.cli-lab-theme {
+  --acc-expand: 250ms;
+  --acc-collapse: 250ms;
+  --acc-chevron: 250ms;
+  --acc-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --lab-motion-fast: 150ms;
+  --lab-motion-panel: 250ms;
+}
+
+/* grid-template-rows 0fr → 1fr gives a clean height animation
+   with no JS measurement; the inner element clips overflow. */
+.t-acc-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--acc-collapse) var(--acc-ease);
+}
+.t-acc[data-open='true'] .t-acc-panel {
+  grid-template-rows: 1fr;
+  transition: grid-template-rows var(--acc-expand) var(--acc-ease);
+}
+.t-acc-panel-inner {
+  overflow: hidden;
+  opacity: 0;
+  filter: blur(2px);
+  transition:
+    opacity var(--acc-collapse) var(--acc-ease),
+    filter var(--acc-collapse) var(--acc-ease);
+}
+.t-acc[data-open='true'] .t-acc-panel-inner {
+  opacity: 1;
+  filter: blur(0);
+  transition:
+    opacity var(--acc-expand) var(--acc-ease),
+    filter var(--acc-expand) var(--acc-ease);
+}
+/* Flip the chevron vertically to turn the "v" into a "^".
+   scaleY(-1) about the centre passes through a flat line at
+   the midpoint (same look as a `d:` path morph) but animates
+   in every browser, unlike CSS `d:` morphing (Chromium only).
+   The chevron path is symmetric about the 16x16 viewBox
+   centre, so the flip lands exactly on the "^"; non-scaling
+   -stroke keeps the stroke width constant through the flip. */
+.t-acc-chevron {
+  display: inline-flex;
+  transform: scaleY(1);
+  transform-origin: center;
+  transition: transform var(--acc-chevron) var(--acc-ease);
+}
+.t-acc-chevron path {
+  vector-effect: non-scaling-stroke;
+}
+.t-acc[data-open='true'] .t-acc-chevron {
+  transform: scaleY(-1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .t-acc-panel,
+  .t-acc-panel-inner,
+  .t-acc-chevron {
+    transition: none !important;
+  }
+}
+
+.cli-lab-theme .cli-lab-surface :where(button, summary) {
+  transition:
+    color var(--lab-motion-fast) ease,
+    background-color var(--lab-motion-fast) ease,
+    border-color var(--lab-motion-fast) ease,
+    box-shadow var(--lab-motion-fast) ease,
+    transform var(--lab-motion-fast) ease;
+}
+.cli-lab-theme .cli-lab-surface button:not(:disabled):active {
+  transform: translateY(1px);
+}
+.cli-lab-menu[open] > .cli-lab-menu-items {
+  animation: lab-popover-in var(--lab-motion-panel) var(--acc-ease) both;
+  transform-origin: top right;
+}
+.cli-lab-secondary-panel,
+.cli-lab-ping-form,
+.cli-lab-hint-expanded,
+.cli-lab-body > .ai-lab-root {
+  animation: lab-panel-in var(--lab-motion-panel) var(--acc-ease) both;
+}
+.cli-objective-chevron {
+  transition: transform var(--acc-chevron) var(--acc-ease);
+}
+.cli-objective-group.is-complete > summary small > svg {
+  animation: lab-check-in var(--lab-motion-panel) var(--acc-ease) both;
+}
+.cli-lab-save-state.is-busy .cli-lab-save-indicator {
+  animation: lab-busy 1.1s ease-in-out infinite;
+}
+.t-acc-panel-inner > .cli-objective-tasks {
+  padding: 3px;
+}
+.t-acc[data-open='false'] > .t-acc-panel {
+  grid-template-rows: 0fr;
+}
+.t-acc[data-open='false'] > .t-acc-panel > .t-acc-panel-inner {
+  opacity: 0;
+  filter: blur(2px);
+}
+@supports (interpolate-size: allow-keywords) {
+  .cli-lab-review,
+  .cli-lab-task-scroll details:not(.t-acc),
+  .cli-lab-ping-form details {
+    interpolate-size: allow-keywords;
+  }
+  :is(
+    .cli-lab-review,
+    .cli-lab-task-scroll details:not(.t-acc),
+    .cli-lab-ping-form details
+  )::details-content {
+    height: 0;
+    opacity: 0;
+    overflow: clip;
+    transition:
+      height var(--acc-collapse) var(--acc-ease),
+      opacity var(--acc-collapse) ease,
+      content-visibility var(--acc-collapse) allow-discrete;
+  }
+  :is(
+      .cli-lab-review,
+      .cli-lab-task-scroll details:not(.t-acc),
+      .cli-lab-ping-form details
+    )[open]::details-content {
+    height: auto;
+    opacity: 1;
+  }
+}
+@keyframes lab-popover-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes lab-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes lab-check-in {
+  from {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes lab-busy {
+  50% {
+    opacity: 0.4;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cli-lab-theme .cli-lab-surface :where(button, summary),
+  .cli-objective-chevron {
+    transition: none !important;
+  }
+  .cli-lab-menu-items,
+  .cli-lab-secondary-panel,
+  .cli-lab-ping-form,
+  .cli-lab-hint-expanded,
+  .cli-lab-body > .ai-lab-root,
+  .cli-lab-save-indicator,
+  .cli-objective-group small svg {
+    animation: none !important;
+  }
+  :is(
+    .cli-lab-review,
+    .cli-lab-task-scroll details:not(.t-acc),
+    .cli-lab-ping-form details
+  )::details-content {
+    transition: none !important;
+  }
+}

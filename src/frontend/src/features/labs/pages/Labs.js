@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import '../styles/Labs.css';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useParams, useNavigate } from 'react-router-dom';
 import {
   Download,
   Clock,
@@ -9,7 +9,6 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
-  Copy,
   Check,
   BookOpen,
   Network,
@@ -21,13 +20,16 @@ import {
 } from 'lucide-react';
 import { api, BACKEND_URL } from '../../../services/Api.js';
 import { useAuth } from '../../../context/AuthContext';
-import Dialog from '../../../components/ui/Dialog';
 import HeartbeatLoader from '../../../components/ui/HeartbeatLoader';
 import { useToast } from '../../../components/ui/Toast';
 import CliLabWorkspace from '../components/CliLabWorkspace';
+import AnimatedCopyButton from '../../../components/ui/AnimatedCopyButton';
+import Dialog from '../../../components/ui/Dialog';
 import { prefersReducedMotion } from '../utils/labMotion';
 import { storeTransitionEvent } from '../../courses/hooks/useLearningProgress';
 import { sanitizeHtml } from '@ccna/shared/sanitizeHtml';
+import { normalizeCommands } from '@ccna/shared/labDefinition';
+import MarkdownRenderer from '../../../components/common/MarkdownRenderer';
 
 // Giải quyết URL file lab: local path hoặc Cloudinary URL
 const getLabFileUrl = (fileUrl) => {
@@ -35,23 +37,6 @@ const getLabFileUrl = (fileUrl) => {
   if (fileUrl.startsWith('http')) return fileUrl;
   // File local: trỏ tới backend server
   return `${BACKEND_URL}${fileUrl}`;
-};
-
-const CopyButton = ({ text }) => {
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(text).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
-  };
-
-  return (
-    <button className="lab-copy-btn" onClick={handleCopy} title="Copy">
-      {copied ? <Check size={13} /> : <Copy size={13} />}
-    </button>
-  );
 };
 
 const LabGuideModal = ({ lab, onClose, onComplete, isGuestView, onGuestBlocked }) => {
@@ -211,17 +196,21 @@ const LabGuideModal = ({ lab, onClose, onComplete, isGuestView, onGuestBlocked }
                 <div className="lab-sidebar-label">
                   <FileText size={13} /> Nội dung hướng dẫn
                 </div>
-                <div
-                  className="lab-guide-rich-text"
-                  style={{
-                    fontSize: '0.85rem',
-                    color: '#c9d1d9',
-                    marginTop: '8px',
-                    lineHeight: '1.5',
-                    wordBreak: 'break-word',
-                  }}
-                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(lab.guideContent) }}
-                />
+                {lab.guideFormat === 'markdown' ? (
+                  <MarkdownRenderer content={lab.guideContent} />
+                ) : (
+                  <div
+                    className="lab-guide-rich-text"
+                    style={{
+                      fontSize: '0.85rem',
+                      color: '#c9d1d9',
+                      marginTop: '8px',
+                      lineHeight: '1.5',
+                      wordBreak: 'break-word',
+                    }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(lab.guideContent) }}
+                  />
+                )}
               </div>
             )}
 
@@ -316,11 +305,16 @@ const LabGuideModal = ({ lab, onClose, onComplete, isGuestView, onGuestBlocked }
             </div>
 
             <div className="lab-cli-block">
-              {currentStep?.commands?.map((cmd, i) => (
+              {normalizeCommands(currentStep?.commands).map((cmd, i) => (
                 <div key={i} className="lab-cli-line">
-                  <span className="lab-cli-prompt">$</span>
-                  <span className="lab-cli-cmd">{cmd}</span>
-                  <CopyButton text={cmd} />
+                  <span className="lab-cli-prompt">{cmd.deviceId || '$'}</span>
+                  <span className="lab-cli-cmd">{cmd.command}</span>
+                  <AnimatedCopyButton
+                    value={cmd.command}
+                    className="lab-copy-btn"
+                    label="Sao chép lệnh"
+                    tone="inverse"
+                  />
                 </div>
               ))}
             </div>
@@ -454,7 +448,7 @@ export const LabCard = ({
 
         <div className="lab-card-meta">
           <span>
-            <Clock size={13} /> {lab.duration}
+            <Clock size={13} /> {lab.durationMinutes ? `${lab.durationMinutes} phút` : lab.duration}
           </span>
           <span>
             <Terminal size={13} /> {lab.tools?.join(', ')}
@@ -528,6 +522,8 @@ export const Labs = () => {
   const isGuest = !isAuthenticated;
 
   const [searchParams, setSearchParams] = useSearchParams();
+  const { id: practiceId } = useParams();
+  const navigate = useNavigate();
   const labIdParam = searchParams.get('labId');
 
   const [labs, setLabs] = useState([]);
@@ -537,7 +533,6 @@ export const Labs = () => {
   const [filter, setFilter] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedLab, setSelectedLab] = useState(null);
-  const [selectedCliLab, setSelectedCliLab] = useState(null);
   const [completedLabs, setCompletedLabs] = useState([]);
   const [loadedToken, setLoadedToken] = useState(undefined);
 
@@ -548,21 +543,17 @@ export const Labs = () => {
       const foundLab = labs.find((l) => l.id.toString() === labIdParam);
       if (foundLab && foundLab.access?.canAccess !== false && isAuthenticated) {
         if (foundLab.labType === 'CLI_SIMULATION' && isAuthenticated) {
-          setSelectedLab(null);
-          setSelectedCliLab(foundLab);
+          navigate(`/labs/${foundLab.id}`, { replace: true });
         } else {
-          setSelectedCliLab(null);
           setSelectedLab(foundLab);
         }
       } else {
         setSelectedLab(null);
-        setSelectedCliLab(null);
       }
     } else {
       setSelectedLab(null);
-      setSelectedCliLab(null);
     }
-  }, [labs, labIdParam, isAuthenticated, token, loadedToken]);
+  }, [labs, labIdParam, isAuthenticated, token, loadedToken, navigate]);
 
   const openLab = (lab) => {
     if (!isAuthenticated) {
@@ -570,13 +561,17 @@ export const Labs = () => {
       return;
     }
     if (lab.access?.canAccess === false) return;
+    if (lab.labType === 'CLI_SIMULATION') {
+      navigate(`/labs/${lab.id}`);
+      return;
+    }
     const params = new URLSearchParams(searchParams);
     params.set('labId', String(lab.id));
     setSearchParams(params);
   };
   const closeLab = () => {
     setSelectedLab(null);
-    setSelectedCliLab(null);
+
     const params = new URLSearchParams(searchParams);
     params.delete('labId');
     setSearchParams(params, { replace: true });
@@ -590,18 +585,20 @@ export const Labs = () => {
         setLoadError('');
         setLoadedToken(undefined);
         setSelectedLab(null);
-        setSelectedCliLab(null);
+
         setLabs([]);
         setCompletedLabs([]);
 
         // Luôn tải danh sách lab (hỗ trợ cả tài khoản guest)
-        const labsData = await api.getLabs(token);
+        const labsData = practiceId
+          ? [await api.getLab(token, practiceId)]
+          : await api.getLabs(token);
         if (cancelled) return;
         setLabs(labsData);
 
         let done = [];
         // Chỉ tải tiến độ học tập nếu tài khoản đã đăng nhập
-        if (token) {
+        if (token && !practiceId) {
           const progressMap = await api.getUserProgress(token);
           done = Object.entries(progressMap)
             .filter(([key, val]) => key.startsWith('lab_') && val.status === 'COMPLETED')
@@ -625,7 +622,7 @@ export const Labs = () => {
     return () => {
       cancelled = true;
     };
-  }, [token, reloadKey]);
+  }, [token, reloadKey, practiceId]);
 
   const allCategories = React.useMemo(() => {
     const list = ['All', 'Switching', 'Routing', 'Security', 'Services', 'Automation'];
@@ -649,6 +646,66 @@ export const Labs = () => {
   const notifyGuestBlocked = useCallback(() => {
     showToast('Guest chỉ được xem thông tin lab. Vui lòng đăng nhập để thực hành.', 'info');
   }, [showToast]);
+
+  const practiceLab = practiceId ? labs.find((item) => String(item.id) === practiceId) : null;
+  useEffect(() => {
+    if (!practiceId) return;
+    const previous = document.title;
+    document.title = practiceLab
+      ? `${practiceLab.title} · Thực hành | NetMaster`
+      : 'Thực hành lab | NetMaster';
+    return () => {
+      document.title = previous;
+    };
+  }, [practiceId, practiceLab]);
+  if (practiceId) {
+    if (loading || loadedToken !== (token || null))
+      return <HeartbeatLoader label="Đang mở bài thực hành…" />;
+    if (
+      practiceLab?.labType === 'CLI_SIMULATION' &&
+      isAuthenticated &&
+      practiceLab.access?.canAccess !== false
+    ) {
+      return (
+        <>
+          {ToastComponent}
+          <CliLabWorkspace
+            key={practiceLab.id}
+            page
+            lab={practiceLab}
+            onClose={() => navigate('/labs')}
+            onNotify={showToast}
+          />
+        </>
+      );
+    }
+    return (
+      <section className="labs-page labs-route-state">
+        <h1>
+          {loadError
+            ? 'Chưa mở được bài thực hành'
+            : !isAuthenticated
+              ? 'Đăng nhập để thực hành'
+              : practiceLab?.access?.canAccess === false
+                ? 'Bài thực hành chưa mở khóa'
+                : 'Không tìm thấy bài thực hành'}
+        </h1>
+        <p>
+          {loadError ||
+            (practiceLab?.access?.canAccess === false
+              ? practiceLab.access.lockedReason || 'Hoàn thành bài tiên quyết để mở lab này.'
+              : 'Bạn có thể trở về danh sách bài lab để tiếp tục.')}
+        </p>
+        {loadError && <button onClick={() => setReloadKey((k) => k + 1)}>Thử lại</button>}
+        {!isAuthenticated && (
+          <Link to="/login" state={{ from: `/labs/${practiceId}` }}>
+            Đăng nhập
+          </Link>
+        )}
+        <Link to="/labs">Danh sách lab</Link>
+      </section>
+    );
+  }
 
   return (
     <div className="labs-page">
@@ -768,18 +825,6 @@ export const Labs = () => {
           onGuestBlocked={notifyGuestBlocked}
         />
       )}
-
-      {selectedCliLab && loadedToken === (token || null) ? (
-        <CliLabWorkspace
-          lab={selectedCliLab}
-          onClose={closeLab}
-          onPassed={(id) => {
-            if (!completedLabs.includes(String(id)))
-              setCompletedLabs((previous) => [...previous, String(id)]);
-          }}
-          onNotify={showToast}
-        />
-      ) : null}
     </div>
   );
 };

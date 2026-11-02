@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 
 const storageKey = 'ccna.ai.panel-width.v1';
-const limits = () => ({ min: 320, max: Math.max(320, Math.min(680, window.innerWidth - 400)) });
+const limits = (viewport = window.innerWidth) => ({
+  min: 320,
+  max: Math.max(320, Math.min(480, viewport - 820)),
+});
 const clamp = (width) => Math.round(Math.max(limits().min, Math.min(limits().max, width)));
 export default function usePanelWidth(mobile, onWidthChange) {
   const [preferredWidth, setPreferredWidth] = useState(() => {
@@ -14,7 +17,7 @@ export default function usePanelWidth(mobile, onWidthChange) {
     }
   });
   const [viewport, setViewport] = useState(window.innerWidth);
-  const width = Math.round(Math.min(preferredWidth, Math.max(320, Math.min(680, viewport - 400))));
+  const width = Math.round(Math.min(preferredWidth, limits(viewport).max));
   const change = useCallback((value) => setPreferredWidth(clamp(value)), []);
   useEffect(() => {
     const resize = () => setViewport(window.innerWidth);
