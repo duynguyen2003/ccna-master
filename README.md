@@ -145,5 +145,5 @@ ccna-master/
 
 ## 👨‍💻 Tác giả
 
-- **Tên**: [Tên của bạn]
-- **Đồ án**: Tốt nghiệp khóa [Năm] - Ngành Công nghệ thông tin.
+- **Tên**: DUY.hy
+
