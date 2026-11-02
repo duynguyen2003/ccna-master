@@ -7,11 +7,20 @@ const cloneJson = (value) => JSON.parse(JSON.stringify(value));
  * working. In particular, expected and actual values belong to submit
  * feedback and must never be copied into this DTO.
  */
-const taskMetadata = (check) => ({
+const taskMetadata = (check, state = {}) => ({
   id: check.id,
   title: check.title || check.id,
   points: check.points,
-  hint: check.hint || null,
+  hint: check.hints?.[0] || check.hint || null,
+  ...(check.hints
+    ? {
+        hintCount: check.hints.length,
+        hints: check.hints.slice(0, state.learningEvidence?.hints?.[check.id] || 0),
+      }
+    : {}),
+  ...(check.objective ? { objective: check.objective } : {}),
+  ...(check.skill ? { skill: check.skill } : {}),
+  ...(check.required !== undefined ? { required: check.required } : {}),
   deviceId: check.deviceId || null,
   type: check.type,
   interface: check.interface || null,
@@ -32,6 +41,9 @@ const buildLabProgress = (state, gradingSpec) => {
   const result = gradeAttempt(cloneJson(state), gradingSpec);
   let nextTaskId = null;
   const safeChecks = result.checks.map((check) => {
+    if (check.status === 'blocked') {
+      return { id: check.id, status: 'blocked', passed: false, blockedBy: check.blockedBy };
+    }
     const passed = check.passed === true;
     const status = passed
       ? 'completed'
@@ -49,8 +61,10 @@ const buildLabProgress = (state, gradingSpec) => {
   };
 };
 
-const buildLabTasks = (gradingSpec) =>
-  (Array.isArray(gradingSpec?.checks) ? gradingSpec.checks : []).map(taskMetadata);
+const buildLabTasks = (gradingSpec, state) =>
+  (Array.isArray(gradingSpec?.checks) ? gradingSpec.checks : []).map((check) =>
+    taskMetadata(check, state)
+  );
 
 module.exports = {
   buildLabProgress,

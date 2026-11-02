@@ -239,6 +239,11 @@ function convergeEigrp(s) {
   }
   s.eigrpNeighbors = neighbors;
 
+  if (s.simulatorVersion === '3.0.0') {
+    require('./eigrpClassic').convergeClassic(s, edges, connectedRoutes, eigrpEnabled);
+    return;
+  }
+
   for (const [id, device] of Object.entries(s.devices)) {
     device.eigrpRoutes = [];
     if (device.deviceType !== 'ROUTER' || !device.eigrp) continue;

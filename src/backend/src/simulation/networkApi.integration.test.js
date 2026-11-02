@@ -123,6 +123,28 @@ test(
         assert.equal(result.status, 200, JSON.stringify(result.body));
         assert.equal(result.body.lab.courseId, courseId);
       });
+      await t.test(
+        'direct lab metadata applies learner access, hides rubric and excludes drafts',
+        async () => {
+          const result = await request(`/learning/labs/${labId}?view=learning`);
+          assert.equal(result.status, 200, JSON.stringify(result.body));
+          assert.equal(result.body.data.id, labId);
+          assert.equal('gradingSpec' in result.body.data, false);
+          assert.equal('initialState' in result.body.data, false);
+          const guest = await request(`/learning/labs/${labId}`, -1);
+          assert.equal(guest.status, 200);
+          assert.equal(guest.body.data.access.canAccess, false);
+          assert.equal(guest.body.data.guideContent, null);
+          assert.deepEqual(guest.body.data.steps, []);
+          assert.equal((await request('/learning/labs/invalid')).status, 400);
+          await prisma.lab.update({ where: { id: labId }, data: { status: 'DRAFT' } });
+          try {
+            assert.equal((await request(`/learning/labs/${labId}`)).status, 404);
+          } finally {
+            await prisma.lab.update({ where: { id: labId }, data: { status: 'PUBLISHED' } });
+          }
+        }
+      );
       await t.test('concurrent starts resume exactly one attempt', async () => {
         const results = await Promise.all([
           request(`/lab-attempts/labs/${labId}/start`, 0, 'POST'),

@@ -23,6 +23,27 @@ const CLI_PROFILE_CATALOG = Object.freeze([
 
 const CLI_CHECK_CATALOG = Object.freeze([
   Object.freeze({
+    type: 'eigrp_passive_observed',
+    label: 'Quan sát passive và khôi phục',
+    description:
+      'Xác minh quá trình bật passive, quan sát mất neighbor, khôi phục và quan sát lại.',
+    fields: Object.freeze(['deviceId', 'interface']),
+    supports: 'topology-only',
+  }),
+  Object.freeze({
+    type: 'eigrp_metric_exercise',
+    label: 'Bài thực hành metric EIGRP',
+    description: 'Học viên điều chỉnh delay và đạt FD mục tiêu.',
+    fields: Object.freeze([
+      'deviceId',
+      'interface',
+      'destination',
+      'expectedMetric',
+      'expectedDelayMicroseconds',
+    ]),
+    supports: 'topology-only',
+  }),
+  Object.freeze({
     type: 'hostname_equals',
     label: 'Hostname khớp',
     description: 'Kiểm tra hostname của thiết bị.',
@@ -89,21 +110,21 @@ const CLI_CHECK_CATALOG = Object.freeze([
     type: 'startup_config_saved',
     label: 'Đã lưu startup config',
     description: 'Kiểm tra cấu hình đã được lưu vào startup-config.',
-    fields: Object.freeze(['deviceId']),
+    fields: Object.freeze(['deviceId', 'matchesRunning']),
     supports: 'single-or-topology',
   }),
   Object.freeze({
     type: 'reachable',
     label: 'Có thể ping tới',
     description: 'Kiểm tra đường đi hai chiều tới địa chỉ IPv4.',
-    fields: Object.freeze(['deviceId', 'destination']),
+    fields: Object.freeze(['deviceId', 'destination', 'protocol']),
     supports: 'topology-only',
   }),
   Object.freeze({
     type: 'route_exists',
     label: 'Có route tới',
     description: 'Kiểm tra bảng định tuyến có route bao phủ địa chỉ IPv4.',
-    fields: Object.freeze(['deviceId', 'destination']),
+    fields: Object.freeze(['deviceId', 'destination', 'protocol', 'source']),
     supports: 'topology-only',
   }),
   Object.freeze({

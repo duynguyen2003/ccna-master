@@ -19,6 +19,7 @@ router.patch(
 router.get('/courses', optionalAuth, learningController.getCourses);
 router.get('/courses/summary', optionalAuth, learningController.getCourseSummaries);
 router.get('/labs', optionalAuth, learningController.getLabs);
+router.get('/labs/:id', optionalAuth, learningController.getLab);
 router.get('/resources', optionalAuth, learningController.getResources);
 router.get('/resources/:id/download', optionalAuth, learningController.downloadResource);
 router.get('/courses/:courseId/modules', optionalAuth, learningController.getModulesByCourse);

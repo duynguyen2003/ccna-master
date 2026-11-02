@@ -17,7 +17,7 @@
     "build": "pnpm --dir src/frontend build",
     "test": "pnpm --dir src/frontend test",
     "check:icons": "node src/scripts/check-icons.cjs",
-    "test:cli": "node --test src/backend/src/simulation/*.test.js src/agent/tests/aiLabCertification.test.js",
+    "test:cli": "node --test --test-concurrency=1 src/backend/src/simulation/*.test.js src/agent/tests/aiLabCertification.test.js",
     "test:ai": "pnpm --dir src/agent test",
     "test:ai:python": "uv run --directory src/agent/python --frozen pytest",
     "test:ai:python:integration": "node src/agent/scripts/test-python-integration.cjs",

@@ -1,5 +1,7 @@
 import { appPrompt, appConfirm, appAlert } from '../../../utils/appDialog';
+import { commandText, normalizeCommands } from '@ccna/shared/labDefinition';
 import React, { useState, useEffect, useContext, useRef, useCallback, useMemo } from 'react';
+import SlidingTabs from '../../../components/ui/SlidingTabs';
 import CliLabConfigEditor from '../components/labs/CliLabConfigEditor';
 import LabAccessPolicyEditor from '../components/labs/LabAccessPolicyEditor';
 import AiLabSettings from '../components/labs/AiLabSettings';
@@ -113,6 +115,10 @@ const STATUS_BADGE_MAP = {
 };
 
 const createInitialFormData = () => ({
+  schemaVersion: 2,
+  guideFormat: 'markdown',
+  durationMinutes: '',
+  topicsText: '',
   title: '',
   category: '',
   difficulty: 'EASY',
@@ -147,7 +153,7 @@ const normalizeToolsToText = (toolsValue) => {
 };
 
 const normalizeStepCommandsToText = (commandsValue) => {
-  if (Array.isArray(commandsValue)) return commandsValue.join('\n');
+  if (Array.isArray(commandsValue)) return commandsValue.map(commandText).join('\n');
   if (typeof commandsValue === 'string') return commandsValue;
   return '';
 };
@@ -169,6 +175,10 @@ const mapLabToFormData = (lab) => {
       : [{ title: '', commands: '', note: '' }];
 
   return {
+    schemaVersion: lab?.schemaVersion || 1,
+    guideFormat: lab?.guideFormat || 'html',
+    durationMinutes: lab?.durationMinutes ?? '',
+    topicsText: (lab?.topics || []).join(', '),
     title: String(lab?.title || ''),
     category: String(lab?.category || ''),
     difficulty: String(lab?.difficulty || 'EASY'),
@@ -411,9 +421,14 @@ const Labs = () => {
   };
 
   const openEditEditor = (lab) => {
-    setEditorMode('edit');
-    setEditingLabId(lab.id);
-    setFormData(mapLabToFormData(lab));
+    const fromRepo = lab.contentSource === 'REPOSITORY';
+    setEditorMode(fromRepo ? 'create' : 'edit');
+    setEditingLabId(fromRepo ? null : lab.id);
+    setFormData(
+      mapLabToFormData(
+        fromRepo ? { ...lab, title: `${lab.title} — Bản nháp`, status: 'DRAFT' } : lab
+      )
+    );
     setPreviews({
       thumbnail: lab.imageUrl || null,
       topology: lab.topologyImgUrl || null,
@@ -560,6 +575,10 @@ const Labs = () => {
       payload.append('difficulty', formData.difficulty);
       payload.append('status', formData.status);
       payload.append('duration', formData.duration.trim());
+      payload.append('schemaVersion', String(formData.schemaVersion));
+      payload.append('guideFormat', formData.guideFormat);
+      payload.append('durationMinutes', String(formData.durationMinutes));
+      payload.append('topics', JSON.stringify(parseToolsInput(formData.topicsText)));
       payload.append(
         'guideContent',
         hasRichTextContent(formData.guideContent) ? formData.guideContent : ''
@@ -591,7 +610,17 @@ const Labs = () => {
           note: step.note.trim(),
         }))
         .filter((step) => step.title || step.commands.length > 0 || step.note);
-      payload.append('steps', JSON.stringify(formattedSteps));
+      payload.append(
+        'steps',
+        JSON.stringify(
+          formData.schemaVersion >= 2
+            ? formattedSteps.map((step) => ({
+                ...step,
+                commands: normalizeCommands(step.commands),
+              }))
+            : formattedSteps
+        )
+      );
 
       if (editorMode === 'edit') {
         await adminApi.updateLab(token, editingLabId, payload);
@@ -625,7 +654,13 @@ const Labs = () => {
         {isPreviewOpen ? (
           <div className="cli-admin-preview-layer">
             <CliLabWorkspace
-              lab={{ title: formData.title || 'Lab xem trước', objective: formData.objective }}
+              lab={{
+                title: formData.title || 'Lab xem trước',
+                objective: formData.objective,
+                guideContent: formData.guideContent,
+                guideFormat: formData.guideFormat,
+                steps: formData.steps,
+              }}
               preview={isPreviewOpen}
               onClose={() => setIsPreviewOpen(false)}
             />
@@ -641,18 +676,19 @@ const Labs = () => {
             <p>Nhập thông tin theo từng tab, bố cục giống màn quản lý bài kiểm tra.</p>
           </div>
 
-          <div className="labm-tabs">
+          <SlidingTabs className="labm-tabs" value={activeTab} aria-label="Nội dung chỉnh sửa lab">
             {LAB_TABS.map((tab) => (
               <button
                 key={tab.id}
                 type="button"
                 className={`labm-tab-btn ${activeTab === tab.id ? 'active' : ''}`}
+                aria-pressed={activeTab === tab.id}
                 onClick={() => setActiveTab(tab.id)}
               >
                 {tab.label}
               </button>
             ))}
-          </div>
+          </SlidingTabs>
 
           {error ? <div className="labm-form-error-banner">{error}</div> : null}
 
@@ -705,13 +741,21 @@ const Labs = () => {
                   </div>
 
                   <div className="acm-field">
-                    <span>Thời lượng</span>
+                    <span>Thời lượng {formData.schemaVersion >= 2 ? '(phút)' : ''}</span>
                     <input
                       className="acm-input"
-                      placeholder="VD: 30 phút"
-                      value={formData.duration}
+                      type={formData.schemaVersion >= 2 ? 'number' : 'text'}
+                      min="1"
+                      placeholder="30"
+                      value={
+                        formData.schemaVersion >= 2 ? formData.durationMinutes : formData.duration
+                      }
                       onChange={(event) =>
-                        setFormData((prev) => ({ ...prev, duration: event.target.value }))
+                        setFormData((prev) => ({
+                          ...prev,
+                          [prev.schemaVersion >= 2 ? 'durationMinutes' : 'duration']:
+                            event.target.value,
+                        }))
                       }
                     />
                   </div>
@@ -822,12 +866,45 @@ const Labs = () => {
                 </div>
 
                 <div className="acm-field">
-                  <span>Nội dung hướng dẫn (Rich Text)</span>
-                  <RichTextEditor
-                    value={formData.guideContent}
-                    onChange={(value) => setFormData((prev) => ({ ...prev, guideContent: value }))}
-                    placeholder="Nhập nội dung hướng dẫn tổng quan..."
+                  <label>
+                    Chủ đề
+                    <input
+                      className="acm-input"
+                      value={formData.topicsText}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, topicsText: e.target.value }))
+                      }
+                      placeholder="Routing, EIGRP"
+                    />
+                  </label>
+                  <span>Nội dung hướng dẫn</span>
+                  <CustomSelect
+                    value={formData.guideFormat}
+                    onChange={(guideFormat) => setFormData((prev) => ({ ...prev, guideFormat }))}
+                    options={[
+                      { value: 'html', label: 'Rich Text' },
+                      { value: 'markdown', label: 'Markdown' },
+                    ]}
                   />
+                  {formData.guideFormat === 'markdown' ? (
+                    <textarea
+                      className="acm-input"
+                      aria-label="Hướng dẫn Markdown"
+                      rows={12}
+                      value={formData.guideContent}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, guideContent: e.target.value }))
+                      }
+                    />
+                  ) : (
+                    <RichTextEditor
+                      value={formData.guideContent}
+                      onChange={(value) =>
+                        setFormData((prev) => ({ ...prev, guideContent: value }))
+                      }
+                      placeholder="Nhập nội dung hướng dẫn tổng quan..."
+                    />
+                  )}
                 </div>
 
                 <div className="acm-field">

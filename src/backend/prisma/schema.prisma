@@ -39,6 +39,7 @@ enum LabAttemptStatus {
   IN_PROGRESS
   PASSED
   FAILED
+  MASTERED
 }
 
 // ==========================================
@@ -188,6 +189,14 @@ model Lesson {
 }
 
 model Lab {
+  schemaVersion    Int        @default(1) @map("schema_version")
+  labKey           String?    @map("lab_key") @db.VarChar(80)
+  labVersion       Int        @default(1) @map("lab_version")
+  contentSource    String     @default("ADMIN") @map("content_source") @db.VarChar(20)
+  contentHash      String?    @map("content_hash") @db.VarChar(64)
+  durationMinutes  Int?       @map("duration_minutes")
+  topics           Json?
+  guideFormat      String     @default("html") @map("guide_format") @db.VarChar(20)
   id               Int        @id @default(autoincrement())
   title            String     @db.VarChar(1000)
   category         String?    @db.VarChar(50)
@@ -217,10 +226,14 @@ model Lab {
   progress UserProgress[]
   attempts LabAttempt[]
 
+  @@unique([labKey, labVersion])
   @@map("labs")
 }
 
 model LabAttempt {
+  bestScore        Int?      @map("best_score")
+  firstPassedAt    DateTime? @map("first_passed_at")
+  masteredAt       DateTime? @map("mastered_at")
   definition       Json?
   members          Json?
   id               String           @id @default(uuid()) @db.Uuid
@@ -254,6 +267,7 @@ model LabAttempt {
 }
 
 model LabCommand {
+  events    Json?
   action    Json?
   id        Int      @id @default(autoincrement())
   attemptId String   @map("attempt_id") @db.Uuid

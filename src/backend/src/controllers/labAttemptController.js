@@ -4,6 +4,13 @@ const { actionSchema } = require('../validation/cliLabSchema');
 const engine = require('@ccna/shared/simulation/networkEngine');
 const { gradeAttempt } = require('@ccna/shared/simulation/gradingEngine');
 const { buildLabProgress, buildLabTasks } = require('../simulation/labProgress');
+const {
+  captureDefinition,
+  canPractice,
+  replayAttempt,
+  resultUpdate,
+  MAX_ACTIONS,
+} = require('../simulation/labPolicy');
 const { fail, mayAccess, withAttempt } = require('../simulation/attemptAccess');
 const { explainFeedback } = require('../simulation/labFeedback');
 const learningPathService = require('../services/learningPathService');
@@ -24,6 +31,11 @@ const dto = (a, userId, deviceId) => {
     state: a.deviceState,
     prompt: engine.prompt(a.deviceState, deviceId),
     score: a.score,
+    bestScore: a.bestScore ?? a.score,
+    firstPassedAt: a.firstPassedAt,
+    masteredAt: a.masteredAt,
+    canPractice: canPractice(a),
+    features: definition.features || {},
     feedback: a.feedback,
     feedbackRevision: a.feedbackRevision,
     feedbackRecordedAt: a.feedbackRecordedAt,
@@ -33,10 +45,13 @@ const dto = (a, userId, deviceId) => {
     progress,
     lab: {
       id: a.labId,
-      title: a.lab.title,
-      objective: a.lab.objective,
+      title: definition.title || a.lab.title,
+      objective: definition.objective ?? a.lab.objective,
+      steps: definition.steps || [],
+      guideContent: definition.guideContent || '',
+      guideFormat: definition.guideFormat || 'html',
       passingScore: definition.gradingSpec?.passingScore ?? 70,
-      tasks: buildLabTasks(definition.gradingSpec),
+      tasks: buildLabTasks(definition.gradingSpec, a.deviceState),
     },
   };
 };
@@ -71,20 +86,26 @@ module.exports.startAttempt = handle(async (req, res) => {
       await learningPathService.assertLabAccess(tx, req.user.id, lab);
       await tx.$queryRaw`SELECT pg_advisory_xact_lock(${req.user.id}::int, ${labId}::int)::text AS locked`;
       const existing = await tx.labAttempt.findFirst({
-        where: { userId: req.user.id, labId, status: 'IN_PROGRESS' },
+        where: {
+          userId: req.user.id,
+          labId,
+          status: { in: ['IN_PROGRESS', 'PASSED', 'MASTERED'] },
+        },
+        orderBy: { startedAt: 'desc' },
         include: { lab: true, commands: { orderBy: { sequence: 'asc' } } },
       });
-      if (existing) return existing;
+      if (existing && canPractice(existing)) return existing;
+      const definition = captureDefinition(lab);
       return tx.labAttempt.create({
         data: {
           userId: req.user.id,
           labId,
-          definition: { initialState: lab.initialState, gradingSpec: lab.gradingSpec },
-          publicMetadata: publicMetadata(lab, { gradingSpec: lab.gradingSpec }),
+          definition,
+          publicMetadata: publicMetadata(lab, definition),
           publicMetadataProvenance: 'CAPTURED_AT_ATTEMPT_START',
           publicMetadataCapturedAt: new Date(),
           members: [],
-          deviceState: engine.initial(lab.initialState),
+          deviceState: engine.initial(definition.initialState, definition.simulatorVersion),
           simulatorVersion: lab.simulatorVersion || '1.0.0',
         },
         include: { lab: true, commands: true },
@@ -110,13 +131,22 @@ module.exports.executeAttemptCommand = handle(async (req, res) => {
   const action = actionSchema.parse(req.body.action || { ...req.body, type: 'command' });
   const expected = z.number().int().min(0).parse(req.body.expectedRevision);
   const data = await withAttempt(prisma, req.params.attemptId, req.user.id, async (tx, a) => {
-    if (a.status !== 'IN_PROGRESS') throw fail(409, 'Phiên đã kết thúc');
+    if (!canPractice(a)) throw fail(409, 'Phiên đã kết thúc');
     if (a.deviceState.revision !== expected)
       throw fail(409, 'Cấu hình đã thay đổi; đồng bộ phiên rồi thử lại.');
     if (action.deviceId && !a.deviceState.devices?.[action.deviceId])
       throw fail(400, 'Unknown device');
     const count = await tx.labCommand.count({ where: { attemptId: a.id } });
-    if (count >= 500) throw fail(409, 'Giới hạn 500 thao tác mỗi phiên');
+    if (count >= MAX_ACTIONS) throw fail(409, 'Giới hạn 500 thao tác mỗi phiên');
+    if (action.type === 'hint') {
+      const check = definitionOf(a).gradingSpec.checks.find((c) => c.id === action.checkId);
+      if (
+        !check?.hints ||
+        action.level > check.hints.length ||
+        action.level > (a.deviceState.learningEvidence?.hints?.[check.id] || 0) + 1
+      )
+        throw fail(400, 'Mở gợi ý theo thứ tự');
+    }
     const result = engine.execute(a.deviceState, action);
     if (result.help) {
       return {
@@ -137,6 +167,7 @@ module.exports.executeAttemptCommand = handle(async (req, res) => {
         prompt: result.prompt,
         output: result.output || '',
         isError: result.isError,
+        ...(result.events ? { events: result.events } : {}),
       },
     });
     await tx.labAttempt.update({ where: { id: a.id }, data: { deviceState: result.state } });
@@ -145,6 +176,7 @@ module.exports.executeAttemptCommand = handle(async (req, res) => {
       state: result.state,
       prompt: engine.prompt(result.state, action.deviceId),
       progress: buildLabProgress(result.state, definitionOf(a).gradingSpec),
+      tasks: buildLabTasks(definitionOf(a).gradingSpec, result.state),
     };
   });
   res.json({ data });
@@ -162,25 +194,46 @@ module.exports.getAttemptCompletions = handle(async (req, res) => {
 module.exports.submitAttempt = handle(async (req, res) => {
   const data = await withAttempt(prisma, req.params.attemptId, req.user.id, async (tx, a) => {
     if (a.userId !== req.user.id) throw fail(403, 'Chỉ chủ phiên được nộp bài');
-    if (a.status !== 'IN_PROGRESS') throw fail(409, 'Phiên đã kết thúc');
+    if (!canPractice(a)) throw fail(409, 'Phiên đã kết thúc');
     await learningPathService.assertLabAccess(tx, req.user.id, a.lab);
-    const result = gradeAttempt(a.deviceState, definitionOf(a).gradingSpec);
+    const definition = definitionOf(a);
+    const records =
+      definition.schemaVersion >= 2
+        ? await tx.labCommand.findMany({
+            where: { attemptId: a.id },
+            orderBy: { sequence: 'asc' },
+            take: MAX_ACTIONS + 1,
+          })
+        : null;
+    const gradedState = records
+      ? replayAttempt(definition, records, a.simulatorVersion)
+      : a.deviceState;
+    const result = {
+      ...gradeAttempt(gradedState, definition.gradingSpec),
+      ...(definition.features ? { features: definition.features } : {}),
+      ...(definition.schemaVersion >= 2
+        ? {
+            labVersion: definition.labVersion,
+            withoutHints: !Object.keys(gradedState.learningEvidence?.hints || {}).length,
+          }
+        : {}),
+    };
     const updated = await tx.labAttempt.update({
       where: { id: a.id },
       data: {
-        status: result.passed ? 'PASSED' : 'IN_PROGRESS',
-        score: result.score,
+        ...resultUpdate(a, result),
+        deviceState: gradedState,
         feedback: result,
-        feedbackRevision: a.deviceState.revision,
+        feedbackRevision: gradedState.revision,
         feedbackRecordedAt: new Date(),
         safeFeedbackSnapshot: safeFeedback(result),
         feedbackProvenance: 'FEEDBACK_SNAPSHOT',
-        submittedAt: result.passed ? new Date() : null,
       },
     });
-    const progress = result.passed
-      ? await learningPathService.completeGradedLab(tx, a.userId, a.lab)
-      : null;
+    const progress =
+      result.passed && !['PASSED', 'MASTERED'].includes(a.status)
+        ? await learningPathService.completeGradedLab(tx, a.userId, a.lab)
+        : null;
     return {
       attempt: dto({ ...updated, lab: a.lab }, req.user.id),
       result,
@@ -215,11 +268,7 @@ module.exports.replayAttempt = handle(async (req, res) => {
     where: { attemptId: a.id, sequence: { lte: sequence } },
     orderBy: { sequence: 'asc' },
   });
-  let state = engine.initial(a.definition.initialState);
-  for (const e of commands) {
-    state = engine.execute(state, e.action || { type: 'command', command: e.command }).state;
-    state.revision = e.sequence;
-  }
+  const state = replayAttempt(a.definition, commands, a.simulatorVersion);
   res.json({
     data: {
       state,
@@ -235,7 +284,7 @@ module.exports.updateMembers = handle(async (req, res) => {
     .parse(req.body);
   const data = await withAttempt(prisma, req.params.attemptId, req.user.id, async (tx, a) => {
     if (a.userId !== req.user.id) throw fail(403, 'Chỉ chủ phiên được quản lý thành viên');
-    if (a.status !== 'IN_PROGRESS') throw fail(409, 'Phiên đã kết thúc');
+    if (!canPractice(a)) throw fail(409, 'Phiên đã kết thúc');
     if (body.userId === a.userId) throw fail(400, 'Chủ phiên đã có quyền truy cập');
     if (!body.remove && !(await tx.user.findFirst({ where: { id: body.userId, deletedAt: null } })))
       throw fail(404, 'Không tìm thấy tài khoản');
@@ -263,11 +312,11 @@ module.exports.explainAttempt = handle(async (req, res) => {
 module.exports.achievements = handle(async (req, res) => {
   const best = await prisma.labAttempt.groupBy({
     by: ['labId'],
-    where: { userId: req.user.id, status: 'PASSED' },
+    where: { userId: req.user.id, status: { in: ['PASSED', 'MASTERED'] } },
     _max: { score: true },
   });
   const dates =
-    await prisma.$queryRaw`SELECT DISTINCT (submitted_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Ho_Chi_Minh')::date::text AS day FROM lab_attempts WHERE user_id = ${req.user.id} AND status = 'PASSED' ORDER BY day DESC LIMIT 366`;
+    await prisma.$queryRaw`SELECT DISTINCT (submitted_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Ho_Chi_Minh')::date::text AS day FROM lab_attempts WHERE user_id = ${req.user.id} AND status IN ('PASSED', 'MASTERED') ORDER BY day DESC LIMIT 366`;
   const dayMs = 86400000;
   const today = new Date(Date.now() + 7 * 3600000).toISOString().slice(0, 10);
   let cursor = Date.parse(today);
