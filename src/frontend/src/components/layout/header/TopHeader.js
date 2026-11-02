@@ -1,10 +1,10 @@
 import AppIcon from '../../ui/AppIcon';
 import React, { useCallback, useState, useRef, useEffect } from 'react';
+import GuestSectionTabs from './GuestSectionTabs';
 import '../styles/TopHeader.css';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
 import api, { API_URL } from '../../../services/Api';
-import GuestSectionTabs from './GuestSectionTabs';
 import BrandLogo from '../../branding/BrandLogo';
 import ThemeToggle from '../../ui/ThemeToggle';
 

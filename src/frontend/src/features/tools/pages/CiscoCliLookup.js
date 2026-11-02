@@ -1,41 +1,9 @@
 import AppIcon from '../../../components/ui/AppIcon';
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import AnimatedCopyButton from '../../../components/ui/AnimatedCopyButton';
 import '../styles/CiscoCliLookup.css';
 import { Link } from 'react-router-dom';
 import ciscoCommands from '../../../data/cisco-commands.json';
-
-// --- 1. COPY BUTTON COMPONENT (Isolated State) ---
-const CopyButton = ({ textToCopy }) => {
-  const [isCopied, setIsCopied] = useState(false);
-
-  const handleCopy = () => {
-    if (!textToCopy) return;
-    navigator.clipboard
-      .writeText(textToCopy)
-      .then(() => {
-        setIsCopied(true);
-        setTimeout(() => {
-          setIsCopied(false);
-        }, 2000); // Reset after 2s
-      })
-      .catch((err) => console.error('Failed to copy:', err));
-  };
-
-  return (
-    <button
-      className={`cli-copy-btn ${isCopied ? 'copied' : ''}`}
-      onClick={handleCopy}
-      title="Sao chép lệnh"
-    >
-      <AppIcon
-        name={isCopied ? 'check' : 'content_copy'}
-        className="app-icon"
-        style={{ fontSize: 14 }}
-      />
-      {isCopied ? 'Đã sao chép' : 'Sao chép'}
-    </button>
-  );
-};
 
 // --- 2. COMMAND CARD COMPONENT ---
 const CommandCard = ({ commandData, allCommands, onSearchCommand }) => {
@@ -59,7 +27,12 @@ const CommandCard = ({ commandData, allCommands, onSearchCommand }) => {
       <p className="cli-command-desc">{commandData.description}</p>
 
       <div className="cli-terminal">
-        <CopyButton textToCopy={commandData.example} />
+        <AnimatedCopyButton
+          value={commandData.example}
+          className="cli-copy-btn"
+          label="Sao chép lệnh"
+          tone="inverse"
+        />
         <pre>{commandData.example}</pre>
       </div>
 

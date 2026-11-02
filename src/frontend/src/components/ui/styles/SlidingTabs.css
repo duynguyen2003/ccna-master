@@ -1,0 +1,81 @@
+.sliding-tabs.t-tabs {
+  --tabs-dur: 400ms;
+  --tabs-ease: cubic-bezier(0.65, 0, 0.35, 1);
+  --tabs-label-fade: 180ms;
+  --tabs-text-muted: var(--color-muted-foreground);
+  --tabs-text-active: var(--color-primary);
+  --tabs-bar-bg: var(--color-muted);
+  --tabs-pill-bg: var(--color-surface);
+  position: relative;
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 3px;
+  padding: 3px;
+  min-width: 0;
+  max-width: 100%;
+  border-radius: 48px;
+  background: var(--tabs-bar-bg);
+  isolation: isolate;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+.sliding-tabs.t-tabs > .t-tab {
+  position: relative;
+  appearance: none;
+  flex-shrink: 0;
+  border: 0;
+  background: transparent;
+  min-height: 30px;
+  height: auto;
+  padding: 6px 12px;
+  color: var(--tabs-text-muted);
+  cursor: pointer;
+  border-radius: 48px;
+  font-weight: 600;
+  white-space: nowrap;
+  z-index: 1;
+  box-shadow: none;
+  transition: color var(--tabs-label-fade) var(--tabs-ease);
+}
+.sliding-tabs.t-tabs > .t-tab:not([data-active='true']):hover:not(:disabled) {
+  color: var(--tabs-text-hover, var(--tabs-text-active));
+  background: transparent;
+}
+.sliding-tabs.t-tabs > .t-tab[data-active='true'],
+.sliding-tabs.t-tabs > .t-tab[data-active='true']:hover:not(:disabled) {
+  color: var(--tabs-text-active);
+  background: transparent;
+  box-shadow: none;
+  transition-delay: calc(var(--tabs-dur) - var(--tabs-label-fade));
+}
+.sliding-tabs.t-tabs > .t-tab:focus-visible {
+  outline: 2px solid var(--tabs-text-active);
+  outline-offset: -2px;
+}
+.sliding-tabs.t-tabs > .t-tab:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.sliding-tabs .t-tabs-pill {
+  position: absolute;
+  top: 3px;
+  left: 0;
+  height: 30px;
+  width: 0;
+  visibility: hidden;
+  background: var(--tabs-pill-bg);
+  border-radius: 48px;
+  transition:
+    left var(--tabs-dur) var(--tabs-ease),
+    width var(--tabs-dur) var(--tabs-ease);
+  will-change: left, width;
+  z-index: 0;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sliding-tabs .t-tabs-pill,
+  .sliding-tabs .t-tab {
+    transition: none !important;
+  }
+}

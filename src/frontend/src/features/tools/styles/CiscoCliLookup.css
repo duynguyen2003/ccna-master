@@ -287,12 +287,6 @@
   color: var(--hero-foreground);
 }
 
-:where(.cli-lookup-wrapper) .cli-copy-btn.copied {
-  background: rgba(16, 185, 129, 0.2);
-  border-color: var(--color-success);
-  color: #34d399;
-}
-
 /* Related Commands */
 :where(.cli-lookup-wrapper) .cli-related {
   font-size: 13px;
@@ -383,4 +377,8 @@
 }
 :where(.cli-lookup-wrapper) .cli-terminal pre {
   font-family: Consolas, ui-monospace, monospace;
+}
+
+:where(.cli-lookup-wrapper) .cli-terminal pre {
+  padding-inline-end: 32px;
 }

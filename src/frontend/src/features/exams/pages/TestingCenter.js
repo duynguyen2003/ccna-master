@@ -1,5 +1,6 @@
 import { Settings, CalendarDays as Calendar, Clock, Lock, BookOpen, FileText } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
+import SlidingTabs from '../../../components/ui/SlidingTabs';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
 import { useToast } from '../../../components/ui/Toast';
@@ -202,7 +203,7 @@ const TestingCenter = () => {
         </div>
 
         {/* Tab Navigation */}
-        <div className="tc-tabs">
+        <SlidingTabs className="tc-tabs" value={activeTab} aria-label="Hình thức luyện thi">
           <button
             className={`tc-tab ${activeTab === 'practice' ? 'active' : ''}`}
             aria-pressed={activeTab === 'practice'}
@@ -217,7 +218,7 @@ const TestingCenter = () => {
           >
             Thi thử CCNA
           </button>
-        </div>
+        </SlidingTabs>
 
         {/* ── Tab 1: Practice by Chapter ── */}
         {activeTab === 'practice' && (

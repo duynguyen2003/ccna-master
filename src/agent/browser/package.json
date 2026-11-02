@@ -8,11 +8,13 @@
   ],
   "exports": {
     "./panel": "./panel.js",
+    "./loader": "./loader.js",
     "./feedback": "./feedback.js",
     "./admin": "./admin.js",
     "./controller": "./state/assistantController.js",
     "./api": "./api/aiLabApi.js",
-    "./fixtures": "./fixtures.js"
+    "./fixtures": "./fixtures.js",
+    "./clipboard": "./clipboard.js"
   },
   "dependencies": {
     "@ccna/agent-contracts": "workspace:*"

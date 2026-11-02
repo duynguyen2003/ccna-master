@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="vi">
+<html lang="vi" data-theme="light">
   <head>
     <meta charset="utf-8" />
     <link rel="icon" type="image/png" sizes="32x32" href="%PUBLIC_URL%/brand/icon-32.png" />
@@ -35,11 +35,7 @@
       try {
         var savedTheme = localStorage.getItem('netmaster-theme');
         document.documentElement.dataset.theme =
-          savedTheme === 'light' || savedTheme === 'dark'
-            ? savedTheme
-            : matchMedia('(prefers-color-scheme: dark)').matches
-              ? 'dark'
-              : 'light';
+          savedTheme === 'light' || savedTheme === 'dark' ? savedTheme : 'light';
       } catch (_) {}
     </script>
   </head>

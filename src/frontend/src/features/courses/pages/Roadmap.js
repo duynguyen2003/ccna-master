@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import SlidingTabs from '../../../components/ui/SlidingTabs';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Sparkles, LogIn, RefreshCw, Server, Lock, Monitor, Smartphone } from 'lucide-react';
@@ -120,7 +121,11 @@ export const RoadmapOverview = ({
     </div>
 
     <div className="lp-overview-controls">
-      <div className="lp-layout-switch" role="group" aria-label="Hướng hiển thị lộ trình">
+      <SlidingTabs
+        className="lp-layout-switch"
+        value={layoutMode}
+        aria-label="Hướng hiển thị lộ trình"
+      >
         {LAYOUT_OPTIONS.map(({ value, label, icon: Icon }) => (
           <button
             key={value}
@@ -133,7 +138,7 @@ export const RoadmapOverview = ({
             {label}
           </button>
         ))}
-      </div>
+      </SlidingTabs>
 
       {unlockAction || adminTestAction ? (
         <div className="lp-unlock-actions">
