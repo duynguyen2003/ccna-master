@@ -25,9 +25,10 @@ class Settings:
     receipt_attempts: int = 3
     live_enabled: bool = False
     api_key: str = field(default="", repr=False)
+    trace_timings: bool = False
 
     def __post_init__(self):
-        valid = self.mode in {"off", "fake", "gemini"} and self.host in {
+        valid = self.mode in {"off", "gemini"} and self.host in {
             "127.0.0.1",
             "::1",
             "0.0.0.0",
@@ -36,7 +37,7 @@ class Settings:
             ("port", 1, 65535),
             ("max_body_bytes", 1, 65536),
             ("body_timeout_ms", 1, 10000),
-            ("max_request_ms", 1, 30000),
+            ("max_request_ms", 1, 55000 if self.mode == "gemini" else 30000),
             ("callback_timeout_ms", 1, 5000),
             ("max_concurrent", 1, 8),
             ("receipt_attempts", 1, 3),
@@ -49,11 +50,9 @@ class Settings:
         if self.service_secret:
             valid = valid and len(self.service_secret) >= 32
             valid = valid and not any(char.isspace() for char in self.service_secret)
-        if self.mode in {"fake", "gemini"}:
-            valid = valid and self.environment in {"local", "test"} and bool(self.service_secret)
         if self.mode == "gemini":
-            valid = valid and self.environment == "local"
-        valid = valid and type(self.live_enabled) is bool
+            valid = valid and self.environment == "local" and bool(self.service_secret)
+        valid = valid and type(self.live_enabled) is bool and type(self.trace_timings) is bool
         try:
             url = urlsplit(self.node_url)
             valid = valid and (
@@ -92,6 +91,7 @@ class Settings:
             "MAX_CONCURRENT": ("max_concurrent", int),
             "RECEIPT_ATTEMPTS": ("receipt_attempts", int),
             "LIVE_ENABLED": ("live_enabled", bool),
+            "TRACE_TIMINGS": ("trace_timings", bool),
         }
         values = {
             "service_secret": environ.get("AI_SERVICE_SECRET", ""),

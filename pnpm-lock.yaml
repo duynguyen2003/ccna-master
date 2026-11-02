@@ -67,6 +67,12 @@ importers:
         specifier: ^4.3.6
         version: 4.3.6
 
+  src/agent/browser:
+    dependencies:
+      '@ccna/agent-contracts':
+        specifier: workspace:*
+        version: link:../contracts
+
   src/agent/contracts:
     dependencies:
       zod:
@@ -132,6 +138,9 @@ importers:
 
   src/frontend:
     dependencies:
+      '@ccna/agent-ui':
+        specifier: workspace:*
+        version: link:../agent/browser
       '@ccna/shared':
         specifier: workspace:*
         version: link:../shared

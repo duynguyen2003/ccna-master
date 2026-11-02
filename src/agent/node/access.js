@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const { withAttempt } = require('../../backend/src/simulation/attemptAccess');
 const { isAccountActive } = require('../../backend/src/security/session');
+const { inAiCohort } = require('./eligibility');
 
 const denied = (status, code) => Object.assign(new Error(code), { status, code });
 
@@ -41,6 +42,7 @@ async function withAiAccess(prisma, scope, callback) {
       where: { id: principal.id },
       select: {
         id: true,
+        role: true,
         isActive: true,
         deletedAt: true,
         sessionVersion: true,
@@ -66,14 +68,7 @@ async function withAiAccess(prisma, scope, callback) {
     }
     await tx.$queryRaw`SELECT environment FROM ai_runtime_policies WHERE environment = ${environment} FOR SHARE`;
     const policy = await tx.aiRuntimePolicy.findUnique({ where: { environment } });
-    const rules = policy?.eligibilityRules;
-    if (
-      !policy?.admissionEnabled ||
-      !Array.isArray(rules?.userIds) ||
-      !Array.isArray(rules?.labIds) ||
-      !rules.userIds.includes(principal.id) ||
-      !rules.labIds.includes(attempt.labId)
-    )
+    if (!policy?.admissionEnabled || !inAiCohort(policy, user, attempt.labId))
       throw denied(403, 'AI_NOT_ELIGIBLE');
     return callback(tx, { attempt, conversation, policy, user });
   });

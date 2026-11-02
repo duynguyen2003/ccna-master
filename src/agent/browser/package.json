@@ -1,0 +1,23 @@
+{
+  "name": "@ccna/agent-ui",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "exports": {
+    "./panel": "./panel.js",
+    "./feedback": "./feedback.js",
+    "./admin": "./admin.js",
+    "./controller": "./state/assistantController.js",
+    "./api": "./api/aiLabApi.js",
+    "./fixtures": "./fixtures.js"
+  },
+  "dependencies": {
+    "@ccna/agent-contracts": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": "^18.3.1"
+  }
+}

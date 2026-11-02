@@ -69,3 +69,14 @@ test('student summaries preserve uploaded thumbnails alongside personal progress
   assert.equal(summaries[0].nextLessonTitle, 'Bài học tiếp theo: First lesson');
   assert.equal(findProgress.mock.calls.at(-1).arguments[0].where.userId, 42);
 });
+
+test('adding an optional practice lab does not lower a course summary percentage', async () => {
+  courses[0].labs = [
+    { id: 90, accessPolicy: { mode: 'OPEN', lessonIds: [], requiredForCompletion: false } },
+  ];
+  try {
+    assert.equal((await invoke({ id: 42, role: 'STUDENT' }))[0].progress, 50);
+  } finally {
+    courses[0].labs = [];
+  }
+});

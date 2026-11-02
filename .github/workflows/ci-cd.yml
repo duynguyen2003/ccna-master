@@ -53,6 +53,8 @@ jobs:
           pnpm check:ai:fixtures
           pnpm check:ai:budget
           pnpm test:ai:contracts
+          pnpm test:ai:browser
+          pnpm exec eslint --no-ignore "src/agent/browser/**/*.{js,jsx}" src/agent/node/conversation.js src/agent/scripts/frontend-browser.cjs
           pnpm test:ai:context
           pnpm test:ai:diagnostics
           pnpm test:ai:local

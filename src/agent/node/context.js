@@ -5,11 +5,6 @@ const { evidenceFor, commandsFor } = require('./evidence');
 const { fail } = require('./quota');
 const { VERSION: diagnosticVersion } = require('./diagnostics/catalog');
 const bytes = (value) => Buffer.byteLength(JSON.stringify(value), 'utf8');
-// A defined tokenizer for the local fake protocol, not an estimate of any
-// vendor tokenizer. Real adapters must count their complete prompt/schema.
-const fakeInputTokens = (value) =>
-  (JSON.stringify(value).match(/[A-Za-z0-9_]+|[^\s]/gu) || []).length;
-
 function projectContext(row, options = {}) {
   const snapshot = row.snapshot;
   if (
@@ -197,7 +192,7 @@ function validateBoundary(value, provider) {
     return input;
   if (!provider || typeof provider.measureInput !== 'function') throw fail('AI_DISABLED');
   // Provider adapter owns counting its complete prompt/schema. The bundled
-  // implementation is a synthetic tokenizer for the local fake protocol.
+  // implementation belongs to the injected provider (tests only).
   const tokens = provider.measureInput(input);
   if (!Number.isSafeInteger(tokens) || tokens < 0) throw fail('AI_DISABLED');
   if (tokens > input.policy.maxInputTokens) throw fail('AI_CONTEXT_TOO_LARGE');
@@ -224,5 +219,4 @@ module.exports = {
   validateBoundary,
   fitBoundary,
   bytes,
-  fakeInputTokens,
 };

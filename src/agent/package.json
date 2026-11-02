@@ -10,7 +10,7 @@
   },
   "scripts": {
     "worker": "node workers/aiWorker.js",
-    "test": "node --test node/access.test.js node/snapshot.test.js node/worker.test.js node/context.test.js node/contract.test.js node/localGemini.test.js node/pythonTransport.test.js node/diagnostics/*.test.js tests/*.test.js",
+    "test": "node --test node/access.test.js node/snapshot.test.js node/worker.test.js node/context.test.js node/contract.test.js node/localGemini.test.js node/pythonTransport.test.js node/diagnostics/*.test.js tests/*.test.js tests/browser/*.test.mjs",
     "test:storage": "node scripts/test-ai-lab-storage.cjs",
     "check:contracts": "node scripts/generate-ai-lab-contracts.cjs --check",
     "check:fixtures": "node scripts/generate-ai-lab-fixtures.cjs --check"

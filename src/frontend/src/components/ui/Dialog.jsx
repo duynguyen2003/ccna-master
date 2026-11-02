@@ -68,7 +68,7 @@ export default function Dialog({ title, children, onClose, className = '', anima
         if (event.key !== 'Tab') return;
         const items = [
           ...event.currentTarget.querySelectorAll(
-            'button:not(:disabled), a[href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled)'
+            'button:not(:disabled), a[href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), summary, [tabindex="0"]'
           ),
         ];
         const first = items[0],

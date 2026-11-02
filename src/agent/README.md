@@ -9,6 +9,7 @@ src/
 ├── frontend/                Giao diện
 ├── shared/                  Simulator và phần dùng chung
 └── agent/
+    ├── browser/             UI/hook/HTTP client browser-only, package @ccna/agent-ui
     ├── node/                Quyền truy cập, snapshot, request/quota,
     │   │                    worker lifecycle, context, kiểm câu trả lời
     │   ├── diagnostics/     Chẩn đoán SIM-01
@@ -26,6 +27,10 @@ src/
 `@ccna/agent` là workspace Node. `@ccna/agent-contracts` là workspace riêng chỉ chứa
 contract dùng được trong browser. Đường import `@ccna/shared/aiLabContract` được giữ
 bằng một file chuyển tiếp, nguồn schema thật nằm ở `contracts/aiLabContract.js`.
+
+`@ccna/agent-ui` chứa source React và controller riêng cho browser. Frontend chỉ
+ghép panel vào workspace và truyền adapter UI/token/API URL. CRA biên dịch đúng
+thư mục browser qua wrapper; không cấp quyền import phần Node của agent.
 
 Backend nạp router và các hàm agent qua `@ccna/agent/node/...` hoặc
 `@ccna/agent/routes/...`. Agent vẫn dùng quyền truy cập lab, session, tiến độ và kết
@@ -58,10 +63,10 @@ Các lệnh `ai:worker`, `test:ai:context`, `test:ai:diagnostics`, `test:ai:loca
 cấp quyền gọi provider thật. Dữ liệu DB thử, log và ledger chi phí vẫn ở `.tmp/`
 tại gốc repo; không tạo ledger mới khi đổi đường dẫn công cụ.
 
-Python đã có [dịch vụ nội bộ với fake và Gemini local](python/README.md). Cài bằng
+Python dùng [dịch vụ nội bộ Gemini](python/README.md). Cài bằng
 `uv sync --project src/agent/python --frozen`, rồi chạy `pnpm test:ai:python` và
-`pnpm check:ai:python`. Worker/Python mặc định tắt; chọn `python-fake` hoặc
-`python-gemini` qua cấu hình server khi chạy với DB thử riêng. Kiểm luồng đầy đủ
+`pnpm check:ai:python`. Worker/Python mặc định tắt; chọn
+`python-gemini` với key phía server khi chạy với DB thử riêng. Kiểm luồng đầy đủ
 bằng `pnpm test:ai:python:integration`; lệnh này giả lập Google, không tốn tiền.
 `pnpm ai:python:live:check` chủ động thử một generation thật bằng dữ liệu tổng hợp,
 dùng ledger đã có. Xem [PY-02](../../docs/ai-lab-assistant/baseline/PY-02-provider.md).
@@ -69,3 +74,15 @@ dùng ledger đã có. Xem [PY-02](../../docs/ai-lab-assistant/baseline/PY-02-pr
 Báo cáo, tiến độ và giải thích task tiếp tục sửa tại
 [docs/ai-lab-assistant](../../docs/ai-lab-assistant/README.md). Xem
 [hướng dẫn cho task tiếp theo](AGENTS.md) trước khi thêm code.
+
+Để ADMIN test trực tiếp trên app dev, xem [hướng dẫn admin-test](../../docs/ai-lab-assistant/baseline/admin-test-access.md).
+`pnpm ai:admin:enable` kiểm tra cấu hình Gemini; thêm `--apply` để chọn `app-gemini` trên môi trường dev
+`admin-test`. Chạy backend, `pnpm ai:python`, rồi `pnpm ai:worker`. Launcher chỉ
+truyền service secret/key Gemini cho Python; không truyền DB/JWT/owner secret.
+Ngân sách dùng chung ledger đã có, không reset lượt gọi; không mở cohort học viên
+hoặc production. Xem [hướng dẫn admin-test](../../docs/ai-lab-assistant/baseline/admin-test-access.md).
+
+Từ 29/10/2026, runtime không còn mode `fake`, `python-fake`, `app-fake` hoặc
+adapter trả lời cố định. `--gemini` được giữ như alias tương thích của setup.
+Thiếu key/provider lỗi trả trạng thái không khả dụng, không ghép gợi ý thay thế.
+Mock chỉ nằm trong test/fixture để kiểm offline; không được launcher ứng dụng nạp.

@@ -108,7 +108,7 @@ async function explainWithGemini(feedback, config, fetcher = fetch, options = {}
     config.LAB_AI_MODE !== 'local-live' ||
     config.NODE_ENV === 'production' ||
     config.NODE_ENV === 'test' ||
-    !config.GEMINI_API_KEY ||
+    !config.GEMINI_API_KEY?.trim() ||
     (config.GEMINI_MODEL && config.GEMINI_MODEL !== policy.model)
   )
     throw fail('LOCAL_LIVE_DISABLED');

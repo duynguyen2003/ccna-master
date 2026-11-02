@@ -65,13 +65,14 @@ const getCourseMetadata = (code) =>
 
 // ─── Core Fetch ─────────────────────────────────────────────────────────────
 const apiFetch = async (endpoint, token, options = {}) => {
+  const { suppressGlobalError, ...fetchOptions } = options;
   const headers = {
     'Content-Type': 'application/json',
     ...(token && { Authorization: `Bearer ${token}` }),
     ...options.headers,
   };
 
-  const response = await fetch(`${API_URL}${endpoint}`, { ...options, headers });
+  const response = await fetch(`${API_URL}${endpoint}`, { ...fetchOptions, headers });
   const data = await response.json().catch(() => ({}));
 
   if (response.status === 401) {
@@ -87,7 +88,7 @@ const apiFetch = async (endpoint, token, options = {}) => {
   }
 
   if (!response.ok) {
-    if (response.status >= 500) {
+    if (response.status >= 500 && !suppressGlobalError) {
       window.dispatchEvent(
         new CustomEvent('api_error', { detail: 'Lỗi máy chủ (500). Vui lòng thử lại sau.' })
       );
@@ -130,13 +131,15 @@ const mapLesson = (lesson) => ({
   sectionNumber: lesson.sectionNumber || null,
   videoDuration: lesson.videoDuration || null,
   orderIndex: lesson.orderIndex,
+  canAccess: lesson.canAccess,
+  lockedReason: lesson.lockedReason,
+  hasVideo: lesson.hasVideo,
 });
 
 const mapModule = (module, idx, isStarted) => ({
   ...module,
-  // Backend trả về status (completed, active, locked).
-  // Nếu chưa ghi danh thì khóa toàn bộ.
-  status: isStarted ? module.status || (idx === 0 ? 'active' : 'locked') : 'locked',
+  // Preserve the server gate, including an accessible module before enrollment.
+  status: module.status || (isStarted && idx === 0 ? 'active' : 'locked'),
   lessonCount: module._count?.lessons || module.lessons?.length || 0,
   lessons: (module.lessons || []).map(mapLesson),
 });
@@ -234,7 +237,7 @@ export const api = {
   // ── Courses ───────────────────────────────────────────────────────────────
 
   getCourses: async (token) => {
-    const json = await safeApiFetch('/learning/courses', token, { data: [] });
+    const json = await safeApiFetch('/learning/courses?view=learning', token, { data: [] });
     const courses = json.data?.courses || json.data || [];
     return courses.map(mapCourse);
   },
@@ -245,19 +248,19 @@ export const api = {
   },
 
   getModulesByCourse: async (token, courseId) => {
-    const json = await safeApiFetch(`/learning/courses/${courseId}/modules`, token, { data: [] });
+    const json = await apiFetch(`/learning/courses/${courseId}/modules?view=learning`, token);
     return json.data || [];
   },
 
   getLessonsByModule: async (token, moduleId) => {
-    const json = await safeApiFetch(`/learning/modules/${moduleId}/lessons`, token, { data: [] });
+    const json = await apiFetch(`/learning/modules/${moduleId}/lessons?view=learning`, token);
     return json.data || [];
   },
 
   // ── Labs ──────────────────────────────────────────────────────────────────
 
   getLabs: async (token) => {
-    const json = await apiFetch('/learning/labs?limit=100', token);
+    const json = await apiFetch('/learning/labs?limit=100&view=learning', token);
     const labs = json.data?.labs || json.data || [];
     return labs.map(mapLab);
   },
@@ -305,15 +308,8 @@ export const api = {
     ).data,
   cliReplay: async (token, id, sequence) =>
     (await apiFetch(`/lab-attempts/${id}/replay?sequence=${sequence}`, token)).data,
-  cliMembers: async (token, id, userId, remove = false) =>
-    (
-      await apiFetch(`/lab-attempts/${id}/members`, token, {
-        method: 'POST',
-        body: JSON.stringify({ userId, remove }),
-      })
-    ).data,
-  cliExplain: async (token, id) =>
-    (await apiFetch(`/lab-attempts/${id}/explain`, token, { method: 'POST' })).data,
+  cliExplain: async (token, id, options = {}) =>
+    (await apiFetch(`/lab-attempts/${id}/explain`, token, { ...options, method: 'POST' })).data,
   cliAchievements: async (token) => (await apiFetch('/lab-attempts/achievements', token)).data,
 
   // ── Resources ─────────────────────────────────────────────────────────────

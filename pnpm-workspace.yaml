@@ -4,6 +4,7 @@ packages:
   - src/shared
   - src/agent
   - src/agent/contracts
+  - src/agent/browser
 
 # Keep the flat dependency layout expected by Create React App 5.
 nodeLinker: hoisted

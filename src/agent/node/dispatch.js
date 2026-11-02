@@ -57,7 +57,9 @@ function dispatch(prisma, config) {
             callId,
             contextHash: c.row.contextHash,
             leaseVersion,
-            deadlineAt: new Date(Math.min(+c.row.deadlineAt, +c.now + 20000)).toISOString(),
+            deadlineAt: new Date(
+              Math.min(+c.row.deadlineAt, +c.now + (p.executionWindowMs || 20000))
+            ).toISOString(),
             providerConfigId: c.policy.providerConfigId,
             versions: c.row.versions,
             policy: {

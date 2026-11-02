@@ -16,6 +16,7 @@ router.use(verifyToken);
 router.use(
   '/:attemptId/ai',
   require('@ccna/agent/routes/aiLab')(getPrisma(), {
+    ...require('@ccna/agent/node/workerConfig').runtimeConfig(),
     environment: process.env.AI_ENVIRONMENT || 'local',
     recoveryEpoch: process.env.AI_RECOVERY_EPOCH,
     ownerSecret: process.env.AI_OWNER_SECRET,

@@ -1,5 +1,23 @@
 @import './CliLabTokens.css';
 
+.cli-ai-loading {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 20;
+  margin: 0;
+  padding: 14px;
+  background: var(--lab-surface);
+  color: var(--lab-text);
+}
+
+@media (min-width: 769px) {
+  .cli-lab-theme .cli-workspace-body.has-ai-assistant {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) var(--ai-lab-panel-width);
+  }
+}
+
 /* Component aliases keep the workspace scoped to the shared lab palette. */
 .cli-lab-theme,
 .cli-lab-theme *,
@@ -37,6 +55,7 @@
 }
 
 .cli-lab-theme .cli-workspace.cli-lab-surface {
+  --ai-lab-panel-width: 440px;
   width: min(1640px, 100%);
   height: min(960px, 100%);
   margin: auto;
@@ -135,6 +154,7 @@
 }
 
 .cli-lab-theme .cli-workspace-body {
+  position: relative;
   height: auto;
   min-height: 0;
   flex: 1 1 auto;
@@ -241,114 +261,6 @@
   color: var(--lab-text-subtle);
   font-size: 0.72rem;
 }
-.cli-lab-inline-form {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-left: auto;
-}
-.cli-lab-inline-form input {
-  height: 32px;
-  min-width: 140px;
-  padding: 0 10px;
-  border: 1px solid var(--lab-border-strong);
-  border-radius: 6px;
-  color: var(--lab-text);
-  background: var(--lab-surface-raised);
-  font-family: inherit;
-  font-size: 0.75rem;
-  outline: none;
-  box-sizing: border-box;
-  transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease,
-    background-color 0.2s ease;
-}
-.cli-lab-inline-form input::placeholder {
-  color: var(--lab-text-subtle);
-  font-size: 0.73rem;
-  opacity: 0.85;
-}
-.cli-lab-inline-form input:focus {
-  border-color: var(--lab-accent);
-  box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.2);
-  background: var(--lab-surface-soft);
-}
-.cli-lab-inline-form input[type='number'] {
-  width: 120px;
-}
-.cli-lab-inline-form input[type='number']::-webkit-inner-spin-button,
-.cli-lab-inline-form input[type='number']::-webkit-outer-spin-button {
-  opacity: 0.4;
-}
-.cli-lab-join-form {
-  margin-left: 0;
-}
-.cli-lab-join-form input {
-  min-width: 220px;
-}
-.cli-lab-inline-form button,
-.cli-lab-member-row button {
-  height: 32px;
-  padding: 0 14px;
-  border: 1px solid var(--lab-border-strong);
-  border-radius: 6px;
-  color: var(--lab-text);
-  background: var(--lab-surface-raised);
-  font-family: inherit;
-  font-size: 0.75rem;
-  font-weight: 600;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  white-space: nowrap;
-  box-sizing: border-box;
-  transition:
-    background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
-    color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
-    border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
-    box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1),
-    transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
-    opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.cli-lab-inline-form button:hover:not(:disabled),
-.cli-lab-member-row button:hover:not(:disabled) {
-  border-color: var(--lab-accent);
-  color: var(--lab-accent);
-  background: var(--lab-accent-bg);
-}
-.cli-lab-inline-form button:active:not(:disabled),
-.cli-lab-member-row button:active:not(:disabled) {
-  transform: translateY(1px);
-}
-.cli-lab-inline-form button:disabled,
-.cli-lab-member-row button:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-  border-color: var(--lab-border);
-}
-.cli-lab-member-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 10px;
-  border-radius: 6px;
-  background: var(--lab-surface-raised);
-  border: 1px solid var(--lab-border);
-  font-size: 0.74rem;
-}
-.cli-lab-member-row span {
-  font-weight: 600;
-  color: var(--lab-text);
-}
-.cli-lab-member-row button {
-  height: 24px;
-  padding: 0 8px;
-  font-size: 0.7rem;
-  border-radius: 4px;
-}
-
 .cli-lab-terminal-pane {
   overflow-y: auto;
 }
@@ -1052,6 +964,7 @@
     padding: 0;
   }
   .cli-lab-theme .cli-workspace.cli-lab-surface {
+    --ai-lab-panel-width: 400px;
     height: 100%;
     border: 0;
     border-radius: 0;
@@ -1094,24 +1007,10 @@
   .cli-lab-secondary-panel {
     flex-wrap: wrap;
   }
-  .cli-lab-inline-form {
-    width: 100%;
-    margin-left: 0;
-  }
-  .cli-lab-inline-form input {
-    flex: 1;
-  }
 }
 .cli-lab-theme .network-topology {
   height: clamp(240px, 32vh, 360px);
   min-height: 240px;
-}
-.cli-lab-theme .is-console-focused .network-topology {
-  height: 180px;
-  min-height: 160px;
-}
-.cli-lab-theme .is-console-focused .cli-xterm-host {
-  height: max(260px, 38vh);
 }
 @media (max-width: 560px) {
   .cli-lab-theme .cli-lab-header {
@@ -1143,9 +1042,10 @@
     height: 280px;
   }
 }
-.cli-lab-theme .cli-console-toggle {
-  width: auto;
-  min-width: 92px;
-  padding: 0 12px;
-  white-space: nowrap;
+@media (max-width: 768px) {
+  /* The existing laptop notice covers CLI; keep those controls out of Tab order.
+     The assistant Dialog is portalled outside this surface and remains usable. */
+  .cli-lab-theme .cli-workspace.cli-lab-surface {
+    visibility: hidden;
+  }
 }

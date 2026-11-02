@@ -16,7 +16,7 @@ Dự án được xây dựng theo mô hình **Client-Server** đầy đủ (Ful
 *   **[.env](file:///d:/ĐỒ ÁN TỐT NGHIỆP/ccna-master/.env)** & **[.env.example](file:///d:/ĐỒ ÁN TỐT NGHIỆP/ccna-master/.env.example)**: Chứa các biến môi trường cấu hình cho hệ thống (như cổng Server, chuỗi kết nối Database `DATABASE_URL` tới PostgreSQL, mã bí mật `JWT_SECRET`, thông số gửi mail của Nodemailer, Client ID của Google OAuth và các tham số của Cloudinary để tải ảnh).
 *   **[package.json](file:///d:/ĐỒ ÁN TỐT NGHIỆP/ccna-master/package.json)**: File quan trọng nhất của Node.js, khai báo tất cả các thư viện dependency đã cài đặt (cho cả React & Express) và các kịch bản chạy (scripts) như `pnpm start`, `pnpm run dev`, `build`...
 *   **[prisma.config.ts](file:///d:/ĐỒ ÁN TỐT NGHIỆP/ccna-master/prisma.config.ts)**: Cấu hình bổ sung cho Prisma ORM khi thực hiện biên dịch và kết nối.
-*   **[db_schema_dump.prisma](file:///d:/ĐỒ ÁN TỐT NGHIỆP/ccna-master/db_schema_dump.prisma)**: File sao lưu cấu trúc database dưới dạng ngôn ngữ schema của Prisma.
+*   **`db_schema_dump.prisma`**: Bản xuất schema cục bộ, được `.gitignore` loại khỏi Git. Schema nguồn dùng để generate client và quản lý migration là [src/backend/prisma/schema.prisma](../src/backend/prisma/schema.prisma).
 *   **[README.md](file:///d:/ĐỒ ÁN TỐT NGHIỆP/ccna-master/README.md)**: Tài liệu hướng dẫn cài đặt, cấu hình môi trường ban đầu và các câu lệnh để vận hành dự án.
 
 ---
@@ -80,12 +80,12 @@ Backend được chia nhỏ thành các thư mục chức năng để dễ bảo
     *   `CiscoCliLookup.js`: Tra cứu từ điển câu lệnh cấu hình thiết bị router/switch của Cisco.
 
 ### 📁 Thư mục Giao tiếp API (`src/services/`)
-*   **[Api.js](file:///d:/ĐỒ ÁN TỐT NGHIỆP/ccna-master/src/services/Api.js)**: Cấu hình Axios Client chung để tự động chèn JWT token lưu ở client vào tiêu đề header của mỗi request gửi lên Backend.
-*   **`api/`** (`adminApi.js`, `authApi.js`, `contentApi.js`): Các module API chuyên biệt gọi trực tiếp các endpoint tương ứng ở Backend.
+*   **[Api.js](../src/frontend/src/services/Api.js)**: Fetch wrapper cho học viên, gắn Bearer token và xử lý lỗi API chung.
+*   **[adminApi.js](../src/frontend/src/services/api/adminApi.js)**: Client gọi các endpoint quản trị. Các placeholder `authApi.js`, `contentApi.js` và barrel `api/index.js` không có consumer đã được gỡ.
 
 ### 📁 Thư mục Quản lý State (`src/context/`)
 *   **[AuthContext.js](file:///d:/ĐỒ ÁN TỐT NGHIỆP/ccna-master/src/context/AuthContext.js)**: Cung cấp trạng thái đăng nhập, thông tin tài khoản và hàm Logout toàn cục cho tất cả các Component trong ứng dụng.
-*   **[ToastContext.js](file:///d:/ĐỒ ÁN TỐT NGHIỆP/ccna-master/src/context/ToastContext.js)**: Quản lý việc hiển thị thông báo popup (Toast) trên màn hình khi thao tác thành công hoặc lỗi.
+*   **[Toast.js](../src/frontend/src/components/ui/Toast.js)**: Component và hook hiển thị thông báo; toast toàn cục dùng AuthContext trong App. `ToastContext.js` và `AdminContext.js` dạng khung chưa dùng đã được gỡ.
 
 ### 📁 Thư mục Dữ liệu tĩnh (`src/json/`)
 *   **[ports.json](file:///d:/ĐỒ ÁN TỐT NGHIỆP/ccna-master/src/json/ports.json)**: Tập tin chứa danh sách hơn hàng ngàn cổng mạng và mô tả giao thức đi kèm để phục vụ cho tính năng Port Lookup.

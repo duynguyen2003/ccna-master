@@ -7,16 +7,18 @@ import httpx
 import pytest
 from conftest import SECRET, headers_for
 from fastapi.testclient import TestClient
+from fixtures.fake_adapter import FakeAdapter
 
 from app.boundary import ANALYZE_PATH
 from app.config import Settings
 from app.contracts import VERSION, validate
-from app.fake import FakeAdapter
 from app.main import create_app
 
 
 def client_for(settings, node, adapter=None):
-    return TestClient(create_app(settings, transport=httpx.MockTransport(node), adapter=adapter))
+    return TestClient(
+        create_app(settings, transport=httpx.MockTransport(node), adapter=adapter or FakeAdapter())
+    )
 
 
 def test_live_and_disabled_readiness_are_distinct_and_private_routes_are_hidden():
@@ -29,9 +31,18 @@ def test_live_and_disabled_readiness_are_distinct_and_private_routes_are_hidden(
             assert client.get(path).status_code == 404
 
 
+def test_removed_fake_provider_is_never_registered(payload, settings, node):
+    payload["providerConfigId"] = "local-fake-v1"
+    with TestClient(create_app(settings, transport=httpx.MockTransport(node))) as client:
+        response = client.post(ANALYZE_PATH, json=payload, headers=headers_for(payload))
+        assert response.status_code == 503
+        assert response.json()["error"]["code"] == "AI_DISABLED"
+        assert not node.calls
+
+
 def test_fake_claim_receipt_ack_order_and_duplicate_rejection(payload, settings, node):
     with client_for(settings, node) as client:
-        assert client.get("/health/ready").json()["adapter"] == "fake"
+        assert client.get("/health/ready").json()["adapter"] == "gemini"
         response = client.post(ANALYZE_PATH, json=payload, headers=headers_for(payload))
         assert response.status_code == 200
         validate("InternalAnalyzeResponse", response.json())

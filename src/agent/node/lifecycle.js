@@ -1,6 +1,7 @@
 const { mayAccess } = require('../../backend/src/simulation/attemptAccess');
 const { isAccountActive } = require('../../backend/src/security/session');
 const { fail } = require('./quota');
+const { inAiCohort } = require('./eligibility');
 const pending = (r) => ['QUEUED', 'RUNNING'].includes(r.status);
 // The pg adapter can interpret raw timestamptz as UTC wall time in a non-UTC
 // session. Epoch milliseconds avoid that conversion while retaining DB time.
@@ -70,7 +71,6 @@ async function locked(prisma, environment, requestId, fn) {
 }
 function canRetain(c) {
   const { row, user, attempt, conversation } = c;
-  const rules = c.policy?.eligibilityRules;
   return Boolean(
     isAccountActive(user) &&
     user.sessionVersion === row.sessionVersionAtAdmission &&
@@ -82,22 +82,11 @@ function canRetain(c) {
     conversation.userId === row.userId &&
     conversation.attemptId === row.attemptId &&
     conversation.epoch === row.conversationEpoch &&
-    Array.isArray(rules?.userIds) &&
-    rules.userIds.includes(row.userId) &&
-    Array.isArray(rules?.labIds) &&
-    rules.labIds.includes(attempt.labId)
+    inAiCohort(c.policy, user, attempt.labId)
   );
 }
 function eligible(c) {
-  const rules = c.policy?.eligibilityRules;
-  return (
-    canRetain(c) &&
-    c.policy?.admissionEnabled &&
-    Array.isArray(rules?.userIds) &&
-    rules.userIds.includes(c.row.userId) &&
-    Array.isArray(rules?.labIds) &&
-    rules.labIds.includes(c.attempt.labId)
-  );
+  return Boolean(canRetain(c) && c.policy?.admissionEnabled);
 }
 function fenced(c, workerId, leaseVersion) {
   if (

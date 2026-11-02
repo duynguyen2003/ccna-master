@@ -8,10 +8,10 @@ from pathlib import Path
 import httpx
 import jwt
 import pytest
+from fixtures.fake_adapter import FAKE_VERSIONS
 
 from app.config import Settings
 from app.contracts import VERSION, binding, validate
-from app.fake import FAKE_VERSIONS
 
 PROJECT = Path(__file__).resolve().parents[1]
 CONTRACTS = PROJECT.parent / "contracts" / "ai-lab" / "v1"
@@ -26,7 +26,7 @@ def payload():
         .isoformat(timespec="milliseconds")
         .replace("+00:00", "Z")
     )
-    value["providerConfigId"] = "local-fake-v1"
+    value["providerConfigId"] = "local-gemini-v1"
     value["versions"].update(copy.deepcopy(FAKE_VERSIONS))
     return value
 
@@ -61,7 +61,13 @@ def headers_for(payload):
 
 @pytest.fixture
 def settings():
-    return Settings(mode="fake", environment="test", service_secret=SECRET)
+    return Settings(
+        mode="gemini",
+        environment="local",
+        service_secret=SECRET,
+        live_enabled=True,
+        api_key="synthetic-test-key",
+    )
 
 
 class NodeStub:

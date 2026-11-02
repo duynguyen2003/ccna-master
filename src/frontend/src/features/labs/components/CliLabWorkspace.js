@@ -1,5 +1,5 @@
 import { Sun, Moon } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Check,
   ChevronDown,
@@ -13,11 +13,9 @@ import {
   Radio,
   RotateCcw,
   Send,
-  Share2,
   SlidersHorizontal,
   Sparkles,
   Trophy,
-  Users,
   X,
 } from 'lucide-react';
 import { api } from '../../../services/Api';
@@ -56,6 +54,9 @@ const MODE_SUFFIX = {
   ROUTER_CONFIG: '(config-router)#',
   ACL_CONFIG: '(config-ext-nacl)#',
 };
+
+const AiLabAssistant = lazy(() => import('./AiLabAssistant'));
+const AiFeedbackExplanation = lazy(() => import('./AiFeedbackExplanation'));
 
 const ONBOARDING_STEPS = [
   {
@@ -113,15 +114,9 @@ export default function CliLabWorkspace({
   const [startRetry, setStartRetry] = useState(0);
   const [replay, setReplay] = useState(null);
   const [sequence, setSequence] = useState(0);
-  const [joinId, setJoinId] = useState('');
-  const [memberId, setMemberId] = useState('');
   const [explanation, setExplanation] = useState('');
-  const [explanationDetails, setExplanationDetails] = useState(null);
-  const explanationOwner = useRef(null);
-  explanationOwner.current = { token, attemptId: attempt?.id };
   useEffect(() => {
     setExplanation('');
-    setExplanationDetails(null);
   }, [token, attempt?.id]);
   const [achievements, setAchievements] = useState(null);
   const [destination, setDestination] = useState('');
@@ -130,22 +125,20 @@ export default function CliLabWorkspace({
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [hintOpen, setHintOpen] = useState(false);
   const [secondaryPanel, setSecondaryPanel] = useState(null);
+  const [assistantWidth, setAssistantWidth] = useState(null);
+  const assistantEnabled = Boolean(
+    token && user?.id && !isPreview && !replay && attempt?.status === 'IN_PROGRESS'
+  );
+  const isReplay = Boolean(replay);
+  useEffect(() => {
+    setSecondaryPanel(null);
+  }, [token, attempt?.id, isReplay]);
   const [pulseTaskId, setPulseTaskId] = useState('');
   const [focusedTaskId, setFocusedTaskId] = useState('');
   const [terminalShakeKey, setTerminalShakeKey] = useState(0);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState(0);
   const [theme, setTheme] = useState('dark');
-  const [consoleFocused, setConsoleFocused] = useState(false);
-  useEffect(() => {
-    if (!consoleFocused) return;
-    const frame = requestAnimationFrame(() =>
-      dialog.current
-        ?.querySelector('.cli-xterm-host')
-        ?.scrollIntoView({ block: 'nearest', behavior: 'auto' })
-    );
-    return () => cancelAnimationFrame(frame);
-  }, [consoleFocused]);
   const mounted = useRef(true);
   const dialog = useRef(null);
   const onboardingFocusRestore = useRef(null);
@@ -458,16 +451,6 @@ export default function CliLabWorkspace({
     action({ type: 'link', linkId: link.id, enabled: link.enabled === false });
   };
 
-  const join = () =>
-    perform(async () => {
-      if (isPreview) return;
-      const nextAttempt = await api.getCliLabAttempt(token, joinId.trim());
-      selected.current = '';
-      setReplay(null);
-      setExplanation('');
-      accept(nextAttempt);
-    });
-
   const submit = () =>
     perform(async () => {
       const current = latest.current;
@@ -582,6 +565,7 @@ export default function CliLabWorkspace({
       return (
         node.getClientRects().length > 0 &&
         style.visibility !== 'hidden' &&
+        !node.closest('[inert]') &&
         !node.closest('details:not([open])') &&
         node.getAttribute('aria-hidden') !== 'true'
       );
@@ -607,6 +591,7 @@ export default function CliLabWorkspace({
   };
 
   const captureEscape = (event) => {
+    if (event.target.closest('[data-ai-panel]')) return;
     if (event.key === 'Escape') closeOnEscape(event);
   };
 
@@ -627,19 +612,26 @@ export default function CliLabWorkspace({
           <div className="cli-mobile-fallback-icon">
             <Laptop size={36} />
           </div>
-          <h3>Chức năng này cần dùng trên Laptop</h3>
+          <h3>Thực hành CLI trên máy tính</h3>
           <p>
             Môi trường thực hành mô phỏng mạng Cisco yêu cầu màn hình rộng và bàn phím máy tính.
           </p>
+          {!isPreview && (
+            <button
+              className="cli-mobile-fallback-btn"
+              disabled={!assistantEnabled}
+              onClick={() => setSecondaryPanel('assistant')}
+            >
+              Mở trợ lý AI
+            </button>
+          )}
           <button className="cli-mobile-fallback-btn" onClick={onClose}>
             Quay lại danh sách bài học
           </button>
         </div>
       </div>
 
-      <div
-        className={`cli-workspace network-workspace cli-lab-surface ${consoleFocused ? 'is-console-focused' : ''}`}
-      >
+      <div className="cli-workspace network-workspace cli-lab-surface">
         <header className="cli-workspace-header cli-lab-header">
           <div className="cli-lab-heading">
             <span className="cli-workspace-kicker">PHÒNG THỰC HÀNH MẠNG</span>
@@ -679,14 +671,6 @@ export default function CliLabWorkspace({
               ?
             </button>
           )}
-          <button
-            type="button"
-            className="cli-lab-theme-toggle cli-console-toggle"
-            aria-pressed={consoleFocused}
-            onClick={() => setConsoleFocused((value) => !value)}
-          >
-            Ưu tiên CLI
-          </button>
           <button
             type="button"
             className="cli-lab-theme-toggle"
@@ -736,7 +720,7 @@ export default function CliLabWorkspace({
           <>
             <div className="cli-lab-session-strip">
               <span className="cli-lab-session-id">
-                <Share2 size={14} />{' '}
+                <Radio size={14} />{' '}
                 {isPreview ? (
                   'Phiên cục bộ'
                 ) : (
@@ -755,20 +739,21 @@ export default function CliLabWorkspace({
                   <button
                     type="button"
                     className="cli-lab-session-button"
-                    onClick={() =>
-                      setSecondaryPanel((current) => (current === 'session' ? null : 'session'))
-                    }
-                    aria-expanded={secondaryPanel === 'session'}
-                  >
-                    <Users size={14} /> Cùng thực hành
-                  </button>
-                  <button
-                    type="button"
-                    className="cli-lab-session-button"
                     onClick={openAchievements}
                     aria-expanded={secondaryPanel === 'achievements'}
                   >
                     <Trophy size={14} /> Thành tích
+                  </button>
+                  <button
+                    type="button"
+                    className="cli-lab-session-button"
+                    disabled={!assistantEnabled}
+                    onClick={() =>
+                      setSecondaryPanel((value) => (value === 'assistant' ? null : 'assistant'))
+                    }
+                    aria-expanded={secondaryPanel === 'assistant'}
+                  >
+                    <Sparkles size={14} aria-hidden="true" /> Trợ lý AI
                   </button>
                 </>
               )}
@@ -779,63 +764,6 @@ export default function CliLabWorkspace({
               )}
             </div>
 
-            {secondaryPanel === 'session' && !isPreview && (
-              <section className="cli-lab-secondary-panel" aria-label="Cùng thực hành">
-                <div>
-                  <strong>Mời bạn học vào phiên</strong>
-                  <p>Chỉ chủ phiên có thể mời, gỡ quyền và nộp bài.</p>
-                </div>
-                <div className="cli-lab-inline-form">
-                  <input
-                    aria-label="ID tài khoản bạn học"
-                    type="number"
-                    min="1"
-                    placeholder="ID bạn học"
-                    value={memberId}
-                    onChange={(event) => setMemberId(event.target.value)}
-                  />
-                  <button
-                    disabled={!editable || !attempt.isOwner || !memberId}
-                    onClick={() =>
-                      perform(async () => {
-                        await api.cliMembers(token, attempt.id, Number(memberId));
-                        await refresh();
-                      })
-                    }
-                  >
-                    Thêm
-                  </button>
-                </div>
-                {attempt.isOwner &&
-                  attempt.members?.map((id) => (
-                    <div className="cli-lab-member-row" key={id}>
-                      <span>User {id}</span>
-                      <button
-                        disabled={!editable}
-                        onClick={() =>
-                          perform(async () => {
-                            await api.cliMembers(token, attempt.id, id, true);
-                            await refresh();
-                          })
-                        }
-                      >
-                        Gỡ quyền
-                      </button>
-                    </div>
-                  ))}
-                <div className="cli-lab-inline-form cli-lab-join-form">
-                  <input
-                    aria-label="Mã phiên được chia sẻ"
-                    placeholder="Dán mã phiên được chia sẻ"
-                    value={joinId}
-                    onChange={(event) => setJoinId(event.target.value)}
-                  />
-                  <button disabled={busy || !joinId} onClick={join}>
-                    Vào phiên
-                  </button>
-                </div>
-              </section>
-            )}
             {secondaryPanel === 'achievements' && !isPreview && (
               <section className="cli-lab-secondary-panel" aria-label="Thành tích của bạn">
                 <strong>Thành tích của bạn</strong>
@@ -852,7 +780,39 @@ export default function CliLabWorkspace({
               </section>
             )}
 
-            <div className="cli-workspace-body cli-lab-body">
+            <div
+              className={`cli-workspace-body cli-lab-body${secondaryPanel === 'assistant' && assistantEnabled ? ' has-ai-assistant' : ''}`}
+              style={assistantWidth ? { '--ai-lab-panel-width': `${assistantWidth}px` } : undefined}
+            >
+              {secondaryPanel === 'assistant' && assistantEnabled && (
+                <Suspense
+                  fallback={
+                    <p role="status" className="cli-ai-loading">
+                      Đang tải trợ lý…
+                    </p>
+                  }
+                >
+                  <AiLabAssistant
+                    key={`${token}:${attempt.id}`}
+                    token={token}
+                    userId={user.id}
+                    attemptId={attempt.id}
+                    revision={attempt.state?.revision ?? 0}
+                    theme={theme}
+                    devices={deviceEntries(attempt.state?.devices).map(([id, device]) => ({
+                      id,
+                      name: device.hostname || id,
+                    }))}
+                    selectedDeviceId={deviceId}
+                    onWidthChange={setAssistantWidth}
+                    taskId={selectedTask?.id}
+                    onSelectDevice={(id) => {
+                      if (Object.hasOwn(attempt.state?.devices || {}, id)) selectDevice(id);
+                    }}
+                    onClose={() => setSecondaryPanel(null)}
+                  />
+                </Suspense>
+              )}
               <section className="cli-terminal-pane cli-lab-terminal-pane">
                 {displayed?.devices && (
                   <>
@@ -998,7 +958,18 @@ export default function CliLabWorkspace({
                     {hintOpen ? 'Ẩn gợi ý' : 'Xem gợi ý'}
                   </button>
                   {hintOpen && (
-                    <div className="cli-lab-hint-expanded">{selectedTask?.hint || hintText}</div>
+                    <div className="cli-lab-hint-expanded">
+                      {selectedTask?.hint || hintText}
+                      {!isPreview && (
+                        <button
+                          type="button"
+                          disabled={!assistantEnabled}
+                          onClick={() => setSecondaryPanel('assistant')}
+                        >
+                          Hỏi trợ lý
+                        </button>
+                      )}
+                    </div>
                   )}
                 </div>
                 <div
@@ -1061,7 +1032,11 @@ export default function CliLabWorkspace({
                 </div>
               </section>
 
-              <aside className="cli-task-pane cli-lab-task-pane">
+              <aside
+                className="cli-task-pane cli-lab-task-pane"
+                inert={secondaryPanel === 'assistant' && assistantEnabled ? '' : undefined}
+                aria-hidden={secondaryPanel === 'assistant' && assistantEnabled ? true : undefined}
+              >
                 <div className="cli-task-scroll cli-lab-task-scroll">
                   <section className="cli-lab-objective">
                     <span className="cli-lab-eyebrow">MỤC TIÊU</span>
@@ -1149,37 +1124,15 @@ export default function CliLabWorkspace({
                         <Sparkles size={16} />
                       </div>
                       <p>Điểm đạt: {attempt.lab.passingScore ?? 70}/100</p>
-                      <button
-                        disabled={busy || isPreview}
-                        onClick={() =>
-                          perform(async () => {
-                            const owner = explanationOwner.current;
-                            const result = await api.cliExplain(token, attempt.id);
-                            if (
-                              explanationOwner.current.token !== owner.token ||
-                              explanationOwner.current.attemptId !== owner.attemptId
-                            )
-                              return;
-                            setExplanation(result.explanation);
-                            setExplanationDetails(result);
-                          })
-                        }
-                      >
-                        Giải thích kết quả
-                      </button>
-                      {explanation && (
-                        <div aria-live="polite">
-                          <small>
-                            {explanationDetails?.explanation === explanation &&
-                            explanationDetails.provider === 'gemini'
-                              ? `Gemini · ${explanationDetails.model}`
-                              : 'Giải thích theo kết quả chấm'}
-                            {explanationDetails?.explanation === explanation &&
-                              explanationDetails.unavailable &&
-                              ' · AI chưa khả dụng, đang dùng gợi ý có sẵn'}
-                          </small>
-                          <p className="network-explanation">{explanation}</p>
-                        </div>
+                      <Suspense fallback={<p role="status">Đang tải phần giải thích…</p>}>
+                        <AiFeedbackExplanation
+                          token={token}
+                          attempt={attempt}
+                          disabled={isPreview || Boolean(replay)}
+                        />
+                      </Suspense>
+                      {isPreview && explanation && (
+                        <p className="network-explanation">{explanation}</p>
                       )}
                     </section>
                   )}

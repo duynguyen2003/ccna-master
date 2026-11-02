@@ -1,5 +1,6 @@
 import asyncio
 import json
+import time
 
 import httpx
 
@@ -8,6 +9,7 @@ from .errors import ServiceError
 from .models import parse_wire
 from .policy import GEMINI_VERSIONS, POLICY
 from .prompts import build_request, validate_answer
+from .timing import emit, measure
 
 ORIGIN = "https://generativelanguage.googleapis.com"
 
@@ -73,7 +75,12 @@ class GeminiAdapter:
             raise ServiceError("AI_BUDGET_PAUSED")
 
     async def post(self, method, value, seconds):
+        with measure(f"google.{method}.total"):
+            return await self._post(method, value, seconds)
+
+    async def _post(self, method, value, seconds):
         # Native REST only: no SDK automatic continuation, retry or tools.
+        started = time.perf_counter()
         async with asyncio.timeout(seconds):
             async with self.client.stream(
                 "POST",
@@ -84,11 +91,14 @@ class GeminiAdapter:
                 },
                 json=value,
             ) as response:
+                emit(f"google.{method}.headers", started)
+                body_started = time.perf_counter()
                 raw = bytearray()
                 async for chunk in response.aiter_bytes():
                     raw.extend(chunk)
                     if len(raw) > 65536:
                         raise ValueError("RESPONSE_TOO_LARGE")
+                emit(f"google.{method}.body", body_started)
                 if response.status_code != 200:
                     return response.status_code, {}
                 return 200, json.loads(raw)

@@ -56,6 +56,14 @@ if (fs.existsSync(rootEnvironment)) {
 }
 
 process.chdir(frontendDirectory);
-const entry = require.resolve('react-scripts/bin/react-scripts.js');
-process.argv = [process.execPath, entry, ...process.argv.slice(2)];
+const supported = ['start', 'build', 'test'].includes(command);
+if (supported) {
+  process.env.NODE_ENV = mode;
+  process.env.BABEL_ENV = mode;
+  if (command !== 'test') require('../../agent/scripts/frontend-browser.cjs')(frontendDirectory);
+}
+const entry = require.resolve(
+  supported ? `react-scripts/scripts/${command}.js` : 'react-scripts/bin/react-scripts.js'
+);
+process.argv = [process.execPath, entry, ...process.argv.slice(supported ? 3 : 2)];
 require(entry);

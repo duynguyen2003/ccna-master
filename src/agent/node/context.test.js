@@ -6,7 +6,7 @@ const { parseCommand } = require('@ccna/shared/simulation/cliParser');
 const { parseAnalyzeInput } = require('@ccna/shared/aiLabContract');
 const { labs } = require('../fixtures/labs/disc03');
 const { captureSnapshot } = require('./snapshot');
-const { runtimeConfig } = require('./workerConfig');
+const { provider: testProvider } = require('../tests/helpers/fakeProvider.cjs');
 const {
   projectContext,
   contextPreparer,
@@ -18,7 +18,7 @@ const { evidenceFor, commandsFor } = require('./evidence');
 const { verifyOutput } = require('./outputVerifier');
 const { redactor } = require('./redaction');
 
-const provider = () => runtimeConfig({}).providers['local-fake-v1'];
+const provider = () => testProvider;
 function rowFor(lab = labs[0]) {
   const attempt = {
     id: randomUUID(),

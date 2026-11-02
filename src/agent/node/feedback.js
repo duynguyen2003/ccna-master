@@ -1,18 +1,17 @@
 const { explainWithGemini } = require('./localGemini');
 
-const deterministicExplanation = (feedback) =>
-  feedback.checks
-    .filter((c) => !c.passed)
-    .map((c) => `${c.message}${c.hint ? ` Gợi ý: ${c.hint}` : ''}`)
-    .join('\n') || 'Tất cả yêu cầu đã đạt.';
 async function explainFeedback(feedback, config = process.env, fetcher = fetch, options = {}) {
-  const fallback = { explanation: deterministicExplanation(feedback), provider: 'deterministic' };
-  if (config.LAB_AI_MODE !== 'local-live') return fallback;
   try {
     return await explainWithGemini(feedback, config, fetcher, options);
   } catch (error) {
-    const reason = /^[A-Z][A-Z0-9_]+$/.test(error.code || '') ? error.code : 'PROVIDER_UNAVAILABLE';
-    return { ...fallback, unavailable: true, reason };
+    const code = /^[A-Z][A-Z0-9_]+$/.test(error.code || '') ? error.code : 'PROVIDER_UNAVAILABLE';
+    const exhausted = code === 'LOCAL_BUDGET_EXHAUSTED';
+    const limited = ['LOCAL_RATE_LIMIT', 'LOCAL_BUSY', 'GEMINI_HTTP_429'].includes(code);
+    throw Object.assign(new Error('Trợ lý AI chưa khả dụng. Hãy thử lại sau.'), {
+      status: exhausted || limited ? 429 : 503,
+      code: exhausted ? 'AI_QUOTA_EXHAUSTED' : limited ? 'AI_USER_RATE_LIMITED' : code,
+      ...(limited ? { retryAfterSeconds: 60 } : {}),
+    });
   }
 }
-module.exports = { explainFeedback, deterministicExplanation };
+module.exports = { explainFeedback };

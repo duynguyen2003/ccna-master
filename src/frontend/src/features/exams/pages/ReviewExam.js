@@ -118,7 +118,7 @@ const ReviewExamSession = () => {
                   className="take-exam__q-tag"
                   style={{
                     background: isCorrect ? 'var(--color-success-bg)' : 'var(--color-danger-bg)',
-                    color: isCorrect ? 'var(--color-success)' : '#991b1b',
+                    color: isCorrect ? 'var(--color-success)' : 'var(--color-danger)',
                   }}
                 >
                   {isCorrect ? '✓ CÂU HỎI ' : '✕ CÂU HỎI '}
@@ -342,15 +342,15 @@ const ReviewExamSession = () => {
                 const ca = Array.isArray(q.correctAnswer) ? q.correctAnswer : [q.correctAnswer];
                 const isRightAnswer =
                   ua.length === ca.length && ua.every((val) => ca.includes(val));
-                let bg = 'var(--color-muted-foreground)',
+                let bg = 'var(--color-muted)',
                   color = 'var(--color-muted-foreground)',
                   border = 'none';
                 if (index === currentQ) {
-                  bg = 'white';
+                  bg = 'var(--color-primary-soft)';
                   color = 'var(--color-primary)';
-                  border = '2px solid #386298';
+                  border = '2px solid var(--color-primary)';
                 } else if (ua.length === 0) {
-                  bg = 'var(--color-muted-foreground)';
+                  bg = 'var(--color-muted)';
                   color = 'var(--color-muted-foreground)';
                 } else if (isRightAnswer) {
                   bg = 'var(--color-success-bg)';

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import '../styles/Labs.css';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   Download,
   Clock,
@@ -17,6 +17,7 @@ import {
   AlertCircle,
   FileText,
   Laptop,
+  Lock,
 } from 'lucide-react';
 import { api, BACKEND_URL } from '../../../services/Api.js';
 import { useAuth } from '../../../context/AuthContext';
@@ -387,9 +388,18 @@ const difficultyConfig = {
   Hard: { label: 'Khó', cls: 'badge-hard' },
 };
 
-const LabCard = ({ lab, isCompleted, onSelect, onStartCli, isGuestView, onGuestBlocked }) => {
+export const LabCard = ({
+  lab,
+  isCompleted,
+  onSelect,
+  onStartCli,
+  isGuestView,
+  onGuestBlocked,
+}) => {
   const diff = difficultyConfig[lab.difficulty] || { label: lab.difficulty, cls: 'badge-gray' };
   const isCliLab = lab.labType === 'CLI_SIMULATION';
+  const locked = !isGuestView && lab.access?.canAccess === false;
+  const prerequisite = lab.access?.unmetLessons?.[0];
 
   return (
     <div className="lab-card">
@@ -440,6 +450,7 @@ const LabCard = ({ lab, isCompleted, onSelect, onStartCli, isGuestView, onGuestB
       <div className="lab-card-body">
         <span className="lab-card-category">{lab.category}</span>
         <h3 className="lab-card-title">{lab.title}</h3>
+        {lab.access?.mode === 'OPEN' && <small className="lab-access-mode">Tự luyện</small>}
 
         <div className="lab-card-meta">
           <span>
@@ -454,9 +465,12 @@ const LabCard = ({ lab, isCompleted, onSelect, onStartCli, isGuestView, onGuestB
           {isCliLab ? (
             <button
               className="lab-btn-primary"
+              disabled={locked}
+              aria-describedby={locked ? `lab-lock-${lab.id}` : undefined}
               onClick={() => (isGuestView ? onGuestBlocked() : onStartCli(lab))}
             >
-              <Terminal size={14} /> Mở CLI Lab
+              {locked ? <Lock size={14} aria-hidden="true" /> : <Terminal size={14} />}{' '}
+              {locked ? 'Chưa mở khóa' : 'Mở CLI Lab'}
             </button>
           ) : (
             <>
@@ -464,7 +478,7 @@ const LabCard = ({ lab, isCompleted, onSelect, onStartCli, isGuestView, onGuestB
                 <button type="button" className="lab-btn-outline" onClick={onGuestBlocked}>
                   <Download size={14} /> Tải file
                 </button>
-              ) : getLabFileUrl(lab.fileUrl) ? (
+              ) : !locked && getLabFileUrl(lab.fileUrl) ? (
                 <a href={getLabFileUrl(lab.fileUrl)} className="lab-btn-outline" download>
                   <Download size={14} /> Tải file
                 </a>
@@ -480,12 +494,29 @@ const LabCard = ({ lab, isCompleted, onSelect, onStartCli, isGuestView, onGuestB
                 </button>
               )}
 
-              <button className="lab-btn-primary" onClick={() => onSelect(lab)}>
+              <button className="lab-btn-primary" disabled={locked} onClick={() => onSelect(lab)}>
                 <BookOpen size={14} /> Xem hướng dẫn
               </button>
             </>
           )}
         </div>
+        {locked && (
+          <div className="lab-access-lock" id={`lab-lock-${lab.id}`}>
+            <p>{lab.access.lockedReason}</p>
+            {prerequisite ? (
+              <Link
+                to={`/lesson?course=${encodeURIComponent(prerequisite.courseId)}&lesson=${prerequisite.id}`}
+              >
+                Học bài: {prerequisite.title} ({prerequisite.requiredPercent}%)
+              </Link>
+            ) : (
+              <Link to="/roadmap">Xem lộ trình</Link>
+            )}
+            {lab.access.unmetLessons?.length > 1 && (
+              <small>Còn {lab.access.unmetLessons.length} bài cần học.</small>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -508,12 +539,14 @@ export const Labs = () => {
   const [selectedLab, setSelectedLab] = useState(null);
   const [selectedCliLab, setSelectedCliLab] = useState(null);
   const [completedLabs, setCompletedLabs] = useState([]);
+  const [loadedToken, setLoadedToken] = useState(undefined);
 
   // Tự động mở bài Lab nếu có labIdParam trong URL
   useEffect(() => {
+    if (loadedToken !== (token || null)) return;
     if (labs.length > 0 && labIdParam) {
       const foundLab = labs.find((l) => l.id.toString() === labIdParam);
-      if (foundLab) {
+      if (foundLab && foundLab.access?.canAccess !== false && isAuthenticated) {
         if (foundLab.labType === 'CLI_SIMULATION' && isAuthenticated) {
           setSelectedLab(null);
           setSelectedCliLab(foundLab);
@@ -521,36 +554,49 @@ export const Labs = () => {
           setSelectedCliLab(null);
           setSelectedLab(foundLab);
         }
-      }
-    }
-  }, [labs, labIdParam, isAuthenticated]);
-
-  // Đồng bộ trạng thái selectedLab và URL query parameter
-  useEffect(() => {
-    const activeLab = selectedCliLab || selectedLab;
-    if (activeLab) {
-      const currentParam = searchParams.get('labId');
-      if (currentParam !== activeLab.id.toString()) {
-        setSearchParams({ labId: activeLab.id.toString() }, { replace: true });
+      } else {
+        setSelectedLab(null);
+        setSelectedCliLab(null);
       }
     } else {
-      const currentParam = searchParams.get('labId');
-      if (currentParam) {
-        const newParams = new URLSearchParams(searchParams);
-        newParams.delete('labId');
-        setSearchParams(newParams, { replace: true });
-      }
+      setSelectedLab(null);
+      setSelectedCliLab(null);
     }
-  }, [selectedLab, selectedCliLab, searchParams, setSearchParams]);
+  }, [labs, labIdParam, isAuthenticated, token, loadedToken]);
+
+  const openLab = (lab) => {
+    if (!isAuthenticated) {
+      setSelectedLab(lab);
+      return;
+    }
+    if (lab.access?.canAccess === false) return;
+    const params = new URLSearchParams(searchParams);
+    params.set('labId', String(lab.id));
+    setSearchParams(params);
+  };
+  const closeLab = () => {
+    setSelectedLab(null);
+    setSelectedCliLab(null);
+    const params = new URLSearchParams(searchParams);
+    params.delete('labId');
+    setSearchParams(params, { replace: true });
+  };
 
   useEffect(() => {
+    let cancelled = false;
     const loadData = async () => {
       try {
         setLoading(true);
         setLoadError('');
+        setLoadedToken(undefined);
+        setSelectedLab(null);
+        setSelectedCliLab(null);
+        setLabs([]);
+        setCompletedLabs([]);
 
         // Luôn tải danh sách lab (hỗ trợ cả tài khoản guest)
         const labsData = await api.getLabs(token);
+        if (cancelled) return;
         setLabs(labsData);
 
         let done = [];
@@ -562,16 +608,23 @@ export const Labs = () => {
             .map(([key]) => key.replace('lab_', ''));
         }
 
+        if (cancelled) return;
         setCompletedLabs(done);
+        setLoadedToken(token || null);
       } catch (err) {
+        if (cancelled) return;
         console.error('Failed to load labs data', err);
         setLoadError(err.message || 'Không thể tải danh sách Lab.');
+        setLoadedToken(token || null);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
     loadData();
+    return () => {
+      cancelled = true;
+    };
   }, [token, reloadKey]);
 
   const allCategories = React.useMemo(() => {
@@ -647,7 +700,7 @@ export const Labs = () => {
         ))}
       </div>
 
-      {loading ? (
+      {loading || loadedToken !== (token || null) ? (
         <HeartbeatLoader label="Đang tải danh sách lab..." />
       ) : loadError ? (
         <div className="labs-empty" role="alert">
@@ -672,9 +725,9 @@ export const Labs = () => {
             <LabCard
               key={lab.id}
               lab={lab}
-              isCompleted={completedLabs.includes(lab.id)}
-              onSelect={setSelectedLab}
-              onStartCli={setSelectedCliLab}
+              isCompleted={completedLabs.includes(String(lab.id))}
+              onSelect={openLab}
+              onStartCli={openLab}
               isGuestView={isGuest}
               onGuestBlocked={notifyGuestBlocked}
             />
@@ -682,10 +735,10 @@ export const Labs = () => {
         </div>
       )}
 
-      {selectedLab && (
+      {selectedLab && loadedToken === (token || null) && (
         <LabGuideModal
           lab={selectedLab}
-          onClose={() => setSelectedLab(null)}
+          onClose={closeLab}
           onComplete={async (id) => {
             try {
               // Lưu vào cơ sở dữ liệu
@@ -701,27 +754,28 @@ export const Labs = () => {
                 storeTransitionEvent(res.transition, user?.id);
               }
 
-              if (!completedLabs.includes(id)) {
-                setCompletedLabs((prev) => [...prev, id]);
+              if (!completedLabs.includes(String(id))) {
+                setCompletedLabs((prev) => [...prev, String(id)]);
               }
               showToast('Chúc mừng! Bạn đã hoàn thành bài thực hành.', 'success');
             } catch (err) {
               console.error('Failed to save lab progress', err);
               showToast('Không thể lưu tiến độ. Vui lòng thử lại sau.', 'error');
             }
-            setSelectedLab(null);
+            closeLab();
           }}
           isGuestView={isGuest}
           onGuestBlocked={notifyGuestBlocked}
         />
       )}
 
-      {selectedCliLab ? (
+      {selectedCliLab && loadedToken === (token || null) ? (
         <CliLabWorkspace
           lab={selectedCliLab}
-          onClose={() => setSelectedCliLab(null)}
+          onClose={closeLab}
           onPassed={(id) => {
-            if (!completedLabs.includes(id)) setCompletedLabs((previous) => [...previous, id]);
+            if (!completedLabs.includes(String(id)))
+              setCompletedLabs((previous) => [...previous, String(id)]);
           }}
           onNotify={showToast}
         />

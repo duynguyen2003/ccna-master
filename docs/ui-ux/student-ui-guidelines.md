@@ -46,7 +46,15 @@ Tài liệu này hướng dẫn sửa UI trên hệ React/CSS hiện có. Danh s
 - Thanh học tiếp dùng LearningResumeBanner/useLearningPath và cache chung theo user. Home đặt thanh sau hero; Layout chỉ đặt dưới header ở /roadmap, không render hai lần. Ẩn trên các route khác. Chiều ngang bằng hero (tối đa 1360px; cùng gutter/breakpoint), căn giữa; chiều cao desktop khoảng 65px, nút tối thiểu 44px. Hover/focus nâng nhẹ và đổ bóng; animation cuộn thuộc wrapper để không ghi đè transform hover. Lấy phần trăm/quyền truy cập/nextLessonId/streak từ API; không tạo bộ tính tiến độ thứ hai. Link phải chứa cả course và lesson; bài tiếp không hợp lệ thì về khóa học. Xem [phân tích F8 và ánh xạ dữ liệu](f8-typography-progress.md).
 - Màu chủ đạo là **rgb(56,98,152) / #386298**. Dùng brand-primary và nhóm token primary/hover/gradient/tint; theme tối dùng tint cùng họ màu cho độ tương phản. Không thêm lại blue #2563eb/#3b82f6 vào nút/viền/link mới. Màu trạng thái vẫn có vai trò riêng.
 - Trang bài học ưu tiên video rộng và danh sách bài bên phải; điều hướng ở thanh dưới, ghi chú mở khi cần. Dùng Dialog chung cho ngăn kéo ghi chú và nội dung chương trên mobile. Giữ vùng bấm và cặp màu rõ chữ ngay cả khi nút bị khóa; không bỏ điều kiện 70%/xác nhận hoàn thành để sửa hình thức. Xem [phân tích F8 và thay đổi màn học](f8-lesson-ui.md).
-- Bộ màu chung nằm ở [theme.css](../../src/frontend/src/styles/theme.css), có 16 vai trò và hai theme. Dùng primary/on-primary, foreground/surface và các cặp màu phản hồi cùng nhau. ThemeProvider theo hệ thống hoặc lựa chọn đã lưu; lab giữ token scoped, admin giữ theme hiện có.
+- Quyền mở bài dùng canAccess/lockedReason từ server cho sidebar, URL và link danh sách khóa học. Video đạt70% tiến độ đã lưu mới mở bài kế; bài đọc cần hoàn thành. Chờ ACK và tải quyền mới trước khi mở; không mở theo playhead cục bộ. ADMIN trong màn học dùng view=learning, ngoại lệ test AI chỉ dành cho lab. Xem [điều kiện và kết quả kiểm chứng](lesson-access-rules.md).
+- Lab có ba chế độ Tự luyện/Theo bài tiên quyết/Tổng hợp, tách điều kiện mở khỏi khóa/chương dùng để phân loại. Thẻ bị khóa hiện bài cần học và link tới đúng bài; URL không được bỏ qua quyền. Lab tùy chọn không làm giảm tiến độ khóa học. Quản trị cấu hình trong tab Thông tin cơ bản bằng dropdown và checkbox bài có tìm kiếm. Xem [policy và lab ITN nền tảng](lab-access-policies.md).
+- Bộ màu chung nằm ở [theme.css](../../src/frontend/src/styles/theme.css), gồm các vai trò ngữ nghĩa và hai theme. Dùng primary/on-primary, foreground/surface và các cặp màu phản hồi cùng nhau. ThemeProvider theo hệ thống hoặc lựa chọn đã lưu; lab giữ token scoped, admin giữ theme hiện có.
+- Chữ trên nền đổi theme dùng foreground/muted-foreground hoặc cặp trạng thái;
+  chữ trên nền tối cố định/ảnh phủ tối dùng hero-foreground/hero-muted.
+  on-primary chỉ đi cùng nền primary, không dùng thay màu trắng chung. Cặp
+  accent/accent-bg dành cho nhãn tím. Alias slate chỉ do theme.css sở hữu;
+  CSS feature không ghi đè chúng ở :root. Kiểm cả màu inline, hover và trạng
+  thái có dữ liệu; xem [báo cáo tương phản dark](dark-theme-audit.md).
 - Tái dùng [Dialog](../../src/frontend/src/components/ui/Dialog.jsx), DropdownSelect, StatusAlert và Toast. Giữ tên dialog, Tab/Escape và trả focus. Portal cần class phạm vi nếu dùng CSS của tính năng, như exam-dialog.
 - Selector của trang phải có phạm vi sở hữu, ví dụ :where(.profile-page), :where(.doc-container). Không tạo .container/.btn/.filter-btn toàn cục trong CSS lazy; không khai báo lại biến chung trong :root của trang. Kiểm điều hướng nhiều trang trong cùng phiên khi CSS cũ còn được giữ.
 - Mốc chung là 480/768/1024/1280px. Giữ ngoại lệ 380px cho header và các mốc topology/workspace có lý do riêng. Kiểm min-width:0, flex-wrap và minmax(0,1fr) trước khi thêm breakpoint.
@@ -132,6 +140,22 @@ Lượt audit đầu tiên đã loại gợi ý font cho trẻ em. Kết quả p
 
 Tham chiếu: [W3C Keyboard](https://www.w3.org/WAI/WCAG22/Understanding/keyboard.html), [W3C Contrast](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html), [W3C Target Size](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html).
 
-## Kiểm chứng Home và hồ sơ
+## Trợ lý lab — UX-01/FE-01/FE-02,28/10/2026
 
-Xem [báo cáo bản thay đổi](home-profile-release.md) cho phạm vi và kiểm chứng của banner, Home và heatmap.
+- Code UI/hook/HTTP AI ở `src/agent/browser`, frontend chỉ có bridge và điểm mở;
+  browser package không được import server/provider. Chi tiết ở
+  [thiết kế](../ai-lab-assistant/baseline/UX-01-assistant-design.md) và
+  [báo cáo](../ai-lab-assistant/baseline/FE-01-02-browser.md).
+- Desktop ngăn phủ đúng vùng nhiệm vụ370/320px; vùng đó inert khi phủ. Không
+  thêm cột hoặc đổi kích thước/khóa terminal. Spinner lazy cũng nằm absolute.
+- Mobile có điểm mở từ thông báo laptop; dùng Dialog chung, token lab truyền
+  qua class theme trên portal. CLI vẫn giữ điều kiện máy tính; controls bị
+  phủ không nằm trong thứ tự Tab. Dialog tự quản box-sizing/viewport width.
+- Chữ body13px, heading16px, nút40px/gửi và đóng44px. Dùng selector đủ scope để
+  rule cũ `.network-workspace aside button` không ghi đè màu nút trong ngăn.
+- Plain text được escape; chỉ copy lệnh đã resolve từ contract. Nhãn nguồn,
+  độ chắc chắn và revision cũ rõ ràng; không tự hỏi lại khi lab đổi. Đang đọc
+  lịch sử thì giữ vị trí; load trang cũ giữ neo; lỗi lịch sử có retry riêng.
+- Metadata phục hồi chỉ gồm ID theo user/attempt trong sessionStorage, không
+  lưu chat/token. Đổi scope xóa ngay draft/DOM cũ và bỏ response muộn. Dữ liệu
+  dùng để trợ giúp mở lần đầu; đánh giá đi qua endpoint kiểm quyền.

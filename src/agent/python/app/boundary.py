@@ -8,6 +8,7 @@ import time
 from .contracts import VERSION, timestamp, validate
 from .errors import ServiceError, error_response
 from .security import verify_binding, verify_token
+from .timing import trace_request
 
 ANALYZE_PATH = "/internal/v1/lab-assistant/analyze"
 LOGGER = logging.getLogger("ai_service")
@@ -139,8 +140,9 @@ class Boundary:
                     time.monotonic() + claims["receipt"]["exp"] - time.time(),
                 ),
             )
-            async with asyncio.timeout_at(scope["state"]["ai_receipt_deadline"]):
-                await self.app(scope, receive, safe_send)
+            with trace_request(self.settings.trace_timings, payload):
+                async with asyncio.timeout_at(scope["state"]["ai_receipt_deadline"]):
+                    await self.app(scope, receive, safe_send)
         except ServiceError as error:
             if not started:
                 await error_response(error.code)(scope, receive, send)

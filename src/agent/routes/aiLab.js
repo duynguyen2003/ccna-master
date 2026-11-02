@@ -2,9 +2,11 @@ const express = require('express');
 const { z } = require('zod');
 const { VERSION, ErrorStatuses } = require('@ccna/shared/aiLabContract');
 const { service } = require('../node/requests');
+const { conversationService } = require('../node/conversation');
 module.exports = (prisma, config) => {
   const router = express.Router({ mergeParams: true });
   const api = service(prisma, config);
+  const conversation = conversationService(prisma, config);
   const handle = (fn) => async (req, res) => {
     res.set('X-AI-Contract-Version', VERSION);
     try {
@@ -57,6 +59,35 @@ module.exports = (prisma, config) => {
   router.get(
     '/quota',
     handle((r) => api.info(r.aiPrincipal, r.params.attemptId, true))
+  );
+  router.get(
+    '/messages',
+    handle((r) => conversation.history(r.aiPrincipal, r.params.attemptId, r.query))
+  );
+  router.post(
+    '/messages/:id/feedback',
+    handle((r) =>
+      conversation.feedback(r.aiPrincipal, r.params.attemptId, uuid(r.params.id), r.body)
+    )
+  );
+  router.delete(
+    '/conversations/:id',
+    handle((r) => {
+      const body = z
+        .object({
+          contractVersion: z.literal(VERSION),
+          conversationEpoch: z.number().int().nonnegative(),
+        })
+        .strict()
+        .safeParse(r.body);
+      if (!body.success) throw Object.assign(new Error(), { code: 'AI_INVALID_REQUEST' });
+      return conversation.reset(
+        r.aiPrincipal,
+        r.params.attemptId,
+        uuid(r.params.id),
+        body.data.conversationEpoch
+      );
+    })
   );
   return router;
 };

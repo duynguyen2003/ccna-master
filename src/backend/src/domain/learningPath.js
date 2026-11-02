@@ -1,6 +1,7 @@
 // The roadmap and the legacy course API share these calculations. Summary
 // UserProgress rows are projections, never evidence that a task was completed.
 const XP_REWARDS = Object.freeze({ lesson: 10, lab: 50, module: 25, course: 100 });
+const { countsForCompletion } = require('./labAccess');
 const PUBLISHED_STATUSES = ['PUBLISHED', 'OPEN'];
 
 const clampProgress = (value) => {
@@ -8,7 +9,10 @@ const clampProgress = (value) => {
   return Number.isFinite(number) ? Math.min(100, Math.max(0, number)) : 0;
 };
 const compareOrder = (a, b) =>
-  (a.orderIndex || 0) - (b.orderIndex || 0) || String(a.id).localeCompare(String(b.id), 'en');
+  (a.orderIndex || 0) - (b.orderIndex || 0) ||
+  (typeof a.id === 'number' && typeof b.id === 'number'
+    ? a.id - b.id
+    : String(a.id).localeCompare(String(b.id), 'en'));
 const durationSeconds = (value) => {
   if (!value || !/^\d+:\d{2}(:\d{2})?$/.test(value)) return 0;
   const parts = value.split(':').map(Number);
@@ -85,12 +89,16 @@ function buildLearningPath(catalog, progress = [], user = {}, badges = []) {
         task(course.id, 'lab', {
           id: lab.id,
           title: lab.title,
+          courseId: course.id,
           moduleId: lab.moduleId || null,
           labType: lab.labType,
+          accessPolicy: lab.accessPolicy || null,
+          requiredForCompletion: countsForCompletion(lab),
         })
       );
     }
     const labs = [...labsById.values()].sort((a, b) => a.id - b.id);
+    const requiredLabs = labs.filter((l) => l.requiredForCompletion);
     const modules = rawModules.map((module) => {
       const lessons = [...(module.lessons || [])]
         .filter((lesson) => !lesson.deletedAt)
@@ -100,10 +108,14 @@ function buildLearningPath(catalog, progress = [], user = {}, badges = []) {
             id: lesson.id,
             title: lesson.title,
             videoDuration: lesson.videoDuration || null,
+            hasVideo: Boolean(lesson.hasVideo ?? lesson.videoUrl),
             orderIndex: lesson.orderIndex,
           })
         );
       const moduleLabs = labs.filter((lab) => lab.moduleId === module.id);
+      const requiredModuleLabs = moduleLabs.filter((l) => l.requiredForCompletion);
+      const optionalOnly =
+        lessons.length === 0 && moduleLabs.length > 0 && requiredModuleLabs.length === 0;
       const seconds = lessons.reduce(
         (sum, lesson) => sum + durationSeconds(lesson.videoDuration),
         0
@@ -115,21 +127,24 @@ function buildLearningPath(catalog, progress = [], user = {}, badges = []) {
         orderIndex: module.orderIndex,
         lessons,
         labs: moduleLabs,
-        ...summarizeItems([...lessons, ...moduleLabs]),
+        ...summarizeItems([...lessons, ...requiredModuleLabs]),
+        optionalOnly,
         totalLessons: lessons.length,
         completedLessons: lessons.filter((l) => l.completed).length,
-        totalLabs: moduleLabs.length,
-        completedLabs: moduleLabs.filter((l) => l.completed).length,
+        totalLabs: requiredModuleLabs.length,
+        completedLabs: requiredModuleLabs.filter((l) => l.completed).length,
         estimatedMinutes: seconds ? Math.ceil(seconds / 60) : null,
         duration: seconds ? `${Math.ceil(seconds / 60)} phút` : null,
         nextLessonId: (lessons.find((l) => !l.completed) || lessons[0])?.id || null,
       };
     });
     const lessons = modules.flatMap((module) => module.lessons);
-    const contentReady = modules.every((m) => m.totalItems > 0) && lessons.length + labs.length > 0;
+    const contentReady =
+      modules.every((m) => m.totalItems > 0 || m.optionalOnly) &&
+      lessons.length + requiredLabs.length > 0;
     const summary = summarizeItems(
-      [...lessons, ...labs],
-      contentReady && modules.every((m) => m.completed)
+      [...lessons, ...requiredLabs],
+      contentReady && modules.every((m) => m.completed || m.optionalOnly)
     );
     const seconds = lessons.reduce((sum, lesson) => sum + durationSeconds(lesson.videoDuration), 0);
     const iconType = {
@@ -158,8 +173,8 @@ function buildLearningPath(catalog, progress = [], user = {}, badges = []) {
       completedModules: modules.filter((m) => m.completed).length,
       totalLessons: lessons.length,
       completedLessons: lessons.filter((l) => l.completed).length,
-      totalLabs: labs.length,
-      completedLabs: labs.filter((l) => l.completed).length,
+      totalLabs: requiredLabs.length,
+      completedLabs: requiredLabs.filter((l) => l.completed).length,
       estimatedHours: seconds ? Math.round(seconds / 360) / 10 : null,
       skills: [...(course.topics || [])].sort(compareOrder).map((topic) => topic.title),
       badgeName: `CCNA: ${course.id}`,
@@ -182,11 +197,25 @@ function buildLearningPath(catalog, progress = [], user = {}, badges = []) {
         ? lockedReason || `Hoàn thành ${previousTitle} để mở khóa chương này.`
         : null;
       if (!module.completed) previousTitle = previousTitle || module.title;
-      previousCompleted = previousCompleted && module.completed;
-      return { ...module, status, canAccess, lockedReason: reason };
+      previousCompleted = previousCompleted && (module.completed || module.optionalOnly);
+      let precedingReady = true;
+      let lessonReason = null;
+      const lessons = module.lessons.map((lesson) => {
+        const lessonAccess = canAccess && (lesson.completed || precedingReady);
+        const lockedReason = lessonAccess ? null : reason || lessonReason;
+        const ready = lesson.completed || (lesson.hasVideo && lesson.progressPercent >= 70);
+        if (!ready && !lessonReason)
+          lessonReason = lesson.hasVideo
+            ? `Xem ít nhất 70% video “${lesson.title}” để mở bài tiếp theo.`
+            : `Xác nhận đã đọc xong “${lesson.title}” để mở bài tiếp theo.`;
+        precedingReady = precedingReady && ready;
+        return { ...lesson, canAccess: lessonAccess, lockedReason };
+      });
+      return { ...module, lessons, status, canAccess, lockedReason: reason };
     });
     const nextModule =
-      modules.find((m) => m.status === 'current') || (course.completed ? modules[0] : null);
+      modules.find((m) => m.status === 'current' && !m.optionalOnly) ||
+      (course.completed ? modules[0] : null);
     return {
       ...course,
       modules,

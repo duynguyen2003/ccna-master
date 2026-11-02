@@ -1,6 +1,6 @@
 # Python AI service — PY-01/PY-02
 
-Python đã có adapter fake và Gemini local. Node giữ quyền học viên, simulator,
+Python chỉ đăng ký adapter Gemini. Node giữ quyền học viên, simulator,
 hàng chờ, database và quyết toán. Python nhận bản chụp đã lọc, gọi model khi Node
 cấp phép rồi gửi biên nhận về Node.
 
@@ -23,17 +23,18 @@ Lệnh cuối mặc định nghe **127.0.0.1:8001**, AI tắt. Python không t�
 
 | Biến                            | Ý nghĩa                                                                              |
 | ------------------------------- | ------------------------------------------------------------------------------------ |
-| `AI_PYTHON_MODE`                | `off` mặc định; thêm `fake` hoặc `gemini` khi chủ động bật.                          |
-| `AI_PYTHON_ENVIRONMENT`         | `local` hoặc `test` với fake; Gemini chỉ nhận `local`.                               |
+| `AI_PYTHON_MODE`                | `off` mặc định; `gemini` khi chủ động bật. Các mode fake bị từ chối.                 |
+| `AI_PYTHON_ENVIRONMENT`         | Gemini chỉ nhận `local`.                                                           |
 | `AI_SERVICE_SECRET`             | Cùng secret Node, ít nhất 32 ký tự; chỉ ở server.                                    |
 | `AI_PYTHON_NODE_URL`            | Callback loopback, mặc định `http://127.0.0.1:5500/internal/v1/ai`.                  |
 | `AI_PYTHON_LIVE_ENABLED`        | Mặc định `false`; Gemini cần `true` và `GEMINI_API_KEY`.                             |
 | `AI_PYTHON_MAX_BODY_BYTES`      | Mặc định và tối đa 65.536 byte UTF-8.                                                |
 | `AI_PYTHON_BODY_TIMEOUT_MS`     | Mặc định 2.000 ms để đọc body.                                                       |
-| `AI_PYTHON_MAX_REQUEST_MS`      | Mặc định 25.000 ms cho preflight/claim/generation; còn bị giới hạn bởi JWT/deadline. |
+| `AI_PYTHON_MAX_REQUEST_MS`      | Mặc định 25.000 ms; tối đa55.000 với Gemini; còn bị giới hạn bởi JWT/deadline.        |
 | `AI_PYTHON_CALLBACK_TIMEOUT_MS` | Mặc định 3.000 ms mỗi callback.                                                      |
 | `AI_PYTHON_RECEIPT_ATTEMPTS`    | Tối đa ba lần gửi cùng receipt; không retry model.                                   |
 | `AI_PYTHON_MAX_CONCURRENT`      | Mặc định hai tác vụ mỗi process; đầy trả 503.                                        |
+| `AI_PYTHON_TRACE_TIMINGS`       | Mặc định false; log request/call ID, phase, ms và outcome, không log nội dung/secrets. |
 
 Sau hạn generation còn tối đa 4,5 giây gửi receipt, trong hạn token receipt. Biến
 `AI_PYTHON_*` không biết hoặc giá trị sai làm service dừng bằng lỗi chung, không in
@@ -44,6 +45,14 @@ không dùng proxy môi trường hoặc tự theo redirect.
 hoặc thiếu cấu hình Gemini, 200 khi adapter đã cấu hình. Readiness **không gọi model**,
 không xác nhận DB/Node/quota tài khoản và không cấp phép mở pilot.
 
+Để đo độ trễ khi dùng launcher Node, đặt `AI_TRACE_TIMINGS=true` trong môi trường
+server rồi chạy `pnpm ai:python`. Log `ai.timing` tách `prepare`, `claim`,
+`generate`, `validate_receipt`, `receipt` và Google `headers`/`body`/`total` cho
+countTokens/generateContent. Các mốc con nằm trong mốc cha, không cộng hai lần.
+`headers` ở API không streaming là thời gian chờ HTTP response, không phải số đo
+token đầu tiên hay thời gian suy luận riêng của GPU. Xem
+[phân tích độ trễ](../../../docs/ai-lab-assistant/baseline/latency-analysis.md).
+
 ## Một yêu cầu đi qua đâu?
 
 1. Worker gửi `POST /internal/v1/lab-assistant/analyze` với JWT riêng cho
@@ -51,7 +60,7 @@ không xác nhận DB/Node/quota tài khoản và không cấp phép mở pilot.
 2. Python kiểm auth trước body; kiểm bytes, JSON Schema và Pydantic strict.
    Không bỏ trường lạ/ép kiểu. Token phải cùng request/call/contextHash/leaseVersion.
 3. Gemini đếm token toàn request, gồm system prompt và output schema. Count sai/quá
-   trần dừng trước claim. Fake dùng câu trả lời cố định, không gọi Google.
+   trần dừng trước claim. Không có adapter trả lời cố định trong runtime.
 4. Python claim permit một lần. Node kiểm quyền, giữ slot/ngân sách trong PostgreSQL
    và ledger chung. Bị từ chối thì không gọi model.
 5. Gemini generation tối đa một lần. Timeout, 429 hoặc JSON sai không được gọi lại.
@@ -75,9 +84,19 @@ Module LAB_REVIEW mới là phần prompt/adapter: admission hiện thu feedback
 đường topology đầy đủ tới worker cho intent này. Chưa mở learnerLevel hoặc nâng
 hint level tự động. Node/Python phải cùng prompt version với runtime policy.
 
-Worker chọn `AI_WORKER_MODE=python-fake` hoặc `python-gemini`, URL Python qua
+Worker chọn `AI_WORKER_MODE=python-gemini`, URL Python qua
 `AI_ANALYZE_URL`. Cần DB AI thử riêng trên loopback và runtime policy có cohort,
 budget, recovery epoch hợp lệ. Thêm env không tự tạo policy trong DB.
+
+Ngoại lệ dev đã được user yêu cầu ngày 28/10/2026: `app-gemini` nối DB ứng dụng
+chỉ ở môi trường `admin-test`/ngoài production với policy ADMIN. Chọn bằng
+`pnpm ai:admin:enable --gemini --apply`, rồi dùng `pnpm ai:python` để khởi động
+Python ở loopback từ cấu hình server hiện tại; sau đó chạy `pnpm ai:worker`.
+Python vẫn có environment `local`, JWT nội bộ và giới hạn provider hiện hữu;
+launcher không truyền DATABASE_URL/JWT/owner secret sang Python. Ledger ngân sách
+chung không được tạo lại hoặc reset khi đổi worker mode.
+Launcher đặt cửa sổ55giây cho Gemini để khớp Node. Request của
+Node tối đa60giây và JWT vẫn60giây; không retry generation khi quá hạn.
 
 ## Kiểm tích hợp và Gemini thật
 

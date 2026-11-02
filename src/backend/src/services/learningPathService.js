@@ -1,5 +1,7 @@
 const { getPrisma } = require('../config/database');
 const { buildLearningPath, clampProgress, PUBLISHED_STATUSES } = require('../domain/learningPath');
+const { mayTestLockedLab } = require('@ccna/agent/node/eligibility');
+const { labAccess } = require('../domain/labAccess');
 
 const fail = (status, code, message) => Object.assign(new Error(message), { status, code });
 const orderBy = [{ orderIndex: 'asc' }, { id: 'asc' }];
@@ -11,10 +13,11 @@ const labSelect = {
   moduleId: true,
   labType: true,
   status: true,
+  accessPolicy: true,
 };
 
 async function readCatalog(db, includeDrafts = false) {
-  return db.course.findMany({
+  const catalog = await db.course.findMany({
     where: { deletedAt: null, ...(includeDrafts ? {} : { status: { in: PUBLISHED_STATUSES } }) },
     orderBy,
     include: {
@@ -30,6 +33,7 @@ async function readCatalog(db, includeDrafts = false) {
               moduleId: true,
               title: true,
               videoDuration: true,
+              videoUrl: true,
               sectionNumber: true,
               orderIndex: true,
             },
@@ -46,6 +50,17 @@ async function readCatalog(db, includeDrafts = false) {
       exams: { where: { deletedAt: null, status: 'OPEN' }, select: { id: true, examCode: true } },
     },
   });
+  // Metadata callers need the lesson type, never the underlying video URL.
+  return catalog.map((course) => ({
+    ...course,
+    modules: course.modules.map((module) => ({
+      ...module,
+      lessons: module.lessons.map(({ videoUrl, ...lesson }) => ({
+        ...lesson,
+        hasVideo: Boolean(videoUrl),
+      })),
+    })),
+  }));
 }
 
 async function readUser(db, userId) {
@@ -119,7 +134,13 @@ async function readVideoAccess(db, userId, lessonId) {
   // earlier courses/modules. Summary rows can be stale after curriculum edits.
   // Omit lesson content, exams, topics, badges and every later course. Reuse the
   // domain calculation so telemetry cannot diverge from roadmap access rules.
-  const accessLabSelect = { id: true, courseId: true, moduleId: true, status: true };
+  const accessLabSelect = {
+    id: true,
+    courseId: true,
+    moduleId: true,
+    status: true,
+    accessPolicy: true,
+  };
   const catalog = await db.course.findMany({
     where: {
       deletedAt: null,
@@ -137,7 +158,10 @@ async function readVideoAccess(db, userId, lessonId) {
           id: true,
           title: true,
           orderIndex: true,
-          lessons: { where: { deletedAt: null }, select: { id: true } },
+          lessons: {
+            where: { deletedAt: null },
+            select: { id: true, title: true, orderIndex: true, videoUrl: true },
+          },
           labs: { where: visibleLabs, select: accessLabSelect },
         },
       },
@@ -153,7 +177,7 @@ async function readVideoAccess(db, userId, lessonId) {
     select: { courseId: true, lessonId: true, labId: true, progressPercent: true, status: true },
   });
   const context = findLesson({ path: buildLearningPath(catalog, progress) }, lessonId);
-  assertAccess(context.course, context.module);
+  assertLessonAccess(context);
   return context;
 }
 
@@ -161,6 +185,57 @@ function assertAccess(course, module) {
   if (!course) throw fail(404, 'COURSE_NOT_FOUND', 'Không tìm thấy khóa học đã xuất bản.');
   if (!course.canAccess) throw fail(403, 'COURSE_LOCKED', course.lockedReason);
   if (module && !module.canAccess) throw fail(403, 'MODULE_LOCKED', module.lockedReason);
+}
+
+function assertLessonAccess({ course, module, lesson }) {
+  assertAccess(course, module);
+  if (!lesson.canAccess) throw fail(403, 'LESSON_LOCKED', lesson.lockedReason);
+}
+
+// The learner view shares course/module/lesson gates with progress writes.
+// Admin content editing remains a separate view in the controller.
+async function readCurriculum(userId, { courseId, moduleId }) {
+  return getPrisma().$transaction(
+    async (db) => {
+      const state = await readState(db, userId);
+      const target = moduleId
+        ? findModule(state, moduleId)
+        : { course: state.path.courses.find((course) => course.id === courseId) };
+      assertAccess(target.course, target.module);
+      const modules = await db.module.findMany({
+        where: {
+          courseId: target.course.id,
+          ...(moduleId ? { id: moduleId } : {}),
+          deletedAt: null,
+        },
+        orderBy,
+        include: { lessons: { where: { deletedAt: null }, orderBy } },
+      });
+      return modules.map((module) => {
+        const gate = target.course.modules.find((item) => item.id === module.id);
+        return {
+          ...module,
+          canAccess: gate.canAccess,
+          status: gate.status,
+          lockedReason: gate.lockedReason,
+          lessons: module.lessons.map(({ videoUrl, contentHtml, ...lesson }) => {
+            const access = gate.lessons.find((item) => item.id === lesson.id);
+            return {
+              ...lesson,
+              hasVideo: Boolean(videoUrl),
+              videoUrl: access.canAccess ? videoUrl : null,
+              contentHtml: access.canAccess ? contentHtml : null,
+              canAccess: access.canAccess,
+              lockedReason: access.lockedReason,
+              progressPercent: access.progressPercent,
+              completed: access.completed,
+            };
+          }),
+        };
+      });
+    },
+    { isolationLevel: 'RepeatableRead', timeout: 15000, maxWait: 10000 }
+  );
 }
 
 function findModule(state, moduleId) {
@@ -315,7 +390,9 @@ async function updateProgress(userId, input) {
     ) {
       throw fail(400, 'CONTENT_MISMATCH', 'Bài học hoặc Lab không thuộc khóa học/chương đã gửi.');
     }
-    assertAccess(course, module);
+    if (lesson) assertLessonAccess(target);
+    else if (lab) await assertLabInState(db, userId, lab, before);
+    else assertAccess(course, module);
     if (lab?.labType === 'CLI_SIMULATION') {
       throw fail(
         403,
@@ -380,10 +457,30 @@ async function completeModule(userId, moduleId) {
 
 async function assertLabAccess(db, userId, lab) {
   const state = await readState(db, userId);
-  if (!lab.courseId && !lab.moduleId) return state;
-  const target = findLab(state, lab.id);
-  assertAccess(target.course, target.module);
+  await assertLabInState(db, userId, lab, state);
   return state;
+}
+
+async function assertLabInState(db, userId, lab, state) {
+  if (await mayTestLockedLab(db, userId)) return;
+  const access = labAccess(lab, state);
+  if (!access.canAccess) throw fail(403, 'LAB_LOCKED', access.lockedReason);
+}
+
+async function readLabAccess(userId, labs) {
+  return getPrisma().$transaction(
+    async (db) => {
+      const state = await readState(db, userId);
+      const override = userId ? await mayTestLockedLab(db, userId) : false;
+      return labs.map((lab) => {
+        const access = labAccess(lab, state);
+        return override
+          ? { ...access, canAccess: true, lockedReason: null, unmetLessons: [] }
+          : access;
+      });
+    },
+    { isolationLevel: 'RepeatableRead', timeout: 15000, maxWait: 10000 }
+  );
 }
 
 async function completeGradedLab(db, userId, lab) {
@@ -536,4 +633,6 @@ module.exports = {
   completeGradedLab,
   updateVideoProgress,
   studyDate,
+  readCurriculum,
+  readLabAccess,
 };

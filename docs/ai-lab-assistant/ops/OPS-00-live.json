@@ -3,6 +3,14 @@
   "mode": "LOCAL_LIVE_FEEDBACK",
   "authorizedAt": "2026-10-22",
   "authorization": "User requested real Gemini and supplied a key; supersedes fake-only for local feedback explanations",
+  "adminAppAuthorization": {
+    "authorizedAt": "2026-10-28",
+    "source": "User requested real Gemini instead of the fake worker on the development app",
+    "environment": "admin-test",
+    "roles": ["ADMIN"],
+    "sharedLedger": true,
+    "productionEnabled": false
+  },
   "model": "gemini-3.5-flash-lite",
   "priceVersion": "google-standard-2026-10-22-flash-lite",
   "priceSource": "https://ai.google.dev/gemini-api/docs/pricing#gemini-3.5-flash-lite",

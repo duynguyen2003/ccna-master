@@ -20,7 +20,7 @@ Backend đã xử lý nghiệp vụ. Frontend chỉ gửi thao tác hợp lệ v
 | Authentication | `src/frontend/src/context/AuthContext.js`: `user`, `token`, `loading`, `isAuthenticated`, `login`, `logout`, `updateUser` |
 | API client đang được dùng | `src/frontend/src/services/Api.js`: `API_URL`, `apiFetch`, object `api`, Bearer token và sự kiện `unauthorized` |
 | Điểm khác đặc tả ban đầu | Client học viên thực tế dùng **fetch wrapper**; Axios có trong dependency nhưng không có Axios instance chung cho flow này. Mở rộng `apiFetch`, không tạo transport thứ hai chỉ để khớp ví dụ Axios |
-| Module API cũ chưa dùng | `src/frontend/src/services/api/contentApi.js` là placeholder; `src/frontend/src/services/api/index.js` còn export `examApi` không tồn tại. Không nối tính năng mới qua barrel này |
+| Module API | `src/frontend/src/services/api/adminApi.js` phục vụ quản trị; client học viên dùng `services/Api.js`. Các placeholder `authApi.js`, `contentApi.js` và barrel `api/index.js` không có consumer đã được gỡ ngày 28/10/2026 |
 | Server state | `src/frontend/src/index.js` đã tạo một `QueryClient` trong `QueryClientProvider`; Roadmap cũ vẫn dùng useEffect, cần chuyển riêng flow này sang React Query v5 |
 | UI tokens | `src/frontend/src/App.css`: `--blue-primary`, `--blue-hover`, `--slate-*`, `--border-color`, `--text-muted`, `--system-ui` |
 | Styling | CSS nằm trong `styles` của từng feature hoặc nhóm UI/layout; không giả định utility Tailwind đã được cấu hình đầy đủ chỉ vì dependency tồn tại |

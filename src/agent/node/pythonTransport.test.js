@@ -73,7 +73,10 @@ test('Python transport refuses remote or injected endpoints and expired work', a
 });
 
 test('Gemini is dispatched only by explicit local Python worker mode', () => {
-  const common = { DATABASE_URL: 'postgresql://user:unused@127.0.0.1:55432/ai_lab_local' };
+  const common = {
+    DATABASE_URL: 'postgresql://user:unused@127.0.0.1:55432/ai_lab_local',
+    GEMINI_API_KEY: 'synthetic-key',
+  };
   assert.equal(runtimeConfig({ ...common, AI_WORKER_MODE: 'python-gemini' }).enabled, true);
   assert.equal(
     runtimeConfig({ ...common, AI_WORKER_MODE: 'python-gemini', NODE_ENV: 'production' }).enabled,

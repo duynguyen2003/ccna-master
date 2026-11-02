@@ -8,11 +8,11 @@
   --surface-terminal: #10202e;
   --text-primary: #132336;
   --text-secondary: #455b70;
-  --text-subtle: #647b90;
+  --text-subtle: #52677b;
   --text-accent: var(--brand-primary, #386298);
-  --text-success: #15803d;
+  --text-success: #166534;
   --text-danger: #be123c;
-  --text-warning: #a16207;
+  --text-warning: #854d0e;
   --border-subtle: #cbd9e5;
   --border-strong: #9fb8cc;
   --border-danger: var(--text-danger);
@@ -34,7 +34,7 @@
   --surface-terminal: #06101a;
   --text-primary: #e7f0f8;
   --text-secondary: #9db1c3;
-  --text-subtle: #71869a;
+  --text-subtle: #95aabd;
   --text-accent: #abc2df;
   --text-success: #4ade80;
   --text-danger: #fb7185;

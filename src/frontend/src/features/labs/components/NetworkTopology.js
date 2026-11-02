@@ -60,6 +60,22 @@ export default function NetworkTopology({
   const animationId = packetKey(packet);
 
   useEffect(() => {
+    if (!selected || prefersReducedMotion()) return undefined;
+    const node = [...(svgRef.current?.querySelectorAll('[data-device-id]') || [])].find(
+      (item) => item.dataset.deviceId === selected
+    );
+    if (!node) return undefined;
+    const context = gsap.context(() => {
+      gsap.fromTo(
+        node.querySelector('rect'),
+        { strokeWidth: 5 },
+        { strokeWidth: 1.6, duration: 0.9, clearProps: 'strokeWidth' }
+      );
+    }, svgRef);
+    return () => context.revert();
+  }, [selected]);
+
+  useEffect(() => {
     const marker = markerRef.current;
     if (!marker) return undefined;
     if (!animationId) {
@@ -212,6 +228,7 @@ export default function NetworkTopology({
         return (
           <g
             key={device.id}
+            data-device-id={device.id}
             role="button"
             tabIndex={0}
             aria-label={`Chọn ${device.id}`}

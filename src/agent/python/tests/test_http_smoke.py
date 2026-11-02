@@ -15,7 +15,9 @@ from app.contracts import validate
 def test_real_python_http_process_with_real_node_jwt_and_callback_peer(payload, tmp_path):
     flags = subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0
     env = {key: value for key, value in os.environ.items() if not key.startswith("AI_PYTHON_")}
-    env.update(AI_SERVICE_SECRET=SECRET, PY01_TEST_DEADLINE=payload["deadlineAt"])
+    env.update(
+        AI_SERVICE_SECRET=SECRET, PY01_TEST_DEADLINE=payload["deadlineAt"], PYTHONPATH=str(PROJECT)
+    )
     # Deliberately unusable proxies: service-to-Node traffic must ignore them.
     for key in ("HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "http_proxy", "https_proxy", "all_proxy"):
         env[key] = "http://127.0.0.1:1"
@@ -46,15 +48,17 @@ def test_real_python_http_process_with_real_node_jwt_and_callback_peer(payload, 
             listener.bind(("127.0.0.1", 0))
             port = listener.getsockname()[1]
         env.update(
-            AI_PYTHON_MODE="fake",
-            AI_PYTHON_ENVIRONMENT="test",
+            AI_PYTHON_MODE="gemini",
+            AI_PYTHON_ENVIRONMENT="local",
+            AI_PYTHON_LIVE_ENABLED="true",
+            GEMINI_API_KEY="synthetic-smoke-key",
             AI_PYTHON_PORT=str(port),
             AI_PYTHON_NODE_URL=f"http://127.0.0.1:{peer_port}/internal/v1/ai",
         )
         log_file = tmp_path / "service.log"
         with log_file.open("w", encoding="utf-8") as log:
             service = subprocess.Popen(
-                [sys.executable, "-m", "app"],
+                [sys.executable, "tests/fixtures/run_fake_service.py"],
                 cwd=PROJECT,
                 env=env,
                 stdout=log,

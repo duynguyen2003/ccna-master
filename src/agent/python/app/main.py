@@ -12,9 +12,9 @@ from .callbacks import NodeCallbacks
 from .config import Settings
 from .contracts import VERSION, binding, validate
 from .errors import ServiceError, error_response
-from .fake import FakeAdapter
 from .gemini import GeminiAdapter
 from .models import parse_wire
+from .timing import measure
 
 
 def create_app(settings=None, *, transport=None, adapter=None, provider_transport=None):
@@ -39,7 +39,7 @@ def create_app(settings=None, *, transport=None, adapter=None, provider_transpor
                 timeout=None,
             ) as provider_client:
                 app.state.callbacks = NodeCallbacks(client, settings)
-                app.state.adapters = {"local-fake-v1": adapter or FakeAdapter()}
+                app.state.adapters = {}
                 if settings.mode == "gemini":
                     app.state.adapters["local-gemini-v1"] = adapter or GeminiAdapter(
                         settings, provider_client
@@ -71,9 +71,7 @@ def create_app(settings=None, *, transport=None, adapter=None, provider_transpor
 
     @app.get("/health/ready")
     async def ready():
-        enabled = settings.mode == "fake" or (
-            settings.mode == "gemini" and settings.live_enabled and bool(settings.api_key)
-        )
+        enabled = settings.mode == "gemini" and settings.live_enabled and bool(settings.api_key)
         return JSONResponse(
             {
                 "service": "ai-python",
@@ -97,15 +95,21 @@ def create_app(settings=None, *, transport=None, adapter=None, provider_transpor
         claimed = False
         try:
             async with asyncio.timeout_at(request.state.ai_generation_deadline):
-                prepared = await adapter.prepare(payload) if hasattr(adapter, "prepare") else None
-                await app.state.callbacks.claim(payload, tokens["claim"])
+                with measure("prepare"):
+                    prepared = (
+                        await adapter.prepare(payload) if hasattr(adapter, "prepare") else None
+                    )
+                with measure("claim"):
+                    await app.state.callbacks.claim(payload, tokens["claim"])
                 claimed = True
-                receipt = (
-                    await adapter.generate(payload, prepared)
-                    if prepared is not None
-                    else await adapter.generate(payload)
-                )
-                parse_wire("ProviderReceipt", receipt)
+                with measure("generate"):
+                    receipt = (
+                        await adapter.generate(payload, prepared)
+                        if prepared is not None
+                        else await adapter.generate(payload)
+                    )
+                with measure("validate_receipt"):
+                    parse_wire("ProviderReceipt", receipt)
         except TimeoutError:
             if not claimed:
                 raise ServiceError("AI_LEASE_LOST") from None
@@ -123,7 +127,8 @@ def create_app(settings=None, *, transport=None, adapter=None, provider_transpor
                 },
                 "output": None,
             }
-        receipt_hash = await app.state.callbacks.receipt(receipt, tokens["receipt"])
+        with measure("receipt"):
+            receipt_hash = await app.state.callbacks.receipt(receipt, tokens["receipt"])
         ack = validate(
             "InternalAnalyzeResponse",
             {

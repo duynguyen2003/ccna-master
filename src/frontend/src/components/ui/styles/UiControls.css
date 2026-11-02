@@ -200,7 +200,7 @@ html,
   border: 1px solid var(--color-border);
   border-radius: 18px;
   background: var(--color-surface);
-  color: #172033;
+  color: var(--color-foreground);
   box-shadow: 0 24px 80px #0f172a33;
 }
 .app-dialog::backdrop {

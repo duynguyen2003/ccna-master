@@ -11,6 +11,8 @@ const {
 } = require('../validation/labPublication');
 const { sanitizeHtml } = require('@ccna/shared/sanitizeHtml');
 const prisma = getPrisma();
+const { validateLabAccessPolicy } = require('../validation/labAccessPolicy');
+const { countsForCompletion } = require('../domain/labAccess');
 const formatCliConfigError = (error) => {
   const issue = error?.issues?.[0];
   if (!issue) return error?.message || 'CLI Lab configuration is invalid';
@@ -49,7 +51,7 @@ module.exports.getCourseSummaries = async (req, res, next) => {
           },
           labs: {
             where: { deletedAt: null },
-            select: { id: true },
+            select: { id: true, accessPolicy: true },
           },
         },
       }),
@@ -79,7 +81,8 @@ module.exports.getCourseSummaries = async (req, res, next) => {
       const lessonProgress = new Map(
         courseProgress.filter((item) => item.lessonId !== null).map((item) => [item.lessonId, item])
       );
-      const courseLabIds = new Set(course.labs.map((lab) => lab.id));
+      const requiredLabs = course.labs.filter(countsForCompletion);
+      const courseLabIds = new Set(requiredLabs.map((lab) => lab.id));
       const completedLabIds = new Set(
         courseProgress
           .filter(
@@ -93,7 +96,7 @@ module.exports.getCourseSummaries = async (req, res, next) => {
         (total, lesson) => total + (lessonProgress.get(lesson.id)?.progressPercent || 0),
         0
       );
-      const totalItems = lessons.length + course.labs.length;
+      const totalItems = lessons.length + requiredLabs.length;
       const completedItems = lessonProgressTotal / 100 + completedLabIds.size;
       const progress =
         totalItems > 0 ? Math.min(100, Math.round((completedItems / totalItems) * 100)) : 0;
@@ -128,7 +131,8 @@ module.exports.getCourses = async (req, res) => {
     const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 10));
     const { readState } = require('../services/learningPathService');
     const state = await prisma.$transaction(
-      (db) => readState(db, req.user?.id, req.user?.role === 'ADMIN'),
+      (db) =>
+        readState(db, req.user?.id, req.user?.role === 'ADMIN' && req.query.view !== 'learning'),
       { isolationLevel: 'RepeatableRead', timeout: 15000, maxWait: 10000 }
     );
     const nodes = new Map(state.path.courses.map((node) => [node.id, node]));
@@ -145,12 +149,17 @@ module.exports.getCourses = async (req, res) => {
             progressPercent: progress.progressPercent,
             canAccess: progress.canAccess,
             lockedReason: progress.lockedReason,
+            lessons: module.lessons.map((lesson) => ({
+              ...lesson,
+              ...progress.lessons.find((item) => item.id === lesson.id),
+            })),
           };
         }),
         progress: node.progressPercent,
         totalHours: node.estimatedHours || 0,
         isStarted: node.isStarted,
         learningStatus: node.status,
+        canAccess: node.canAccess,
         prerequisiteId: node.prerequisiteId,
         lockedReason: node.lockedReason,
         totalModules: node.totalModules,
@@ -314,7 +323,8 @@ module.exports.getLabs = async (req, res, next) => {
     const skip = (page - 1) * limit;
 
     const whereClause = { deletedAt: null };
-    if (!req.user || req.user.role !== 'ADMIN') {
+    const learnerView = req.user?.role !== 'ADMIN' || req.query.view === 'learning';
+    if (learnerView) {
       whereClause.status = 'PUBLISHED';
     }
 
@@ -329,16 +339,25 @@ module.exports.getLabs = async (req, res, next) => {
       prisma.lab.count({ where: whereClause }),
     ]);
 
-    const responseLabs =
-      req.user?.role === 'ADMIN'
-        ? labs
-        : labs.map((lab) => {
-            const publicLab = { ...lab };
-            delete publicLab.gradingSpec;
-            delete publicLab.initialState;
-            return publicLab;
-          });
+    const accesses = learnerView
+      ? await require('../services/learningPathService').readLabAccess(req.user?.id, labs)
+      : [];
+    const responseLabs = !learnerView
+      ? labs
+      : labs.map((lab, index) => {
+          const publicLab = { ...lab };
+          delete publicLab.gradingSpec;
+          delete publicLab.initialState;
+          publicLab.access = accesses[index];
+          if (!accesses[index].canAccess) {
+            publicLab.fileUrl = null;
+            publicLab.guideContent = null;
+            publicLab.steps = [];
+          }
+          return publicLab;
+        });
 
+    res.set('Cache-Control', 'private, no-store');
     res.json({
       data: responseLabs,
       pagination: { total, page, limit, totalPages: Math.ceil(total / limit) },
@@ -395,6 +414,11 @@ module.exports.createLab = async (req, res, next) => {
       return res.status(400).json({ message: formatCliConfigError(configError) });
     }
     await assertCourseModule(prisma, normalizedCourseId, normalizedModuleId);
+    const accessPolicy = await validateLabAccessPolicy(prisma, req.body.accessPolicy, {
+      courseId: normalizedCourseId,
+      moduleId: normalizedModuleId,
+      status: normalizedStatus,
+    });
     assertPublishReady({
       status: normalizedStatus,
       labType: cliConfig.labType,
@@ -455,6 +479,7 @@ module.exports.createLab = async (req, res, next) => {
         topologyImgUrl,
         courseId: normalizedCourseId,
         moduleId: normalizedModuleId,
+        ...(accessPolicy ? { accessPolicy } : {}),
         ...cliConfig,
       },
     });
@@ -530,6 +555,11 @@ module.exports.updateLab = async (req, res, next) => {
       return res.status(400).json({ message: formatCliConfigError(configError) });
     }
     await assertCourseModule(prisma, effectiveCourseId, effectiveModuleId);
+    const accessPolicy = await validateLabAccessPolicy(
+      prisma,
+      req.body.accessPolicy === undefined ? existingLab.accessPolicy : req.body.accessPolicy,
+      { courseId: effectiveCourseId, moduleId: effectiveModuleId, status: effectiveStatus }
+    );
     assertPublishReady({
       status: effectiveStatus,
       labType: cliConfig.labType,
@@ -552,6 +582,7 @@ module.exports.updateLab = async (req, res, next) => {
       objective: effectiveObjective,
       courseId: effectiveCourseId,
       moduleId: effectiveModuleId,
+      accessPolicy: accessPolicy || require('@prisma/client').Prisma.DbNull,
       tools: parsedTools,
       steps: parsedSteps,
       ...cliConfig,
@@ -619,6 +650,12 @@ module.exports.deleteLab = async (req, res, next) => {
 module.exports.getModulesByCourse = async (req, res, next) => {
   try {
     const { courseId } = req.params;
+    if (req.user?.role !== 'ADMIN' || req.query.view === 'learning') {
+      const { readCurriculum } = require('../services/learningPathService');
+      const modules = await readCurriculum(req.user?.id, { courseId });
+      res.set('Cache-Control', 'private, no-store');
+      return res.json({ data: modules });
+    }
     const modules = await prisma.module.findMany({
       where: { courseId, deletedAt: null },
       orderBy: { orderIndex: 'asc' },
@@ -717,6 +754,12 @@ module.exports.updateModule = async (req, res, next) => {
 module.exports.getLessonsByModule = async (req, res, next) => {
   try {
     const { moduleId } = req.params;
+    if (req.user?.role !== 'ADMIN' || req.query.view === 'learning') {
+      const { readCurriculum } = require('../services/learningPathService');
+      const [module] = await readCurriculum(req.user?.id, { moduleId });
+      res.set('Cache-Control', 'private, no-store');
+      return res.json({ data: module.lessons });
+    }
     const lessons = await prisma.lesson.findMany({
       where: { moduleId, deletedAt: null },
       orderBy: { orderIndex: 'asc' },

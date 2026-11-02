@@ -1,12 +1,11 @@
 const { randomUUID } = require('node:crypto');
 const { setTimeout: delay } = require('node:timers/promises');
-const { VERSION, schemas } = require('@ccna/shared/aiLabContract');
+const { schemas } = require('@ccna/shared/aiLabContract');
 const { leases } = require('../node/leases');
 const { dispatch } = require('../node/dispatch');
 const { receipts } = require('../node/receipts');
 const { serviceAuth } = require('../node/serviceAuth');
-const { projectContext, contextPreparer } = require('../node/context');
-const { diagnosticAnswer } = require('../node/diagnostics');
+const { contextPreparer } = require('../node/context');
 const { pythonAnalyze } = require('../node/pythonTransport');
 
 function createWorker(prisma, config, adapters) {
@@ -34,7 +33,7 @@ function createWorker(prisma, config, adapters) {
       try {
         // Diagnostics/context building, HTTP, sleeps and provider execution are
         // deliberately OUTSIDE all transactions. The BE-05 projector/history
-        // reader is the default; transport remains fake until PY-01/PY-02.
+        // reader is the default; execution uses the Python Gemini service.
         const prepared = await prepare(row);
         const input = await permits.plan(row.id, workerId, row.leaseVersion, prepared);
         const ack = schemas.InternalAnalyzeResponse.parse(
@@ -67,72 +66,6 @@ function createWorker(prisma, config, adapters) {
   };
 }
 
-// Kept as a fixture helper for BE-04 crash/recovery tests. It now uses the real
-// BE-05 public projection; only the execution transport below remains fake.
-function fakePrepare(row) {
-  return projectContext(row);
-}
-function fakeAnalyze(base, sleepMs = 300) {
-  const url = new URL(base);
-  if (
-    url.protocol !== 'http:' ||
-    !['127.0.0.1', 'localhost'].includes(url.hostname) ||
-    url.username ||
-    url.password ||
-    url.pathname !== '/internal/v1/ai'
-  )
-    throw new Error('Fake worker internal URL must be loopback /internal/v1/ai');
-  return async (input, tokens) => {
-    const binding = schemas.ClaimRequest.parse({
-      contractVersion: VERSION,
-      requestId: input.requestId,
-      callId: input.callId,
-      contextHash: input.contextHash,
-      leaseVersion: input.leaseVersion,
-    });
-    const send = async (operation, method, body, token) => {
-      const response = await fetch(`${base}/provider-calls/${input.callId}/${operation}`, {
-        method,
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'X-AI-Contract-Version': VERSION,
-        },
-        body: JSON.stringify(body),
-        signal: AbortSignal.timeout(25000),
-      });
-      if (!response.ok) throw new Error('AI_INTERNAL_CALL_REJECTED');
-      return response.json();
-    };
-    await send('claim', 'POST', binding, tokens.claimToken);
-    await delay(sleepMs);
-    const receipt = {
-      ...binding,
-      outcome: 'RECEIVED',
-      providerRequestId: null,
-      usage: { status: 'FINAL', inputTokens: 0, outputTokens: 0, reasoningTokens: 0 },
-      versions: input.versions,
-      finishReason: 'fake',
-      output: diagnosticAnswer(input) || {
-        summary: 'Luồng AI giả đã hoàn tất. Chưa có phân tích bài lab bằng model thật.',
-        claimType: 'INSUFFICIENT_CONTEXT',
-        evidenceIds: [],
-        nextSteps: [],
-        verification: 'Tiếp tục kiểm tra bài lab bằng công cụ mô phỏng.',
-        hintLevel: 1,
-      },
-    };
-    const saved = schemas.ReceiptResponse.parse(
-      await send('receipt', 'PUT', receipt, tokens.receiptToken)
-    );
-    return {
-      contractVersion: VERSION,
-      callId: input.callId,
-      contextHash: input.contextHash,
-      receiptHash: saved.data.receiptHash,
-    };
-  };
-}
 async function main() {
   require('../../backend/src/config/env');
   const { runtimeConfig } = require('../node/workerConfig');
@@ -140,7 +73,7 @@ async function main() {
   const config = runtimeConfig();
   if (!config.enabled)
     throw new Error(
-      'Worker disabled: explicit local mode and isolated loopback AI database required'
+      'Worker disabled: select an isolated local mode or explicit admin-test application mode'
     );
   let stopping = false;
   process.on('SIGINT', () => {
@@ -150,11 +83,7 @@ async function main() {
     stopping = true;
   });
   const worker = createWorker(getPrisma(), config, {
-    analyze: ['python-fake', 'python-gemini'].includes(process.env.AI_WORKER_MODE)
-      ? pythonAnalyze(
-          process.env.AI_ANALYZE_URL || 'http://127.0.0.1:8001/internal/v1/lab-assistant/analyze'
-        )
-      : fakeAnalyze(process.env.AI_INTERNAL_URL || 'http://127.0.0.1:5500/internal/v1/ai'),
+    analyze: workerAnalyze(process.env),
   });
   try {
     while (!stopping) {
@@ -165,9 +94,15 @@ async function main() {
     await disconnectDatabase();
   }
 }
+function workerAnalyze(env, adapters = { pythonAnalyze }) {
+  if (!['python-gemini', 'app-gemini'].includes(env.AI_WORKER_MODE)) throw new Error('AI_DISABLED');
+  return adapters.pythonAnalyze(
+    env.AI_ANALYZE_URL || 'http://127.0.0.1:8001/internal/v1/lab-assistant/analyze'
+  );
+}
 if (require.main === module)
   main().catch(() => {
     console.error('AI worker stopped; check server-only worker configuration/database');
     process.exitCode = 1;
   });
-module.exports = { createWorker, fakePrepare, fakeAnalyze };
+module.exports = { createWorker, workerAnalyze };

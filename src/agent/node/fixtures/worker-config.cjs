@@ -3,7 +3,8 @@ module.exports = () => {
   const config = runtimeConfig();
   config.enabled = true;
   config.ownerSecret = process.env.AI_OWNER_SECRET;
-  const base = config.providers['local-fake-v1'];
+  const base = require('../../tests/helpers/fakeProvider.cjs').provider;
+  config.providers['local-fake-v1'] = base;
   config.providers['synthetic-paid'] = {
     ...base,
     provider: 'synthetic',
