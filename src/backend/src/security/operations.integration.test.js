@@ -19,9 +19,9 @@ test(
       targetName = `ccna_restore_${tag}_test`;
     const admin = new Client({ connectionString: url.href });
     await admin.connect();
-    const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'ccna-restore-'));
-    const uploads = path.join(temp, 'uploads'),
-      restoredUploads = path.join(temp, 'restored');
+    const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'ccna-khôi-phục-'));
+    const uploads = path.join(temp, 'uploads tiếng Việt'),
+      restoredUploads = path.join(temp, 'khôi phục uploads');
     fs.mkdirSync(uploads);
     fs.writeFileSync(path.join(uploads, 'lab.txt'), 'restored lab fixture');
     let source, restored;

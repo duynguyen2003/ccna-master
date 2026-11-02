@@ -10,7 +10,7 @@ export const deviceEntries = (devices) => {
 export const firstDeviceId = (devices) => deviceEntries(devices)[0]?.[0] || '';
 
 const safeStatus = (value) => {
-  if (value === 'completed' || value === 'in_progress' || value === 'not_started') return value;
+  if (['completed', 'in_progress', 'not_started', 'blocked'].includes(value)) return value;
   return null;
 };
 
@@ -33,7 +33,12 @@ export const normalizeProgress = (attempt) => {
   const checks = tasks.map((task) => {
     const check = byId.get(task.id);
     const status = safeStatus(check?.status) || (safePassed(check) ? 'completed' : 'not_started');
-    return { id: task.id, status, passed: safePassed(check) };
+    return {
+      id: task.id,
+      status,
+      passed: safePassed(check),
+      ...(check?.blockedBy ? { blockedBy: check.blockedBy } : {}),
+    };
   });
   rawChecks.forEach((check) => {
     if (!checks.some((item) => item.id === check.id)) {
@@ -41,6 +46,7 @@ export const normalizeProgress = (attempt) => {
         id: check.id,
         status: safeStatus(check.status) || (safePassed(check) ? 'completed' : 'not_started'),
         passed: safePassed(check),
+        ...(check.blockedBy ? { blockedBy: check.blockedBy } : {}),
       });
     }
   });
@@ -53,10 +59,10 @@ export const normalizeProgress = (attempt) => {
     : checks.filter((check) => check.status === 'completed' || check.passed).length;
   const nextTaskId =
     source.nextTaskId ||
-    checks.find((check) => check.status !== 'completed' && !check.passed)?.id ||
+    checks.find((check) => !['completed', 'blocked'].includes(check.status) && !check.passed)?.id ||
     null;
   const withCurrent = checks.map((check) =>
-    check.id === nextTaskId && check.status !== 'completed'
+    check.id === nextTaskId && !['completed', 'blocked'].includes(check.status)
       ? { ...check, status: 'in_progress' }
       : check
   );
@@ -71,10 +77,13 @@ export const progressForTasks = (tasks, checks = []) => {
       ...task,
       status: safeStatus(check?.status) || (safePassed(check) ? 'completed' : 'not_started'),
       passed: safePassed(check),
+      ...(check?.blockedBy ? { blockedBy: check.blockedBy } : {}),
     };
   });
   const completed = normalized.filter((task) => task.status === 'completed' || task.passed).length;
-  const firstUnfinished = normalized.find((task) => task.status !== 'completed' && !task.passed);
+  const firstUnfinished = normalized.find(
+    (task) => !['completed', 'blocked'].includes(task.status) && !task.passed
+  );
   const withCurrent = normalized.map((task) =>
     task.id === firstUnfinished?.id && task.status !== 'completed'
       ? { ...task, status: 'in_progress' }
@@ -83,13 +92,19 @@ export const progressForTasks = (tasks, checks = []) => {
   return {
     completed,
     total: withCurrent.length,
-    checks: withCurrent.map(({ id, status, passed }) => ({ id, status, passed })),
+    checks: withCurrent.map(({ id, status, passed, blockedBy }) => ({
+      id,
+      status,
+      passed,
+      ...(blockedBy ? { blockedBy } : {}),
+    })),
     nextTaskId: firstUnfinished?.id || null,
   };
 };
 
 export const taskStatus = (task, progress) => {
   const check = progress?.checks?.find((item) => item.id === task.id);
+  if (check?.status === 'blocked') return 'blocked';
   if (progress?.nextTaskId === task.id) return 'in_progress';
   if (check?.status) return check.status;
   if (check?.passed) return 'completed';
@@ -97,7 +112,9 @@ export const taskStatus = (task, progress) => {
 };
 
 export const nextTaskForDevice = (tasks, progress, selectedDeviceId) => {
-  const unfinished = tasks.filter((task) => taskStatus(task, progress) !== 'completed');
+  const unfinished = tasks.filter(
+    (task) => !['completed', 'blocked'].includes(taskStatus(task, progress))
+  );
   return (
     unfinished.find((task) => task.deviceId && task.deviceId === selectedDeviceId) ||
     unfinished.find((task) => taskStatus(task, progress) === 'in_progress') ||
@@ -183,7 +200,10 @@ export const safeTaskFromCheck = (check, index) => ({
   id: check?.id || `check-${index + 1}`,
   title: check?.title || check?.id || `Nhiệm vụ ${index + 1}`,
   points: Number(check?.points) || 0,
-  hint: check?.hint || '',
+  hint: check?.hints?.[0] || check?.hint || '',
+  ...(check?.hints ? { hintCount: check.hints.length, hints: [] } : {}),
+  ...(check?.required !== undefined ? { required: check.required } : {}),
+  ...(check?.skill ? { skill: check.skill } : {}),
   deviceId: check?.deviceId || '',
   type: check?.type || '',
   interface: check?.interface || '',
@@ -191,6 +211,7 @@ export const safeTaskFromCheck = (check, index) => ({
 
 export const stripGradeCheck = (check) => ({
   id: check.id,
-  status: check.passed ? 'completed' : 'not_started',
+  status: check.status === 'blocked' ? 'blocked' : check.passed ? 'completed' : 'not_started',
+  ...(check.blockedBy ? { blockedBy: check.blockedBy } : {}),
   passed: Boolean(check.passed),
 });

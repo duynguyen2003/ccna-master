@@ -105,6 +105,72 @@
               "format": "date-time",
               "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
             },
+            "progress": {
+              "type": "object",
+              "properties": {
+                "streamVersion": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                },
+                "phase": {
+                  "type": "string",
+                  "enum": [
+                    "QUEUED",
+                    "RUNNING",
+                    "PREPARING_CONTEXT",
+                    "ANALYZING",
+                    "FINALIZING",
+                    "FINISHED"
+                  ]
+                },
+                "deviceId": {
+                  "type": "string",
+                  "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+                },
+                "unitStatus": {
+                  "type": "string",
+                  "enum": [
+                    "RESERVED",
+                    "CONSUMED",
+                    "RELEASED"
+                  ]
+                },
+                "recoveryAction": {
+                  "type": "string",
+                  "enum": [
+                    "NONE",
+                    "NEW_REQUEST",
+                    "RECONNECT",
+                    "POLL"
+                  ]
+                },
+                "reasonCode": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^[\\s\\S]{1,80}$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "deadlineAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                }
+              },
+              "required": [
+                "streamVersion",
+                "phase",
+                "unitStatus",
+                "reasonCode",
+                "deadlineAt"
+              ],
+              "additionalProperties": false
+            },
             "status": {
               "type": "string",
               "enum": [
@@ -233,6 +299,72 @@
               "type": "string",
               "format": "date-time",
               "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+            },
+            "progress": {
+              "type": "object",
+              "properties": {
+                "streamVersion": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                },
+                "phase": {
+                  "type": "string",
+                  "enum": [
+                    "QUEUED",
+                    "RUNNING",
+                    "PREPARING_CONTEXT",
+                    "ANALYZING",
+                    "FINALIZING",
+                    "FINISHED"
+                  ]
+                },
+                "deviceId": {
+                  "type": "string",
+                  "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+                },
+                "unitStatus": {
+                  "type": "string",
+                  "enum": [
+                    "RESERVED",
+                    "CONSUMED",
+                    "RELEASED"
+                  ]
+                },
+                "recoveryAction": {
+                  "type": "string",
+                  "enum": [
+                    "NONE",
+                    "NEW_REQUEST",
+                    "RECONNECT",
+                    "POLL"
+                  ]
+                },
+                "reasonCode": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^[\\s\\S]{1,80}$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "deadlineAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                }
+              },
+              "required": [
+                "streamVersion",
+                "phase",
+                "unitStatus",
+                "reasonCode",
+                "deadlineAt"
+              ],
+              "additionalProperties": false
             },
             "status": {
               "type": "string",
@@ -398,12 +530,27 @@
                           "PRIVILEGED_EXEC",
                           "GLOBAL_CONFIG",
                           "INTERFACE_CONFIG",
-                          "VLAN_CONFIG"
+                          "VLAN_CONFIG",
+                          "ROUTER_CONFIG"
                         ]
                       },
                       "command": {
                         "type": "string",
                         "pattern": "^[\\s\\S]{1,500}$"
+                      },
+                      "template": {
+                        "type": "boolean"
+                      },
+                      "routingProtocol": {
+                        "type": "string",
+                        "enum": [
+                          "eigrp",
+                          "ospf"
+                        ]
+                      },
+                      "interface": {
+                        "type": "string",
+                        "pattern": "^[\\s\\S]{1,80}$"
                       }
                     },
                     "required": [
@@ -460,6 +607,41 @@
                     "modelVersion",
                     "priceVersion",
                     "appCommit"
+                  ],
+                  "additionalProperties": false
+                },
+                "focus": {
+                  "type": "object",
+                  "properties": {
+                    "taskId": {
+                      "type": "string",
+                      "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+                    },
+                    "title": {
+                      "type": "string",
+                      "pattern": "^[\\s\\S]{1,200}$"
+                    },
+                    "deviceId": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "verification": {
+                      "type": "string",
+                      "pattern": "^[\\s\\S]{1,500}$"
+                    }
+                  },
+                  "required": [
+                    "taskId",
+                    "title",
+                    "deviceId",
+                    "verification"
                   ],
                   "additionalProperties": false
                 }
@@ -588,6 +770,72 @@
               "type": "string",
               "format": "date-time",
               "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+            },
+            "progress": {
+              "type": "object",
+              "properties": {
+                "streamVersion": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                },
+                "phase": {
+                  "type": "string",
+                  "enum": [
+                    "QUEUED",
+                    "RUNNING",
+                    "PREPARING_CONTEXT",
+                    "ANALYZING",
+                    "FINALIZING",
+                    "FINISHED"
+                  ]
+                },
+                "deviceId": {
+                  "type": "string",
+                  "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+                },
+                "unitStatus": {
+                  "type": "string",
+                  "enum": [
+                    "RESERVED",
+                    "CONSUMED",
+                    "RELEASED"
+                  ]
+                },
+                "recoveryAction": {
+                  "type": "string",
+                  "enum": [
+                    "NONE",
+                    "NEW_REQUEST",
+                    "RECONNECT",
+                    "POLL"
+                  ]
+                },
+                "reasonCode": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^[\\s\\S]{1,80}$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "deadlineAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                }
+              },
+              "required": [
+                "streamVersion",
+                "phase",
+                "unitStatus",
+                "reasonCode",
+                "deadlineAt"
+              ],
+              "additionalProperties": false
             },
             "status": {
               "type": "string",
@@ -753,12 +1001,27 @@
                           "PRIVILEGED_EXEC",
                           "GLOBAL_CONFIG",
                           "INTERFACE_CONFIG",
-                          "VLAN_CONFIG"
+                          "VLAN_CONFIG",
+                          "ROUTER_CONFIG"
                         ]
                       },
                       "command": {
                         "type": "string",
                         "pattern": "^[\\s\\S]{1,500}$"
+                      },
+                      "template": {
+                        "type": "boolean"
+                      },
+                      "routingProtocol": {
+                        "type": "string",
+                        "enum": [
+                          "eigrp",
+                          "ospf"
+                        ]
+                      },
+                      "interface": {
+                        "type": "string",
+                        "pattern": "^[\\s\\S]{1,80}$"
                       }
                     },
                     "required": [
@@ -815,6 +1078,41 @@
                     "modelVersion",
                     "priceVersion",
                     "appCommit"
+                  ],
+                  "additionalProperties": false
+                },
+                "focus": {
+                  "type": "object",
+                  "properties": {
+                    "taskId": {
+                      "type": "string",
+                      "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+                    },
+                    "title": {
+                      "type": "string",
+                      "pattern": "^[\\s\\S]{1,200}$"
+                    },
+                    "deviceId": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "verification": {
+                      "type": "string",
+                      "pattern": "^[\\s\\S]{1,500}$"
+                    }
+                  },
+                  "required": [
+                    "taskId",
+                    "title",
+                    "deviceId",
+                    "verification"
                   ],
                   "additionalProperties": false
                 }
@@ -943,6 +1241,72 @@
               "type": "string",
               "format": "date-time",
               "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+            },
+            "progress": {
+              "type": "object",
+              "properties": {
+                "streamVersion": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                },
+                "phase": {
+                  "type": "string",
+                  "enum": [
+                    "QUEUED",
+                    "RUNNING",
+                    "PREPARING_CONTEXT",
+                    "ANALYZING",
+                    "FINALIZING",
+                    "FINISHED"
+                  ]
+                },
+                "deviceId": {
+                  "type": "string",
+                  "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+                },
+                "unitStatus": {
+                  "type": "string",
+                  "enum": [
+                    "RESERVED",
+                    "CONSUMED",
+                    "RELEASED"
+                  ]
+                },
+                "recoveryAction": {
+                  "type": "string",
+                  "enum": [
+                    "NONE",
+                    "NEW_REQUEST",
+                    "RECONNECT",
+                    "POLL"
+                  ]
+                },
+                "reasonCode": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^[\\s\\S]{1,80}$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "deadlineAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                }
+              },
+              "required": [
+                "streamVersion",
+                "phase",
+                "unitStatus",
+                "reasonCode",
+                "deadlineAt"
+              ],
+              "additionalProperties": false
             },
             "status": {
               "type": "string",
@@ -1077,6 +1441,72 @@
               "format": "date-time",
               "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
             },
+            "progress": {
+              "type": "object",
+              "properties": {
+                "streamVersion": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                },
+                "phase": {
+                  "type": "string",
+                  "enum": [
+                    "QUEUED",
+                    "RUNNING",
+                    "PREPARING_CONTEXT",
+                    "ANALYZING",
+                    "FINALIZING",
+                    "FINISHED"
+                  ]
+                },
+                "deviceId": {
+                  "type": "string",
+                  "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+                },
+                "unitStatus": {
+                  "type": "string",
+                  "enum": [
+                    "RESERVED",
+                    "CONSUMED",
+                    "RELEASED"
+                  ]
+                },
+                "recoveryAction": {
+                  "type": "string",
+                  "enum": [
+                    "NONE",
+                    "NEW_REQUEST",
+                    "RECONNECT",
+                    "POLL"
+                  ]
+                },
+                "reasonCode": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^[\\s\\S]{1,80}$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "deadlineAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                }
+              },
+              "required": [
+                "streamVersion",
+                "phase",
+                "unitStatus",
+                "reasonCode",
+                "deadlineAt"
+              ],
+              "additionalProperties": false
+            },
             "status": {
               "type": "string",
               "const": "OUTCOME_UNKNOWN"
@@ -1203,6 +1633,72 @@
               "type": "string",
               "format": "date-time",
               "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+            },
+            "progress": {
+              "type": "object",
+              "properties": {
+                "streamVersion": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                },
+                "phase": {
+                  "type": "string",
+                  "enum": [
+                    "QUEUED",
+                    "RUNNING",
+                    "PREPARING_CONTEXT",
+                    "ANALYZING",
+                    "FINALIZING",
+                    "FINISHED"
+                  ]
+                },
+                "deviceId": {
+                  "type": "string",
+                  "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+                },
+                "unitStatus": {
+                  "type": "string",
+                  "enum": [
+                    "RESERVED",
+                    "CONSUMED",
+                    "RELEASED"
+                  ]
+                },
+                "recoveryAction": {
+                  "type": "string",
+                  "enum": [
+                    "NONE",
+                    "NEW_REQUEST",
+                    "RECONNECT",
+                    "POLL"
+                  ]
+                },
+                "reasonCode": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^[\\s\\S]{1,80}$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "deadlineAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                }
+              },
+              "required": [
+                "streamVersion",
+                "phase",
+                "unitStatus",
+                "reasonCode",
+                "deadlineAt"
+              ],
+              "additionalProperties": false
             },
             "status": {
               "type": "string",
@@ -1368,12 +1864,27 @@
                           "PRIVILEGED_EXEC",
                           "GLOBAL_CONFIG",
                           "INTERFACE_CONFIG",
-                          "VLAN_CONFIG"
+                          "VLAN_CONFIG",
+                          "ROUTER_CONFIG"
                         ]
                       },
                       "command": {
                         "type": "string",
                         "pattern": "^[\\s\\S]{1,500}$"
+                      },
+                      "template": {
+                        "type": "boolean"
+                      },
+                      "routingProtocol": {
+                        "type": "string",
+                        "enum": [
+                          "eigrp",
+                          "ospf"
+                        ]
+                      },
+                      "interface": {
+                        "type": "string",
+                        "pattern": "^[\\s\\S]{1,80}$"
                       }
                     },
                     "required": [
@@ -1430,6 +1941,41 @@
                     "modelVersion",
                     "priceVersion",
                     "appCommit"
+                  ],
+                  "additionalProperties": false
+                },
+                "focus": {
+                  "type": "object",
+                  "properties": {
+                    "taskId": {
+                      "type": "string",
+                      "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+                    },
+                    "title": {
+                      "type": "string",
+                      "pattern": "^[\\s\\S]{1,200}$"
+                    },
+                    "deviceId": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "verification": {
+                      "type": "string",
+                      "pattern": "^[\\s\\S]{1,500}$"
+                    }
+                  },
+                  "required": [
+                    "taskId",
+                    "title",
+                    "deviceId",
+                    "verification"
                   ],
                   "additionalProperties": false
                 }

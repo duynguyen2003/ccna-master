@@ -13,6 +13,7 @@ Object.assign(process.env, {
   JWT_SECRET: 'be04-user-test-only',
   LAB_AI_MODE: 'deterministic',
   AI_ENVIRONMENT: 'be04',
+  AI_STATUS_STREAM_ENABLED: 'true',
   AI_RECOVERY_EPOCH: 'epoch_be04',
   AI_OWNER_SECRET: 'synthetic-owner-secret-at-least-32-characters',
   AI_SERVICE_SECRET: 'synthetic-service-secret-at-least-32-characters',
@@ -275,6 +276,90 @@ test('BE-04 durable workers, permits and accounting on isolated PostgreSQL', asy
         limits,
       },
     });
+
+    await t.test(
+      'SSE authorizes ownership, publishes only committed results and replays a terminal snapshot',
+      async () => {
+        const j = await fresh();
+        const other = await fresh();
+        await results.cancel(other.id);
+        const path = `${a.base}/api/lab-attempts/${j.attemptId}/ai/requests/${j.id}/events`;
+        const denied = await fetch(path, {
+          headers: { Authorization: `Bearer ${createAccessToken(other.user)}` },
+        });
+        assert.equal(denied.status, 404);
+        const headers = { Authorization: `Bearer ${createAccessToken(j.user)}` };
+        const legacy = await fetch(path.replace('/events', ''), { headers });
+        assert.equal((await legacy.json()).data.progress, undefined);
+        const modern = await fetch(path.replace('/events', ''), {
+          headers: { ...headers, 'X-AI-Progress': '1' },
+        });
+        assert.equal((await modern.json()).data.progress.phase, 'QUEUED');
+        const response = await fetch(path, { headers, signal: AbortSignal.timeout(10000) });
+        assert.equal(response.headers.get('content-type').split(';')[0], 'text/event-stream');
+        const reader = response.body.getReader();
+        const first = new TextDecoder().decode((await reader.read()).value);
+        assert.match(first, /event: state/);
+        assert.doesNotMatch(first, /Synthetic answer|"summary"/);
+        await a.rpc('tick', 20);
+        let received = '';
+        for (;;) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          received += new TextDecoder().decode(value);
+        }
+        assert.match(received, /event: result/);
+        const row = await db.aiRequest.findUnique({ where: { id: j.id } });
+        assert.equal(row.status, 'COMPLETED');
+        assert.ok(row.streamVersion >= 4);
+        const cursor = `${j.id}:${row.streamVersion}`;
+        const replay = await fetch(path, {
+          headers: { ...headers, 'Last-Event-ID': cursor },
+          signal: AbortSignal.timeout(5000),
+        });
+        assert.match(await replay.text(), /event: result/);
+        assert.equal(await db.aiProviderCall.count({ where: { requestId: j.id } }), 1);
+        const saved = await api.read(j.principal, j.attemptId, 'id', j.id);
+        assert.equal(saved.data.progress.unitStatus, 'CONSUMED');
+      }
+    );
+
+    await t.test(
+      'independent sweeper expires abandoned requests and releases the learner unit',
+      async () => {
+        const j = await fresh();
+        await db.aiRequest.update({
+          where: { id: j.id },
+          data: {
+            createdAt: new Date(Date.now() - 61000),
+            deadlineAt: new Date(Date.now() - 1000),
+          },
+        });
+        const abort = new AbortController();
+        const { runSweeper } = require('../workers/aiSweeper');
+        const task = runSweeper(db, config, {
+          signal: abort.signal,
+          intervalMs: 10,
+          onError: (error) => {
+            throw error;
+          },
+        });
+        try {
+          for (let i = 0; i < 40; i++) {
+            const state = await api.read(j.principal, j.attemptId, 'id', j.id);
+            if (state.data.status === 'EXPIRED') {
+              assert.equal(state.data.progress.unitStatus, 'RELEASED');
+              return;
+            }
+            await delay(25);
+          }
+          assert.fail('sweeper did not expire request');
+        } finally {
+          abort.abort();
+          await task;
+        }
+      }
+    );
 
     await t.test(
       'DB clock is UTC-correct in non-UTC sessions and settlement uses original reserved windows',

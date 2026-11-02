@@ -1,6 +1,7 @@
 const { PrismaClient } = require('@prisma/client');
 const { Pool } = require('pg');
 const { PrismaPg } = require('@prisma/adapter-pg');
+const { PrismaPgClient } = require('./prismaPgClient');
 
 // Singleton pattern for Prisma instance (avoid multiple connections)
 let prismaInstance = null;
@@ -21,6 +22,7 @@ const initializeDatabase = () => {
       throw new Error('DATABASE_URL is required in production');
     }
     const pool = new Pool({
+      Client: PrismaPgClient,
       connectionString:
         process.env.DATABASE_URL || 'postgresql://postgres:123456@localhost:5432/netmastery_db',
       connectionTimeoutMillis: 5000,

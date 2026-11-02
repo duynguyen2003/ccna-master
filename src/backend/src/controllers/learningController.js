@@ -316,6 +316,36 @@ module.exports.deleteCourse = async (req, res, next) => {
   }
 };
 
+const learnerLab = (lab, access) => {
+  const publicLab = { ...lab };
+  delete publicLab.gradingSpec;
+  delete publicLab.initialState;
+  publicLab.access = access;
+  if (!access.canAccess) {
+    publicLab.fileUrl = null;
+    publicLab.guideContent = null;
+    publicLab.steps = [];
+  }
+  return publicLab;
+};
+module.exports.getLab = async (req, res, next) => {
+  try {
+    if (!/^[1-9]\d*$/.test(req.params.id) || Number(req.params.id) > 2147483647)
+      return res.status(400).json({ message: 'Mã bài thực hành không hợp lệ' });
+    const lab = await prisma.lab.findFirst({
+      where: { id: Number(req.params.id), status: 'PUBLISHED', deletedAt: null },
+      include: { course: true },
+    });
+    if (!lab) return res.status(404).json({ message: 'Không tìm thấy bài thực hành' });
+    const [access] = await require('../services/learningPathService').readLabAccess(req.user?.id, [
+      lab,
+    ]);
+    res.set('Cache-Control', 'private, no-store');
+    res.json({ data: learnerLab(lab, access) });
+  } catch (error) {
+    next(error);
+  }
+};
 module.exports.getLabs = async (req, res, next) => {
   try {
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
@@ -344,18 +374,7 @@ module.exports.getLabs = async (req, res, next) => {
       : [];
     const responseLabs = !learnerView
       ? labs
-      : labs.map((lab, index) => {
-          const publicLab = { ...lab };
-          delete publicLab.gradingSpec;
-          delete publicLab.initialState;
-          publicLab.access = accesses[index];
-          if (!accesses[index].canAccess) {
-            publicLab.fileUrl = null;
-            publicLab.guideContent = null;
-            publicLab.steps = [];
-          }
-          return publicLab;
-        });
+      : labs.map((lab, index) => learnerLab(lab, accesses[index]));
 
     res.set('Cache-Control', 'private, no-store');
     res.json({
@@ -369,6 +388,7 @@ module.exports.getLabs = async (req, res, next) => {
 
 module.exports.createLab = async (req, res, next) => {
   try {
+    const metadata = require('../validation/labMetadata').labMetadata(req.body);
     const {
       title,
       category,
@@ -413,6 +433,7 @@ module.exports.createLab = async (req, res, next) => {
     } catch (configError) {
       return res.status(400).json({ message: formatCliConfigError(configError) });
     }
+    if (cliConfig.simulatorVersion === '3.0.0') metadata.schemaVersion = 2;
     await assertCourseModule(prisma, normalizedCourseId, normalizedModuleId);
     const accessPolicy = await validateLabAccessPolicy(prisma, req.body.accessPolicy, {
       courseId: normalizedCourseId,
@@ -465,11 +486,16 @@ module.exports.createLab = async (req, res, next) => {
 
     const lab = await prisma.lab.create({
       data: {
+        ...metadata,
         title,
         category: category || null,
         difficulty: normalizedDifficulty,
         duration: duration || null,
-        guideContent: guideContent ? sanitizeHtml(guideContent) : null,
+        guideContent: guideContent
+          ? metadata.guideFormat === 'markdown'
+            ? guideContent
+            : sanitizeHtml(guideContent)
+          : null,
         objective: objective || null,
         status: normalizedStatus,
         tools: parsedTools,
@@ -517,6 +543,11 @@ module.exports.updateLab = async (req, res, next) => {
       where: { id: parseInt(id, 10), deletedAt: null },
     });
     if (!existingLab) return res.status(404).json({ message: 'Không tìm thấy bài Lab' });
+    if (existingLab.contentSource === 'REPOSITORY')
+      return res
+        .status(409)
+        .json({ message: 'Bản phát hành từ repo không sửa trực tiếp. Hãy tạo bản nháp riêng.' });
+    const metadata = require('../validation/labMetadata').labMetadata(req.body, existingLab);
 
     const effectiveCourseId = courseId === undefined ? existingLab.courseId : courseId || null;
     const effectiveModuleId =
@@ -554,6 +585,7 @@ module.exports.updateLab = async (req, res, next) => {
     } catch (configError) {
       return res.status(400).json({ message: formatCliConfigError(configError) });
     }
+    if (cliConfig.simulatorVersion === '3.0.0') metadata.schemaVersion = 2;
     await assertCourseModule(prisma, effectiveCourseId, effectiveModuleId);
     const accessPolicy = await validateLabAccessPolicy(
       prisma,
@@ -572,13 +604,21 @@ module.exports.updateLab = async (req, res, next) => {
     });
 
     const dataToUpdate = {
+      ...metadata,
+      labVersion: (existingLab.labVersion || 1) + 1,
       title: effectiveTitle,
       category,
       difficulty: effectiveDifficulty,
       duration,
       status: effectiveStatus,
       guideContent:
-        guideContent === undefined ? undefined : guideContent ? sanitizeHtml(guideContent) : null,
+        guideContent === undefined
+          ? undefined
+          : guideContent
+            ? metadata.guideFormat === 'markdown'
+              ? guideContent
+              : sanitizeHtml(guideContent)
+            : null,
       objective: effectiveObjective,
       courseId: effectiveCourseId,
       moduleId: effectiveModuleId,

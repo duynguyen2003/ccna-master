@@ -42,6 +42,9 @@ export const buildPreviewAttempt = ({ runtime, initialState = {}, gradingSpec = 
     prompt: runtime.engine.prompt(state),
     commands: [],
     lab: {
+      steps: lab.steps || [],
+      guideFormat: lab.guideFormat,
+      guideContent: lab.guideContent,
       id: lab.id || 'preview',
       title: lab.title || 'Xem trước lab',
       objective: lab.objective || '',
@@ -52,6 +55,7 @@ export const buildPreviewAttempt = ({ runtime, initialState = {}, gradingSpec = 
 };
 
 export const previewAction = ({ runtime, attempt, action }) => {
+  if (attempt.commands.length >= 500) throw new Error('Giới hạn 500 thao tác mỗi phiên');
   const result = runtime.engine.execute(attempt.state, action);
   const sequence = attempt.commands.length + 1;
   const event = {
@@ -77,11 +81,17 @@ export const previewAction = ({ runtime, attempt, action }) => {
 
 export const gradePreview = ({ runtime, attempt, gradingSpec }) => {
   const result = runtime.grade(attempt.state, gradingSpec || {});
-  const tasks = attempt.lab.tasks || [];
+  const tasks = (gradingSpec?.checks || []).map((check, index) => ({
+    ...safeTaskFromCheck(check, index),
+    ...(check.hints
+      ? { hints: check.hints.slice(0, attempt.state.learningEvidence?.hints?.[check.id] || 0) }
+      : {}),
+  }));
   const safeChecks = result.checks.map(stripGradeCheck);
   return {
     ...attempt,
     score: result.score,
+    lab: { ...attempt.lab, tasks },
     feedback: {
       score: result.score,
       passed: result.passed,

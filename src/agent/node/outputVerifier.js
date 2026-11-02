@@ -17,9 +17,16 @@ function hasCommand(text) {
       'GLOBAL_CONFIG',
       'INTERFACE_CONFIG',
       'VLAN_CONFIG',
+      'ROUTER_CONFIG',
     ])
       for (const deviceType of ['ROUTER', 'SWITCH', 'PC'])
-        if (parseCommand('ccna-network-v2', { mode, deviceType }, candidate).kind === 'command')
+        if (
+          parseCommand(
+            'ccna-network-v2',
+            { mode, deviceType, simulatorVersion: '3.0.0', context: { routingProtocol: 'eigrp' } },
+            candidate
+          ).kind === 'command'
+        )
           return true;
   }
   return false;
@@ -28,11 +35,37 @@ function verifyOutput(input, value, options = {}) {
   const receipt = assertBindings(input, value);
   if (
     !isDeepStrictEqual(input.facts, evidenceFor(input.context, input.request)) ||
-    !isDeepStrictEqual(input.allowedCommands, commandsFor(input.context))
+    !isDeepStrictEqual(input.allowedCommands, commandsFor(input.context, input.request))
   )
     throw new Error('AI_UNTRUSTED_EVIDENCE_OR_COMMAND');
   if (!receipt.output) return true;
   const output = receipt.output;
+  const focus = input.context.taskFocus;
+  if (focus && input.request.intent === 'NEXT_STEP') {
+    if (
+      output.hintLevel !== focus.hintLevel ||
+      (focus.hintLevel === 1 && output.nextSteps.some((step) => step.commandId))
+    )
+      throw new Error('AI_HINT_LEVEL_MISMATCH');
+    const prose = [
+      output.summary,
+      output.verification,
+      ...output.nextSteps.map((step) => step.text),
+    ].join(' ');
+    // Device IDs in prose are also scoped; a valid commandId alone cannot
+    // legitimize instructions about a different router.
+    for (const device of input.context.devices) {
+      const escaped = device.id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const mention = new RegExp(`(^|[^\\w-])${escaped}(?=$|[^\\w-])`, 'i');
+      if (device.id === focus.deviceId || mention.test(focus.title)) continue;
+      if (mention.test(prose)) throw new Error('AI_TASK_DEVICE_MISMATCH');
+    }
+    if (
+      focus.type === 'eigrp_as_configured' &&
+      /\b(?:delay|metric|bandwidth|passive)\b/i.test(prose)
+    )
+      throw new Error('AI_TASK_TOPIC_MISMATCH');
+  }
   const scrub = redactor([...identityValues(options.row), ...(options.secrets || [])]);
   for (const text of [
     output.summary,

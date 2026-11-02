@@ -24,7 +24,9 @@ const { connection, run, digest } = require('./backup-lib.cjs');
   const uploads = uploadsDirectory;
   if (fs.existsSync(uploads) && fs.readdirSync(uploads).length)
     throw new Error('UPLOADS_DIR must be empty');
-  const entries = run('tar', ['-tzf', path.join(source, 'uploads.tar.gz')], env)
+  const entries = run('tar', ['-tzf', '-'], env, {
+    inputFile: path.join(source, 'uploads.tar.gz'),
+  })
     .split(/\r?\n/)
     .filter(Boolean);
   if (
@@ -44,19 +46,15 @@ const { connection, run, digest } = require('./backup-lib.cjs');
   }
   run(
     process.env.PG_RESTORE_BIN || 'pg_restore',
-    [
-      '--dbname',
-      database,
-      '--no-owner',
-      '--no-acl',
-      '--exit-on-error',
-      '--single-transaction',
-      path.join(source, 'database.dump'),
-    ],
-    env
+    ['--dbname', database, '--no-owner', '--no-acl', '--exit-on-error', '--single-transaction'],
+    env,
+    { inputFile: path.join(source, 'database.dump') }
   );
   fs.mkdirSync(uploads, { recursive: true });
-  run('tar', ['-xzf', path.join(source, 'uploads.tar.gz'), '-C', uploads], env);
+  run('tar', ['-xzf', '-'], env, {
+    cwd: uploads,
+    inputFile: path.join(source, 'uploads.tar.gz'),
+  });
   console.log(`Restore complete: ${database}; uploads: ${uploads}`);
 })().catch((error) => {
   console.error(error.message);

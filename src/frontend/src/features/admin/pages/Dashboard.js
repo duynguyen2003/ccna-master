@@ -1,5 +1,6 @@
 // src/frontend/src/features/admin/pages/Dashboard.js
 import React, { useState, useEffect, useCallback, useContext, useRef } from 'react';
+import SlidingTabs from '../../../components/ui/SlidingTabs';
 import { Users, BookOpen, Award, TrendingUp, AlertCircle } from 'lucide-react';
 import { adminApi } from '../../../services/api/adminApi';
 import { AuthContext } from '../../../context/AuthContext';
@@ -258,32 +259,28 @@ const Dashboard = () => {
               <h3>Hoạt động học tập</h3>
               <p className="dashboard-card-subtitle">Số bài học hoàn thành</p>
             </div>
-            <div style={{ display: 'flex', gap: '8px' }}>
+            <SlidingTabs
+              className="admin-activity-periods"
+              value={activeTab}
+              aria-label="Khoảng thời gian hoạt động"
+            >
               <button
                 className={`admin-badge ${activeTab === 'week' ? 'active' : 'inactive'}`}
-                style={{
-                  border: 'none',
-                  cursor: 'pointer',
-                  background: activeTab === 'week' ? '#386298' : 'transparent',
-                  color: activeTab === 'week' ? '#fff' : '#64748b',
-                }}
+                type="button"
+                aria-pressed={activeTab === 'week'}
                 onClick={() => setActiveTab('week')}
               >
                 Tuần này
               </button>
               <button
                 className={`admin-badge ${activeTab === 'month' ? 'active' : 'inactive'}`}
-                style={{
-                  border: 'none',
-                  cursor: 'pointer',
-                  background: activeTab === 'month' ? '#386298' : 'transparent',
-                  color: activeTab === 'month' ? '#fff' : '#64748b',
-                }}
+                type="button"
+                aria-pressed={activeTab === 'month'}
                 onClick={() => setActiveTab('month')}
               >
                 Tháng này
               </button>
-            </div>
+            </SlidingTabs>
           </div>
           {errors.activity ? (
             renderError(errors.activity)

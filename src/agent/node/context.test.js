@@ -342,6 +342,7 @@ test('strong claims require an exact observation or a matching scoped diagnostic
   // connectivity diagnosis instead needs the complete SIM-01 proof/template.
   input.request = { ...input.request, intent: 'NEXT_STEP', target: null };
   input.facts = evidenceFor(input.context, input.request);
+  input.allowedCommands = commandsFor(input.context, input.request);
   const receipt = receiptFor(input);
   const fact = input.facts[0];
   Object.assign(receipt.output, {
@@ -356,7 +357,7 @@ test('strong claims require an exact observation or a matching scoped diagnostic
   receipt.output.summary = 'Đây chắc chắn là nguyên nhân mất kết nối.';
   assert.throws(() => verifyOutput(input, receipt), /AI_UNSUPPORTED_FINDING/);
   assert.deepEqual(input.facts, evidenceFor(input.context, input.request));
-  assert.deepEqual(input.allowedCommands, commandsFor(input.context));
+  assert.deepEqual(input.allowedCommands, commandsFor(input.context, input.request));
 });
 
 test('verification accepts persisted JSON with reordered object keys', () => {

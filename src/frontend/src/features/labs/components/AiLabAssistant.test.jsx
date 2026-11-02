@@ -2,6 +2,8 @@ import React from 'react';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import AiLabPanel from '@ccna/agent-ui/panel';
+import DropdownSelect from '../../../components/ui/DropdownSelect';
+import AnimatedCopyButton from '../../../components/ui/AnimatedCopyButton';
 import { capabilities, ids, quota, request, result } from '@ccna/agent-ui/fixtures';
 
 const deferred = () => {
@@ -13,6 +15,7 @@ const deferred = () => {
 };
 let api;
 const props = {
+  CopyButton: AnimatedCopyButton,
   baseUrl: '/api',
   token: 'synthetic',
   userId: 1,
@@ -47,6 +50,110 @@ beforeEach(() => {
   };
 });
 
+test('server progress stays on the task device and composer Enter submits while Shift/IME do not', async () => {
+  const pending = request('RUNNING', {
+    progress: {
+      streamVersion: 3,
+      phase: 'ANALYZING',
+      deviceId: 'R2',
+      unitStatus: 'RESERVED',
+      reasonCode: null,
+      deadlineAt: new Date(Date.now() + 60000).toISOString(),
+    },
+  });
+  api.create.mockResolvedValue(pending);
+  render(<AiLabPanel {...props} api={api} />);
+  const input = await screen.findByRole('textbox');
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Gửi câu hỏi' })).toBeEnabled());
+  fireEvent.change(input, { target: { value: 'Giúp tôi hiểu bước này' } });
+  fireEvent.keyDown(input, { key: 'Enter', shiftKey: true });
+  fireEvent.keyDown(input, { key: 'Enter', isComposing: true });
+  expect(api.create).not.toHaveBeenCalled();
+  fireEvent.keyDown(input, { key: 'Enter' });
+  expect(await screen.findByText('Đang phân tích nhiệm vụ trên R2…')).toBeInTheDocument();
+  expect(api.create).toHaveBeenCalledTimes(1);
+  expect(input.style.height).not.toBe('');
+});
+
+test('reset action closes options, focuses confirmation and preserves history until confirmed', async () => {
+  api.capabilities.mockResolvedValue({ ...capabilities, conversationId: ids.conversation });
+  api.reset = jest.fn().mockResolvedValue({});
+  render(<AiLabPanel {...props} api={api} Select={DropdownSelect} />);
+  const reset = await screen.findByRole('button', { name: 'Đặt lại hội thoại' });
+  await waitFor(() => expect(reset).toBeEnabled());
+  const options = screen.getByText('Tùy chọn');
+  fireEvent.click(options);
+  expect(reset).toBeVisible();
+  fireEvent.click(reset);
+  expect(reset).not.toBeVisible();
+  expect(screen.getByRole('group', { name: 'Xác nhận đặt lại hội thoại' })).toBeVisible();
+  const keep = screen.getByRole('button', { name: 'Giữ hội thoại' });
+  expect(keep).toHaveFocus();
+  expect(api.reset).not.toHaveBeenCalled();
+  fireEvent.click(keep);
+  expect(
+    screen.queryByRole('group', { name: 'Xác nhận đặt lại hội thoại' })
+  ).not.toBeInTheDocument();
+  expect(options).toHaveFocus();
+  expect(reset).not.toBeVisible();
+  expect(api.reset).not.toHaveBeenCalled();
+});
+
+test('cancel stays enabled outside the disabled composer fields while a request is running', async () => {
+  api.create.mockResolvedValue(request('RUNNING'));
+  api.cancel.mockResolvedValue(request('CANCELLED'));
+  render(<AiLabPanel {...props} api={api} Select={DropdownSelect} />);
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Gửi câu hỏi' })).toBeEnabled());
+  fireEvent.click(screen.getByRole('button', { name: 'Gửi câu hỏi' }));
+  const cancel = await screen.findByRole('button', { name: 'Hủy yêu cầu' });
+  expect(cancel).toBeEnabled();
+  expect(screen.getByRole('combobox', { name: 'Thiết bị' })).toBeDisabled();
+  expect(screen.getByRole('combobox', { name: 'Cách trợ giúp' })).toBeDisabled();
+  await waitFor(() => expect(api.create).toHaveBeenCalledTimes(1));
+  fireEvent.click(cancel);
+  await waitFor(() =>
+    expect(api.cancel).toHaveBeenCalledWith(ids.attempt, ids.request, expect.anything())
+  );
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Gửi câu hỏi' })).toBeEnabled());
+});
+
+test('app dropdown adapter renders styled listboxes for intent, device, hints and feedback', async () => {
+  api.create.mockResolvedValue(request('COMPLETED', { result }));
+  render(<AiLabPanel {...props} api={api} Select={DropdownSelect} />);
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Gửi câu hỏi' })).toBeEnabled());
+  expect(screen.getByRole('combobox', { name: 'Cách trợ giúp' }).textContent).toBe('Gợi ý');
+  fireEvent.click(screen.getByRole('combobox', { name: 'Cách trợ giúp' }));
+  const closeCalls = props.onClose.mock.calls.length;
+  fireEvent.keyDown(screen.getByRole('combobox', { name: 'Cách trợ giúp' }), { key: 'Escape' });
+  expect(props.onClose).toHaveBeenCalledTimes(closeCalls);
+  fireEvent.click(screen.getByRole('combobox', { name: 'Cách trợ giúp' }));
+  fireEvent.click(await screen.findByRole('option', { name: 'Phân tích kết nối' }));
+  fireEvent.click(screen.getByRole('combobox', { name: 'Thiết bị đích' }));
+  fireEvent.click(await screen.findByRole('option', { name: 'PC1' }));
+  expect(screen.getByRole('combobox', { name: 'Cách trợ giúp' }).textContent).toBe('Kết nối');
+  expect(screen.queryByText('Đổi thiết bị · gợi ý mức 1')).not.toBeInTheDocument();
+  expect(screen.getByRole('combobox', { name: 'Thiết bị' })).toHaveAttribute(
+    'aria-haspopup',
+    'listbox'
+  );
+  fireEvent.click(screen.getByRole('combobox', { name: 'Mức gợi ý' }));
+  fireEvent.click(await screen.findByRole('option', { name: '2 · Kiểm tra cụ thể' }));
+  expect(screen.getByRole('combobox', { name: 'Mức gợi ý' }).textContent).toBe('Mức gợi ý 2/3');
+  fireEvent.click(screen.getByRole('button', { name: 'Gửi câu hỏi' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Chưa hữu ích' }));
+  fireEvent.click(screen.getByRole('combobox', { name: 'Lý do đánh giá' }));
+  fireEvent.click(await screen.findByRole('option', { name: 'Nhầm thiết bị' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Gửi đánh giá' }));
+  await waitFor(() =>
+    expect(api.feedback).toHaveBeenCalledWith(
+      ids.attempt,
+      expect.any(String),
+      { helpful: false, reasonCode: 'WRONG_DEVICE' },
+      expect.anything()
+    )
+  );
+});
+
 test('empty → independent pending → safe answer, copy and feedback; no AI command execution', async () => {
   const answer = JSON.parse(JSON.stringify(result));
   answer.answer.summary =
@@ -65,6 +172,7 @@ test('empty → independent pending → safe answer, copy and feedback; no AI co
   fireEvent.click(screen.getByRole('button', { name: 'Gửi câu hỏi' }));
   expect(screen.getByRole('button', { name: 'Terminal độc lập' })).toBeEnabled();
   expect(await screen.findByText('Đang gửi câu hỏi…')).toBeInTheDocument();
+  expect(within(screen.getByRole('log')).getByText('Đang gửi câu hỏi…')).toBeInTheDocument();
   expect(screen.getByRole('article', { name: 'Câu hỏi của bạn' })).toHaveTextContent(
     'Gợi ý bước tiếp theo'
   );
@@ -97,7 +205,9 @@ test('live revision changes mark answer stale without automatically asking again
 test('diagnose needs a source and target and concept needs a question', async () => {
   render(<AiLabPanel {...props} api={api} />);
   await waitFor(() => expect(screen.getByRole('button', { name: 'Gửi câu hỏi' })).toBeEnabled());
-  fireEvent.click(screen.getByRole('button', { name: 'Phân tích kết nối' }));
+  fireEvent.change(screen.getByRole('combobox', { name: 'Cách trợ giúp' }), {
+    target: { value: 'DIAGNOSE' },
+  });
   fireEvent.click(screen.getByRole('button', { name: 'Gửi câu hỏi' }));
   expect(screen.getByRole('alert')).toHaveTextContent('Chọn thiết bị nguồn');
   expect(api.create).not.toHaveBeenCalled();
@@ -146,9 +256,11 @@ test('empty-state action focuses the question and concept validation clears on i
 test('changing the source clears a diagnosis target that is now the same device', async () => {
   render(<AiLabPanel {...props} api={api} />);
   await waitFor(() => expect(screen.getByRole('button', { name: 'Gửi câu hỏi' })).toBeEnabled());
-  fireEvent.click(screen.getByRole('button', { name: 'Phân tích kết nối', exact: true }));
+  fireEvent.change(screen.getByRole('combobox', { name: 'Cách trợ giúp' }), {
+    target: { value: 'DIAGNOSE' },
+  });
   fireEvent.change(screen.getByLabelText('Thiết bị đích'), { target: { value: 'PC1' } });
-  fireEvent.change(screen.getByLabelText('Thiết bị nguồn'), { target: { value: 'PC1' } });
+  fireEvent.change(screen.getByLabelText('Thiết bị'), { target: { value: 'PC1' } });
   expect(screen.getByLabelText('Thiết bị đích')).toHaveValue('');
   fireEvent.click(screen.getByRole('button', { name: 'Gửi câu hỏi' }));
   expect(api.create).not.toHaveBeenCalled();
@@ -192,6 +304,8 @@ test('quota/disabled states cannot send; Escape closes the assistant', async () 
 });
 
 test('panel width supports keyboard controls and persists only a numeric preference', async () => {
+  const originalWidth = window.innerWidth;
+  Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1440 });
   const change = jest.fn();
   render(<AiLabPanel {...props} api={api} onWidthChange={change} />);
   const separator = screen.getByRole('separator', { name: 'Chiều rộng trợ lý' });
@@ -201,6 +315,7 @@ test('panel width supports keyboard controls and persists only a numeric prefere
   expect(localStorage.getItem('ccna.ai.panel-width.v1')).toBe(String(before + 24));
   fireEvent.keyDown(separator, { key: 'Home' });
   expect(separator).toHaveAttribute('aria-valuenow', '320');
+  Object.defineProperty(window, 'innerWidth', { configurable: true, value: originalWidth });
 });
 
 test('insufficient context offers a specific action without another model call', async () => {
@@ -213,10 +328,7 @@ test('insufficient context offers a specific action without another model call',
   await waitFor(() => expect(screen.getByRole('button', { name: 'Gửi câu hỏi' })).toBeEnabled());
   fireEvent.click(screen.getByRole('button', { name: 'Gửi câu hỏi' }));
   fireEvent.click(await screen.findByRole('button', { name: 'Bổ sung thông tin' }));
-  expect(screen.getByRole('button', { name: 'Phân tích kết nối', exact: true })).toHaveAttribute(
-    'aria-pressed',
-    'true'
-  );
+  expect(screen.getByRole('combobox', { name: 'Cách trợ giúp' })).toHaveValue('DIAGNOSE');
   expect(screen.getByRole('textbox')).toHaveFocus();
   expect(api.create).toHaveBeenCalledTimes(1);
 });
@@ -227,13 +339,117 @@ test('a smaller viewport constrains the panel without overwriting the preferred 
   localStorage.setItem('ccna.ai.panel-width.v1', '560');
   render(<AiLabPanel {...props} api={api} />);
   const separator = screen.getByRole('separator', { name: 'Chiều rộng trợ lý' });
-  expect(separator).toHaveAttribute('aria-valuenow', '560');
+  expect(separator).toHaveAttribute('aria-valuenow', '480');
   Object.defineProperty(window, 'innerWidth', { configurable: true, value: 375 });
   fireEvent(window, new Event('resize'));
   expect(separator).toHaveAttribute('aria-valuenow', '320');
   expect(localStorage.getItem('ccna.ai.panel-width.v1')).toBe('560');
   Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1440 });
   fireEvent(window, new Event('resize'));
-  expect(separator).toHaveAttribute('aria-valuenow', '560');
+  expect(separator).toHaveAttribute('aria-valuenow', '480');
   Object.defineProperty(window, 'innerWidth', { configurable: true, value: originalWidth });
 });
+
+test('assistant defaults to the current device and follows terminal selection without resending', async () => {
+  const view = render(<AiLabPanel {...props} selectedDeviceId="" api={api} />);
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Gửi câu hỏi' })).toBeEnabled());
+  expect(screen.getByRole('combobox', { name: 'Thiết bị' })).toHaveValue('R1');
+  view.rerender(<AiLabPanel {...props} selectedDeviceId="PC1" api={api} />);
+  expect(screen.getByRole('combobox', { name: 'Thiết bị' })).toHaveValue('PC1');
+  expect(api.create).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole('button', { name: 'Gửi câu hỏi' }));
+  await waitFor(() =>
+    expect(api.create).toHaveBeenCalledWith(
+      props.attemptId,
+      expect.objectContaining({ selectedDeviceId: 'PC1' }),
+      expect.anything()
+    )
+  );
+});
+
+test('NEXT_STEP uses the task device, advances levels and cannot escalate an old task on a new device', async () => {
+  const focused = {
+    ...result,
+    focus: {
+      taskId: 'as-r2',
+      deviceId: 'R2',
+      title: 'R2: bật EIGRP AS 1',
+      verification: 'Routing process trên R2 dùng AS 1.',
+    },
+    answer: { ...result.answer, hintLevel: 1, nextSteps: [] },
+  };
+  api.create.mockResolvedValue(request('COMPLETED', { result: focused }));
+  const config = {
+    ...props,
+    devices: [{ id: 'R1' }, { id: 'R2' }],
+    taskId: 'as-r2',
+    taskDeviceId: 'R2',
+    taskTitle: 'R2: bật EIGRP AS 1',
+  };
+  const view = render(<AiLabPanel {...config} api={api} />);
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Gửi câu hỏi' })).toBeEnabled());
+  expect(screen.getByRole('combobox', { name: 'Thiết bị' })).toHaveValue('R2');
+  fireEvent.click(screen.getByRole('button', { name: 'Gửi câu hỏi' }));
+  const more = await screen.findByRole('button', { name: 'Gợi ý rõ hơn (mức 2)' });
+  expect(api.create.mock.calls[0][1]).toMatchObject({
+    taskId: 'as-r2',
+    selectedDeviceId: 'R2',
+    requestedHintLevel: 1,
+  });
+  fireEvent.click(more);
+  await waitFor(() => expect(api.create).toHaveBeenCalledTimes(2));
+  expect(api.create.mock.calls[1][1]).toMatchObject({
+    taskId: 'as-r2',
+    selectedDeviceId: 'R2',
+    requestedHintLevel: 2,
+  });
+  view.rerender(
+    <AiLabPanel
+      {...config}
+      taskId="as-r1"
+      taskDeviceId="R1"
+      taskTitle="R1: bật EIGRP AS 1"
+      api={api}
+    />
+  );
+  expect(screen.queryByRole('button', { name: 'Gợi ý rõ hơn (mức 2)' })).not.toBeInTheDocument();
+  expect(screen.getByRole('combobox', { name: 'Thiết bị' })).toHaveValue('R1');
+  expect(screen.getByRole('combobox', { name: 'Mức gợi ý' })).toHaveValue('1');
+});
+
+test.each([false, true])(
+  'command actions distinguish a complete command from a syntax template (%s)',
+  async (template) => {
+    const command = {
+      commandId: 'cmd_test',
+      deviceId: 'R2',
+      mode: 'GLOBAL_CONFIG',
+      command: template ? 'router eigrp <AS>' : 'router eigrp 1',
+      ...(template ? { template: true } : {}),
+    };
+    const focused = {
+      ...result,
+      focus: {
+        taskId: 'as-r2',
+        deviceId: 'R2',
+        title: 'R2: bật EIGRP AS 1',
+        verification: 'R2 dùng AS 1.',
+      },
+      commands: [command],
+      answer: {
+        ...result.answer,
+        hintLevel: template ? 2 : 3,
+        nextSteps: template
+          ? [{ text: 'Tạo routing process trên R2.', commandId: command.commandId }]
+          : [],
+      },
+    };
+    api.create.mockResolvedValue(request('COMPLETED', { result: focused }));
+    render(<AiLabPanel {...props} taskId="as-r2" taskDeviceId="R2" api={api} />);
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Gửi câu hỏi' })).toBeEnabled());
+    fireEvent.click(screen.getByRole('button', { name: 'Gửi câu hỏi' }));
+    await screen.findByText(command.command);
+    expect(screen.queryByRole('button', { name: /Đưa vào terminal/ })).not.toBeInTheDocument();
+    expect(Boolean(screen.queryByRole('button', { name: 'Sao chép' }))).toBe(!template);
+  }
+);

@@ -7,6 +7,7 @@
     "./package.json": "./package.json",
     "./cliLabCatalog": "./cliLabCatalog.js",
     "./cliLabSchema": "./cliLabSchema.js",
+    "./labDefinition": "./labDefinition.js",
     "./aiLabContract": "./aiLabContract.js",
     "./sanitizeHtml": "./sanitizeHtml.js",
     "./simulation/*": "./simulation/*.js",

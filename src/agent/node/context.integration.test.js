@@ -178,6 +178,101 @@ test('BE-05 actual worker boundary, private history and rejected-output accounti
     });
 
     await t.test(
+      'focused EIGRP admission binds device and stores all three hint levels before reserving',
+      async () => {
+        const principal = await user();
+        const a = await attempt(principal);
+        const eigrp = require('@ccna/shared/labs/eigrp01');
+        await db.labAttempt.update({
+          where: { id: a.id },
+          data: {
+            simulatorVersion: '3.0.0',
+            definition: eigrp,
+            deviceState: engine.initial(eigrp.initialState),
+            publicMetadata: publicMetadata({ title: eigrp.labRecord.title }, eigrp),
+          },
+        });
+        const input = {
+          contractVersion: '1.0.0',
+          intent: 'NEXT_STEP',
+          taskId: 'eigrp-as-r2',
+          selectedDeviceId: 'R2',
+          expectedRevision: 0,
+          conversationEpoch: 0,
+          recoveryEpoch: 'epoch_be05',
+        };
+        const count = await db.aiRequest.count({ where: { attemptId: a.id } });
+        await assert.rejects(
+          api.create(principal, a.id, {
+            ...input,
+            selectedDeviceId: 'R1',
+            clientRequestId: randomUUID(),
+            requestedHintLevel: 1,
+          }),
+          { code: 'AI_INVALID_REQUEST' }
+        );
+        assert.equal(await db.aiRequest.count({ where: { attemptId: a.id } }), count);
+        for (const level of [1, 2, 3]) {
+          const response = await api.create(principal, a.id, {
+            ...input,
+            clientRequestId: randomUUID(),
+            requestedHintLevel: level,
+          });
+          const row = await db.aiRequest.findUniqueOrThrow({
+            where: { id: response.data.requestId },
+          });
+          assert.equal(row.effectiveHintLevel, level);
+          const projected = await prepare(row);
+          assert.equal(projected.context.taskFocus.deviceId, 'R2');
+          assert.equal(projected.context.taskFocus.hintLevel, level);
+          assert.ok(projected.allowedCommands.every((command) => command.deviceId === 'R2'));
+          if (level === 1) assert.deepEqual(projected.allowedCommands, []);
+          if (level === 2) assert.equal(projected.allowedCommands[0].template, true);
+          if (level === 3) assert.equal(projected.allowedCommands[0].command, 'router eigrp 1');
+          if (level < 3) await api.cancel(principal, a.id, row.id);
+          else {
+            const claimed = await queue.claim('focused_test');
+            assert.equal(claimed.id, row.id);
+            const input = await permits.plan(
+              row.id,
+              'focused_test',
+              claimed.leaseVersion,
+              await prepare(claimed)
+            );
+            await send(input, 'claim', binding(input));
+            await send(input, 'receipt', {
+              ...binding(input),
+              outcome: 'RECEIVED',
+              providerRequestId: 'synthetic',
+              versions: input.versions,
+              finishReason: 'stop',
+              usage: { status: 'FINAL', inputTokens: 2, outputTokens: 3, reasoningTokens: 0 },
+              output: {
+                summary: 'Tạo routing process EIGRP trên R2 trong chế độ cấu hình chung.',
+                claimType: 'HYPOTHESIS',
+                evidenceIds: [],
+                nextSteps: [],
+                verification: 'AS giúp phân biệt các routing process như thế nào?',
+                hintLevel: 3,
+              },
+            });
+            await results.finalize(row.id);
+            const resource = await api.read(principal, a.id, 'id', row.id);
+            assert.equal(resource.data.status, 'COMPLETED');
+            assert.equal(resource.data.result.focus.deviceId, 'R2');
+            assert.equal(resource.data.result.commands[0].command, 'router eigrp 1');
+            assert.deepEqual(
+              resource.data.result.answer.nextSteps,
+              [],
+              'server commands do not depend on model formatting'
+            );
+            assert.match(resource.data.result.focus.verification, /R2.*AS 1/);
+          }
+        }
+      }
+    );
+
+    await t.test(
       'real snapshot and prompt-injection text reach fake HTTP transport without private canaries or extra authority',
       async () => {
         const principal = await user();

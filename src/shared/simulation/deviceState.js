@@ -1,4 +1,5 @@
 const { getCompletions, getProfile, parseCommand } = require('./cliParser');
+const { configurationSnapshot } = require('./configSnapshot');
 
 const MODES = {
   USER: 'USER_EXEC',
@@ -27,6 +28,7 @@ const normalizeInterfaceName = (input) => {
     [/^(g|gi|gig|gigabitethernet)(\d+\/\d+)$/, 'GigabitEthernet'],
     [/^(f|fa|fastethernet)(\d+\/\d+)$/, 'FastEthernet'],
     [/^(lo|loopback)(\d+)$/, 'Loopback'],
+    [/^(s|se|serial)(\d+\/\d+(?:\/\d+)?)$/, 'Serial'],
   ];
   for (const [pattern, prefix] of aliases) {
     const match = compact.match(pattern);
@@ -44,7 +46,7 @@ const createInitialState = (initialState = {}) => {
       ? ['GigabitEthernet0/1', 'GigabitEthernet0/2']
       : deviceType === 'PC'
         ? ['GigabitEthernet0/0']
-      : ['GigabitEthernet0/0', 'GigabitEthernet0/1'];
+        : ['GigabitEthernet0/0', 'GigabitEthernet0/1'];
   const names =
     Array.isArray(initialState.interfaces) && initialState.interfaces.length
       ? initialState.interfaces
@@ -74,6 +76,7 @@ const createInitialState = (initialState = {}) => {
     vlans: { 1: { name: 'default', status: 'active' } },
     defaultGateway: initialState.defaultGateway || null,
     startupConfig: null,
+    startupConfigModel: null,
   };
 };
 
@@ -309,6 +312,7 @@ const executeCommand = (currentState, rawCommand, profileId = 'ccna-basic-v1') =
       break;
     case 'save_config':
       state.startupConfig = buildRunningConfig(state);
+      state.startupConfigModel = configurationSnapshot(state);
       output = 'Building configuration...\n[OK]';
       changed = true;
       break;

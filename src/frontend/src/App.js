@@ -169,6 +169,7 @@ function App() {
                     <Route path="/course/:courseId" element={<CourseDetail />} />
                     <Route path="/lesson" element={<Lesson />} />
                     <Route path="/labs" element={<LabsView />} />
+                    <Route path="/labs/:id" element={<LabsView />} />
                     <Route path="/exam/*" element={<Exam />} />
                     <Route
                       path="/resources"

@@ -1,5 +1,6 @@
 /* global globalThis */
 import contract from '@ccna/agent-contracts';
+import { readSse } from './sse.js';
 
 const { VERSION, schemas, parseRequestResource } = contract;
 export { VERSION };
@@ -39,6 +40,7 @@ export function createAiLabApi({
           headers: {
             Authorization: `Bearer ${token}`,
             'X-AI-Contract-Version': VERSION,
+            'X-AI-Progress': '1',
             'Content-Type': 'application/json',
           },
           ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
@@ -93,6 +95,102 @@ export function createAiLabApi({
     }
   }
   return {
+    async events(attempt, id, { signal, lastEventId, onEvent } = {}) {
+      const abort = new AbortController();
+      const cancel = () => abort.abort();
+      if (signal?.aborted) cancel();
+      signal?.addEventListener('abort', cancel, { once: true });
+      let idle;
+      const activity = () => {
+        clearTimeout(idle);
+        idle = setTimeout(cancel, 20000);
+      };
+      const total = setTimeout(cancel, 85000);
+      const firstEvent = setTimeout(cancel, 5000);
+      activity();
+      try {
+        const response = await fetchImpl(
+          `${baseUrl.replace(/\/$/, '')}/lab-attempts/${encodeURIComponent(attempt)}/ai/requests/${encodeURIComponent(id)}/events`,
+          {
+            signal: abort.signal,
+            cache: 'no-store',
+            credentials: 'omit',
+            headers: {
+              Authorization: `Bearer ${token}`,
+              Accept: 'text/event-stream',
+              'X-AI-Contract-Version': VERSION,
+              ...(lastEventId ? { 'Last-Event-ID': lastEventId } : {}),
+            },
+          }
+        );
+        if (!response.ok) {
+          const error = schemas.ErrorResponse.safeParse(await response.json().catch(() => null));
+          if (response.status === 401) onUnauthorized();
+          throw Object.assign(new Error('AI_HTTP_ERROR'), {
+            status: response.status,
+            code:
+              response.status === 401
+                ? 'AI_UNAUTHENTICATED'
+                : error.success
+                  ? error.data.error.code
+                  : 'AI_HTTP_ERROR',
+          });
+        }
+        if (
+          response.headers.get('x-ai-contract-version') !== VERSION ||
+          !/^text\/event-stream(?:;|$)/i.test(response.headers.get('content-type') || '')
+        )
+          throw Object.assign(new Error('AI_STREAM_UNAVAILABLE'), {
+            code: 'AI_STREAM_UNAVAILABLE',
+          });
+        await readSse(
+          response.body,
+          (frame) => {
+            let json;
+            try {
+              json = JSON.parse(frame.data);
+            } catch {
+              throw Object.assign(new Error('AI_INVALID_RESPONSE'), {
+                code: 'AI_INVALID_RESPONSE',
+              });
+            }
+            if (frame.type === 'error') {
+              const parsed = schemas.ErrorResponse.parse(json);
+              const code = parsed.error.code;
+              if (code === 'UNAUTHORIZED') onUnauthorized();
+              throw Object.assign(new Error(code), { code, status: contract.ErrorStatuses[code] });
+            }
+            const event = schemas.RequestStreamEvent.parse(json);
+            const data = parseRequestResource(event.data);
+            const expected = data.result
+              ? 'result'
+              : ['QUEUED', 'RUNNING'].includes(data.status)
+                ? 'state'
+                : 'terminal';
+            if (
+              data.requestId !== id ||
+              !data.progress ||
+              event.kind !== frame.type ||
+              event.kind !== expected ||
+              frame.id !== `${id}:${data.progress.streamVersion}`
+            )
+              throw Object.assign(new Error('AI_INVALID_RESPONSE'), {
+                code: 'AI_INVALID_RESPONSE',
+              });
+            if (data.result) validateResult(data.result);
+            clearTimeout(firstEvent);
+            onEvent({ ...event, id: frame.id });
+          },
+          { signal: abort.signal, onActivity: activity }
+        );
+      } finally {
+        clearTimeout(idle);
+        clearTimeout(total);
+        clearTimeout(firstEvent);
+        signal?.removeEventListener('abort', cancel);
+        abort.abort();
+      }
+    },
     capabilities: (attempt, signal) =>
       call(attempt, '/capabilities', schemas.CapabilitiesResponse, { signal }),
     quota: (attempt, signal) => call(attempt, '/quota', schemas.QuotaResponse, { signal }),

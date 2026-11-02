@@ -12,6 +12,22 @@ const global = ['GLOBAL_CONFIG'];
 const priv = ['PRIVILEGED_EXEC'];
 const iface = ['INTERFACE_CONFIG'];
 const commands = [
+  ...['bandwidth', 'delay'].map((name) =>
+    command(
+      `interface-${name}`,
+      iface,
+      [kw(name), arg('value', 'metricInteger', { optionalOnNegate: true })],
+      `interface_${name}`,
+      { negatable: true, deviceTypes: ['ROUTER'], since: '3.0.0' }
+    )
+  ),
+  command(
+    'show-eigrp-topology',
+    priv,
+    [kw('show'), kw('ip'), kw('eigrp'), kw('topology')],
+    'network_show_eigrp_topology',
+    { since: '3.0.0' }
+  ),
   command(
     'static-route',
     global,
@@ -185,9 +201,7 @@ const filtered = commands
 const extendedBase = base.commands.map((c) => ({
   ...c,
   deviceTypes: c.deviceTypes || ['ROUTER', 'SWITCH'],
-  ...(['exit', 'end'].includes(c.id)
-    ? { modes: [...c.modes, 'ROUTER_CONFIG', 'ACL_CONFIG'] }
-    : {}),
+  ...(['exit', 'end'].includes(c.id) ? { modes: [...c.modes, 'ROUTER_CONFIG', 'ACL_CONFIG'] } : {}),
 }));
 module.exports = {
   id: 'ccna-network-v2',

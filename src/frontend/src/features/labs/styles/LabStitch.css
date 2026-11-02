@@ -1,0 +1,195 @@
+/* User-selected Stitch palette, scoped to practice/AI and their portals. */
+.cli-lab-theme.cli-lab-stitch[data-theme='light'],
+.ui-dialog.cli-lab-stitch--light {
+  color-scheme: light;
+  --surface-overlay: rgb(15 23 42 / 35%);
+  --surface-canvas: #f8fafc;
+  --surface-primary: #ffffff;
+  --surface-secondary: #f8fafc;
+  --surface-muted: #f1f5f9;
+  --surface-terminal: #f8fafc;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-subtle: #64748b;
+  --text-accent: #0369a1;
+  --text-success: #047857;
+  --text-danger: #b91c1c;
+  --text-warning: #b45309;
+  --border-subtle: #e2e8f0;
+  --border-strong: #cbd5e1;
+  --topology-wire: #64748b;
+  --button-primary: #047857;
+  --button-primary-hover: #065f46;
+  --button-on-primary: #ffffff;
+  --bg-accent: #f0f9ff;
+  --bg-danger: #fef2f2;
+  --stitch-network: #0284c7;
+  --stitch-ai: #4f46e5;
+  --stitch-ai-soft: #eef2ff;
+  --stitch-user-bg: #0369a1;
+  --stitch-user-text: #ffffff;
+  --terminal-foreground: #0f172a;
+  --terminal-cursor: #0284c7;
+  --terminal-selection: #bfdbfe;
+}
+.cli-lab-theme.cli-lab-stitch[data-theme='dark'],
+.ui-dialog.cli-lab-stitch--dark {
+  color-scheme: dark;
+  --surface-overlay: rgb(2 6 23 / 72%);
+  --surface-canvas: #0f172a;
+  --surface-primary: #0f172a;
+  --surface-secondary: #172235;
+  --surface-muted: #1e293b;
+  --surface-terminal: #0f172a;
+  --text-primary: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --text-subtle: #94a3b8;
+  --text-accent: #38bdf8;
+  --text-success: #34d399;
+  --text-danger: #fca5a5;
+  --text-warning: #fbbf24;
+  --border-subtle: #334155;
+  --border-strong: #475569;
+  --topology-wire: #94a3b8;
+  --button-primary: #047857;
+  --button-primary-hover: #065f46;
+  --button-on-primary: #ffffff;
+  --bg-accent: #0c324b;
+  --bg-danger: #451a24;
+  --stitch-network: #38bdf8;
+  --stitch-ai: #a5b4fc;
+  --stitch-ai-soft: #25254b;
+  --stitch-user-bg: #075985;
+  --stitch-user-text: #f0f9ff;
+  --terminal-foreground: #e2e8f0;
+  --terminal-cursor: #38bdf8;
+  --terminal-selection: #1e3a5f;
+}
+.cli-lab-stitch {
+  --lab-code-font: 'JetBrains Mono', 'Cascadia Code', Consolas, monospace;
+}
+.cli-lab-theme.cli-lab-stitch .cli-lab-header {
+  min-height: 56px;
+  padding: 8px 14px;
+}
+.cli-lab-theme.cli-lab-stitch .cli-lab-heading :is(h1, h2) {
+  font-size: 15px;
+}
+.cli-lab-theme.cli-lab-stitch .cli-lab-header .cli-lab-submit {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 34px;
+  width: auto;
+  margin: 0;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--button-primary);
+  background: var(--button-primary);
+  color: var(--button-on-primary);
+  font: 600 12px/1.5 var(--system-ui);
+}
+.cli-lab-theme.cli-lab-stitch .cli-lab-header .cli-lab-submit:hover:not(:disabled) {
+  background: var(--button-primary-hover);
+  border-color: var(--button-primary-hover);
+  color: var(--button-on-primary);
+}
+.cli-lab-theme.cli-lab-stitch .cli-lab-topology-stage {
+  background-color: var(--surface-secondary);
+  background-image: radial-gradient(circle, var(--border-strong) 0.7px, transparent 0.7px);
+  background-size: 20px 20px;
+}
+.cli-lab-theme.cli-lab-stitch .cli-lab-terminal-pane > .cli-lab-topology-stage {
+  max-height: none;
+}
+.cli-lab-stitch .cli-lab-topology-stage > .network-topology {
+  flex-shrink: 0;
+}
+.cli-lab-stitch .cli-topology-meta {
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 400;
+}
+.cli-lab-stitch .network-diagram--fit {
+  background: transparent;
+}
+.cli-lab-stitch .network-diagram--fit .network-device-ring {
+  opacity: 0;
+}
+.cli-lab-stitch .network-diagram--fit .network-device-body {
+  fill: var(--surface-primary);
+  stroke: var(--border-strong);
+  stroke-width: 1.5;
+}
+.cli-lab-stitch .network-diagram--fit .network-device-symbol {
+  stroke: var(--text-secondary);
+}
+.cli-lab-stitch .network-diagram--fit .network-node.selected .network-device-body {
+  fill: var(--surface-primary);
+  stroke: var(--stitch-network);
+  stroke-width: 2.5;
+}
+.cli-lab-stitch .network-diagram--fit .network-node.selected .network-device-symbol {
+  stroke: var(--stitch-network);
+}
+.cli-lab-stitch .network-diagram--fit .network-node:focus-visible .network-device-body {
+  stroke: var(--stitch-network);
+  stroke-width: 3;
+  stroke-dasharray: 3 2;
+}
+.cli-lab-stitch .network-diagram--fit .network-device-name {
+  font-family: var(--lab-code-font);
+  font-weight: 600;
+}
+.cli-lab-stitch .network-diagram--fit .network-subnet rect {
+  rx: 6px;
+}
+.cli-lab-theme.cli-lab-stitch .cli-lab-terminal-toolbar {
+  gap: 12px;
+  min-height: 38px;
+}
+.cli-lab-theme.cli-lab-stitch .cli-lab-terminal-frame,
+.cli-lab-theme.cli-lab-stitch .cli-lab-terminal-frame .cli-xterm-host,
+.cli-lab-theme.cli-lab-stitch .cli-xterm-host .xterm-viewport {
+  color-scheme: inherit;
+  background: var(--surface-terminal) !important;
+  color: var(--terminal-foreground);
+  scrollbar-color: var(--border-strong) var(--surface-terminal);
+}
+.cli-lab-stitch .cli-xterm-host .xterm-viewport::-webkit-scrollbar-track {
+  background: var(--surface-terminal);
+}
+.cli-lab-stitch .cli-xterm-host .xterm-viewport::-webkit-scrollbar-thumb {
+  background: var(--text-subtle);
+  border-color: var(--surface-terminal);
+}
+.cli-lab-stitch .cli-lab-device-tabs button {
+  font-family: var(--lab-code-font);
+}
+.cli-lab-stitch .cli-lab-device-tabs button[aria-pressed='true'] {
+  color: var(--text-accent);
+  background: var(--surface-primary);
+  box-shadow: inset 0 -2px var(--stitch-network);
+}
+.cli-lab-stitch .cli-lab-hint-bar {
+  border-radius: 6px;
+}
+@media (min-width: 769px) and (max-width: 1100px) {
+  .cli-lab-stitch .cli-lab-header-tools > button[aria-label='Thành tích'] {
+    display: none;
+  }
+}
+
+/* Measured pill inherits the lab palette; selection no longer paints each button. */
+.cli-lab-theme .cli-lab-device-tabs.sliding-tabs {
+  --tabs-text-muted: var(--text-secondary);
+  --tabs-text-active: var(--text-accent);
+  --tabs-pill-bg: var(--bg-accent);
+  --tabs-bar-bg: var(--surface-secondary);
+  align-self: center;
+}
+.cli-lab-theme .cli-lab-device-tabs.sliding-tabs > button {
+  min-height: 30px;
+}

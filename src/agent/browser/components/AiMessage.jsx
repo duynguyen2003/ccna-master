@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import AiIcon from './AiIcon.jsx';
+import useClipboard, { COPY_ERROR } from '../hooks/useClipboard.js';
 
 const claims = {
   SUPPORTED_FINDING: 'Có căn cứ',
-  HYPOTHESIS: 'Giả thuyết',
+  HYPOTHESIS: 'Gợi ý tham khảo',
   NO_ISSUE_OBSERVED: 'Chưa thấy lỗi trong phép kiểm tra',
   INSUFFICIENT_CONTEXT: 'Thiếu dữ liệu',
   UNSUPPORTED: 'Chưa hỗ trợ',
@@ -19,6 +20,7 @@ const modeLabels = {
   PRIVILEGED_EXEC: 'EXEC đặc quyền',
   GLOBAL_CONFIG: 'Cấu hình chung',
   INTERFACE_CONFIG: 'Cấu hình cổng',
+  ROUTER_CONFIG: 'Cấu hình định tuyến',
 };
 const reasons = [
   ['TOO_VAGUE', 'Chưa rõ cách làm'],
@@ -31,35 +33,67 @@ const reasons = [
   ['OTHER', 'Lý do khác'],
 ];
 
-function Command({ command }) {
+// Standalone consumers may supply their own renderer, like Select/Dialog.
+// The application supplies its shared Lucide/Motion button.
+function NativeCopyButton({ value, label = 'Sao chép', onError, onCopied }) {
+  const { state, copy, status } = useClipboard(value, onError, onCopied);
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      aria-busy={state === 'pending'}
+      onClick={copy}
+      data-state={state}
+      style={{ width: 32, height: 32, minWidth: 32, padding: 0 }}
+    >
+      <span aria-hidden="true" style={{ color: state === 'copied' ? '#4ade80' : undefined }}>
+        <AiIcon name={state === 'copied' ? 'check' : 'copy'} size={16} />
+      </span>
+      <span role="status" className="ai-lab-sr-only">
+        {status}
+      </span>
+    </button>
+  );
+}
+
+function Command({ command, CopyButton }) {
   const [status, setStatus] = useState('');
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(command.command);
-      setStatus('Đã sao chép');
-    } catch {
-      setStatus('Không sao chép được. Hãy chọn lệnh để sao chép thủ công.');
-    }
-  };
   return (
     <div className="ai-lab-command">
       <div>
         <span>
-          {command.deviceId} · {modeLabels[command.mode] || 'Cisco IOS'}
+          <span className="ai-lab-device-chip">{command.deviceId}</span> ·{' '}
+          {modeLabels[command.mode] || 'Cisco IOS'}
+          {command.interface ? ` · ${command.interface}` : ''}
         </span>
-        <button type="button" onClick={copy}>
-          <AiIcon name="copy" size={14} /> Sao chép
-        </button>
+        {!command.template && (
+          <CopyButton
+            value={command.command}
+            label="Sao chép"
+            tone="inverse"
+            onError={setStatus}
+            onCopied={() => setStatus((current) => (current === COPY_ERROR ? '' : current))}
+          />
+        )}
       </div>
       <pre tabIndex={0}>
         <code>{command.command}</code>
       </pre>
+      {command.template && (
+        <p className="ai-lab-muted">
+          {command.command.includes('<')
+            ? 'Cú pháp: tự điền các phần trong dấu < >.'
+            : 'Cú pháp lệnh quan sát.'}
+        </p>
+      )}
       <span role="status">{status}</span>
     </div>
   );
 }
 
 export default function AiMessage({
+  CopyButton = NativeCopyButton,
+  Select = 'select',
   message,
   currentRevision,
   feedback,
@@ -69,12 +103,16 @@ export default function AiMessage({
   canAsk,
   onMoreHint,
   onAddContext,
+  canMoreHint,
 }) {
   const [negative, setNegative] = useState(false);
   const [reason, setReason] = useState('TOO_VAGUE');
   if (message.role === 'USER')
     return (
-      <article className="ai-lab-message ai-lab-message--user" aria-label="Câu hỏi của bạn">
+      <article
+        className={`ai-lab-message ai-lab-message--user${intentLabels[message.content] ? ' ai-lab-message--quick' : ''}`}
+        aria-label="Câu hỏi của bạn"
+      >
         <p>{intentLabels[message.content] || message.content}</p>
       </article>
     );
@@ -83,6 +121,7 @@ export default function AiMessage({
   return (
     <article
       className="ai-lab-message"
+      data-response-state="complete"
       aria-label={responseMode === 'LLM' ? 'Trả lời từ AI' : 'Gợi ý từ hệ thống'}
     >
       <div className="ai-lab-message__meta">
@@ -92,6 +131,12 @@ export default function AiMessage({
         <strong>{responseMode === 'LLM' ? 'Trợ lý AI' : 'Gợi ý từ hệ thống'}</strong>
         <span>{claims[result.answer.claimType]}</span>
       </div>
+      {result.focus && (
+        <p className="ai-lab-answer-focus">
+          <span className="ai-lab-device-chip">{result.focus.deviceId}</span>
+          {result.focus.title}
+        </p>
+      )}
       {stale && (
         <div className="ai-lab-stale">
           <span>Dựa trên cấu hình trước đó. Lab đã thay đổi từ lúc bạn hỏi.</span>
@@ -104,21 +149,28 @@ export default function AiMessage({
         <p className="ai-lab-muted">Kết quả cũ chưa có thông tin phiên bản cấu hình.</p>
       )}
       <p className="ai-lab-prose">{result.answer.summary}</p>
-      {['INSUFFICIENT_CONTEXT', 'UNSUPPORTED'].includes(result.answer.claimType) && (
-        <div className="ai-lab-context-help">
-          <p>
-            {result.answer.claimType === 'UNSUPPORTED'
-              ? 'Phép kiểm tra này chưa được hỗ trợ. Bạn có thể chọn hai thiết bị để kiểm tra kết nối.'
-              : 'Chọn thiết bị nguồn, thiết bị đích và mô tả kết quả bạn mong đợi để bổ sung ngữ cảnh.'}
-          </p>
-          <button type="button" disabled={!canAsk} onClick={onAddContext}>
-            Bổ sung thông tin
-          </button>
-        </div>
-      )}
+      {!result.focus &&
+        ['INSUFFICIENT_CONTEXT', 'UNSUPPORTED'].includes(result.answer.claimType) && (
+          <div className="ai-lab-context-help">
+            <p>
+              {result.answer.claimType === 'UNSUPPORTED'
+                ? 'Phép kiểm tra này chưa được hỗ trợ. Bạn có thể chọn hai thiết bị để kiểm tra kết nối.'
+                : 'Chọn thiết bị nguồn, thiết bị đích và mô tả kết quả bạn mong đợi để bổ sung ngữ cảnh.'}
+            </p>
+            <button type="button" disabled={!canAsk} onClick={onAddContext}>
+              Bổ sung thông tin
+            </button>
+          </div>
+        )}
       {result.evidence.length > 0 && (
         <details className="ai-lab-evidence">
-          <summary>Bằng chứng ({result.evidence.length})</summary>
+          <summary>
+            Dựa trên: {result.evidence[0].deviceId ? `${result.evidence[0].deviceId} · ` : ''}
+            {result.evidence[0].observation}
+            {result.evidence.length > 1 && (
+              <span className="ai-lab-source-count">{result.evidence.length} nguồn</span>
+            )}
+          </summary>
           <ul>
             {result.evidence.map((entry) => (
               <li key={entry.evidenceId}>
@@ -147,6 +199,7 @@ export default function AiMessage({
                 <p>{step.text}</p>
                 {step.commandId && (
                   <Command
+                    CopyButton={CopyButton}
                     command={result.commands.find((item) => item.commandId === step.commandId)}
                   />
                 )}
@@ -155,9 +208,18 @@ export default function AiMessage({
           </ol>
         </>
       )}
+      {result.focus &&
+        result.commands
+          .filter(
+            (command) =>
+              !result.answer.nextSteps.some((step) => step.commandId === command.commandId)
+          )
+          .map((command) => (
+            <Command CopyButton={CopyButton} key={command.commandId} command={command} />
+          ))}
       <div className="ai-lab-verification">
         <strong>Kiểm tra lại</strong>
-        <p>{result.answer.verification}</p>
+        <p>{result.focus?.verification || result.answer.verification}</p>
       </div>
       <p className="ai-lab-muted">
         Mức gợi ý {result.answer.hintLevel}/3
@@ -166,29 +228,35 @@ export default function AiMessage({
           : ''}
       </p>
       <div className="ai-lab-feedback" aria-label="Đánh giá câu trả lời">
-        {result.answer.hintLevel < 3 && (
+        {result.answer.hintLevel < 3 && canMoreHint && !stale && (
           <button type="button" disabled={!canAsk} onClick={onMoreHint}>
-            Gợi ý chi tiết hơn
+            Gợi ý rõ hơn (mức {result.answer.hintLevel + 1})
           </button>
         )}
         <button
           type="button"
+          className="ai-lab-icon-button"
+          aria-label="Hữu ích"
+          title="Hữu ích"
           disabled={feedback?.pending}
-          aria-pressed={feedback?.saved && feedback.helpful === true}
+          aria-pressed={Boolean(feedback?.saved && feedback.helpful === true)}
           onClick={() => {
             setNegative(false);
             onFeedback({ helpful: true, reasonCode: null });
           }}
         >
-          Hữu ích
+          <AiIcon name="like" />
         </button>
         <button
           type="button"
+          className="ai-lab-icon-button"
+          aria-label="Chưa hữu ích"
+          title="Chưa hữu ích"
           disabled={feedback?.pending}
           aria-pressed={negative || (feedback?.saved && feedback.helpful === false)}
           onClick={() => setNegative((value) => !value)}
         >
-          Chưa hữu ích
+          <AiIcon name="dislike" />
         </button>
         {negative && (
           <form
@@ -199,13 +267,18 @@ export default function AiMessage({
           >
             <label>
               Lý do
-              <select value={reason} onChange={(event) => setReason(event.target.value)}>
+              <Select
+                aria-label="Lý do đánh giá"
+                value={reason}
+                onChange={(event) => setReason(event.target.value)}
+                disabled={feedback?.pending}
+              >
                 {reasons.map(([id, label]) => (
                   <option value={id} key={id}>
                     {label}
                   </option>
                 ))}
-              </select>
+              </Select>
             </label>
             <button type="submit" disabled={feedback?.pending}>
               Gửi đánh giá

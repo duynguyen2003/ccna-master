@@ -98,7 +98,8 @@ function transmit(s, sourceId, destination, options = {}) {
         'ROUTE',
         current,
         `${route.protocol} ${route.network}/${route.mask} via ${route.nextHop || 'connected'}`,
-        packet
+        packet,
+        { routeProtocol: route.protocol, reply }
       );
       if (
         incoming &&

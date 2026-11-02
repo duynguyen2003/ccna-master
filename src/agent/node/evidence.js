@@ -22,6 +22,12 @@ function evidenceFor(context, request) {
     });
   };
   for (const device of context.devices) {
+    if (
+      request?.intent === 'NEXT_STEP' &&
+      context.taskFocus?.deviceId &&
+      device.id !== context.taskFocus.deviceId
+    )
+      continue;
     for (const port of device.interfaces)
       add(
         'INTERFACE',
@@ -44,13 +50,21 @@ function evidenceFor(context, request) {
         { deviceId: device.id }
       );
   }
-  for (const link of context.links)
+  for (const link of context.links) {
+    if (
+      request?.intent === 'NEXT_STEP' &&
+      context.taskFocus?.deviceId &&
+      ![link.a.deviceId, link.b.deviceId].includes(context.taskFocus.deviceId)
+    )
+      continue;
     add('LINK', `links.${link.id}`, `Link ${link.id}: ${link.enabled ? 'đang nối' : 'đang ngắt'}.`);
+  }
   const diagnostics = diagnose(context, request).facts;
   return [...facts.slice(0, 64 - diagnostics.length), ...diagnostics];
 }
 
-function commandsFor(context) {
+function commandsFor(context, request) {
+  if (request?.intent === 'NEXT_STEP' && context.taskFocus) return context.taskFocus.commands;
   const commands = [];
   for (const device of context.devices) {
     if (device.deviceType === 'PC') continue;

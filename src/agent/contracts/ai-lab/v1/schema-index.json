@@ -5,6 +5,7 @@
     "CreateRequest": "schemas/CreateRequest.schema.json",
     "RequestResource": "schemas/RequestResource.schema.json",
     "RequestResponse": "schemas/RequestResponse.schema.json",
+    "RequestStreamEvent": "schemas/RequestStreamEvent.schema.json",
     "ErrorResponse": "schemas/ErrorResponse.schema.json",
     "FeedbackRequest": "schemas/FeedbackRequest.schema.json",
     "FeedbackResponse": "schemas/FeedbackResponse.schema.json",

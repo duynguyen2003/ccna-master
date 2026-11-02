@@ -1,8 +1,25 @@
 import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import DropdownSelect from './DropdownSelect';
 
 describe('DropdownSelect', () => {
+  it('keeps its menu in a modal dialog and consumes Escape before the parent', () => {
+    const parentKey = jest.fn();
+    render(
+      <dialog open aria-label="Hộp thoại" onKeyDown={parentKey}>
+        <DropdownSelect aria-label="Thiết bị" value="R1" onChange={jest.fn()}>
+          <option value="R1">R1</option>
+        </DropdownSelect>
+      </dialog>
+    );
+    const trigger = screen.getByRole('combobox');
+    fireEvent.click(trigger);
+    expect(within(screen.getByRole('dialog')).getByRole('listbox')).toBeTruthy();
+    expect(fireEvent.mouseDown(screen.getByRole('option'), { cancelable: true })).toBe(false);
+    fireEvent.keyDown(trigger, { key: 'Escape' });
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+    expect(parentKey).not.toHaveBeenCalled();
+  });
   it('opens a scrollable listbox and preserves the select change event shape', () => {
     const onChange = jest.fn();
     render(
