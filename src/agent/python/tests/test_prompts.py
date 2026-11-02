@@ -255,6 +255,7 @@ console.log(JSON.stringify({ version,
                     "commands"
                 ]
 
+
 @pytest.mark.parametrize("level", [1, 2, 3])
 def test_focused_task_has_exact_level_and_no_commands_at_level_one(payload, level):
     payload["request"]["intent"] = "NEXT_STEP"
@@ -273,6 +274,7 @@ def test_focused_task_has_exact_level_and_no_commands_at_level_one(payload, leve
         output["nextSteps"][0]["commandId"] = payload["allowedCommands"][0]["commandId"]
         with pytest.raises(ValueError, match="AI_INVALID_OUTPUT"):
             validate_answer(payload, output)
+
 
 def test_focused_teaching_does_not_treat_omitted_diagnostics_as_a_network_conclusion(payload):
     payload["request"]["intent"] = "NEXT_STEP"

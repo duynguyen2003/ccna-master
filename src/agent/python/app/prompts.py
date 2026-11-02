@@ -528,8 +528,10 @@ def validate_answer(payload, output):
         raise ValueError("AI_INVALID_OUTPUT")
     commands = {command["commandId"] for command in payload["allowedCommands"]}
     focus = payload["context"].get("taskFocus")
-    if focus and focus["hintLevel"] == 1 and any(
-        "commandId" in step for step in output["nextSteps"]
+    if (
+        focus
+        and focus["hintLevel"] == 1
+        and any("commandId" in step for step in output["nextSteps"])
     ):
         raise ValueError("AI_INVALID_OUTPUT")
     if any(
