@@ -6,7 +6,7 @@ POLICY = json.loads(
         encoding="utf-8"
     )
 )
-PROMPT_VERSION = "gemini-r1-v2"
+PROMPT_VERSION = "gemini-r1-v3"
 
 GEMINI_VERSIONS = {
     "contextSchemaVersion": "1.0.0",

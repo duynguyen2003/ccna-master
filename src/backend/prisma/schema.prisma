@@ -662,6 +662,8 @@ model AiRequest {
   leaseVersion              Int                @default(0) @map("lease_version")
   leaseExpiresAt            DateTime?          @map("lease_expires_at") @db.Timestamptz(3)
   heartbeatAt               DateTime?          @map("heartbeat_at") @db.Timestamptz(3)
+  streamVersion             Int                @default(1) @map("stream_version")
+  progressPhase             String?            @map("progress_phase") @db.VarChar(40)
   errorCode                 String?            @map("error_code") @db.VarChar(80)
   createdAt                 DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt                 DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)

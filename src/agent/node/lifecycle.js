@@ -114,6 +114,8 @@ async function terminal(tx, c, status, errorCode = null) {
     where: { id: c.row.id },
     data: {
       status,
+      streamVersion: { increment: 1 },
+      progressPhase: null,
       responseMode: 'NONE',
       errorCode,
       finishedAt: c.now,

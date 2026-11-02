@@ -406,7 +406,8 @@
                 "enum": [
                   "completed",
                   "in_progress",
-                  "not_started"
+                  "not_started",
+                  "blocked"
                 ]
               },
               "hint": {
@@ -419,6 +420,25 @@
                     "type": "null"
                   }
                 ]
+              },
+              "deviceId": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": {
+                "type": "string",
+                "pattern": "^[\\s\\S]{1,80}$"
+              },
+              "objective": {
+                "type": "string",
+                "pattern": "^[\\s\\S]{1,80}$"
               }
             },
             "required": [
@@ -465,6 +485,111 @@
         },
         "contextTruncated": {
           "type": "boolean"
+        },
+        "taskFocus": {
+          "type": "object",
+          "properties": {
+            "taskId": {
+              "type": "string",
+              "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+            },
+            "title": {
+              "type": "string",
+              "pattern": "^[\\s\\S]{1,200}$"
+            },
+            "deviceId": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "verification": {
+              "type": "string",
+              "pattern": "^[\\s\\S]{1,500}$"
+            },
+            "type": {
+              "type": "string",
+              "pattern": "^[\\s\\S]{1,80}$"
+            },
+            "hintLevel": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 3
+            },
+            "guidance": {
+              "type": "string",
+              "pattern": "^[\\s\\S]{1,500}$"
+            },
+            "commands": {
+              "maxItems": 2,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "commandId": {
+                    "type": "string",
+                    "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+                  },
+                  "deviceId": {
+                    "type": "string",
+                    "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+                  },
+                  "mode": {
+                    "type": "string",
+                    "enum": [
+                      "USER_EXEC",
+                      "PRIVILEGED_EXEC",
+                      "GLOBAL_CONFIG",
+                      "INTERFACE_CONFIG",
+                      "VLAN_CONFIG",
+                      "ROUTER_CONFIG"
+                    ]
+                  },
+                  "command": {
+                    "type": "string",
+                    "pattern": "^[\\s\\S]{1,500}$"
+                  },
+                  "template": {
+                    "type": "boolean"
+                  },
+                  "routingProtocol": {
+                    "type": "string",
+                    "enum": [
+                      "eigrp",
+                      "ospf"
+                    ]
+                  },
+                  "interface": {
+                    "type": "string",
+                    "pattern": "^[\\s\\S]{1,80}$"
+                  }
+                },
+                "required": [
+                  "commandId",
+                  "deviceId",
+                  "mode",
+                  "command"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": [
+            "taskId",
+            "title",
+            "deviceId",
+            "verification",
+            "type",
+            "hintLevel",
+            "guidance",
+            "commands"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -839,12 +964,27 @@
               "PRIVILEGED_EXEC",
               "GLOBAL_CONFIG",
               "INTERFACE_CONFIG",
-              "VLAN_CONFIG"
+              "VLAN_CONFIG",
+              "ROUTER_CONFIG"
             ]
           },
           "command": {
             "type": "string",
             "pattern": "^[\\s\\S]{1,500}$"
+          },
+          "template": {
+            "type": "boolean"
+          },
+          "routingProtocol": {
+            "type": "string",
+            "enum": [
+              "eigrp",
+              "ospf"
+            ]
+          },
+          "interface": {
+            "type": "string",
+            "pattern": "^[\\s\\S]{1,80}$"
           }
         },
         "required": [

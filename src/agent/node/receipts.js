@@ -82,10 +82,22 @@ function receipts(prisma, config) {
             evidence: call.analyzeInput.facts
               .filter((f) => ids.has(f.evidenceId))
               .map(({ provenance, ...f }) => f),
-            commands: call.analyzeInput.allowedCommands.filter((cmd) =>
-              commands.has(cmd.commandId)
-            ),
+            // Focused recipes are versioned server-owned teaching material,
+            // independent of whether the model chose to reference each one.
+            commands:
+              call.analyzeInput.context.taskFocus?.commands ||
+              call.analyzeInput.allowedCommands.filter((cmd) => commands.has(cmd.commandId)),
             versions: receipt.versions,
+            ...(call.analyzeInput.context.taskFocus
+              ? {
+                  focus: Object.fromEntries(
+                    ['taskId', 'title', 'deviceId', 'verification'].map((key) => [
+                      key,
+                      call.analyzeInput.context.taskFocus[key],
+                    ])
+                  ),
+                }
+              : {}),
           };
         }
       } catch {
@@ -118,6 +130,8 @@ function receipts(prisma, config) {
       where: { id: c.row.id },
       data: {
         status,
+        streamVersion: { increment: 1 },
+        progressPhase: null,
         responseMode: result ? p.responseMode : 'NONE',
         finishedAt: c.now,
         leaseOwner: null,

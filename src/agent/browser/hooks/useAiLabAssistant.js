@@ -24,7 +24,14 @@ export default function useAiLabAssistant({
   );
   // A new scope has an empty snapshot synchronously, before effect cleanup.
   const controller = useMemo(
-    () => createAssistantController({ api, userId, attemptId, storage: sessionStorageOrNull() }),
+    () =>
+      createAssistantController({
+        api,
+        userId,
+        attemptId,
+        storage: sessionStorageOrNull(),
+        onTiming: (detail) => window.dispatchEvent(new CustomEvent('ccna:ai-timing', { detail })),
+      }),
     [api, userId, attemptId]
   );
   const identity = `${token}:${userId}:${attemptId}`;

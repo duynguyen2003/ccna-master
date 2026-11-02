@@ -5,6 +5,8 @@ const { withAiAccess } = require('./access');
 const { captureSnapshot } = require('./snapshot');
 const { fail, limitsOf, userQuota, reserve } = require('./quota');
 const { clock } = require('./lifecycle');
+const { taskFocusFor } = require('./taskCoaching');
+const { publicProgress } = require('./progress');
 const hash = (v) => createHash('sha256').update(v).digest('hex');
 function service(prisma, config) {
   const { environment, recoveryEpoch, ownerSecret } = config;
@@ -16,7 +18,7 @@ function service(prisma, config) {
     )
       throw fail('AI_DISABLED');
   };
-  const checked = (principal, attemptId, fn) => {
+  const checked = (principal, attemptId, fn, serialize = true) => {
     if (
       !/^[A-Za-z][A-Za-z0-9_-]{0,79}$/.test(recoveryEpoch || '') ||
       !ownerSecret ||
@@ -24,7 +26,8 @@ function service(prisma, config) {
     )
       throw fail('AI_DISABLED');
     return withAiAccess(prisma, { principal, attemptId, environment }, async (tx, context) => {
-      await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`ai-admission:${environment}`}, 1))::text`;
+      if (serialize)
+        await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`ai-admission:${environment}`}, 1))::text`;
       const now = await clock(tx);
       const owner = createHmac('sha256', ownerSecret)
         .update(`${environment}:${principal.id}`)
@@ -68,6 +71,7 @@ function service(prisma, config) {
         quota: await userQuota(tx, environment, c.owner, c.policy, c.now),
         serverTime: c.now.toISOString(),
         status: row.status,
+        progress: publicProgress(row),
         responseMode: row.responseMode,
         result: message?.structuredAnswer || null,
         ...(pending ? { pollAfterMs: 2000 } : {}),
@@ -115,6 +119,9 @@ function service(prisma, config) {
         const snapshot = captureSnapshot(c.attempt, body.intent);
         if (body.taskId && !snapshot.publicMetadata?.tasks?.some((t) => t.id === body.taskId))
           throw fail('AI_INVALID_REQUEST');
+        const effectiveHintLevel = body.requestedHintLevel || 1;
+        const taskFocus = taskFocusFor(c.attempt, body, effectiveHintLevel);
+        if (taskFocus) snapshot.taskFocus = taskFocus;
         if (Buffer.byteLength(JSON.stringify({ ...snapshot, request: body })) > 65536)
           throw fail('AI_CONTEXT_TOO_LARGE');
         if (
@@ -126,6 +133,7 @@ function service(prisma, config) {
         const limits = limitsOf(c.policy);
         const versionCheck = schemas.InternalAnalyzeRequest.shape.versions.safeParse({
           ...limits.versions,
+          ...config.providers?.[c.policy.providerConfigId]?.versions,
           simulatorVersion: c.attempt.simulatorVersion,
           policyVersion: String(c.policy.version),
         });
@@ -146,7 +154,7 @@ function service(prisma, config) {
             payloadHash,
             intent: body.intent,
             requestedHintLevel: body.requestedHintLevel,
-            effectiveHintLevel: 1,
+            effectiveHintLevel,
             sourceRevision: snapshot.sourceRevision,
             sourceProvenance: snapshot.sourceProvenance,
             snapshot: { ...snapshot, request: body },
@@ -174,13 +182,18 @@ function service(prisma, config) {
       });
     },
     read(principal, attemptId, key, value) {
-      return checked(principal, attemptId, async (tx, c) => {
-        const row = await tx.aiRequest.findFirst({
-          where: { [key]: value, userId: principal.id, attemptId },
-        });
-        if (!row) throw fail('AI_RESOURCE_NOT_FOUND');
-        return resource(tx, row, c);
-      });
+      return checked(
+        principal,
+        attemptId,
+        async (tx, c) => {
+          const row = await tx.aiRequest.findFirst({
+            where: { [key]: value, userId: principal.id, attemptId },
+          });
+          if (!row) throw fail('AI_RESOURCE_NOT_FOUND');
+          return resource(tx, row, c);
+        },
+        false
+      );
     },
     info(principal, attemptId, quotaOnly = false) {
       return checked(principal, attemptId, async (tx, c) => {
@@ -200,6 +213,7 @@ function service(prisma, config) {
           contractVersion: VERSION,
           data: {
             eligible: !conversation?.deletedAt,
+            streaming: config.streamEnabled === true,
             conversationId: conversation?.id || null,
             conversationEpoch: conversation?.epoch || 0,
             recoveryEpoch,

@@ -20,6 +20,8 @@ function runtimeConfig(env = process.env) {
     /* No implicit database fallback for the worker. */
   }
   return {
+    streamEnabled: env.AI_STATUS_STREAM_ENABLED === 'true',
+    timingsEnabled: env.AI_TIMINGS_ENABLED === 'true',
     environment: env.AI_ENVIRONMENT || 'local',
     recoveryEpoch: env.AI_RECOVERY_EPOCH,
     redactionValues: [
@@ -58,7 +60,7 @@ function runtimeConfig(env = process.env) {
         versions: {
           contextSchemaVersion: '1.0.0',
           diagnosticVersion,
-          promptVersion: 'gemini-r1-v2',
+          promptVersion: 'gemini-r1-v3',
           modelVersion: localBudget.policy.model,
           priceVersion: localBudget.policy.priceVersion,
         },

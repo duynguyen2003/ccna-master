@@ -59,6 +59,97 @@ function harness(overrides = {}, store = new Map()) {
   return { controller, timers, store, calls };
 }
 
+test('SSE adopts progress/final snapshots without polling or another admission, and stop aborts IO', async () => {
+  let listener,
+    signal,
+    reads = 0;
+  const h = harness({
+    capabilities: async () => ({ ...capabilities, streaming: true }),
+    read: async () => {
+      reads++;
+      return request();
+    },
+    events: async (_, id, options) => {
+      assert.equal(id, ids.request);
+      listener = options.onEvent;
+      signal = options.signal;
+      await new Promise((resolve) => signal.addEventListener('abort', resolve, { once: true }));
+    },
+  });
+  await h.controller.start();
+  await h.controller.send({ intent: 'NEXT_STEP' }, 3);
+  assert.equal(h.controller.getSnapshot().transport, 'streaming');
+  assert.equal(h.timers.size, 0);
+  listener({ id: 'event2', data: request('RUNNING') });
+  assert.equal(h.controller.getSnapshot().request.status, 'RUNNING');
+  listener({ id: 'event3', data: request() });
+  await flush();
+  assert.equal(h.controller.getSnapshot().pending, null);
+  assert.equal(signal.aborted, true);
+  assert.equal(reads, 0);
+  assert.equal(h.calls.length, 1);
+  h.controller.stop();
+});
+
+test('unusable SSE falls back to one polling loop; authorization failures block rather than retry', async () => {
+  for (const unauthorized of [false, true]) {
+    let streams = 0;
+    const h = harness({
+      capabilities: async () => ({ ...capabilities, streaming: true }),
+      events: async () => {
+        streams++;
+        throw Object.assign(
+          new Error(),
+          unauthorized
+            ? { status: 403, code: 'AI_NOT_ELIGIBLE' }
+            : { code: 'AI_STREAM_UNAVAILABLE' }
+        );
+      },
+    });
+    await h.controller.start();
+    await h.controller.send({ intent: 'NEXT_STEP' }, 3);
+    await flush();
+    assert.equal(streams, 1);
+    if (unauthorized) {
+      assert.equal(h.controller.getSnapshot().phase, 'blocked');
+      assert.equal(h.timers.size, 0);
+    } else {
+      assert.equal(h.controller.getSnapshot().transport, 'polling');
+      assert.equal(h.timers.size, 1);
+      [...h.timers.values()][0].fn();
+      await flush();
+      assert.equal(h.controller.getSnapshot().request.status, 'COMPLETED');
+    }
+    assert.equal(h.calls.length, 1);
+    h.controller.stop();
+  }
+});
+
+test('SSE reconnect uses the last cursor, is bounded and never reissues POST', async () => {
+  let connects = 0;
+  const cursors = [];
+  const h = harness({
+    capabilities: async () => ({ ...capabilities, streaming: true }),
+    events: async (_, id, options) => {
+      connects++;
+      cursors.push(options.lastEventId);
+      options.onEvent({ id: 'cursor2', data: request('RUNNING') });
+    },
+  });
+  await h.controller.start();
+  await h.controller.send({ intent: 'NEXT_STEP' }, 3);
+  await flush();
+  for (let i = 0; i < 2; i++) {
+    [...h.timers.values()][0].fn();
+    await flush();
+  }
+  assert.equal(connects, 3);
+  assert.equal(cursors[1], 'cursor2');
+  assert.equal(h.controller.getSnapshot().transport, 'polling');
+  assert.equal(h.calls.length, 1);
+  h.controller.stop();
+});
+
 test('conversation reset fences late requests, clears private state and reconnects at the new epoch', async () => {
   let epoch = 0;
   const late = deferred();

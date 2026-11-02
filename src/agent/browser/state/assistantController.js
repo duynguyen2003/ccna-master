@@ -17,6 +17,7 @@ const initial = () => ({
   resetting: false,
   feedback: {},
   online: true,
+  transport: 'polling',
 });
 const safeError = (error) => ({
   code: error.code || 'AI_NETWORK_ERROR',
@@ -36,6 +37,8 @@ export function createAssistantController({
   setTimer = setTimeout,
   clearTimer = clearTimeout,
   random = Math.random,
+  now = () => performance.now(),
+  onTiming = () => {},
 }) {
   let state = initial();
   let generation = 0;
@@ -51,6 +54,28 @@ export function createAssistantController({
   let readingHistory = false;
   let cancelRequested = false;
   let cancelling = false;
+  let streamAbort = null;
+  let streamFailures = 0;
+  let streamFallback = false;
+  let lastEventId = null;
+  let sentAt = null;
+  let acceptedAt = null;
+  let visibleResultId = null;
+  let feedbackVisible = false;
+  const timing = (phase, requestId = state.request?.requestId || null) => {
+    if (sentAt === null) return;
+    try {
+      onTiming({
+        phase,
+        requestId,
+        ms: Math.max(0, now() - sentAt),
+      });
+    } catch {}
+  };
+  const stopStream = () => {
+    streamAbort?.abort();
+    streamAbort = null;
+  };
   const listeners = new Set();
   const key = `ccna.ai.pending.v1:${encodeURIComponent(userId)}:${encodeURIComponent(attemptId)}`;
   const emit = (patch) => {
@@ -83,6 +108,7 @@ export function createAssistantController({
   const stopIO = () => {
     generation++;
     clearTimer(timer);
+    stopStream();
     abort?.abort();
     abort = new AbortController();
     posting = false;
@@ -115,6 +141,10 @@ export function createAssistantController({
   function schedule(pollAfterMs = 2000) {
     clearTimer(timer);
     if (!canRead() || !state.pending) return;
+    if (!streamFallback && state.capabilities?.streaming && api.events && state.pending.requestId) {
+      if (!streamAbort) void stream();
+      return;
+    }
     const backoff = [2000, 3000, 5000, 8000][Math.min(failures, 3)];
     timer = setTimer(
       () => {
@@ -123,8 +153,62 @@ export function createAssistantController({
       Math.max(Number.isFinite(pollAfterMs) ? pollAfterMs : 0, backoff) + Math.floor(random() * 250)
     );
   }
+  async function stream() {
+    if (!canRead() || !state.pending?.requestId || streamAbort || streamFallback) return;
+    const stamp = generation;
+    const requestId = state.pending.requestId;
+    let received = false;
+    const channel = new AbortController();
+    streamAbort = channel;
+    const parent = abort;
+    const cancel = () => channel.abort();
+    parent.signal.addEventListener('abort', cancel, { once: true });
+    emit({ transport: 'streaming' });
+    try {
+      await api.events(attemptId, requestId, {
+        signal: channel.signal,
+        lastEventId,
+        onEvent: (event) => {
+          if (!valid(stamp) || channel.signal.aborted || event.data.requestId !== requestId) return;
+          received = true;
+          lastEventId = event.id;
+          adopt(event.data, stamp);
+        },
+      });
+    } catch (error) {
+      if (
+        valid(stamp) &&
+        !channel.signal.aborted &&
+        ([401, 403, 404].includes(error.status) || error.code === 'AI_CONVERSATION_CHANGED')
+      )
+        handleError(error, stamp);
+    } finally {
+      parent.signal.removeEventListener('abort', cancel);
+      if (streamAbort === channel) streamAbort = null;
+      if (!valid(stamp) || channel.signal.aborted || !state.pending || state.phase === 'blocked')
+        return;
+      streamFailures = received ? streamFailures + 1 : 3;
+      if (streamFailures >= 3) {
+        streamFallback = true;
+        emit({ transport: 'polling' });
+        schedule();
+      } else {
+        timer = setTimer(
+          () => void stream(),
+          1000 * 2 ** (streamFailures - 1) + Math.floor(random() * 250)
+        );
+      }
+    }
+  }
   function adopt(request, stamp) {
     if (!valid(stamp)) return false;
+    if (
+      state.request?.requestId === request.requestId &&
+      request.progress &&
+      state.request.progress &&
+      request.progress.streamVersion < state.request.progress.streamVersion
+    )
+      return false;
     if (
       state.request?.requestId === request.requestId &&
       !running(state.request) &&
@@ -139,6 +223,10 @@ export function createAssistantController({
     ) {
       handleError({ code: 'AI_CONVERSATION_CHANGED' }, stamp);
       return false;
+    }
+    if (acceptedAt === null) {
+      acceptedAt = now();
+      timing('accepted', request.requestId);
     }
     emit({
       request,
@@ -157,6 +245,8 @@ export function createAssistantController({
       schedule(request.pollAfterMs);
       if (cancelRequested && !posting) void cancelRequest();
     } else {
+      stopStream();
+      timing(request.result ? 'validated_result' : 'terminal');
       clearTimer(timer);
       forget();
       payload = null;
@@ -333,6 +423,7 @@ export function createAssistantController({
     cancelRequested = true;
     if (posting || cancelling) return;
     cancelling = true;
+    stopStream();
     clearTimer(timer);
     const stamp = generation;
     try {
@@ -343,7 +434,10 @@ export function createAssistantController({
     } catch (error) {
       handleError(error, stamp);
     } finally {
-      if (valid(stamp)) cancelling = false;
+      if (valid(stamp)) {
+        cancelling = false;
+        if (state.pending) schedule();
+      }
     }
   }
   return {
@@ -389,6 +483,13 @@ export function createAssistantController({
       )
         return;
       const clientRequestId = uuid();
+      streamFailures = 0;
+      streamFallback = false;
+      lastEventId = null;
+      sentAt = now();
+      acceptedAt = null;
+      visibleResultId = null;
+      feedbackVisible = false;
       cancelRequested = false;
       payload = {
         ...input,
@@ -439,6 +540,18 @@ export function createAssistantController({
       return connect();
     },
     cancel: cancelRequest,
+    markFeedbackVisible() {
+      if (!feedbackVisible && state.pending) {
+        feedbackVisible = true;
+        timing('visible_feedback');
+      }
+    },
+    markResultVisible(messageId) {
+      if (state.request?.result?.messageId === messageId && visibleResultId !== messageId) {
+        visibleResultId = messageId;
+        timing('visible_result');
+      }
+    },
     loadOlder: () => history(true),
     reloadHistory: () => history(false),
     async resetConversation() {
