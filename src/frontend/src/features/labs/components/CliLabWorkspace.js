@@ -17,6 +17,7 @@ import { api } from '../../../services/Api';
 import DropdownSelect from '../../../components/ui/DropdownSelect';
 import SlidingTabs from '../../../components/ui/SlidingTabs';
 import NetworkTopology from './NetworkTopology';
+import { runThemeTransition } from '../../../components/ui/themeTransition';
 import '../styles/LabWorkspace.css';
 import AnimatedCopyButton from '../../../components/ui/AnimatedCopyButton';
 import Dialog from '../../../components/ui/Dialog';
@@ -153,6 +154,9 @@ export default function CliLabWorkspace({
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState(0);
   const [theme, setTheme] = useState('light');
+  const requestedTheme = useRef('light');
+  const themeTransition = useRef(null);
+  useEffect(() => () => themeTransition.current?.(), []);
   const mounted = useRef(true);
   const dialog = useRef(null);
   const onboardingFocusRestore = useRef(null);
@@ -838,7 +842,12 @@ export default function CliLabWorkspace({
           <button
             type="button"
             className="cli-lab-theme-toggle"
-            onClick={() => setTheme((value) => (value === 'dark' ? 'light' : 'dark'))}
+            aria-pressed={theme === 'dark'}
+            onClick={(event) => {
+              const next = requestedTheme.current === 'dark' ? 'light' : 'dark';
+              requestedTheme.current = next;
+              themeTransition.current = runThemeTransition(() => setTheme(next), event, next);
+            }}
             aria-label={
               theme === 'dark' ? 'Chuyển sang giao diện sáng' : 'Chuyển sang giao diện tối'
             }

@@ -410,6 +410,18 @@ test('replay disables terminal writes and returning live restores controls', asy
   fireEvent.click(screen.getByText('Quay lại hiện tại'));
   expect(screen.getByText('Terminal Router#')).toBeEnabled();
 });
+test('rapid local theme clicks preserve the final choice through the animated fallback', async () => {
+  render(<CliLabWorkspace lab={{ id: 1 }} page />);
+  await screen.findByText('Terminal Router>');
+  const button = screen.getByRole('button', { name: 'Chuyển sang giao diện tối' });
+  fireEvent.click(button);
+  fireEvent.click(button);
+  fireEvent.click(button);
+  expect(await screen.findByRole('button', { name: 'Chuyển sang giao diện sáng' })).toHaveAttribute(
+    'aria-pressed',
+    'true'
+  );
+});
 test('owner can restart an in-progress workspace', async () => {
   api.restartCliLabAttempt.mockResolvedValue({ ...example(), id: 'new-attempt' });
   render(

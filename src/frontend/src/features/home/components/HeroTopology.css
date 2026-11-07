@@ -21,27 +21,24 @@
 }
 
 .hero-topology__device {
+  --device-ink: #b8d9f5;
+  --device-top: #234663;
+  --device-front: #18364f;
+  --device-side: #10283e;
+  --device-screen: #0c2237;
   display: grid;
   width: 48px;
   height: 40px;
   place-items: center;
-  border: 1px solid rgb(149 188 226 / 32%);
-  border-radius: 10px;
-  background: linear-gradient(155deg, rgb(56 98 152 / 40%), rgb(12 29 48 / 92%));
-  box-shadow:
-    inset 0 1px rgb(255 255 255 / 8%),
-    0 5px 14px rgb(0 0 0 / 16%);
   color: #b8d9f5;
 }
 
 .hero-topology__device svg {
   display: block;
-  width: 26px;
-  height: 26px;
-  stroke: currentColor;
-  stroke-width: 1.65;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  width: 56px;
+  height: 52px;
+  margin-top: -5px;
+  overflow: visible;
 }
 
 .hero-topology__label {
@@ -134,8 +131,8 @@
   }
 
   .hero-topology__device svg {
-    width: 23px;
-    height: 23px;
+    width: 48px;
+    height: 46px;
   }
 
   .hero-topology__link {

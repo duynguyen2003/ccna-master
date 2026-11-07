@@ -115,26 +115,7 @@
 .cli-lab-stitch .network-diagram--fit {
   background: transparent;
 }
-.cli-lab-stitch .network-diagram--fit .network-device-ring {
-  opacity: 0;
-}
-.cli-lab-stitch .network-diagram--fit .network-device-body {
-  fill: var(--surface-primary);
-  stroke: var(--border-strong);
-  stroke-width: 1.5;
-}
-.cli-lab-stitch .network-diagram--fit .network-device-symbol {
-  stroke: var(--text-secondary);
-}
-.cli-lab-stitch .network-diagram--fit .network-node.selected .network-device-body {
-  fill: var(--surface-primary);
-  stroke: var(--stitch-network);
-  stroke-width: 2.5;
-}
-.cli-lab-stitch .network-diagram--fit .network-node.selected .network-device-symbol {
-  stroke: var(--stitch-network);
-}
-.cli-lab-stitch .network-diagram--fit .network-node:focus-visible .network-device-body {
+.cli-lab-stitch .network-diagram--fit .network-node:focus-visible .network-device-ring {
   stroke: var(--stitch-network);
   stroke-width: 3;
   stroke-dasharray: 3 2;

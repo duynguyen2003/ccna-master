@@ -2,62 +2,10 @@ import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 're
 import { gsap, prefersReducedMotion } from '../utils/labMotion';
 import { labelLines, layoutTopology, shortPort } from '../utils/topologyLayout';
 import { layoutLinks, packetMotionPath } from '../utils/topologyGeometry';
+import NetworkDeviceGlyph from '../../../components/ui/NetworkDeviceGlyph';
 import '../styles/NetworkTopology.css';
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
-
-function DeviceSymbol({ type, card }) {
-  if (card)
-    return (
-      <>
-        <rect className="network-device-body" x="-28" y="-28" width="56" height="56" rx="10" />
-        <g className="network-device-symbol">
-          {type === 'ROUTER' ? (
-            <>
-              <circle r="16" />
-              <path d="M-2-2 -10-10m0 5v-5h5M2 2l8 8m0-5v5H5M2-2l8-8m-5 0h5v5M-2 2l-8 8m5 0h-5V5" />
-            </>
-          ) : type === 'SWITCH' ? (
-            <>
-              <rect x="-17" y="-11" width="34" height="22" rx="3" />
-              <path d="M-10-4h20m-4-4 4 4-4 4M10 5h-20m4-4-4 4 4 4" />
-            </>
-          ) : (
-            <>
-              <rect x="-16" y="-14" width="32" height="23" rx="2" />
-              <path d="M-16 3h32M0 9v7m-9 0H9" />
-            </>
-          )}
-        </g>
-      </>
-    );
-  if (type === 'ROUTER')
-    return (
-      <>
-        <circle className="network-device-body" r="25" />
-        <g className="network-device-symbol" aria-hidden="true">
-          <path d="M-4-4 -14-14m0 7v-7h7M4 4l10 10m0-7v7H7M4-4l10-10m-7 0h7v7M-4 4l-10 10m7 0h-7V7" />
-        </g>
-      </>
-    );
-  if (type === 'SWITCH')
-    return (
-      <>
-        <rect className="network-device-body" x="-27" y="-19" width="54" height="38" rx="8" />
-        <g className="network-device-symbol" aria-hidden="true">
-          <path d="M-16-7h31m-5-5 5 5-5 5M16 5h-31m5-5-5 5 5 5M-16 13h3m6 0h3m6 0h3m6 0h3" />
-        </g>
-      </>
-    );
-  return (
-    <>
-      <rect className="network-device-body" x="-24" y="-23" width="48" height="36" rx="5" />
-      <g className="network-device-symbol" aria-hidden="true">
-        <path d="M-16 5h32M0 13v10m-12 0h24" />
-      </g>
-    </>
-  );
-}
 
 const packetKey = (packet) =>
   packet?.animationKey ||
@@ -397,7 +345,9 @@ export default function NetworkTopology({
           >
             <g transform={fitted ? undefined : 'scale(1.35)'}>
               <circle className="network-device-ring" r="32" />
-              <DeviceSymbol type={device.deviceType || device.type} card={fitted} />
+              <g className="network-device-art">
+                <NetworkDeviceGlyph type={device.deviceType || device.type} />
+              </g>
               <text className="network-device-name" textAnchor="middle" y="48">
                 {labelLines(device.id).map((line, i) => (
                   <tspan key={i} x="0" dy={i ? 15 : 0}>

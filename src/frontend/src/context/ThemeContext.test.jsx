@@ -68,7 +68,7 @@ test('an invalid saved preference falls back to light', () => {
   expect(screen.getByRole('button', { name: 'light' })).toBeInTheDocument();
 });
 
-test('blocked storage still defaults to light and allows a theme change', () => {
+test('blocked storage still defaults to light and allows an animated theme change', async () => {
   const read = jest.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
     throw new Error('blocked');
   });
@@ -83,7 +83,7 @@ test('blocked storage still defaults to light and allows a theme change', () => 
       </ThemeProvider>
     );
     fireEvent.click(screen.getByRole('button', { name: 'light' }));
-    expect(screen.getByRole('button', { name: 'dark' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'dark' })).toBeInTheDocument();
   } finally {
     read.mockRestore();
     write.mockRestore();

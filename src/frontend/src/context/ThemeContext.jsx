@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
+import { runThemeTransition } from '../components/ui/themeTransition';
 
 const ThemeContext = createContext(null);
 function initialTheme() {
@@ -11,15 +12,26 @@ function initialTheme() {
 
 export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState(initialTheme);
+  const choice = useRef(theme);
+  const dispose = useRef(null);
+  useEffect(() => () => dispose.current?.(), []);
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
-  const toggleTheme = () => {
-    const next = theme === 'dark' ? 'light' : 'dark';
-    setTheme(next);
+  const toggleTheme = (origin) => {
+    const next = choice.current === 'dark' ? 'light' : 'dark';
+    choice.current = next;
     try {
       localStorage.setItem('netmaster-theme', next);
     } catch {}
+    dispose.current = runThemeTransition(
+      () => {
+        document.documentElement.dataset.theme = next;
+        setTheme(next);
+      },
+      origin,
+      next
+    );
   };
   return <ThemeContext.Provider value={{ theme, toggleTheme }}>{children}</ThemeContext.Provider>;
 }

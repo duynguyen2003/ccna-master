@@ -101,23 +101,10 @@
   stroke: var(--diagram-accent);
   stroke-opacity: 0.14;
 }
-.network-diagram .network-device-body {
-  fill: var(--diagram-surface);
-  stroke: var(--diagram-wire);
-  stroke-width: 1.5;
-}
 .network-diagram .network-device-ring {
   fill: transparent;
   stroke: transparent;
   stroke-width: 1.5;
-}
-.network-diagram .network-device-symbol {
-  fill: none;
-  stroke: var(--diagram-accent);
-  stroke-width: 1.8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  pointer-events: none;
 }
 .network-diagram .network-device-name {
   font-size: 13px;
@@ -134,12 +121,9 @@
   fill: var(--lab-accent-bg, var(--bg-accent, #e4edf6));
   stroke: var(--diagram-accent);
 }
-.network-diagram .network-node.selected .network-device-body {
-  fill: var(--brand-primary, #386298);
-  stroke: var(--brand-primary, #386298);
-}
-.network-diagram .network-node.selected .network-device-symbol {
-  stroke: #f7fbff;
+.network-diagram .network-node.selected .network-device-glyph {
+  --device-top: color-mix(in srgb, var(--diagram-accent) 15%, var(--diagram-surface));
+  stroke-width: 1.8;
 }
 .network-diagram .network-node.selected .network-device-name {
   fill: var(--diagram-accent);
@@ -169,9 +153,8 @@
   fill: var(--diagram-muted);
   font-size: 13px;
 }
-.network-diagram .network-device-body,
+.network-diagram .network-device-glyph > path,
 .network-diagram .network-device-ring,
-.network-diagram .network-device-symbol,
 .network-diagram .network-subnet rect,
 .network-diagram .network-link > path {
   transition:
@@ -180,17 +163,15 @@
     stroke-width 150ms ease,
     opacity 150ms ease;
 }
-.network-diagram .network-node:not(.selected):hover .network-device-body {
-  fill: var(--lab-accent-bg);
-  stroke: var(--diagram-accent);
+.network-diagram .network-node:not(.selected):hover .network-device-glyph {
+  --device-top: var(--lab-accent-bg, var(--diagram-surface));
 }
 .network-diagram .network-link:is(:hover, :focus-visible, .selected) .network-subnet rect {
   fill: var(--lab-accent-bg);
 }
 @media (prefers-reduced-motion: reduce) {
-  .network-diagram .network-device-body,
+  .network-diagram .network-device-glyph > path,
   .network-diagram .network-device-ring,
-  .network-diagram .network-device-symbol,
   .network-diagram .network-subnet rect,
   .network-diagram .network-link > path {
     transition: none !important;
