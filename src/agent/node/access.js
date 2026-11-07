@@ -18,7 +18,11 @@ function readPrincipal(authorization, secret) {
       claims.sessionVersion < 0
     )
       throw new Error('Invalid claims');
-    return { id: claims.id, sessionVersion: claims.sessionVersion };
+    return {
+      id: claims.id,
+      sessionVersion: claims.sessionVersion,
+      ...(Number.isFinite(claims.exp) ? { tokenExpiresAt: claims.exp * 1000 } : {}),
+    };
   } catch {
     throw denied(401, 'UNAUTHORIZED');
   }

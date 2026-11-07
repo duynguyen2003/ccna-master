@@ -40,9 +40,21 @@ const validateSteps = (steps) => {
       throw validationError(`steps[${index}].title không được để trống`);
     if (
       !Array.isArray(step.commands) ||
-      step.commands.some((command) => typeof command !== 'string')
+      step.commands.some(
+        (command) =>
+          typeof command !== 'string' &&
+          !(
+            command &&
+            typeof command === 'object' &&
+            typeof command.command === 'string' &&
+            command.command.trim().length > 0 &&
+            command.command.length <= 500 &&
+            (command.deviceId === null ||
+              /^[A-Za-z][A-Za-z0-9_-]{0,39}$/.test(command.deviceId || ''))
+          )
+      )
     )
-      throw validationError(`steps[${index}].commands phải là mảng chuỗi`);
+      throw validationError(`steps[${index}].commands phải là mảng lệnh hợp lệ`);
     if (step.note !== undefined && typeof step.note !== 'string')
       throw validationError(`steps[${index}].note phải là chuỗi`);
   });

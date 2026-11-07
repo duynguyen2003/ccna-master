@@ -4,7 +4,12 @@ import AnimatedCheckbox from '../../../../components/ui/AnimatedCheckbox';
 import DropdownSelect from '../../../../components/ui/DropdownSelect';
 import NetworkTopology from '../../../labs/components/NetworkTopology';
 import { networkLabTemplates } from '../../../labs/data/networkLabTemplates';
-import { getDevices, interfaceName, toInterfaceObject, isTopology } from '../../utils/adminLabConfig';
+import {
+  getDevices,
+  interfaceName,
+  toInterfaceObject,
+  isTopology,
+} from '../../utils/adminLabConfig';
 
 const DEVICE_TYPES = ['ROUTER', 'SWITCH', 'PC'];
 
@@ -56,6 +61,7 @@ const DeviceForm = ({
   canRemoveDevice,
   onRemoveDevice,
   readOnlyId = false,
+  metricEnabled = false,
 }) => {
   const update = (patch) => onChange({ ...device, ...patch });
   const changeDeviceType = (deviceType) => {
@@ -230,6 +236,33 @@ const DeviceForm = ({
                     onChange={(event) => updatePort(index, { description: event.target.value })}
                   />
                 </Field>
+                {metricEnabled &&
+                  device.deviceType === 'ROUTER' &&
+                  ['bandwidthKbps', 'delayMicroseconds'].map((field) => (
+                    <Field
+                      key={field}
+                      label={field === 'bandwidthKbps' ? 'Bandwidth (kbps)' : 'Delay (µs)'}
+                    >
+                      <input
+                        aria-label={`${field} ${index + 1}`}
+                        className="acm-input"
+                        type="number"
+                        min="1"
+                        value={normalized[field] ?? ''}
+                        placeholder="Mặc định theo loại interface"
+                        onChange={(event) => {
+                          const next = { ...normalized };
+                          if (event.target.value === '') delete next[field];
+                          else next[field] = Number(event.target.value);
+                          update({
+                            interfaces: ports.map((port, portIndex) =>
+                              portIndex === index ? next : port
+                            ),
+                          });
+                        }}
+                      />
+                    </Field>
+                  ))}
                 {device.deviceType === 'SWITCH' ? (
                   <>
                     <Field label="Switchport mode">
@@ -566,6 +599,7 @@ export default function InitialStateBuilder({
           </div>
           <DeviceForm
             device={selectedDevice}
+            metricEnabled={value.simulatorVersion === '3.0.0'}
             onChange={disabled ? () => {} : updateSelected}
             onRemovePort={disabled ? () => {} : removePort}
             onAddPort={disabled ? () => {} : addPort}

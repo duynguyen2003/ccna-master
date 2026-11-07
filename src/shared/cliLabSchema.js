@@ -1,5 +1,4 @@
-const zodModule =
-  typeof window !== 'undefined' ? require('./zodBrowser.mjs') : require('zod');
+const zodModule = typeof window !== 'undefined' ? require('./zodBrowser.mjs') : require('zod');
 const { z } = zodModule;
 const { CLI_PROFILE_CATALOG, SUPPORTED_CLI_PROFILE_IDS } = require('./cliLabCatalog');
 
@@ -27,7 +26,7 @@ const hostnameSchema = z.string().regex(/^[a-zA-Z][a-zA-Z0-9-]{0,62}$/, 'Hostnam
 const interfaceNameSchema = z
   .string()
   .regex(
-    /^(?:(?:GigabitEthernet|FastEthernet)\d+\/\d+|Loopback\d+)$/,
+    /^(?:(?:GigabitEthernet|FastEthernet)\d+\/\d+|Serial\d+\/\d+(?:\/\d+)?|Loopback\d+)$/,
     'Tên interface không hợp lệ'
   );
 
@@ -53,6 +52,8 @@ const positionSchema = strictObject({
 });
 
 const interfaceConfigSchema = strictObject({
+  bandwidthKbps: z.number().int().min(1).max(1000000000).optional(),
+  delayMicroseconds: z.number().int().min(1).max(10000000000).optional(),
   name: interfaceNameSchema,
   shutdown: z.boolean().optional(),
   description: z.string().max(80).optional(),
@@ -130,6 +131,7 @@ const linkSchema = strictObject({
 });
 
 const topologySchema = strictObject({
+  simulatorVersion: z.enum(['2.1.0', '3.0.0']).optional(),
   devices: z.array(topologyDeviceDefinitionSchema).min(1).max(24),
   links: z.array(linkSchema).max(96),
 }).superRefine((topology, context) => {
@@ -202,12 +204,17 @@ const topologySchema = strictObject({
 const initialStateSchema = z.union([deviceDefinitionSchema, topologySchema]);
 
 const commonCheckShape = {
+  required: z.boolean().optional(),
+  objective: z.string().min(1).max(200).optional(),
+  skill: z.string().min(1).max(80).optional(),
+  hints: z.array(z.string().min(1).max(500)).min(1).max(3).optional(),
   id: checkId,
   points: z.number().finite().positive().max(1000),
   title: z.string().min(1).max(200).optional(),
   message: z.string().max(500).optional(),
   successMessage: z.string().max(500).optional(),
   hint: z.string().max(500).optional(),
+  dependsOn: z.array(checkId).max(50).optional(),
 };
 
 const makeCheckSchema = (type, fields) =>
@@ -218,6 +225,14 @@ const makeCheckSchema = (type, fields) =>
   });
 
 const gradingCheckSchema = z.discriminatedUnion('type', [
+  makeCheckSchema('eigrp_passive_observed', { deviceId: safeId, interface: interfaceNameSchema }),
+  makeCheckSchema('eigrp_metric_exercise', {
+    deviceId: safeId,
+    interface: interfaceNameSchema,
+    destination: ipv4Schema,
+    expectedMetric: z.number().int().positive(),
+    expectedDelayMicroseconds: z.number().int().positive(),
+  }),
   makeCheckSchema('hostname_equals', { deviceId: safeId.optional(), expected: hostnameSchema }),
   makeCheckSchema('interface_exists', {
     deviceId: safeId.optional(),
@@ -254,9 +269,21 @@ const gradingCheckSchema = z.discriminatedUnion('type', [
     interface: interfaceNameSchema,
     expected: vlanIdSchema,
   }),
-  makeCheckSchema('startup_config_saved', { deviceId: safeId.optional() }),
-  makeCheckSchema('reachable', { deviceId: safeId, destination: ipv4Schema }),
-  makeCheckSchema('route_exists', { deviceId: safeId, destination: ipv4Schema }),
+  makeCheckSchema('startup_config_saved', {
+    deviceId: safeId.optional(),
+    matchesRunning: z.boolean().optional(),
+  }),
+  makeCheckSchema('reachable', {
+    deviceId: safeId,
+    destination: ipv4Schema,
+    protocol: z.enum(['D', 'O']).optional(),
+  }),
+  makeCheckSchema('route_exists', {
+    deviceId: safeId,
+    destination: ipv4Schema,
+    protocol: z.enum(['C', 'S', 'D', 'O']).optional(),
+    source: z.enum(['available', 'learned', 'selected']).optional(),
+  }),
   makeCheckSchema('ospf_neighbor_full', { deviceId: safeId, neighborId: safeId }),
   makeCheckSchema('eigrp_as_configured', {
     deviceId: safeId,
@@ -278,11 +305,36 @@ const gradingCheckSchema = z.discriminatedUnion('type', [
 ]);
 
 const gradingSpecSchema = strictObject({
+  masteryScore: z.number().int().min(1).max(100).optional(),
+  policyVersion: z.number().int().positive().optional(),
   passingScore: z.number().finite().min(0).max(100).default(70),
   checks: z.array(gradingCheckSchema).min(1).max(50),
 }).superRefine((spec, context) => {
+  if (spec.masteryScore !== undefined && spec.masteryScore < spec.passingScore) {
+    context.addIssue({
+      code: 'custom',
+      path: ['masteryScore'],
+      message: 'Mastery score must be at least passing score',
+    });
+  }
+  try {
+    require('./simulation/gradingDependencies').orderedChecks(spec.checks);
+  } catch (error) {
+    context.addIssue({ code: 'custom', path: ['checks'], message: error.message });
+  }
   const ids = new Set();
   spec.checks.forEach((check, index) => {
+    if (
+      check.type === 'route_exists' &&
+      check.source === 'learned' &&
+      !['D', 'O'].includes(check.protocol)
+    ) {
+      context.addIssue({
+        code: 'custom',
+        path: ['checks', index, 'protocol'],
+        message: 'Learned routes require protocol D or O',
+      });
+    }
     if (ids.has(check.id)) {
       context.addIssue({
         code: 'custom',
@@ -302,6 +354,12 @@ const commandRequestShape = {
 const commandRequestSchema = strictObject(commandRequestShape);
 
 const actionSchema = z.discriminatedUnion('type', [
+  strictObject({
+    type: z.literal('hint'),
+    checkId,
+    level: z.number().int().min(1).max(3),
+    deviceId: safeId.optional(),
+  }),
   strictObject({ type: z.literal('command'), ...commandRequestShape }),
   strictObject({ type: z.literal('tick') }),
   strictObject({ type: z.literal('link'), linkId: safeId, enabled: z.boolean() }),
@@ -326,6 +384,8 @@ const parseJsonField = (value, fieldName) => {
 };
 
 const networkOnlyChecks = new Set([
+  'eigrp_passive_observed',
+  'eigrp_metric_exercise',
   'reachable',
   'route_exists',
   'ospf_neighbor_full',
@@ -337,6 +397,8 @@ const networkOnlyChecks = new Set([
   'nat_static_exists',
 ]);
 const interfaceChecks = new Set([
+  'eigrp_passive_observed',
+  'eigrp_metric_exercise',
   'interface_exists',
   'interface_ip_equals',
   'interface_enabled',
@@ -404,6 +466,13 @@ const parseCliLabConfig = ({ labType, initialState, gradingSpec, commandProfile,
   const devices = isTopology ? parsedInitialState.devices : null;
   const deviceById = devices ? new Map(devices.map((device) => [device.id, device])) : null;
   parsedGradingSpec.checks.forEach((check) => {
+    if (
+      (check.hints?.length ||
+        ['eigrp_passive_observed', 'eigrp_metric_exercise'].includes(check.type)) &&
+      parsedInitialState.simulatorVersion !== '3.0.0'
+    ) {
+      throw new Error(`Check ${check.id} yêu cầu simulatorVersion 3.0.0`);
+    }
     if (!devices) {
       if (networkOnlyChecks.has(check.type)) {
         throw new Error(`Check ${check.id} (${check.type}) yêu cầu topology nhiều thiết bị`);
@@ -466,7 +535,7 @@ const parseCliLabConfig = ({ labType, initialState, gradingSpec, commandProfile,
     initialState: parsedInitialState,
     gradingSpec: parsedGradingSpec,
     commandProfile: requestedProfile,
-    simulatorVersion: profile.simulatorVersion,
+    simulatorVersion: parsedInitialState.simulatorVersion || profile.simulatorVersion,
   };
 };
 

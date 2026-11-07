@@ -1,5 +1,6 @@
 /* One scoped palette for the authoring form and the student workspace. */
-:where(.cli-lab-theme, .cli-lab-editor) {
+:where(.cli-lab-theme, .cli-lab-editor, .cli-lab-restart-dialog) {
+  color-scheme: light;
   --surface-overlay: rgba(15, 23, 42, 0.42);
   --surface-canvas: #f7fbff;
   --surface-primary: #ffffff;
@@ -15,6 +16,9 @@
   --text-warning: #854d0e;
   --border-subtle: #cbd9e5;
   --border-strong: #9fb8cc;
+  --topology-wire: #7b8da4;
+  --button-primary-hover: #2d507e;
+  --button-on-primary: #f7fbff;
   --border-danger: var(--text-danger);
   --bg-accent: #e4edf6;
   --bg-danger: #fff1f2;
@@ -25,7 +29,12 @@
   --radius-panel: 8px;
 }
 
-:where(.cli-lab-theme:not([data-theme='light']), .cli-lab-editor.is-dark) {
+:where(
+  .cli-lab-theme:not([data-theme='light']),
+  .cli-lab-editor.is-dark,
+  .cli-lab-restart-dialog--dark
+) {
+  color-scheme: dark;
   --surface-overlay: rgba(2, 6, 23, 0.84);
   --surface-canvas: #08111c;
   --surface-primary: #0e1a28;
@@ -41,6 +50,9 @@
   --text-warning: #fbbf24;
   --border-subtle: #2b4158;
   --border-strong: #45627c;
+  --topology-wire: #7692ad;
+  --button-primary-hover: #96b1d4;
+  --button-on-primary: #08111c;
   --bg-accent: rgba(56, 98, 152, 0.18);
   --bg-danger: #472536;
 }

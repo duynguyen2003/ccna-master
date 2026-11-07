@@ -195,6 +195,27 @@ export default function CliLabConfigEditor({
           <p className="cli-editor-profile-description">
             {profile?.description || 'Chọn profile được backend hỗ trợ.'}
           </p>
+          {topology && initialResult.ok && (
+            <label>
+              Phiên bản mô phỏng
+              <select
+                aria-label="Phiên bản mô phỏng"
+                className="acm-input"
+                value={initialResult.value.simulatorVersion || '2.1.0'}
+                onChange={(event) =>
+                  update({
+                    initialStateText: stringifyJson({
+                      ...initialResult.value,
+                      simulatorVersion: event.target.value,
+                    }),
+                  })
+                }
+              >
+                <option value="2.1.0">2.1.0 — tương thích lab cũ</option>
+                <option value="3.0.0">3.0.0 — metric classic và chấm quá trình</option>
+              </select>
+            </label>
+          )}
           {profile ? (
             <span
               className={`cli-editor-compatibility ${profile.shape === (topology ? 'topology' : 'device') ? 'compatible' : 'warning'}`}

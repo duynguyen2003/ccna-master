@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import SlidingTabs from '../../../../components/ui/SlidingTabs';
 import { Search, ChevronsUpDown, CheckCircle2, LayoutGrid, List } from 'lucide-react';
 import { STATUS_FILTER_OPTIONS } from './constants';
 
@@ -77,7 +78,11 @@ const ExamToolbar = ({
           </div>
 
           {/* View mode toggle */}
-          <div className="exam-hub-view-toggle">
+          <SlidingTabs
+            className="exam-hub-view-toggle"
+            value={viewMode}
+            aria-label="Cách hiển thị bài kiểm tra"
+          >
             {[
               { mode: 'grid', Icon: LayoutGrid, label: 'Chế độ lưới' },
               { mode: 'list', Icon: List, label: 'Chế độ danh sách' },
@@ -88,11 +93,12 @@ const ExamToolbar = ({
                 className={viewMode === mode ? 'active' : ''}
                 onClick={() => onViewModeChange(mode)}
                 aria-label={label}
+                aria-pressed={viewMode === mode}
               >
                 <Icon size={20} />
               </button>
             ))}
-          </div>
+          </SlidingTabs>
         </div>
       </div>
     </div>

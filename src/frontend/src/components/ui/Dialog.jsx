@@ -4,9 +4,18 @@ import { X } from 'lucide-react';
 import useReducedMotion from '../../hooks/useReducedMotion';
 import './styles/Dialog.css';
 
-export default function Dialog({ title, children, onClose, className = '', animateExit = false }) {
+export default function Dialog({
+  title,
+  children,
+  onClose,
+  className = '',
+  animateExit = false,
+  returnFocusRef,
+}) {
   const dialogRef = useRef(null);
   const closeRef = useRef(onClose);
+  const focusReturn = useRef(returnFocusRef);
+  focusReturn.current = returnFocusRef;
   const titleId = useId();
   const [closing, setClosing] = useState(false);
   const closedRef = useRef(false);
@@ -50,7 +59,8 @@ export default function Dialog({ title, children, onClose, className = '', anima
     return () => {
       if (dialog.open) dialog.close();
       document.body.style.overflow = oldOverflow;
-      if (trigger?.isConnected) trigger.focus();
+      const target = focusReturn.current?.current || trigger;
+      if (target?.isConnected) target.focus();
     };
   }, []);
 

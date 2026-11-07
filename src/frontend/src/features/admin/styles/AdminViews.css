@@ -609,3 +609,17 @@
     max-width: 220px;
   }
 }
+
+.labm-tabs.sliding-tabs {
+  display: flex;
+  width: calc(100% - 44px);
+  max-width: calc(100% - 44px);
+  margin: 0 22px 14px;
+  padding: 4px;
+  border: 1px solid var(--color-border);
+}
+.admin-activity-periods.sliding-tabs {
+  --tabs-pill-bg: var(--color-primary);
+  --tabs-text-active: var(--color-on-primary);
+  --tabs-text-hover: var(--color-primary-hover);
+}

@@ -252,12 +252,27 @@
                                 "PRIVILEGED_EXEC",
                                 "GLOBAL_CONFIG",
                                 "INTERFACE_CONFIG",
-                                "VLAN_CONFIG"
+                                "VLAN_CONFIG",
+                                "ROUTER_CONFIG"
                               ]
                             },
                             "command": {
                               "type": "string",
                               "pattern": "^[\\s\\S]{1,500}$"
+                            },
+                            "template": {
+                              "type": "boolean"
+                            },
+                            "routingProtocol": {
+                              "type": "string",
+                              "enum": [
+                                "eigrp",
+                                "ospf"
+                              ]
+                            },
+                            "interface": {
+                              "type": "string",
+                              "pattern": "^[\\s\\S]{1,80}$"
                             }
                           },
                           "required": [
@@ -314,6 +329,41 @@
                           "modelVersion",
                           "priceVersion",
                           "appCommit"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "focus": {
+                        "type": "object",
+                        "properties": {
+                          "taskId": {
+                            "type": "string",
+                            "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+                          },
+                          "title": {
+                            "type": "string",
+                            "pattern": "^[\\s\\S]{1,200}$"
+                          },
+                          "deviceId": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "pattern": "^(?!(?:constructor|prototype)$)[A-Za-z][A-Za-z0-9_-]{0,79}$"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "verification": {
+                            "type": "string",
+                            "pattern": "^[\\s\\S]{1,500}$"
+                          }
+                        },
+                        "required": [
+                          "taskId",
+                          "title",
+                          "deviceId",
+                          "verification"
                         ],
                         "additionalProperties": false
                       }

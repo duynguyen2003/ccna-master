@@ -1,0 +1,61 @@
+.network-device-glyph {
+  color: var(--device-ink, var(--diagram-accent, var(--text-accent, #386298)));
+  stroke: currentColor;
+  stroke-width: 1.35;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+.network-device-glyph .device-glyph-shadow {
+  fill: currentColor;
+  fill-opacity: 0.09;
+  stroke: none;
+}
+.network-device-glyph .device-glyph-top {
+  fill: var(--device-top, var(--diagram-surface, var(--surface-primary, #ffffff)));
+}
+.network-device-glyph .device-glyph-front {
+  fill: var(
+    --device-front,
+    color-mix(in srgb, currentColor 10%, var(--diagram-surface, var(--surface-primary, #ffffff)))
+  );
+}
+.network-device-glyph .device-glyph-side {
+  fill: var(
+    --device-side,
+    color-mix(in srgb, currentColor 19%, var(--diagram-surface, var(--surface-primary, #ffffff)))
+  );
+}
+.network-device-glyph .device-glyph-screen {
+  fill: var(
+    --device-screen,
+    color-mix(in srgb, currentColor 7%, var(--diagram-surface, var(--surface-primary, #ffffff)))
+  );
+}
+.network-device-glyph .device-glyph-detail {
+  fill: none;
+  stroke-width: 1;
+}
+
+:where([data-theme='light']) {
+  --network-glyph-light: inline;
+  --network-glyph-dark: none;
+}
+
+:where([data-theme='dark']) {
+  --network-glyph-light: none;
+  --network-glyph-dark: inline;
+}
+
+.hero-topology__device {
+  --network-glyph-light: none;
+  --network-glyph-dark: inline;
+}
+
+.device-glyph-original--light {
+  display: var(--network-glyph-light, inline);
+}
+
+.device-glyph-original--dark {
+  display: var(--network-glyph-dark, none);
+}

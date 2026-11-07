@@ -28,7 +28,7 @@ export const CHECK_TYPE_MAP = Object.fromEntries(
 
 const IPV4_PATTERN = /^(?:\d{1,3}\.){3}\d{1,3}$/;
 const SAFE_ID_PATTERN = /^[a-zA-Z][a-zA-Z0-9_-]{0,39}$/;
-const INTERFACE_PATTERN = /^(?:(?:GigabitEthernet|FastEthernet)\d+\/\d+|Loopback\d+)$/;
+const INTERFACE_PATTERN = /^(?:(?:GigabitEthernet|FastEthernet|Serial)\d+\/\d+|Loopback\d+)$/;
 export const getDevices = (state) => {
   if (Array.isArray(state?.devices)) return state.devices;
   if (state && Array.isArray(state.interfaces)) return [{ ...state, id: state.id || 'DEVICE1' }];
@@ -223,6 +223,9 @@ export const createDefaultCheck = (type = 'hostname_equals', index = 0) => {
   if (definition.fields.includes('vlanId')) check.vlanId = 1;
   if (definition.fields.includes('asNumber')) check.asNumber = 1;
   if (definition.fields.includes('neighborIp')) check.neighborIp = '';
+  if (definition.fields.includes('expectedMetric')) check.expectedMetric = 133888;
+  if (definition.fields.includes('expectedDelayMicroseconds'))
+    check.expectedDelayMicroseconds = 110;
   if (definition.fields.includes('name')) check.name = 'ACL1';
   return check;
 };
@@ -238,7 +241,11 @@ export const checkField = (check, field, value) =>
   updateOptionalField(
     check,
     field,
-    ['points', 'vlanId', 'asNumber'].includes(field) ? (value === '' ? '' : Number(value)) : value
+    ['points', 'vlanId', 'asNumber', 'expectedMetric', 'expectedDelayMicroseconds'].includes(field)
+      ? value === ''
+        ? ''
+        : Number(value)
+      : value
   );
 
 export { INTERFACE_PATTERN, SAFE_ID_PATTERN, validIpv4, validMask };

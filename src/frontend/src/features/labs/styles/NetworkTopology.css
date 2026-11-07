@@ -1,0 +1,179 @@
+.network-topology.network-diagram {
+  --diagram-surface: var(--lab-surface, var(--surface-primary, #ffffff));
+  --diagram-canvas: var(--lab-surface-raised, var(--surface-secondary, #f1f7fc));
+  --diagram-border: var(--lab-border, var(--border-subtle, #cbd9e5));
+  --diagram-wire: var(--topology-wire, #7b8da4);
+  --diagram-text: var(--lab-text, var(--text-primary, #132336));
+  --diagram-muted: var(--lab-text-muted, var(--text-secondary, #455b70));
+  --diagram-accent: var(--lab-accent, var(--text-accent, #386298));
+  display: block;
+  width: 100%;
+  height: 300px;
+  max-height: none;
+  border: 0;
+  background-color: var(--diagram-canvas);
+  background-image: radial-gradient(circle, var(--diagram-border) 0.7px, transparent 0.7px);
+  background-size: 18px 18px;
+  touch-action: pan-x pan-y;
+}
+.network-topology.network-diagram--fit {
+  height: clamp(260px, 30vh, 340px);
+}
+.network-topology.network-diagram--linear {
+  height: 210px;
+}
+.network-diagram text {
+  fill: var(--diagram-text);
+  font-family: var(--system-ui, sans-serif);
+  user-select: none;
+}
+.network-diagram .network-link,
+.network-diagram .network-node {
+  outline: none;
+  cursor: pointer;
+}
+.network-diagram .network-node {
+  touch-action: none;
+}
+.network-diagram .network-link > :is(line, path) {
+  fill: none;
+  stroke: var(--diagram-wire);
+  stroke-width: 1.8;
+  vector-effect: non-scaling-stroke;
+}
+.network-diagram .network-link > .network-link-hit {
+  stroke: transparent;
+  stroke-width: 28;
+  pointer-events: stroke;
+}
+.network-diagram .network-link > .link-down {
+  stroke: var(--lab-danger, var(--text-danger, #be123c));
+  stroke-dasharray: 5 5;
+}
+.network-diagram .network-link > .link-blocked {
+  stroke: var(--lab-warning, var(--text-warning, #854d0e));
+  stroke-dasharray: 4 4;
+}
+.network-diagram .network-link-port {
+  fill: var(--diagram-wire);
+  stroke: var(--diagram-canvas);
+  stroke-width: 1;
+  pointer-events: none;
+}
+.network-diagram .network-link.link-down .network-link-port {
+  fill: var(--lab-danger, var(--text-danger, #be123c));
+}
+.network-diagram .network-subnet rect {
+  fill: var(--diagram-surface);
+  stroke: var(--diagram-border);
+  stroke-width: 1;
+}
+.network-diagram .network-subnet text {
+  fill: var(--diagram-muted);
+  font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+  font-size: 12px;
+  font-weight: 500;
+}
+.network-diagram:not(.network-diagram--fit) .network-subnet text {
+  font-size: 17px;
+}
+.network-diagram .network-port-labels text {
+  fill: var(--diagram-muted);
+  font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+  font-size: 11px;
+}
+.network-diagram .network-link-status {
+  fill: var(--lab-danger, var(--text-danger, #be123c));
+  font-size: 11px;
+  font-weight: 600;
+}
+.network-diagram .link-blocked .network-link-status {
+  fill: var(--lab-warning, var(--text-warning, #854d0e));
+}
+.network-diagram .network-link:is(:hover, :focus-visible, .selected) .network-subnet rect {
+  stroke: var(--diagram-accent);
+}
+.network-diagram .network-link:is(:hover, :focus-visible, .selected) > .link-up {
+  stroke: var(--diagram-accent);
+  stroke-width: 2.5;
+}
+.network-diagram .network-link:focus-visible > .network-link-hit {
+  stroke: var(--diagram-accent);
+  stroke-opacity: 0.14;
+}
+.network-diagram .network-device-ring {
+  fill: transparent;
+  stroke: transparent;
+  stroke-width: 1.5;
+}
+.network-diagram .network-device-name {
+  font-size: 13px;
+  font-weight: 700;
+}
+.network-diagram .network-device-hostname {
+  fill: var(--diagram-muted);
+  font-size: 12px;
+}
+.network-diagram .network-node:is(:hover, :focus-visible) .network-device-ring {
+  stroke: var(--diagram-accent);
+}
+.network-diagram .network-node.selected .network-device-ring {
+  fill: var(--lab-accent-bg, var(--bg-accent, #e4edf6));
+  stroke: var(--diagram-accent);
+}
+.network-diagram .network-node.selected .network-device-glyph {
+  --device-top: color-mix(in srgb, var(--diagram-accent) 15%, var(--diagram-surface));
+  stroke-width: 1.8;
+}
+.network-diagram .network-node.selected .network-device-name {
+  fill: var(--diagram-accent);
+}
+.network-diagram .network-node:focus-visible .network-device-ring {
+  stroke-width: 3;
+  stroke-dasharray: 3 3;
+}
+.network-diagram .network-packet-gsap {
+  fill: var(--lab-warning, var(--text-warning, #854d0e));
+  stroke: var(--diagram-surface);
+  stroke-width: 2;
+}
+@media (prefers-reduced-motion: reduce) {
+  .network-diagram .network-packet-gsap {
+    display: none;
+  }
+}
+
+.network-diagram .network-label-leader {
+  stroke: var(--diagram-wire);
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+  opacity: 0.65;
+}
+.network-diagram .network-empty {
+  fill: var(--diagram-muted);
+  font-size: 13px;
+}
+.network-diagram .network-device-glyph > path,
+.network-diagram .network-device-ring,
+.network-diagram .network-subnet rect,
+.network-diagram .network-link > path {
+  transition:
+    fill 150ms ease,
+    stroke 150ms ease,
+    stroke-width 150ms ease,
+    opacity 150ms ease;
+}
+.network-diagram .network-node:not(.selected):hover .network-device-glyph {
+  --device-top: var(--lab-accent-bg, var(--diagram-surface));
+}
+.network-diagram .network-link:is(:hover, :focus-visible, .selected) .network-subnet rect {
+  fill: var(--lab-accent-bg);
+}
+@media (prefers-reduced-motion: reduce) {
+  .network-diagram .network-device-glyph > path,
+  .network-diagram .network-device-ring,
+  .network-diagram .network-subnet rect,
+  .network-diagram .network-link > path {
+    transition: none !important;
+  }
+}

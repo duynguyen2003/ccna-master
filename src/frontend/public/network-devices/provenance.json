@@ -1,0 +1,69 @@
+{
+  "origin": "https://protocol-explorer-alpha.vercel.app",
+  "author": "Dilum Sanjaya",
+  "capturedAt": "2026-11-04T23:30:54.041962+07:00",
+  "networkSnapshotSha256": "295ae7bbae21591fb4aadd2b619a10135d72c3a2fca6d918a2971a29aca19597",
+  "description": "Original rendered SVG geometry and light/dark variables, standalone crop/wrapper. Shared assets do not depend on the temporary application runtime.",
+  "icons": [
+    {
+      "path": "cloud-light.svg",
+      "sha256": "b54654adfb352923b1b8ecbe781a1cb20c8a9ab066f822c4227f32403ce87172",
+      "artworkSha256": "3719b632a6878528e7ebcb38359c02aa35d710e58476bee0eee0f88e253dc5c8",
+      "viewBox": "644 391 179 126"
+    },
+    {
+      "path": "cloud-dark.svg",
+      "sha256": "02c461b9ba2f3e08ca6d845f83de7d39e2e73176c0e0173afea6d4ae0f6b17d7",
+      "artworkSha256": "3719b632a6878528e7ebcb38359c02aa35d710e58476bee0eee0f88e253dc5c8",
+      "viewBox": "644 391 179 126"
+    },
+    {
+      "path": "laptop-light.svg",
+      "sha256": "8a50c358c190d8675f14d73783119e063a3862c73d5bc99774ddb8df55ad6252",
+      "artworkSha256": "17165013e4969b1299c57a75b18595232153ac9d9dfc152ace5c341258dcbda0",
+      "viewBox": "152.13 370.5 165.35 164.5"
+    },
+    {
+      "path": "laptop-dark.svg",
+      "sha256": "b156cc59acf81352ce844a329afa2c676e563dcf67a9afee6c86e43a8007e559",
+      "artworkSha256": "17165013e4969b1299c57a75b18595232153ac9d9dfc152ace5c341258dcbda0",
+      "viewBox": "152.13 370.5 165.35 164.5"
+    },
+    {
+      "path": "router-light.svg",
+      "sha256": "e5af916ee3574a56a6118a987ec852f0d83ba70df94841499879bd5121649af5",
+      "artworkSha256": "c256322c2adf8d98d59aadb6c62cc7663dc9cf0c6182b1b9d04cacf74f26d3ae",
+      "viewBox": "376.38 267.5 156.69 161.5"
+    },
+    {
+      "path": "router-dark.svg",
+      "sha256": "4130ef12974a59f97b0a84b0741022bb3c6e5fdf4a322ad03a443a959b11a992",
+      "artworkSha256": "c256322c2adf8d98d59aadb6c62cc7663dc9cf0c6182b1b9d04cacf74f26d3ae",
+      "viewBox": "376.38 267.5 156.69 161.5"
+    },
+    {
+      "path": "dns-light.svg",
+      "sha256": "04648fcbf455c6db11ba41f627d985bd1d417086f912968d1cb9ecdac4d9bdee",
+      "artworkSha256": "6ebd6da223a5828e3c378fd1a598d4d5c75e9c416f642df82f85c40f8950864e",
+      "viewBox": "662.93 135.4 102.12 108.1"
+    },
+    {
+      "path": "dns-dark.svg",
+      "sha256": "f89e78adcaf24d7bf17753480149e10554bc90dd3465f215e5074f655f63fb5b",
+      "artworkSha256": "6ebd6da223a5828e3c378fd1a598d4d5c75e9c416f642df82f85c40f8950864e",
+      "viewBox": "662.93 135.4 102.12 108.1"
+    },
+    {
+      "path": "web-light.svg",
+      "sha256": "6054e8173593ff760e425df2ce2ebd61107671c0acbe1f818878e81f5aad3293",
+      "artworkSha256": "847a65ce7f34f87d84abb7174c26de6401642ca4851b246c9228360604e23efa",
+      "viewBox": "759.98 130 138.68 152.6"
+    },
+    {
+      "path": "web-dark.svg",
+      "sha256": "0da6af8ac1fc6362b827946cf72f9006926dc77b1b5c806e3f4ea5306f98f185",
+      "artworkSha256": "847a65ce7f34f87d84abb7174c26de6401642ca4851b246c9228360604e23efa",
+      "viewBox": "759.98 130 138.68 152.6"
+    }
+  ]
+}

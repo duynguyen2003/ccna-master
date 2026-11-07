@@ -62,9 +62,9 @@ const devicesForSelect = (state) =>
     ? getDevices(state)
         .filter((device) => device && typeof device === 'object')
         .map((device, index) => ({
-        value: device.id || `DEVICE${index + 1}`,
-        label: `${device.id || `DEVICE${index + 1}`} · ${device.hostname || device.deviceType || 'Thiết bị'}`,
-      }))
+          value: device.id || `DEVICE${index + 1}`,
+          label: `${device.id || `DEVICE${index + 1}`} · ${device.hostname || device.deviceType || 'Thiết bị'}`,
+        }))
     : [];
 
 const interfacesForDevice = (state, deviceId) => {
@@ -80,7 +80,19 @@ const interfacesForDevice = (state, deviceId) => {
 
 const copyCommonFields = (check, type, index) => {
   const next = createDefaultCheck(type, index);
-  ['id', 'title', 'points', 'hint', 'message', 'successMessage'].forEach((field) => {
+  [
+    'id',
+    'title',
+    'points',
+    'hint',
+    'hints',
+    'objective',
+    'skill',
+    'required',
+    'message',
+    'successMessage',
+    'dependsOn',
+  ].forEach((field) => {
     if (check[field] !== undefined) next[field] = check[field];
   });
   return next;
@@ -177,7 +189,7 @@ const CheckFields = ({ check, state, onFieldChange }) => {
             { type: 'number', min: 1, max: 4094 }
           )
         : null}
-      {check.type === 'reachable' || check.type === 'route_exists'
+      {['reachable', 'route_exists', 'eigrp_metric_exercise'].includes(check.type)
         ? textInput(
             'Destination IPv4',
             check.destination,
@@ -185,17 +197,68 @@ const CheckFields = ({ check, state, onFieldChange }) => {
             { placeholder: '192.168.2.10' }
           )
         : null}
+      {check.type === 'eigrp_metric_exercise' && (
+        <>
+          {textInput(
+            'FD mục tiêu',
+            check.expectedMetric,
+            (value) => onFieldChange('expectedMetric', Number(value)),
+            { type: 'number', min: 1 }
+          )}
+          {textInput(
+            'Delay mục tiêu (µs)',
+            check.expectedDelayMicroseconds,
+            (value) => onFieldChange('expectedDelayMicroseconds', Number(value)),
+            { type: 'number', min: 1 }
+          )}
+        </>
+      )}
+      {['route_exists', 'reachable'].includes(check.type) &&
+        selectInput(
+          'Giao thức yêu cầu (để trống nếu bất kỳ)',
+          check.protocol,
+          (check.type === 'reachable' ? ['D', 'O'] : ['C', 'S', 'D', 'O']).map((value) => ({
+            value,
+            label: value,
+          })),
+          (value) => onFieldChange('protocol', value)
+        )}
+      {check.type === 'route_exists' &&
+        selectInput(
+          'Nguồn route',
+          check.source || 'available',
+          [
+            { value: 'available', label: 'Mọi route hiện có' },
+            { value: 'learned', label: 'Route học qua EIGRP/OSPF' },
+            { value: 'selected', label: 'Route được chọn tại thiết bị nguồn' },
+          ],
+          (value) => onFieldChange('source', value)
+        )}
+      {check.type === 'startup_config_saved' && (
+        <Field label="Bản lưu phải khớp cấu hình hiện tại">
+          <input
+            type="checkbox"
+            checked={check.matchesRunning === true}
+            onChange={(event) => onFieldChange('matchesRunning', event.target.checked)}
+          />
+        </Field>
+      )}
       {['ospf_neighbor_full', 'eigrp_neighbor_up'].includes(check.type)
         ? selectInput('Thiết bị láng giềng', check.neighborId, neighborOptions, (value) =>
             onFieldChange('neighborId', value)
           )
         : null}
       {check.type === 'eigrp_as_configured'
-        ? textInput('EIGRP AS number', check.asNumber, (value) => onFieldChange('asNumber', value), {
-            type: 'number',
-            min: 1,
-            max: 65535,
-          })
+        ? textInput(
+            'EIGRP AS number',
+            check.asNumber,
+            (value) => onFieldChange('asNumber', value),
+            {
+              type: 'number',
+              min: 1,
+              max: 65535,
+            }
+          )
         : null}
       {check.type === 'eigrp_static_neighbor'
         ? textInput(
@@ -238,10 +301,15 @@ export default function GradingSpecBuilder({ value, initialState, onChange, disa
   const updateSpec = (next) => onChange({ ...spec, ...next });
   const updateCheckField = (index, field, value) => {
     const check = checks[index] || {};
-    const nextCheck =
-      field === 'points' || field === 'vlanId' || field === 'asNumber'
-        ? checkField(check, field, value)
-        : updateOptionalField(check, field, value);
+    const nextCheck = [
+      'points',
+      'vlanId',
+      'asNumber',
+      'expectedMetric',
+      'expectedDelayMicroseconds',
+    ].includes(field)
+      ? checkField(check, field, value)
+      : updateOptionalField(check, field, value);
     updateSpec({
       checks: checks.map((item, checkIndex) => (checkIndex === index ? nextCheck : item)),
     });
@@ -281,6 +349,45 @@ export default function GradingSpecBuilder({ value, initialState, onChange, disa
             disabled={disabled}
           />
         </label>
+        <Field label="Điểm thành thạo (tùy chọn)">
+          <input
+            aria-label="Điểm thành thạo"
+            className="acm-input"
+            type="number"
+            min={spec.passingScore ?? 70}
+            max="100"
+            value={inputValue(spec.masteryScore)}
+            disabled={disabled}
+            onChange={(event) =>
+              onChange(
+                updateOptionalField(
+                  spec,
+                  'masteryScore',
+                  event.target.value === '' ? undefined : Number(event.target.value)
+                )
+              )
+            }
+          />
+        </Field>
+        <Field label="Phiên bản chính sách">
+          <input
+            aria-label="Phiên bản chính sách"
+            className="acm-input"
+            type="number"
+            min="1"
+            value={inputValue(spec.policyVersion)}
+            disabled={disabled}
+            onChange={(event) =>
+              onChange(
+                updateOptionalField(
+                  spec,
+                  'policyVersion',
+                  event.target.value === '' ? undefined : Number(event.target.value)
+                )
+              )
+            }
+          />
+        </Field>
       </div>
 
       <div className="cli-editor-check-list">
@@ -334,6 +441,19 @@ export default function GradingSpecBuilder({ value, initialState, onChange, disa
               </div>
 
               <div className="cli-editor-check-meta">
+                <Field label="Bắt buộc để đạt">
+                  <input
+                    type="checkbox"
+                    checked={check.required === true}
+                    onChange={(e) => updateCheckField(index, 'required', e.target.checked)}
+                  />
+                </Field>
+                {textInput('Mục tiêu học', check.objective, (value) =>
+                  updateCheckField(index, 'objective', value)
+                )}
+                {textInput('Kỹ năng', check.skill, (value) =>
+                  updateCheckField(index, 'skill', value)
+                )}
                 {textInput(
                   'Tiêu đề',
                   check.title,
@@ -344,7 +464,7 @@ export default function GradingSpecBuilder({ value, initialState, onChange, disa
                   'Điểm',
                   check.points,
                   (valueNumber) => updateCheckField(index, 'points', valueNumber),
-                  { type: 'number', min: 1, max: 1000 }
+                  { type: 'number', min: 0.1, step: 0.1, max: 1000 }
                 )}
               </div>
 
@@ -353,10 +473,56 @@ export default function GradingSpecBuilder({ value, initialState, onChange, disa
                 state={initialState}
                 onFieldChange={(field, fieldValue) => updateCheckField(index, field, fieldValue)}
               />
+              <details className="cli-editor-feedback-details">
+                <summary>Điều kiện tiên quyết ({check.dependsOn?.length || 0})</summary>
+                <fieldset className="cli-editor-field">
+                  <legend>Nhiệm vụ phải hoàn thành trước</legend>
+                  {checks
+                    .filter((item) => item?.id && item.id !== check.id)
+                    .map((dependency) => (
+                      <label key={dependency.id}>
+                        <input
+                          type="checkbox"
+                          aria-label={`${check.title || check.id}: cần ${dependency.title || dependency.id}`}
+                          disabled={disabled}
+                          checked={(check.dependsOn || []).includes(dependency.id)}
+                          onChange={(event) =>
+                            updateCheckField(
+                              index,
+                              'dependsOn',
+                              event.target.checked
+                                ? [...(check.dependsOn || []), dependency.id]
+                                : (check.dependsOn || []).filter((id) => id !== dependency.id)
+                            )
+                          }
+                        />
+                        {dependency.title || dependency.id}
+                      </label>
+                    ))}
+                </fieldset>
+              </details>
 
               <details className="cli-editor-feedback-details">
                 <summary>Gợi ý và phản hồi cho học viên</summary>
                 <div className="cli-editor-feedback-grid">
+                  {[0, 1, 2].map((level) => (
+                    <React.Fragment key={level}>
+                      {textInput(
+                        `Gợi ý mức ${level + 1}`,
+                        check.hints?.[level] || '',
+                        (value) => {
+                          const hints = Array.from(
+                            { length: Math.max(level + 1, check.hints?.length || 0) },
+                            (_, i) => check.hints?.[i] || ''
+                          );
+                          hints[level] = value;
+                          while (hints.length && !hints.at(-1).trim()) hints.pop();
+                          updateCheckField(index, 'hints', hints.length ? hints : undefined);
+                        },
+                        { className: `hint-level-${level}` }
+                      )}
+                    </React.Fragment>
+                  ))}
                   {textInput(
                     'Hint',
                     check.hint,

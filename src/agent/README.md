@@ -86,3 +86,29 @@ Từ 29/10/2026, runtime không còn mode `fake`, `python-fake`, `app-fake` ho�
 adapter trả lời cố định. `--gemini` được giữ như alias tương thích của setup.
 Thiếu key/provider lỗi trả trạng thái không khả dụng, không ghép gợi ý thay thế.
 Mock chỉ nằm trong test/fixture để kiểm offline; không được launcher ứng dụng nạp.
+
+## Chạy app với trợ lý AI
+
+Khi cấu hình Gemini phía server đã có, dùng hai terminal ở gốc repo:
+
+```sh
+pnpm dev:ai
+pnpm start
+```
+
+`dev:ai` chạy backend, chờ database readiness, chạy Python, chờ Gemini readiness rồi
+mới bật worker. Nếu đã chạy backend bằng `pnpm server` hoặc `node src/backend/src/Server.js`,
+dùng `pnpm dev:ai --existing-backend`. Dừng Python/worker chạy thủ công trước khi
+chuyển sang launcher này. Ctrl+C dừng các tiến trình mà launcher đã tạo; backend
+có sẵn được giữ nguyên. Một dịch vụ con dừng thì launcher dừng các dịch vụ còn lại
+và báo lỗi. Frontend chạy riêng bằng `pnpm start`.
+
+Lệnh này không bật policy, đổi key, migration, quota hoặc budget. Thiếu cấu hình
+thì dừng với hướng dẫn kiểm tra. `pnpm server` tiếp tục chỉ chạy HTTP backend;
+backend có thể nhận câu hỏi trong khi worker chưa chạy. Khi đó câu hỏi ở `QUEUED`
+và không có generation. Worker khởi động lại sẽ kết thúc câu đã quá hạn, giải phóng
+reservation đúng lifecycle; người dùng gửi câu mới, không tự gọi lại provider cho câu cũ.
+
+Theo dõi AI qua SSE: xem [SSE-01](../../docs/ai-lab-assistant/SSE-01-status-stream.md).
+`pnpm ai:sweeper` quét request quá hạn độc lập với generation worker; `dev:ai`
+khởi động thêm tiến trình này. Flag mặc định tắt; bật sau migration và kiểm thử.

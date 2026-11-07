@@ -81,6 +81,13 @@ function projectContext(row, options = {}) {
       snapshot.progress?.checks?.find((check) => check.id === task.id)?.status || 'not_started',
     // Grading hints may disclose a repair. AI-01 will define hint-level policy.
     hint: null,
+    ...(snapshot.request?.intent === 'NEXT_STEP'
+      ? {
+          deviceId: task.deviceId || null,
+          ...(task.type ? { type: task.type } : {}),
+          ...(task.objective ? { objective: task.objective } : {}),
+        }
+      : {}),
   }));
   const context = schemas.InternalAnalyzeRequest.shape.context.parse({
     sourceRevision: row.sourceRevision,
@@ -105,6 +112,17 @@ function projectContext(row, options = {}) {
     progress,
     recentCommands: [],
     contextTruncated: false,
+    ...(snapshot.taskFocus
+      ? {
+          taskFocus: {
+            ...snapshot.taskFocus,
+            title: text(snapshot.taskFocus.title, 200, snapshot.taskFocus.taskId),
+            guidance: text(snapshot.taskFocus.guidance, 500),
+            verification: text(snapshot.taskFocus.verification, 500),
+            commands: snapshot.taskFocus.commands.filter((command) => scrub.safe(command.command)),
+          },
+        }
+      : {}),
   });
   const request = snapshot.request;
   const history = (options.history || [])
@@ -133,9 +151,10 @@ function projectContext(row, options = {}) {
       taskId: request.taskId ? identifier(request.taskId) : null,
     },
     facts: [],
-    allowedCommands: commandsFor(context),
+    allowedCommands: [],
     history,
   };
+  prepared.allowedCommands = commandsFor(context, prepared.request);
   context.contextTruncated ||= truncated;
   prepared.facts = evidenceFor(context, prepared.request);
   if (bytes({ ...prepared, history: [] }) > 65536) throw fail('AI_CONTEXT_TOO_LARGE');
@@ -182,7 +201,7 @@ function validateBoundary(value, provider) {
     throw fail('AI_INVALID_REQUEST');
   if (
     !isDeepStrictEqual(input.facts, evidenceFor(input.context, input.request)) ||
-    !isDeepStrictEqual(input.allowedCommands, commandsFor(input.context))
+    !isDeepStrictEqual(input.allowedCommands, commandsFor(input.context, input.request))
   )
     throw fail('AI_INVALID_REQUEST');
   // The Python Gemini adapter counts the complete prompt/schema before CLAIM.

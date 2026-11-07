@@ -3,14 +3,23 @@ const { z } = require('zod');
 const { VERSION, ErrorStatuses } = require('@ccna/shared/aiLabContract');
 const { service } = require('../node/requests');
 const { conversationService } = require('../node/conversation');
+const { createRequestStreamHub } = require('../node/requestStream');
 module.exports = (prisma, config) => {
   const router = express.Router({ mergeParams: true });
   const api = service(prisma, config);
   const conversation = conversationService(prisma, config);
+  const streams = createRequestStreamHub({
+    read: (principal, attemptId, requestId) => api.read(principal, attemptId, 'id', requestId),
+  });
   const handle = (fn) => async (req, res) => {
     res.set('X-AI-Contract-Version', VERSION);
     try {
       const data = await fn(req);
+      // Old cached browser bundles use strict v1 objects. New fields require explicit opt-in.
+      if (req.get('X-AI-Progress') !== '1') {
+        delete data.data.progress;
+        delete data.data.streaming;
+      }
       const pending = ['QUEUED', 'RUNNING'].includes(data.data.status);
       if (pending)
         res.set(
@@ -44,6 +53,31 @@ module.exports = (prisma, config) => {
     '/requests/by-client-id/:id',
     handle((r) => api.read(r.aiPrincipal, r.params.attemptId, 'clientRequestId', uuid(r.params.id)))
   );
+  router.get('/requests/:id/events', async (req, res) => {
+    try {
+      if (!config.streamEnabled) throw Object.assign(new Error(), { code: 'AI_DISABLED' });
+      await streams.attach({
+        principal: req.aiPrincipal,
+        attemptId: req.params.attemptId,
+        requestId: uuid(req.params.id),
+        res,
+      });
+    } catch (error) {
+      if (res.headersSent) {
+        res.end();
+        return;
+      }
+      const code = ErrorStatuses[error.code]
+        ? error.code
+        : error.status === 401
+          ? 'UNAUTHORIZED'
+          : 'AI_INTERNAL_ERROR';
+      res
+        .set('X-AI-Contract-Version', VERSION)
+        .status(ErrorStatuses[code])
+        .json({ contractVersion: VERSION, error: { code, message: code } });
+    }
+  });
   router.get(
     '/requests/:id',
     handle((r) => api.read(r.aiPrincipal, r.params.attemptId, 'id', uuid(r.params.id)))

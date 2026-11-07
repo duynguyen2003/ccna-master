@@ -57,7 +57,7 @@ export default function RouteMetadata() {
         : '#main-content h1';
       const heading = document.querySelector(selector);
       if (!heading || heading.getClientRects().length === 0) return;
-      if (/^\/(course|lesson)/.test(pathname))
+      if (/^\/(course|lesson|labs\/)/.test(pathname))
         document.title = `${heading.textContent.trim()} | NetMaster`;
       if (!focused) {
         heading.tabIndex = -1;

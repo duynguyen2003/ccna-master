@@ -1,4 +1,6 @@
 const getInterface = (state, name) => state.interfaces?.[name] || null;
+const { startupMatchesRunning } = require('./configSnapshot');
+const { orderedChecks } = require('./gradingDependencies');
 
 const describeValue = (value) => {
   if (value === null || value === undefined || value === '') return 'chưa cấu hình';
@@ -14,22 +16,72 @@ const evaluateCheck = (wholeState, check) => {
   let expected = null;
 
   switch (check.type) {
+    case 'eigrp_passive_observed':
+      actual =
+        wholeState.learningEvidence?.passive?.[`${check.deviceId}:${check.interface}`]?.phase === 4;
+      expected = true;
+      passed = actual;
+      break;
+    case 'eigrp_metric_exercise': {
+      const { inSubnet } = require('./networkProtocols');
+      const route = (state.eigrpRoutes || []).find((r) =>
+        inSubnet(check.destination, r.network, r.mask)
+      );
+      actual = {
+        edited: Boolean(
+          wholeState.learningEvidence?.metricEdits?.[`${check.deviceId}:${check.interface}`]
+        ),
+        metric: route?.cost ?? null,
+        delayMicroseconds: networkInterface?.delayMicroseconds ?? null,
+      };
+      expected = {
+        edited: true,
+        metric: check.expectedMetric,
+        delayMicroseconds: check.expectedDelayMicroseconds,
+      };
+      passed =
+        actual.edited &&
+        actual.metric === expected.metric &&
+        actual.delayMicroseconds === expected.delayMicroseconds;
+      break;
+    }
     case 'reachable': {
       const { transmit } = require('./networkPackets');
-      actual = transmit(
+      const transmission = transmit(
         JSON.parse(JSON.stringify(wholeState)),
         check.deviceId,
         check.destination
-      ).success;
-      expected = true;
-      passed = actual;
+      );
+      const unexpectedRoutes = check.protocol
+        ? transmission.events
+            .filter(
+              (event) =>
+                event.type === 'ROUTE' && !['C', check.protocol].includes(event.routeProtocol)
+            )
+            .map(({ deviceId, routeProtocol, reply }) => ({
+              deviceId,
+              protocol: routeProtocol,
+              reply,
+            }))
+        : [];
+      actual = check.protocol
+        ? { reachable: transmission.success, unexpectedRoutes }
+        : transmission.success;
+      expected = check.protocol ? { reachable: true, unexpectedRoutes: [] } : true;
+      passed = transmission.success && unexpectedRoutes.length === 0;
       break;
     }
     case 'route_exists': {
       const { routeTable, inSubnet } = require('./networkProtocols');
-      actual = routeTable(wholeState, check.deviceId).some((r) =>
-        inSubnet(check.destination, r.network, r.mask)
-      );
+      const matches = (r) => inSubnet(check.destination, r.network, r.mask);
+      let routes = routeTable(wholeState, check.deviceId);
+      if (check.source === 'learned') {
+        routes = check.protocol === 'D' ? state.eigrpRoutes || [] : state.ospfRoutes || [];
+      } else if (check.source === 'selected') {
+        const selected = routes.find(matches);
+        routes = selected ? [selected] : [];
+      }
+      actual = routes.some((r) => matches(r) && (!check.protocol || r.protocol === check.protocol));
       expected = true;
       passed = actual;
       break;
@@ -133,7 +185,7 @@ const evaluateCheck = (wholeState, check) => {
       passed = Number(actual) === expected;
       break;
     case 'startup_config_saved':
-      actual = Boolean(state.startupConfig);
+      actual = check.matchesRunning ? startupMatchesRunning(state) : Boolean(state.startupConfig);
       expected = true;
       passed = actual;
       break;
@@ -154,7 +206,7 @@ const evaluateCheck = (wholeState, check) => {
       ? check.successMessage || `Đạt yêu cầu: ${check.id}`
       : check.message ||
         `Chưa đạt ${check.id}. Mong đợi ${describeValue(expected)}, hiện tại ${describeValue(actual)}.`,
-    hint: passed ? null : check.hint || null,
+    hint: passed ? null : check.hints?.[0] || check.hint || null,
   };
 };
 
@@ -162,17 +214,55 @@ const gradeAttempt = (state, gradingSpec = {}) => {
   const checks = Array.isArray(gradingSpec.checks) ? gradingSpec.checks : [];
   if (checks.length === 0) throw new Error('Grading spec must contain at least one check');
 
-  const results = checks.map((check) => evaluateCheck(state, check));
+  const byId = new Map();
+  for (const check of orderedChecks(checks)) {
+    const blockedBy = (check.dependsOn || []).filter((id) => !byId.get(id).passed);
+    byId.set(
+      check.id,
+      blockedBy.length
+        ? {
+            id: check.id,
+            type: check.type,
+            status: 'blocked',
+            passed: false,
+            points: Number(check.points) || 0,
+            pointsAwarded: 0,
+            expected: null,
+            actual: null,
+            blockedBy,
+            message: `Cần hoàn thành trước: ${blockedBy.join(', ')}.`,
+            hint: null,
+          }
+        : evaluateCheck(state, check)
+    );
+  }
+  const results = checks.map((check) => byId.get(check.id));
   const maxPoints = results.reduce((sum, result) => sum + result.points, 0);
   if (maxPoints <= 0) throw new Error('Grading spec total points must be greater than zero');
   const awardedPoints = results.reduce((sum, result) => sum + result.pointsAwarded, 0);
   const score = Math.round((awardedPoints / maxPoints) * 100);
   const passingScore = Number(gradingSpec.passingScore ?? 70);
+  const requiredPassed = checks.every((check) => !check.required || byId.get(check.id).passed);
+  const passed = score >= passingScore && requiredPassed;
+  const skills = Object.create(null);
+  checks.forEach((check) => {
+    if (!check.skill) return;
+    skills[check.skill] ||= { points: 0, awarded: 0 };
+    skills[check.skill].points += check.points;
+    skills[check.skill].awarded += byId.get(check.id).pointsAwarded;
+  });
 
   return {
     score,
+    ...(gradingSpec.policyVersion !== undefined
+      ? { policyVersion: gradingSpec.policyVersion }
+      : {}),
     passingScore,
-    passed: score >= passingScore,
+    passed,
+    ...(gradingSpec.masteryScore
+      ? { mastered: passed && score >= gradingSpec.masteryScore, requiredPassed }
+      : {}),
+    ...(Object.keys(skills).length ? { skills } : {}),
     awardedPoints,
     maxPoints,
     checks: results,

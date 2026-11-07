@@ -24,6 +24,8 @@ function leases(prisma, config) {
           where: { id: row.id },
           data: {
             status: 'RUNNING',
+            streamVersion: { increment: 1 },
+            progressPhase: 'PREPARING_CONTEXT',
             leaseOwner: workerId,
             leaseVersion: { increment: 1 },
             startedAt: row.startedAt || now,
@@ -82,7 +84,13 @@ function leases(prisma, config) {
             else if (preDispatch && c.row.leaseExpiresAt <= c.now) {
               await tx.aiRequest.update({
                 where: { id },
-                data: { status: 'QUEUED', leaseOwner: null, leaseExpiresAt: null },
+                data: {
+                  status: 'QUEUED',
+                  leaseOwner: null,
+                  leaseExpiresAt: null,
+                  streamVersion: { increment: 1 },
+                  progressPhase: null,
+                },
               });
               await event(tx, 'AI_REQUEST_REQUEUED', id);
               return;

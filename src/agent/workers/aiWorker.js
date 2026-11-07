@@ -7,6 +7,7 @@ const { receipts } = require('../node/receipts');
 const { serviceAuth } = require('../node/serviceAuth');
 const { contextPreparer } = require('../node/context');
 const { pythonAnalyze } = require('../node/pythonTransport');
+const { setProgress } = require('../node/progress');
 
 function createWorker(prisma, config, adapters) {
   const workerId = adapters.workerId || `worker_${randomUUID()}`;
@@ -21,6 +22,19 @@ function createWorker(prisma, config, adapters) {
       await queue.reap();
       const row = await queue.claim(workerId);
       if (!row) return false;
+      const started = Date.now();
+      const timed = (phase, from) => {
+        if (config.timingsEnabled)
+          console.info(
+            JSON.stringify({
+              event: 'ai.worker.timing',
+              requestId: row.id,
+              phase,
+              ms: Math.max(0, Date.now() - from),
+            })
+          );
+      };
+      timed('queue', +new Date(row.createdAt));
       let heartbeat = Promise.resolve();
       let leaseLost = false;
       const timer = setInterval(() => {
@@ -35,7 +49,10 @@ function createWorker(prisma, config, adapters) {
         // deliberately OUTSIDE all transactions. The BE-05 projector/history
         // reader is the default; execution uses the Python Gemini service.
         const prepared = await prepare(row);
+        timed('context', started);
         const input = await permits.plan(row.id, workerId, row.leaseVersion, prepared);
+        await setProgress(prisma, row, workerId, 'ANALYZING');
+        const analyzing = Date.now();
         const ack = schemas.InternalAnalyzeResponse.parse(
           await adapters.analyze(input, {
             analyzeToken: auth.sign('ANALYZE', input, input.deadlineAt),
@@ -45,9 +62,12 @@ function createWorker(prisma, config, adapters) {
         );
         if (ack.callId !== input.callId || ack.contextHash !== input.contextHash || leaseLost)
           throw new Error('AI_LEASE_LOST');
+        timed('analyze_roundtrip', analyzing);
         const call = await prisma.aiProviderCall.findUnique({ where: { id: input.callId } });
         if (call?.receiptHash !== ack.receiptHash) throw new Error('AI_RECEIPT_MISSING');
+        await setProgress(prisma, row, workerId, 'FINALIZING');
         await results.finalize(row.id, { workerId, leaseVersion: row.leaseVersion });
+        timed('validated_result', started);
       } catch (error) {
         adapters.onError?.(error);
         // If a permit was claimed, only receipt/reaper can determine outcome.

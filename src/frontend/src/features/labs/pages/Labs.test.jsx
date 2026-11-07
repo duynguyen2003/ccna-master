@@ -5,6 +5,10 @@ import { MemoryRouter } from 'react-router-dom';
 import Labs, { LabCard } from './Labs';
 import { api } from '../../../services/Api';
 import { AuthContext } from '../../../context/AuthContext';
+jest.mock('../../../components/common/MarkdownRenderer', () => ({
+  __esModule: true,
+  default: ({ content }) => <div>{content}</div>,
+}));
 // CRA's Jest resolver cannot load react-router/dom from React Router7.
 // Keep actual URLSearchParams/state semantics for these page navigation tests.
 jest.mock('react-router-dom', () => {
@@ -12,16 +16,29 @@ jest.mock('react-router-dom', () => {
   const Context = React.createContext(null);
   return {
     MemoryRouter: ({ children, initialEntries = ['/labs'] }) => {
-      const [params, setParams] = React.useState(
-        () => new URLSearchParams(initialEntries[0].split('?')[1])
-      );
+      const [location, setLocation] = React.useState(initialEntries[0]);
+      const params = new URLSearchParams(location.split('?')[1]);
+      const navigate = React.useCallback((next) => setLocation(next), []);
       return (
-        <Context.Provider value={[params, (next) => setParams(new URLSearchParams(next))]}>
+        <Context.Provider
+          value={{
+            params,
+            setParams: (next) =>
+              setLocation(location.split('?')[0] + '?' + new URLSearchParams(next)),
+            navigate,
+            id: location.match(/^\/labs\/([^/?]+)/)?.[1],
+          }}
+        >
           {children}
         </Context.Provider>
       );
     },
-    useSearchParams: () => React.useContext(Context),
+    useSearchParams: () => {
+      const c = React.useContext(Context);
+      return [c.params, c.setParams];
+    },
+    useParams: () => ({ id: React.useContext(Context).id }),
+    useNavigate: () => React.useContext(Context).navigate,
     Link: ({ to, children, ...props }) => (
       <a href={to} {...props}>
         {children}
@@ -30,12 +47,17 @@ jest.mock('react-router-dom', () => {
   };
 });
 jest.mock('../../../services/Api', () => ({
-  api: { getLabs: jest.fn(), getUserProgress: jest.fn() },
+  api: { getLabs: jest.fn(), getLab: jest.fn(), getUserProgress: jest.fn() },
   BACKEND_URL: 'http://synthetic.invalid',
 }));
 jest.mock('../components/CliLabWorkspace', () => ({
   __esModule: true,
-  default: ({ lab }) => <div role="dialog">Workspace {lab.title}</div>,
+  default: ({ lab, page, onClose }) => (
+    <div role={page ? 'region' : 'dialog'}>
+      Workspace {lab.title}
+      <button onClick={onClose}>Danh sách lab</button>
+    </div>
+  ),
 }));
 const locked = {
   id: 1,
@@ -79,6 +101,7 @@ test('a locked deep link never mounts a workspace; an unlocked one survives init
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   view.unmount();
   api.getLabs.mockResolvedValue([{ ...locked, access: { canAccess: true } }]);
+  api.getLab.mockResolvedValue({ ...locked, access: { canAccess: true } });
   render(
     <AuthContext.Provider value={auth}>
       <MemoryRouter initialEntries={['/labs?labId=1']}>
@@ -86,5 +109,22 @@ test('a locked deep link never mounts a workspace; an unlocked one survives init
       </MemoryRouter>
     </AuthContext.Provider>
   );
-  await waitFor(() => expect(screen.getByRole('dialog')).toHaveTextContent('Workspace Lab IPv4'));
+  await waitFor(() => expect(screen.getByRole('region')).toHaveTextContent('Workspace Lab IPv4'));
+});
+
+test('direct lab URLs fetch the exact lab and enforce access before mounting the workspace', async () => {
+  api.getLab.mockResolvedValue(locked);
+  const auth = { token: 'synthetic', user: { id: 1 }, isAuthenticated: true };
+  render(
+    <AuthContext.Provider value={auth}>
+      <MemoryRouter initialEntries={['/labs/1']}>
+        <Labs />
+      </MemoryRouter>
+    </AuthContext.Provider>
+  );
+  expect(
+    await screen.findByRole('heading', { name: 'Bài thực hành chưa mở khóa' })
+  ).toBeInTheDocument();
+  expect(api.getLab).toHaveBeenCalledWith('synthetic', '1');
+  expect(screen.queryByRole('region')).not.toBeInTheDocument();
 });

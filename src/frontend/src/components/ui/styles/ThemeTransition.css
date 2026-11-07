@@ -1,0 +1,20 @@
+:root.netmaster-theme-transition::view-transition-old(root),
+:root.netmaster-theme-transition::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+:root.netmaster-theme-transition::view-transition-old(root) {
+  z-index: 1;
+}
+
+:root.netmaster-theme-transition::view-transition-new(root) {
+  z-index: 2;
+}
+
+.netmaster-theme-reveal {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  pointer-events: none;
+}

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import SlidingTabs from '../../../components/ui/SlidingTabs';
 import { useNavigate } from 'react-router-dom';
 import '../styles/Profile.css';
 
@@ -304,7 +305,11 @@ export default function Profile() {
                 <h2>Thời gian học</h2>
               </div>
               {/* Period Tabs */}
-              <div className="study-periods" role="group" aria-label="Khoảng thời gian học">
+              <SlidingTabs
+                className="study-periods"
+                value={studyPeriod}
+                aria-label="Khoảng thời gian học"
+              >
                 {[
                   { key: 'week', label: 'Tuần' },
                   { key: 'month', label: 'Tháng' },
@@ -319,7 +324,7 @@ export default function Profile() {
                     {label}
                   </button>
                 ))}
-              </div>
+              </SlidingTabs>
             </div>
             <div
               className={`chart-container${studyChartLoading || studyChartData.length ? '' : ' chart-container--empty'}`}

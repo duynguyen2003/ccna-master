@@ -54,9 +54,26 @@ test('shared schema rejects unknown JSON fields instead of silently stripping th
   assert.equal(state.editorOnly, true);
 });
 
-test('all nineteen supported check types have typed fields and unsupported examples stay rejected', () => {
+test('all twenty-one supported check types have typed fields and unsupported examples stay rejected', () => {
   const gradingSpec = {
     checks: [
+      {
+        id: 'passive',
+        type: 'eigrp_passive_observed',
+        deviceId: 'R1',
+        interface: 'GigabitEthernet0/0',
+        points: 1,
+      },
+      {
+        id: 'metric',
+        type: 'eigrp_metric_exercise',
+        deviceId: 'R1',
+        interface: 'GigabitEthernet0/0',
+        destination: '10.0.0.1',
+        expectedMetric: 133888,
+        expectedDelayMicroseconds: 110,
+        points: 1,
+      },
       { id: 'h', type: 'hostname_equals', deviceId: 'R1', expected: 'R1', points: 1 },
       {
         id: 'ie',
@@ -144,10 +161,10 @@ test('all nineteen supported check types have typed fields and unsupported examp
     labType: 'CLI_SIMULATION',
     courseId: 'course-1',
     commandProfile: 'ccna-network-v2',
-    initialState: topologyState,
+    initialState: { ...topologyState, simulatorVersion: '3.0.0' },
     gradingSpec,
   });
-  assert.equal(parsed.gradingSpec.checks.length, 19);
+  assert.equal(parsed.gradingSpec.checks.length, 21);
   assert.equal(parsed.commandProfile, 'ccna-network-v2');
   assert.equal(
     gradingSpecSchema.safeParse({ checks: [{ id: 'bad', type: 'config_match', points: 1 }] })

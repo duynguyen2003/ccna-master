@@ -11,12 +11,13 @@ const { connection, run, digest } = require('./backup-lib.cjs');
     new Date().toISOString().replace(/[:.]/g, '-')
   );
   fs.mkdirSync(target, { recursive: true, mode: 0o700 });
-  run(
-    process.env.PG_DUMP_BIN || 'pg_dump',
-    ['--format=custom', '--no-owner', '--no-acl', '--file', path.join(target, 'database.dump')],
-    env
-  );
-  run('tar', ['-czf', path.join(target, 'uploads.tar.gz'), '-C', uploads, '.'], env);
+  run(process.env.PG_DUMP_BIN || 'pg_dump', ['--format=custom', '--no-owner', '--no-acl'], env, {
+    outputFile: path.join(target, 'database.dump'),
+  });
+  run('tar', ['-czf', '-', '.'], env, {
+    cwd: uploads,
+    outputFile: path.join(target, 'uploads.tar.gz'),
+  });
   const files = {};
   for (const file of ['database.dump', 'uploads.tar.gz'])
     files[file] = await digest(path.join(target, file));

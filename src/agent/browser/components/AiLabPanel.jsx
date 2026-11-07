@@ -3,6 +3,8 @@ import useAiLabAssistant from '../hooks/useAiLabAssistant.js';
 import AiMessage from './AiMessage.jsx';
 import AiIcon from './AiIcon.jsx';
 import usePanelWidth from '../hooks/usePanelWidth.js';
+import useMobile from '../hooks/useMobile.js';
+import { AssistantClock } from './AssistantLoader.jsx';
 import '../styles/AiLab.css';
 
 const intents = [
@@ -30,19 +32,6 @@ const errors = {
   AI_INVALID_RESPONSE: 'Phản hồi chưa đúng định dạng. Nội dung chưa được hiển thị.',
 };
 
-function useMobile() {
-  const [mobile, setMobile] = useState(
-    () => window.matchMedia?.('(max-width: 768px)').matches || false
-  );
-  useEffect(() => {
-    const query = window.matchMedia?.('(max-width: 768px)');
-    const update = () => setMobile(query.matches);
-    query?.addEventListener?.('change', update);
-    return () => query?.removeEventListener?.('change', update);
-  }, []);
-  return mobile;
-}
-
 function AiLabPanelScope({
   baseUrl,
   token,
@@ -52,12 +41,16 @@ function AiLabPanelScope({
   devices = [],
   selectedDeviceId = '',
   taskId,
+  taskDeviceId,
+  taskTitle,
   theme = 'dark',
   onClose,
   onSelectDevice,
   onWidthChange,
   onUnauthorized,
   Dialog,
+  Select = 'select',
+  CopyButton,
   api,
 }) {
   const { state, controller } = useAiLabAssistant({
@@ -73,13 +66,22 @@ function AiLabPanelScope({
   const titleId = useId();
   const [intent, setIntent] = useState('NEXT_STEP');
   const [message, setMessage] = useState('');
-  const [source, setSource] = useState(selectedDeviceId);
+  const defaultSource = selectedDeviceId || devices[0]?.id || '';
+  const deviceIds = devices.map((d) => d.id).join(',');
+  const [source, setSource] = useState(defaultSource);
   const [target, setTarget] = useState('');
   const [level, setLevel] = useState(1);
+  useEffect(() => {
+    setLevel(1);
+  }, [taskId, taskDeviceId]);
   const [validation, setValidation] = useState('');
   const [newMessages, setNewMessages] = useState(false);
   const [privacyOpen, setPrivacyOpen] = useState(false);
   const [resetConfirm, setResetConfirm] = useState(false);
+  const keepConversation = useRef(null);
+  useEffect(() => {
+    if (resetConfirm) keepConversation.current?.focus();
+  }, [resetConfirm]);
   const question = useRef(null);
   useEffect(() => {
     if (state.request?.requestId) setMessage('');
@@ -88,7 +90,7 @@ function AiLabPanelScope({
   const panel = useRef(null);
   const stick = useRef(true);
   const anchor = useRef(null);
-  const rootClass = `cli-lab-theme ai-lab-root${mobile ? ' ai-lab-root--modal' : ''}`;
+  const rootClass = `cli-lab-theme ai-lab-root cli-lab-stitch cli-lab-stitch--${theme}${mobile ? ' ai-lab-root--modal' : ''}`;
   const blocked = state.phase === 'blocked';
   const serviceBlocked = ['AI_DISABLED', 'AI_BUDGET_PAUSED', 'AI_CAPACITY_EXHAUSTED'].includes(
     state.error?.code
@@ -105,14 +107,14 @@ function AiLabPanelScope({
     state.phase !== 'loading';
   useEffect(() => {
     const trigger = document.activeElement;
-    if (!mobile) panel.current?.querySelector('button')?.focus();
+    if (!mobile) panel.current?.querySelector('.ai-lab-close')?.focus();
     return () => {
       if (!mobile && trigger?.isConnected) trigger.focus();
     };
   }, [mobile]);
   useEffect(() => {
-    setSource(selectedDeviceId);
-  }, [selectedDeviceId]);
+    setSource(defaultSource);
+  }, [defaultSource, deviceIds]);
   useEffect(() => {
     if (target === source) setTarget('');
   }, [source, target]);
@@ -130,6 +132,8 @@ function AiLabPanelScope({
     state.request?.result?.messageId,
     state.loadingOlder,
     state.optimisticQuestion,
+    state.pending,
+    state.request?.status,
   ]);
   const entries = [...state.messages];
   if (
@@ -140,6 +144,60 @@ function AiLabPanelScope({
   )
     entries.push(state.optimisticQuestion);
   const request = state.request;
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      if (state.pending) controller.markFeedbackVisible?.();
+      if (request?.result) controller.markResultVisible?.(request.result.messageId);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [controller, state.pending, request?.result]);
+  useLayoutEffect(() => {
+    const input = question.current;
+    if (!input) return;
+    const resize = () => {
+      input.style.height = 'auto';
+      input.style.height = `${Math.min(100, Math.max(24, input.scrollHeight))}px`;
+    };
+    resize();
+    if (typeof ResizeObserver === 'undefined') return;
+    let width = input.getBoundingClientRect().width;
+    const observer = new ResizeObserver(() => {
+      const next = input.getBoundingClientRect().width;
+      if (next !== width) {
+        width = next;
+        resize();
+      }
+    });
+    observer.observe(input);
+    return () => observer.disconnect();
+  }, [message, intent, state.pending, mobile]);
+  useEffect(() => {
+    const node = list.current;
+    if (!node || typeof ResizeObserver === 'undefined') return;
+    let height = node.scrollHeight;
+    const observer = new ResizeObserver(() => {
+      if (anchor.current) return;
+      const next = node.scrollHeight;
+      if (stick.current) node.scrollTop = next;
+      else if (next > height) setNewMessages(true);
+      height = next;
+    });
+    observer.observe(node);
+    for (const child of node.children) observer.observe(child);
+    return () => observer.disconnect();
+  }, [state.messages, state.request?.result?.messageId, state.pending]);
+  const progress = request?.progress;
+  const progressText = {
+    QUEUED: 'Đã nhận câu hỏi. Đang chờ phân tích…',
+    RUNNING: 'Đang xử lý câu hỏi…',
+    PREPARING_CONTEXT: progress?.deviceId
+      ? `Đang chuẩn bị ngữ cảnh cho ${progress.deviceId}…`
+      : 'Đang chuẩn bị ngữ cảnh…',
+    ANALYZING: progress?.deviceId
+      ? `Đang phân tích nhiệm vụ trên ${progress.deviceId}…`
+      : 'Đang phân tích câu hỏi…',
+    FINALIZING: 'Đang hoàn tất kết quả…',
+  }[progress?.phase];
   if (request?.result && !entries.some((item) => item.messageId === request.result.messageId))
     entries.push({
       role: 'ASSISTANT',
@@ -164,15 +222,40 @@ function AiLabPanelScope({
       }
       input.selectedDeviceId = source;
       input.target = { deviceId: target };
-    } else if (source) input.selectedDeviceId = source;
+    } else if (intent === 'NEXT_STEP' && taskDeviceId) input.selectedDeviceId = taskDeviceId;
+    else if (source) input.selectedDeviceId = source;
     if (intent !== 'EXPLAIN_CONCEPT') {
       input.requestedHintLevel = level;
-      if (taskId) input.taskId = taskId;
+      if (intent === 'NEXT_STEP' && taskId) input.taskId = taskId;
     }
     setValidation('');
     stick.current = true;
     void controller.send(input, revision);
   };
+  const statusText =
+    state.phase === 'loading'
+      ? 'Đang tải trợ lý…'
+      : !state.online
+        ? 'Mất kết nối. Câu hỏi đang soạn được giữ trong tab này.'
+        : state.phase === 'sending'
+          ? 'Đang gửi câu hỏi…'
+          : state.pending && !state.error
+            ? progressText ||
+              (request?.status === 'RUNNING'
+                ? 'Đang phân tích. Bạn vẫn có thể dùng terminal.'
+                : 'Đã nhận câu hỏi. Đang chờ phân tích…')
+            : request?.status === 'CANCELLED'
+              ? 'Đã hủy yêu cầu.'
+              : request && ['FAILED', 'EXPIRED'].includes(request.status)
+                ? 'Không thể hoàn tất câu hỏi này.'
+                : request?.status === 'OUTCOME_UNKNOWN'
+                  ? 'Chưa xác định được kết quả. Hệ thống sẽ không tự gửi lại câu hỏi.'
+                  : entries.at(-1)?.role === 'USER' && !request
+                    ? 'Chưa có phản hồi cho câu hỏi gần nhất. Bạn có thể gửi câu hỏi mới.'
+                    : '';
+  const statusMoving =
+    state.phase === 'sending' || Boolean(state.pending && !state.error && state.online);
+
   const content = (
     <aside
       className={rootClass}
@@ -196,7 +279,48 @@ function AiLabPanelScope({
           </span>
           <h2 id={titleId}>Trợ lý AI</h2>
         </div>
-        {state.quota && <span className="ai-lab-quota">Còn {state.quota.remaining} lượt</span>}
+        <div className="ai-lab-info">
+          <details className="ai-lab-tools">
+            <summary>Tùy chọn</summary>
+            <div>
+              <details
+                open={privacyOpen}
+                onToggle={(event) => setPrivacyOpen(event.currentTarget.open)}
+              >
+                <summary>AI đang xem gì</summary>
+                <p>
+                  Câu hỏi và cấu hình lab đã lọc được gửi tới dịch vụ AI. Hội thoại riêng của bạn.
+                  Trợ lý không tự chạy lệnh; hãy đối chiếu câu trả lời trong terminal.
+                </p>
+              </details>
+
+              {!mobile && (
+                <div className="ai-lab-width-controls" aria-label="Điều chỉnh chiều rộng">
+                  <button type="button" onClick={() => sizing.change(sizing.width - 40)}>
+                    Thu hẹp
+                  </button>
+                  <button type="button" onClick={() => sizing.change(sizing.width + 40)}>
+                    Mở rộng
+                  </button>
+                  <button type="button" onClick={() => sizing.change(440)}>
+                    Mặc định
+                  </button>
+                </div>
+              )}
+              <button
+                type="button"
+                disabled={!state.capabilities?.conversationId || !state.online || state.resetting}
+                onClick={(event) => {
+                  const menu = event.currentTarget.closest('.ai-lab-tools');
+                  if (menu) menu.open = false;
+                  setResetConfirm(true);
+                }}
+              >
+                Đặt lại hội thoại
+              </button>
+            </div>
+          </details>
+        </div>
         {!mobile && (
           <button
             type="button"
@@ -208,40 +332,6 @@ function AiLabPanelScope({
           </button>
         )}
       </header>
-      <div className="ai-lab-info">
-        <details open={privacyOpen} onToggle={(event) => setPrivacyOpen(event.currentTarget.open)}>
-          <summary>Dữ liệu dùng để trợ giúp</summary>
-          <p>
-            Câu hỏi và cấu hình lab đã lọc được gửi tới dịch vụ AI. Hội thoại riêng của bạn. Trợ lý
-            không tự chạy lệnh; hãy đối chiếu câu trả lời trong terminal.
-          </p>
-        </details>
-        <details className="ai-lab-tools">
-          <summary>Tùy chọn hội thoại</summary>
-          <div>
-            {!mobile && (
-              <div className="ai-lab-width-controls" aria-label="Điều chỉnh chiều rộng">
-                <button type="button" onClick={() => sizing.change(sizing.width - 40)}>
-                  Thu hẹp
-                </button>
-                <button type="button" onClick={() => sizing.change(sizing.width + 40)}>
-                  Mở rộng
-                </button>
-                <button type="button" onClick={() => sizing.change(440)}>
-                  Mặc định
-                </button>
-              </div>
-            )}
-            <button
-              type="button"
-              disabled={!state.capabilities?.conversationId || !state.online || state.resetting}
-              onClick={() => setResetConfirm(true)}
-            >
-              Đặt lại hội thoại
-            </button>
-          </div>
-        </details>
-      </div>
       {resetConfirm && (
         <div className="ai-lab-reset-confirm" role="group" aria-label="Xác nhận đặt lại hội thoại">
           <p>
@@ -261,7 +351,15 @@ function AiLabPanelScope({
           >
             Xóa và bắt đầu lại
           </button>
-          <button type="button" disabled={state.resetting} onClick={() => setResetConfirm(false)}>
+          <button
+            ref={keepConversation}
+            type="button"
+            disabled={state.resetting}
+            onClick={() => {
+              setResetConfirm(false);
+              panel.current?.querySelector('.ai-lab-tools > summary')?.focus();
+            }}
+          >
             Giữ hội thoại
           </button>
         </div>
@@ -271,7 +369,7 @@ function AiLabPanelScope({
         role="log"
         aria-live="polite"
         aria-relevant="additions text"
-        aria-busy={state.loadingOlder || state.phase === 'loading'}
+        aria-busy={Boolean(state.pending) || state.loadingOlder || state.phase === 'loading'}
         tabIndex={0}
         aria-label="Lịch sử trợ lý AI"
         ref={list}
@@ -293,6 +391,7 @@ function AiLabPanelScope({
             Câu hỏi trước
           </button>
         )}
+        {state.phase === 'loading' && <AssistantClock />}
         {state.historyError && (
           <p role="alert">
             Chưa tải được lịch sử.{' '}
@@ -308,10 +407,8 @@ function AiLabPanelScope({
         )}
         {!entries.length && state.phase !== 'loading' && !blocked && !state.pending && (
           <div className="ai-lab-empty">
-            <span className="ai-lab-empty__icon">
-              <AiIcon name="assistant" size={28} />
-            </span>
             <h3>Bạn đang vướng ở đâu?</h3>
+            <p>Hỏi về bước đang làm hoặc kết nối giữa các thiết bị.</p>
             <div className="ai-lab-suggestions">
               {intents
                 .filter(([id]) => state.capabilities?.intents.includes(id))
@@ -337,6 +434,8 @@ function AiLabPanelScope({
         )}
         {entries.map((entry) => (
           <AiMessage
+            CopyButton={CopyButton}
+            Select={Select}
             key={entry.messageId}
             message={entry}
             currentRevision={Math.max(revision, request?.currentRevision ?? revision)}
@@ -345,12 +444,18 @@ function AiLabPanelScope({
               void controller.feedback(entry.result.messageId, input);
             }}
             onSelectDevice={onSelectDevice}
+            canMoreHint={Boolean(
+              entry.result?.focus &&
+              entry.result.focus.taskId === taskId &&
+              entry.result.focus.deviceId === (taskDeviceId || source) &&
+              entry.sourceRevision === revision
+            )}
             onRecheck={() => {
               void controller.send(
                 {
                   intent: 'NEXT_STEP',
                   requestedHintLevel: level,
-                  ...(source ? { selectedDeviceId: source } : {}),
+                  ...(taskDeviceId || source ? { selectedDeviceId: taskDeviceId || source } : {}),
                   ...(taskId ? { taskId } : {}),
                 },
                 revision
@@ -363,8 +468,10 @@ function AiLabPanelScope({
                 {
                   intent: 'NEXT_STEP',
                   requestedHintLevel: next,
-                  ...(source ? { selectedDeviceId: source } : {}),
-                  ...(taskId ? { taskId } : {}),
+                  ...(entry.result.focus?.deviceId
+                    ? { selectedDeviceId: entry.result.focus.deviceId }
+                    : {}),
+                  ...(entry.result.focus?.taskId ? { taskId: entry.result.focus.taskId } : {}),
                 },
                 revision
               );
@@ -376,6 +483,25 @@ function AiLabPanelScope({
             canAsk={canAsk}
           />
         ))}
+        <div
+          className={
+            state.phase === 'loading'
+              ? 'ai-assistant-loading-status'
+              : `ai-lab-status${statusMoving ? ' ai-lab-status--working' : ''}`
+          }
+          role="status"
+          aria-live="polite"
+        >
+          {statusText && (
+            <span
+              key={progress?.phase || state.phase}
+              className={statusMoving ? 't-shimmer' : undefined}
+              data-text={statusMoving ? statusText : undefined}
+            >
+              {statusText}
+            </span>
+          )}
+        </div>
       </div>
       {newMessages && (
         <button
@@ -390,25 +516,6 @@ function AiLabPanelScope({
           Tin mới ↓
         </button>
       )}
-      <div className="ai-lab-status" role="status" aria-live="polite">
-        {state.phase === 'loading'
-          ? 'Đang tải trợ lý…'
-          : !state.online
-            ? 'Mất kết nối. Câu hỏi đang soạn được giữ trong tab này.'
-            : state.phase === 'sending'
-              ? 'Đang gửi câu hỏi…'
-              : state.pending && !state.error
-                ? request?.status === 'RUNNING'
-                  ? 'Đang phân tích. Bạn vẫn có thể dùng terminal.'
-                  : 'Đã nhận câu hỏi. Đang chờ phân tích…'
-                : request?.status === 'CANCELLED'
-                  ? 'Đã hủy yêu cầu.'
-                  : request && ['FAILED', 'EXPIRED'].includes(request.status)
-                    ? 'Không thể hoàn tất câu hỏi này.'
-                    : request?.status === 'OUTCOME_UNKNOWN'
-                      ? 'Chưa xác định được kết quả. Hệ thống sẽ không tự gửi lại câu hỏi.'
-                      : ''}
-      </div>
       {state.error && (
         <div className="ai-lab-error" role="alert">
           <p>
@@ -421,11 +528,14 @@ function AiLabPanelScope({
           {!blocked && state.online && (
             <button
               type="button"
+              className="ai-lab-icon-button"
+              aria-label="Thử lại"
+              title="Thử lại"
               onClick={() => {
                 void controller.retry();
               }}
             >
-              Thử lại
+              <AiIcon name="replay" />
             </button>
           )}
           {state.pending &&
@@ -453,66 +563,137 @@ function AiLabPanelScope({
         <p className="ai-lab-muted">Trợ lý chưa được bật cho phiên này.</p>
       )}
       {!blocked && (!serviceBlocked || state.pending) && (
-        <form className="ai-lab-composer" onSubmit={send} aria-label="Gửi câu hỏi cho trợ lý">
+        <form
+          className={`ai-lab-composer${intent === 'DIAGNOSE' ? ' ai-lab-composer--diagnose' : ''}`}
+          onSubmit={send}
+          aria-label="Gửi câu hỏi cho trợ lý"
+        >
           <fieldset disabled={!canAsk}>
             <legend className="ai-lab-sr-only">Cách trợ giúp</legend>
-            <div className="ai-lab-intents">
-              {intents
-                .filter(([id]) => !state.capabilities || state.capabilities.intents.includes(id))
-                .map(([id, label, shortLabel, icon]) => (
-                  <button
-                    key={id}
-                    type="button"
-                    aria-pressed={intent === id}
-                    aria-label={label}
-                    onClick={() => {
-                      setIntent(id);
+            {intent === 'NEXT_STEP' && taskTitle && (
+              <p id={`${titleId}-task`} className="ai-lab-sr-only">
+                {taskTitle}
+              </p>
+            )}
+            <div className="ai-lab-composer-surface">
+              <label className="ai-lab-prompt">
+                <span className="ai-lab-sr-only">
+                  {intent === 'EXPLAIN_CONCEPT' ? 'Khái niệm cần giải thích' : 'Câu hỏi của bạn'}
+                </span>
+                <textarea
+                  ref={question}
+                  value={message}
+                  maxLength={2000}
+                  rows={1}
+                  placeholder={
+                    intent === 'EXPLAIN_CONCEPT'
+                      ? 'Ví dụ: Khi nào cần dùng default gateway?'
+                      : intent === 'DIAGNOSE'
+                        ? 'Ví dụ: Vì sao PC1 chưa ping được R1?'
+                        : 'Mô tả chỗ bạn đang gặp khó…'
+                  }
+                  aria-invalid={Boolean(validation)}
+                  aria-describedby={
+                    [
+                      intent === 'NEXT_STEP' && taskTitle ? `${titleId}-task` : null,
+                      validation ? `${titleId}-validation` : null,
+                    ]
+                      .filter(Boolean)
+                      .join(' ') || undefined
+                  }
+                  onChange={(event) => {
+                    setMessage(event.target.value);
+                    setValidation('');
+                  }}
+                  onKeyDown={(event) => {
+                    if (
+                      event.key === 'Enter' &&
+                      !event.shiftKey &&
+                      !event.nativeEvent.isComposing &&
+                      event.keyCode !== 229
+                    ) {
+                      event.preventDefault();
+                      event.currentTarget.form?.requestSubmit();
+                    }
+                  }}
+                />
+              </label>
+              <div className="ai-lab-composer-controls">
+                {devices.length > 0 && (
+                  <label className="ai-lab-composer-choice ai-lab-composer-choice--device">
+                    <span className="ai-lab-sr-only">Thiết bị</span>
+                    <span className="ai-lab-composer-choice__icon">
+                      <AiIcon name="device" size={15} />
+                    </span>
+                    <Select
+                      disabled={!canAsk}
+                      aria-label="Thiết bị"
+                      title={intent === 'NEXT_STEP' && taskTitle ? taskTitle : undefined}
+                      {...(typeof Select === 'string'
+                        ? {}
+                        : {
+                            displayLabel:
+                              (intent === 'NEXT_STEP' ? taskDeviceId || source : source) || 'Lab',
+                          })}
+                      value={intent === 'NEXT_STEP' ? taskDeviceId || source : source}
+                      onChange={(event) => {
+                        setSource(event.target.value);
+                        setValidation('');
+                        if (intent === 'NEXT_STEP' && event.target.value)
+                          onSelectDevice?.(event.target.value);
+                      }}
+                    >
+                      <option value="">Toàn bộ lab</option>
+                      {devices.map((device) => (
+                        <option key={device.id} value={device.id}>
+                          {device.name || device.id}
+                        </option>
+                      ))}
+                    </Select>
+                  </label>
+                )}
+                <label className="ai-lab-composer-choice ai-lab-composer-choice--intent">
+                  <span className="ai-lab-sr-only">Cách trợ giúp</span>
+                  <span className="ai-lab-composer-choice__icon">
+                    <AiIcon name={intents.find(([id]) => id === intent)?.[3]} size={15} />
+                  </span>
+                  <Select
+                    disabled={!canAsk}
+                    aria-label="Cách trợ giúp"
+                    {...(typeof Select === 'string'
+                      ? {}
+                      : {
+                          displayLabel: intents.find(([id]) => id === intent)?.[2],
+                        })}
+                    value={intent}
+                    onChange={(event) => {
+                      setIntent(event.target.value);
                       setValidation('');
                     }}
                   >
-                    <AiIcon name={icon} size={16} />
-                    {shortLabel}
-                  </button>
-                ))}
+                    {intents
+                      .filter(
+                        ([id]) => !state.capabilities || state.capabilities.intents.includes(id)
+                      )
+                      .map(([id, label]) => (
+                        <option key={id} value={id}>
+                          {label}
+                        </option>
+                      ))}
+                  </Select>
+                </label>
+              </div>
             </div>
-            <label>
-              {intent === 'EXPLAIN_CONCEPT' ? 'Khái niệm cần giải thích' : 'Câu hỏi của bạn'}
-              <textarea
-                ref={question}
-                value={message}
-                maxLength={2000}
-                rows={3}
-                placeholder={
-                  intent === 'EXPLAIN_CONCEPT'
-                    ? 'Ví dụ: Khi nào cần dùng default gateway?'
-                    : intent === 'DIAGNOSE'
-                      ? 'Ví dụ: Vì sao PC1 chưa ping được R1?'
-                      : 'Mô tả chỗ bạn đang gặp khó…'
-                }
-                aria-invalid={Boolean(validation)}
-                aria-describedby={validation ? `${titleId}-validation` : undefined}
-                onChange={(event) => {
-                  setMessage(event.target.value);
-                  setValidation('');
-                }}
-              />
-            </label>
             {intent === 'DIAGNOSE' && (
               <div className="ai-lab-device-fields">
                 <label>
-                  Thiết bị nguồn
-                  <select value={source} onChange={(event) => setSource(event.target.value)}>
-                    <option value="">Chọn nguồn</option>
-                    {devices.map((device) => (
-                      <option key={device.id} value={device.id}>
-                        {device.name || device.id}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
                   Thiết bị đích
-                  <select value={target} onChange={(event) => setTarget(event.target.value)}>
+                  <Select
+                    disabled={!canAsk}
+                    aria-label="Thiết bị đích"
+                    value={target}
+                    onChange={(event) => setTarget(event.target.value)}
+                  >
                     <option value="">Chọn đích</option>
                     {devices
                       .filter((device) => device.id !== source)
@@ -521,41 +702,40 @@ function AiLabPanelScope({
                           {device.name || device.id}
                         </option>
                       ))}
-                  </select>
+                  </Select>
                 </label>
               </div>
             )}
-            {intent !== 'EXPLAIN_CONCEPT' && (
-              <details className="ai-lab-advanced">
-                <summary>Thiết bị và mức gợi ý</summary>
-                <div className="ai-lab-options">
-                  {intent === 'NEXT_STEP' && devices.length > 0 && (
-                    <label>
-                      Thiết bị
-                      <select value={source} onChange={(event) => setSource(event.target.value)}>
-                        <option value="">Toàn bộ lab</option>
-                        {devices.map((device) => (
-                          <option key={device.id} value={device.id}>
-                            {device.name || device.id}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                  )}
-                  <label className="ai-lab-hint-level">
-                    Mức gợi ý
-                    <select
-                      value={level}
-                      onChange={(event) => setLevel(Number(event.target.value))}
-                    >
-                      <option value={1}>1 · Định hướng</option>
-                      <option value={2}>2 · Kiểm tra cụ thể</option>
-                      <option value={3}>3 · Chi tiết hơn</option>
-                    </select>
-                  </label>
-                </div>
-              </details>
-            )}
+            <div className="ai-lab-hint-budget">
+              {intent !== 'EXPLAIN_CONCEPT' && (
+                <label className="ai-lab-hint-level">
+                  <span className="ai-lab-sr-only">Mức gợi ý</span>
+                  <Select
+                    disabled={!canAsk}
+                    aria-label="Mức gợi ý"
+                    {...(typeof Select === 'string'
+                      ? {}
+                      : { displayLabel: `Mức gợi ý ${level}/3` })}
+                    value={level}
+                    onChange={(event) => setLevel(Number(event.target.value))}
+                  >
+                    <option value={1}>1 · Định hướng</option>
+                    <option value={2}>
+                      {intent === 'NEXT_STEP' ? '2 · Cú pháp lệnh' : '2 · Kiểm tra cụ thể'}
+                    </option>
+                    <option value={3}>
+                      {intent === 'NEXT_STEP' ? '3 · Lệnh đầy đủ' : '3 · Chi tiết hơn'}
+                    </option>
+                  </Select>
+                </label>
+              )}
+              {message.length > 1800 && (
+                <span className="ai-lab-character-count">{Array.from(message).length}/2000</span>
+              )}
+              {state.quota && (
+                <span className="ai-lab-remaining">Còn {state.quota.remaining} lượt</span>
+              )}
+            </div>
           </fieldset>
           {validation && (
             <p id={`${titleId}-validation`} className="ai-lab-validation" role="alert">
@@ -563,26 +743,29 @@ function AiLabPanelScope({
             </p>
           )}
           <div className="ai-lab-composer__actions">
-            <span>{Array.from(message).length}/2000</span>
             {state.pending ? (
               <button
                 type="button"
+                className="ai-lab-stop"
+                aria-label="Hủy yêu cầu"
+                title="Hủy yêu cầu"
                 aria-busy={state.phase === 'sending'}
                 disabled={!state.online}
                 onClick={() => {
                   void controller.cancel();
                 }}
               >
-                Hủy yêu cầu
+                <AiIcon name="stop" size={16} />
               </button>
             ) : (
               <button
                 type="submit"
+                aria-label="Gửi câu hỏi"
                 className="ai-lab-send"
                 disabled={!canAsk}
                 aria-busy={Boolean(state.pending)}
               >
-                Gửi câu hỏi <AiIcon name="send" size={18} />
+                <AiIcon name="send" size={20} />
               </button>
             )}
           </div>
@@ -593,7 +776,7 @@ function AiLabPanelScope({
   return mobile && Dialog ? (
     <Dialog
       title="Trợ lý AI"
-      className={`ai-lab-dialog cli-lab-editor${theme === 'dark' ? ' is-dark' : ''}`}
+      className={`ai-lab-dialog cli-lab-editor cli-lab-stitch cli-lab-stitch--${theme}${theme === 'dark' ? ' is-dark' : ''}`}
       onClose={onClose}
     >
       {content}

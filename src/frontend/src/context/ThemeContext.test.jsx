@@ -1,5 +1,5 @@
 import React from 'react';
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { ThemeProvider, useTheme } from './ThemeContext';
 let preference;
@@ -16,25 +16,76 @@ beforeEach(() => {
 afterEach(() => {
   window.matchMedia = originalMatchMedia;
 });
-test('follows system changes until the learner chooses a theme and restores that choice', () => {
-  const view = render(
-    <ThemeProvider>
-      <Toggle />
-    </ThemeProvider>
-  );
-  const update = preference.addEventListener.mock.calls[0][1];
-  act(() => {
-    preference.matches = true;
-    update();
-  });
-  expect(screen.getByRole('button', { name: 'dark' })).toBeInTheDocument();
-  fireEvent.click(screen.getByRole('button', { name: 'dark' }));
-  expect(localStorage.getItem('netmaster-theme')).toBe('light');
-  view.unmount();
+test('new visitors start in light even when the operating system is dark', () => {
+  preference.matches = true;
   render(
     <ThemeProvider>
       <Toggle />
     </ThemeProvider>
   );
   expect(screen.getByRole('button', { name: 'light' })).toBeInTheDocument();
+  expect(document.documentElement).toHaveAttribute('data-theme', 'light');
+  expect(preference.addEventListener).not.toHaveBeenCalled();
+});
+
+test('an explicit theme choice is saved and restored', () => {
+  const view = render(
+    <ThemeProvider>
+      <Toggle />
+    </ThemeProvider>
+  );
+  fireEvent.click(screen.getByRole('button', { name: 'light' }));
+  expect(localStorage.getItem('netmaster-theme')).toBe('dark');
+  view.unmount();
+  render(
+    <ThemeProvider>
+      <Toggle />
+    </ThemeProvider>
+  );
+  expect(screen.getByRole('button', { name: 'dark' })).toBeInTheDocument();
+});
+
+test.each(['light', 'dark'])('a saved %s preference takes priority over the default', (saved) => {
+  localStorage.setItem('netmaster-theme', saved);
+  preference.matches = saved !== 'dark';
+  render(
+    <ThemeProvider>
+      <Toggle />
+    </ThemeProvider>
+  );
+  expect(screen.getByRole('button', { name: saved })).toBeInTheDocument();
+  expect(document.documentElement).toHaveAttribute('data-theme', saved);
+});
+
+test('an invalid saved preference falls back to light', () => {
+  localStorage.setItem('netmaster-theme', 'auto');
+  preference.matches = true;
+  render(
+    <ThemeProvider>
+      <Toggle />
+    </ThemeProvider>
+  );
+  expect(screen.getByRole('button', { name: 'light' })).toBeInTheDocument();
+});
+
+test('blocked storage still defaults to light and allows an animated theme change', async () => {
+  const read = jest.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+    throw new Error('blocked');
+  });
+  const write = jest.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+    throw new Error('blocked');
+  });
+  try {
+    preference.matches = true;
+    render(
+      <ThemeProvider>
+        <Toggle />
+      </ThemeProvider>
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'light' }));
+    expect(await screen.findByRole('button', { name: 'dark' })).toBeInTheDocument();
+  } finally {
+    read.mockRestore();
+    write.mockRestore();
+  }
 });

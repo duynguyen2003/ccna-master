@@ -22,7 +22,7 @@ describe('admin CLI lab config contract', () => {
       'ccna-basic-v1',
       'ccna-network-v2',
     ]);
-    expect(SUPPORTED_CHECK_TYPES).toHaveLength(19);
+    expect(SUPPORTED_CHECK_TYPES).toHaveLength(21);
     expect(SUPPORTED_CHECK_TYPES.map((check) => check.value)).toEqual(
       expect.arrayContaining([
         'reachable',
@@ -34,6 +34,8 @@ describe('admin CLI lab config contract', () => {
         'stp_root',
         'acl_exists',
         'nat_static_exists',
+        'eigrp_passive_observed',
+        'eigrp_metric_exercise',
       ])
     );
   });
@@ -129,24 +131,25 @@ describe('admin CLI lab config contract', () => {
       gradingSpec: { passingScore: 70, checks: [null] },
       field: 'Grading Spec JSON',
     },
-  ])('opens advanced JSON immediately for $label without crashing', ({ initialState, gradingSpec, field }) => {
-    render(
-      <CliLabConfigEditor
-        initialStateText={JSON.stringify(initialState)}
-        gradingSpecText={JSON.stringify(
-          gradingSpec || {
-            passingScore: 70,
-            checks: [{ id: 'host', type: 'hostname_equals', expected: 'R1', points: 10 }],
-          }
-        )}
-        commandProfile={
-          Array.isArray(initialState.devices) ? 'ccna-network-v2' : 'ccna-basic-v1'
-        }
-      />
-    );
+  ])(
+    'opens advanced JSON immediately for $label without crashing',
+    ({ initialState, gradingSpec, field }) => {
+      render(
+        <CliLabConfigEditor
+          initialStateText={JSON.stringify(initialState)}
+          gradingSpecText={JSON.stringify(
+            gradingSpec || {
+              passingScore: 70,
+              checks: [{ id: 'host', type: 'hostname_equals', expected: 'R1', points: 10 }],
+            }
+          )}
+          commandProfile={Array.isArray(initialState.devices) ? 'ccna-network-v2' : 'ccna-basic-v1'}
+        />
+      );
 
-    expect(screen.getByRole('textbox', { name: field })).toBeTruthy();
-  });
+      expect(screen.getByRole('textbox', { name: field })).toBeTruthy();
+    }
+  );
 
   test('keeps the form open while a user completes related fields', () => {
     render(

@@ -1,42 +1,37 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
+import { runThemeTransition } from '../components/ui/themeTransition';
 
 const ThemeContext = createContext(null);
-const systemTheme = () =>
-  window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 function initialTheme() {
   try {
     const saved = localStorage.getItem('netmaster-theme');
     if (saved === 'light' || saved === 'dark') return saved;
   } catch {}
-  return systemTheme();
+  return 'light';
 }
 
 export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState(initialTheme);
-  const [followSystem, setFollowSystem] = useState(() => {
-    try {
-      return !['light', 'dark'].includes(localStorage.getItem('netmaster-theme'));
-    } catch {
-      return true;
-    }
-  });
+  const choice = useRef(theme);
+  const dispose = useRef(null);
+  useEffect(() => () => dispose.current?.(), []);
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
-  useEffect(() => {
-    if (!followSystem || !window.matchMedia) return;
-    const query = window.matchMedia('(prefers-color-scheme: dark)');
-    const update = () => setTheme(query.matches ? 'dark' : 'light');
-    query.addEventListener?.('change', update);
-    return () => query.removeEventListener?.('change', update);
-  }, [followSystem]);
-  const toggleTheme = () => {
-    const next = theme === 'dark' ? 'light' : 'dark';
-    setFollowSystem(false);
-    setTheme(next);
+  const toggleTheme = (origin) => {
+    const next = choice.current === 'dark' ? 'light' : 'dark';
+    choice.current = next;
     try {
       localStorage.setItem('netmaster-theme', next);
     } catch {}
+    dispose.current = runThemeTransition(
+      () => {
+        document.documentElement.dataset.theme = next;
+        setTheme(next);
+      },
+      origin,
+      next
+    );
   };
   return <ThemeContext.Provider value={{ theme, toggleTheme }}>{children}</ThemeContext.Provider>;
 }

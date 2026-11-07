@@ -105,8 +105,25 @@ const allowedCommand = strict({
     'GLOBAL_CONFIG',
     'INTERFACE_CONFIG',
     'VLAN_CONFIG',
+    'ROUTER_CONFIG',
   ]),
   command: text(500),
+  template: z.boolean().optional(),
+  routingProtocol: z.enum(['eigrp', 'ospf']).optional(),
+  interface: text(80).optional(),
+});
+const taskIdentity = {
+  taskId: id,
+  title: text(200),
+  deviceId: id.nullable(),
+  verification: text(500),
+};
+const taskFocus = strict({
+  ...taskIdentity,
+  type: text(80),
+  hintLevel,
+  guidance: text(500),
+  commands: z.array(allowedCommand).max(2),
 });
 const versions = strict({
   contextSchemaVersion: z.literal(VERSION),
@@ -124,6 +141,7 @@ const result = strict({
   evidence: z.array(publicEvidence).max(20),
   commands: z.array(allowedCommand).max(2),
   versions,
+  focus: strict(taskIdentity).optional(),
 });
 const quota = strict({ remaining: integer, reserved: integer, resetAt: timestamp });
 const resourceBase = {
@@ -138,6 +156,22 @@ const resourceBase = {
   sourceProvenance: z.enum(['LIVE_SNAPSHOT', 'FEEDBACK_SNAPSHOT', 'LEGACY_FEEDBACK']),
   quota,
   serverTime: timestamp,
+  progress: strict({
+    streamVersion: integer.min(1),
+    phase: z.enum([
+      'QUEUED',
+      'RUNNING',
+      'PREPARING_CONTEXT',
+      'ANALYZING',
+      'FINALIZING',
+      'FINISHED',
+    ]),
+    deviceId: id.optional(),
+    unitStatus: z.enum(['RESERVED', 'CONSUMED', 'RELEASED']),
+    recoveryAction: z.enum(['NONE', 'NEW_REQUEST', 'RECONNECT', 'POLL']).optional(),
+    reasonCode: text(80).nullable(),
+    deadlineAt: timestamp,
+  }).optional(),
 };
 const noResult = { responseMode: z.literal('NONE'), result: z.null() };
 const RequestResource = z.union([
@@ -293,8 +327,11 @@ const context = strict({
       strict({
         taskId: id,
         title: text(200),
-        status: z.enum(['completed', 'in_progress', 'not_started']),
+        status: z.enum(['completed', 'in_progress', 'not_started', 'blocked']),
         hint: text(500).nullable(),
+        deviceId: id.nullable().optional(),
+        type: text(80).optional(),
+        objective: text(80).optional(),
       })
     )
     .max(64),
@@ -304,6 +341,7 @@ const context = strict({
     )
     .max(12),
   contextTruncated: z.boolean(),
+  taskFocus: taskFocus.optional(),
 });
 const binding = {
   contractVersion: z.literal(VERSION),
@@ -396,6 +434,11 @@ const schemas = Object.freeze({
   CreateRequest,
   RequestResource,
   RequestResponse: envelope(RequestResource),
+  RequestStreamEvent: strict({
+    contractVersion: z.literal(VERSION),
+    kind: z.enum(['state', 'result', 'terminal']),
+    data: RequestResource,
+  }),
   ErrorResponse,
   FeedbackRequest,
   FeedbackResponse: envelope(
@@ -417,6 +460,7 @@ const schemas = Object.freeze({
         userConcurrent: z.literal(1),
       }),
       serverTime: timestamp,
+      streaming: z.boolean().optional(),
     })
   ),
   HistoryResponse: envelope(
@@ -532,6 +576,27 @@ const parseAnalyzeInput = (inputValue) => {
   }
   if (input.request.selectedDeviceId) deviceExists(input.request.selectedDeviceId);
   if (input.request.target?.deviceId) deviceExists(input.request.target.deviceId);
+  const focus = input.context.taskFocus;
+  if (focus) {
+    if (
+      input.request.intent !== 'NEXT_STEP' ||
+      input.request.taskId !== focus.taskId ||
+      input.request.selectedDeviceId !== focus.deviceId ||
+      input.policy.effectiveHintLevel !== focus.hintLevel
+    )
+      fail('task focus mismatch');
+    if (focus.deviceId) deviceExists(focus.deviceId);
+    for (const command of focus.commands) {
+      deviceExists(command.deviceId, command.interface);
+      if (
+        command.deviceId !== focus.deviceId ||
+        focus.hintLevel === 1 ||
+        (focus.hintLevel === 2 && command.template !== true) ||
+        (focus.hintLevel === 3 && command.template === true)
+      )
+        fail('task command disclosure');
+    }
+  }
   if (
     input.request.taskId &&
     !input.context.progress.some((task) => task.taskId === input.request.taskId)
@@ -591,6 +656,21 @@ const assertBindings = (inputValue, receiptValue) => {
 };
 const parseRequestResource = (value) => {
   const parsed = RequestResource.parse(value);
+  if (parsed.progress) {
+    const pending = ['QUEUED', 'RUNNING'].includes(parsed.status);
+    const expectedUnit = pending
+      ? 'RESERVED'
+      : parsed.status === 'COMPLETED' && parsed.responseMode === 'LLM'
+        ? 'CONSUMED'
+        : 'RELEASED';
+    if (
+      parsed.progress.unitStatus !== expectedUnit ||
+      (parsed.status === 'QUEUED' && parsed.progress.phase !== 'QUEUED') ||
+      (parsed.status === 'RUNNING' && ['QUEUED', 'FINISHED'].includes(parsed.progress.phase)) ||
+      (!pending && parsed.progress.phase !== 'FINISHED')
+    )
+      throw new Error('AI contract binding: progress status');
+  }
   const expectedStale =
     parsed.sourceRevision === null ? null : parsed.sourceRevision !== parsed.currentRevision;
   if (parsed.stale !== expectedStale) throw new Error('AI contract binding: stale revision');

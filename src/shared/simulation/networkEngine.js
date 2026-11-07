@@ -1,4 +1,5 @@
 const single = require('./deviceState');
+const { configurationSnapshot } = require('./configSnapshot');
 const { parseCommand, getCompletions } = require('./cliParser');
 const {
   converge,
@@ -19,12 +20,15 @@ const prompt = (s, id) => {
   if (d.mode === 'ACL_CONFIG') return `${d.hostname}(config-ext-nacl)#`;
   return single.getPrompt(d);
 };
-function initial(definition) {
+function initial(definition, version = definition.simulatorVersion || '2.1.0') {
+  if (!['1.0.0', '2.0.0', '2.1.0', '3.0.0'].includes(version))
+    throw new Error(`Unsupported simulator version: ${version}`);
   if (!definition.devices) return single.createInitialState(definition);
   const devices = {};
   for (const item of definition.devices) {
     const device = single.createInitialState(item);
     devices[item.id] = {
+      ...(version === '3.0.0' ? { simulatorVersion: version } : {}),
       ...device,
       deviceType: item.deviceType,
       position: item.position || { x: 100, y: 100 },
@@ -44,6 +48,9 @@ function initial(definition) {
     };
   }
   return converge({
+    ...(version === '3.0.0'
+      ? { simulatorVersion: version, learningEvidence: { passive: {}, metricEdits: {}, hints: {} } }
+      : {}),
     schemaVersion: 2,
     revision: 0,
     tick: 0,
@@ -126,6 +133,8 @@ function configText(d) {
     );
   for (const [name, p] of Object.entries(d.interfaces)) {
     const options = [
+      p.bandwidthKbps && `bandwidth ${p.bandwidthKbps}`,
+      p.delayMicroseconds !== undefined && `delay ${p.delayMicroseconds / 10}`,
       p.natRole && `ip nat ${p.natRole}`,
       p.aclIn && `ip access-group ${p.aclIn} in`,
       p.aclOut && `ip access-group ${p.aclOut} out`,
@@ -182,8 +191,17 @@ function execute(s, action) {
   const beforeMode = d.mode;
   let output = '';
   let isError = false;
+  let cause = null;
+  let events = [];
   try {
-    if (action.type === 'tick') {
+    if (action.type === 'hint') {
+      if (state.simulatorVersion !== '3.0.0') throw new Error('Hints require simulator 3.0.0');
+      state.learningEvidence.hints[action.checkId] = Math.max(
+        state.learningEvidence.hints[action.checkId] || 0,
+        action.level
+      );
+      output = 'Gợi ý đã mở';
+    } else if (action.type === 'tick') {
       state.tick += 1;
       for (const device of Object.values(state.devices)) {
         device.arp = Object.fromEntries(
@@ -212,7 +230,39 @@ function execute(s, action) {
       const p = parsed.params;
       const neg = parsed.negated;
       const int = d.interfaces[d.context.interface];
+      cause = {
+        handler: parsed.handler,
+        deviceId,
+        negated: neg,
+        interface: p.interface ? single.normalizeInterfaceName(p.interface) : d.context.interface,
+      };
+      if (
+        state.simulatorVersion !== '3.0.0' &&
+        ['interface_bandwidth', 'interface_delay', 'network_show_eigrp_topology'].includes(
+          parsed.handler
+        )
+      ) {
+        throw new Error('Command requires simulator 3.0.0');
+      }
       switch (parsed.handler) {
+        case 'interface_bandwidth':
+        case 'interface_delay': {
+          if (!int) throw new Error('Select an interface first');
+          const field =
+            parsed.handler === 'interface_bandwidth' ? 'bandwidthKbps' : 'delayMicroseconds';
+          if (neg) delete int[field];
+          else int[field] = Number(p.value) * (field === 'delayMicroseconds' ? 10 : 1);
+          break;
+        }
+        case 'network_show_eigrp_topology':
+          output = [
+            `EIGRP topology AS ${d.eigrp?.asNumber || '-'} (FD/RD)`,
+            ...(d.eigrpTopology || []).map(
+              (r) =>
+                `${r.network}/${r.mask} (${r.feasibleDistance}/${r.reportedDistance}) via ${r.nextHop || 'connected'}`
+            ),
+          ].join('\n');
+          break;
         case 'static_route': {
           const route = {
             network: ipText((ipNumber(p.network) & ipNumber(p.mask)) >>> 0),
@@ -416,6 +466,7 @@ function execute(s, action) {
           break;
         case 'save_config':
           d.startupConfig = configText(d);
+          d.startupConfigModel = configurationSnapshot(d);
           output = '[OK]';
           break;
         case 'exit':
@@ -433,6 +484,8 @@ function execute(s, action) {
       }
     } else throw new Error('Unknown simulation action');
     converge(state);
+    if (state.simulatorVersion === '3.0.0')
+      events = require('./learningEvidence').recordEvidence(s, state, cause);
     state.revision = s.revision + 1;
   } catch (error) {
     return {
@@ -443,7 +496,14 @@ function execute(s, action) {
       isError: true,
     };
   }
-  return { state, prompt: beforePrompt, mode: beforeMode, output, isError };
+  return {
+    state,
+    prompt: beforePrompt,
+    mode: beforeMode,
+    output,
+    isError,
+    ...(events.length ? { events } : {}),
+  };
 }
 const completions = (s, input, id) =>
   getCompletions(s.devices ? PROFILE : 'ccna-basic-v1', activeDevice(s, id), input);

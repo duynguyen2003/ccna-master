@@ -26,12 +26,17 @@ const getModeCommands = (profile, deviceState) =>
   profile.commands.filter(
     (command) =>
       command.modes.includes(deviceState.mode) &&
+      (!command.since || command.since === deviceState.simulatorVersion) &&
       (!command.deviceTypes || command.deviceTypes.includes(deviceState.deviceType)) &&
       (!command.routingProtocols ||
         command.routingProtocols.includes(deviceState.context?.routingProtocol))
   );
 
 const validateParameter = (spec, value) => {
+  if (spec.type === 'metricInteger')
+    return /^\d+$/.test(value) && Number(value) >= 1 && Number(value) <= 1000000000
+      ? null
+      : 'Invalid metric (1-1000000000)';
   if (spec.type === 'integer')
     return /^\d+$/.test(value) && Number(value) <= 65535 ? null : 'Invalid integer (0-65535)';
   if (spec.type === 'word')
@@ -95,9 +100,7 @@ const structurallyMatches = (command, inputTokens, negated) => {
 };
 
 const requiredTokenCount = (command, negated) =>
-  command.tokens.filter(
-    (token) => !token.optional && !(negated && token.optionalOnNegate)
-  ).length;
+  command.tokens.filter((token) => !token.optional && !(negated && token.optionalOnNegate)).length;
 
 const findErrorPosition = (commands, inputTokens, negated, rawInput) => {
   for (let index = 0; index < inputTokens.length; index += 1) {

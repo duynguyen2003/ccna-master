@@ -1,0 +1,2 @@
+# Preserve captured SVG bytes so provenance hashes survive Windows checkouts.
+src/frontend/public/network-devices/*.svg -text

@@ -80,6 +80,7 @@ beforeEach(() => {
   jest.spyOn(HTMLElement.prototype, 'offsetLeft', 'get').mockImplementation(function () {
     return geometry[this.getAttribute('href')]?.left || 0;
   });
+  jest.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(30);
   jest.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockImplementation(function () {
     if (this.className === 't-tabs-pill') {
       measuredPill = this;

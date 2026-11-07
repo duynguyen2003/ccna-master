@@ -79,6 +79,7 @@ export default function DropdownSelect({
   onChange,
   children,
   className = '',
+  displayLabel,
   disabled = false,
   id,
   title,
@@ -353,6 +354,7 @@ export default function DropdownSelect({
     if (event.key === 'Escape') {
       if (phase !== 'closed') {
         event.preventDefault();
+        event.stopPropagation();
         closeMenu();
       }
       return;
@@ -375,6 +377,7 @@ export default function DropdownSelect({
             className={`app-select__menu t-dropdown ${phase === 'open' ? 'is-open' : ''} ${phase === 'closing' ? 'is-closing' : ''}`}
             data-origin={position.origin}
             role="listbox"
+            onMouseDown={(event) => event.preventDefault()}
             aria-label={ariaLabel ? `${ariaLabel} options` : undefined}
             aria-hidden={phase === 'closing'}
             style={{
@@ -411,7 +414,7 @@ export default function DropdownSelect({
               </div>
             )}
           </div>,
-          document.body
+          triggerRef.current?.closest('dialog[open]') || document.body
         )
       : null;
 
@@ -440,7 +443,9 @@ export default function DropdownSelect({
         onClick={() => (phase === 'closed' || phase === 'closing' ? openMenu() : closeMenu())}
         onKeyDown={handleKeyDown}
       >
-        <span className="app-select__value">{selectedOption?.label || '\u00a0'}</span>
+        <span className="app-select__value">
+          {displayLabel ?? (selectedOption?.label || '\u00a0')}
+        </span>
         <ChevronDown
           className="app-select__chevron"
           size={16}
