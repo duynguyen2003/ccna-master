@@ -198,3 +198,7 @@ Các test integration PostgreSQL cần database thử nghiệm riêng và flag t
 - [Định nghĩa và chấm điểm EIGRP01](docs/eigrp01-grading.md)
 - [Tài liệu AI Lab Assistant](docs/ai-lab-assistant/README.md)
 - [Quy tắc giao diện học viên](docs/ui-ux/student-ui-guidelines.md)
+
+## Tác giả
+
+- **Tên**: DUY.hy
