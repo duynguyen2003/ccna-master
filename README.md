@@ -138,7 +138,7 @@ ccna-master/
 │   ├── scripts/        # Công cụ phát triển và vận hành
 │   └── storage/        # Tệp tải lên tại máy chủ
 ├── docs/               # Tài liệu kỹ thuật, task AI và audit UI
-└── .env                # Biến môi trường (Không commit)
+
 ```
 
 ---
