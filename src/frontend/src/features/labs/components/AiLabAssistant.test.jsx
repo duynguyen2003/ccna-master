@@ -8,11 +8,16 @@ import { capabilities, ids, quota, request, result } from '@ccna/agent-ui/fixtur
 
 const deferred = () => {
   let resolve;
-  const promise = new Promise((done) => {
+  let reject;
+  const promise = new Promise((done, fail) => {
     resolve = done;
+    reject = fail;
   });
-  return { promise, resolve };
+  return { promise, resolve, reject };
 };
+// Decorative avatars have no accessible role; inspect their lifecycle attributes.
+// eslint-disable-next-line testing-library/no-node-access
+const statusAvatar = (node) => node.querySelector('.ai-droid[data-appearance="flower"]');
 let api;
 const props = {
   CopyButton: AnimatedCopyButton,
@@ -50,6 +55,102 @@ beforeEach(() => {
   };
 });
 
+test.each(['complete', 'error'])(
+  'embedded assistant retains drafts while hidden and reports real activity through %s',
+  async (outcome) => {
+    const pending = deferred();
+    api.create.mockReturnValue(pending.promise);
+    const activity = jest.fn();
+    const view = render(
+      <AiLabPanel {...props} api={api} embedded visible onActivityChange={activity} />
+    );
+    const input = await screen.findByRole('textbox');
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Gửi câu hỏi' })).toBeEnabled());
+    fireEvent.change(input, { target: { value: 'Vì sao cần kiểm tra route?' } });
+    view.rerender(
+      <AiLabPanel {...props} api={api} embedded visible={false} onActivityChange={activity} />
+    );
+    view.rerender(<AiLabPanel {...props} api={api} embedded visible onActivityChange={activity} />);
+    expect(screen.getByRole('textbox')).toBe(input);
+    expect(input).toHaveValue('Vì sao cần kiểm tra route?');
+    expect(api.capabilities).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.queryByRole('separator', { name: 'Chiều rộng trợ lý' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Gửi câu hỏi' }));
+    await waitFor(() => expect(activity).toHaveBeenLastCalledWith(true));
+    expect(screen.getByRole('complementary')).toHaveAttribute('data-ai-state', 'working');
+    expect(statusAvatar(screen.getByRole('status', { name: 'Trạng thái trợ lý' }))).toHaveAttribute(
+      'data-state',
+      'working'
+    );
+    view.rerender(
+      <AiLabPanel {...props} api={api} embedded visible={false} onActivityChange={activity} />
+    );
+    await act(async () => {
+      if (outcome === 'complete') pending.resolve(request('COMPLETED', { result }));
+      else
+        pending.reject(
+          Object.assign(new Error('Busy service'), { code: 'AI_CAPACITY_EXHAUSTED', status: 503 })
+        );
+    });
+    await waitFor(() => expect(activity).toHaveBeenLastCalledWith(false));
+    const finishedStatus = screen.getByRole('status', { name: 'Trạng thái trợ lý' });
+    expect(statusAvatar(finishedStatus)).toBeNull();
+    expect(screen.getByRole('complementary')).toHaveAttribute(
+      'data-ai-state',
+      outcome === 'complete' ? 'idle' : 'error'
+    );
+    expect(
+      await screen.findByText(
+        outcome === 'complete' ? 'Đã trả lời.' : 'Trợ lý đang bận. Bạn vẫn có thể thực hành.'
+      )
+    ).toBeInTheDocument();
+  }
+);
+
+test('the standalone header avatar focuses the composer without creating an AI request', async () => {
+  render(<AiLabPanel {...props} api={api} />);
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Gửi câu hỏi' })).toBeEnabled());
+  fireEvent.click(screen.getByRole('button', { name: 'Đặt câu hỏi cho Trợ lý AI' }));
+  expect(screen.getByRole('textbox')).toHaveFocus();
+  expect(api.create).not.toHaveBeenCalled();
+  expect(screen.getByRole('complementary')).toHaveAttribute('data-ai-state', 'idle');
+});
+
+test('embedded assistant uses the host title and keeps options beside the composer', async () => {
+  const view = render(<AiLabPanel {...props} api={api} embedded focusRequest={1} />);
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Gửi câu hỏi' })).toBeEnabled());
+  expect(
+    screen.queryByRole('button', { name: 'Đặt câu hỏi cho Trợ lý AI' })
+  ).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Đóng trợ lý AI' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('heading', { name: 'Trợ lý AI' })).not.toBeInTheDocument();
+  expect(screen.getByRole('complementary')).toHaveAccessibleName('Trợ lý AI');
+  const composer = screen.getByRole('form', { name: 'Gửi câu hỏi cho trợ lý' });
+  const options = within(composer).getByText('Tùy chọn');
+  const input = screen.getByRole('textbox');
+  fireEvent.change(input, { target: { value: 'Giữ câu hỏi đang soạn' } });
+  fireEvent.click(options);
+  view.rerender(<AiLabPanel {...props} api={api} embedded focusRequest={2} />);
+  expect(input).toHaveFocus();
+  expect(input).toHaveValue('Giữ câu hỏi đang soạn');
+  expect(api.capabilities).toHaveBeenCalledTimes(1);
+  expect(api.create).not.toHaveBeenCalled();
+});
+
+test('Escape closes embedded options before closing the assistant', async () => {
+  const close = jest.fn();
+  render(<AiLabPanel {...props} api={api} embedded onClose={close} />);
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Gửi câu hỏi' })).toBeEnabled());
+  const options = screen.getByText('Tùy chọn');
+  fireEvent.click(options);
+  fireEvent.keyDown(options, { key: 'Escape' });
+  expect(options).toHaveFocus();
+  expect(close).not.toHaveBeenCalled();
+  fireEvent.keyDown(screen.getByRole('textbox'), { key: 'Escape' });
+  expect(close).toHaveBeenCalledTimes(1);
+});
+
 test('server progress stays on the task device and composer Enter submits while Shift/IME do not', async () => {
   const pending = request('RUNNING', {
     progress: {
@@ -73,6 +174,51 @@ test('server progress stays on the task device and composer Enter submits while 
   expect(await screen.findByText('Đang phân tích nhiệm vụ trên R2…')).toBeInTheDocument();
   expect(api.create).toHaveBeenCalledTimes(1);
   expect(input.style.height).not.toBe('');
+});
+
+test('streaming progress keeps one working avatar, pauses it while hidden and finishes with a static reply avatar', async () => {
+  const progress = (version, phase) => ({
+    streamVersion: version,
+    phase,
+    deviceId: 'R1',
+    unitStatus: 'RESERVED',
+    reasonCode: null,
+    deadlineAt: new Date(Date.now() + 60000).toISOString(),
+  });
+  api.capabilities.mockResolvedValue({ ...capabilities, streaming: true });
+  api.create.mockResolvedValue(request('RUNNING', { progress: progress(1, 'PREPARING_CONTEXT') }));
+  let channel;
+  api.events = jest.fn((_, __, handlers) => {
+    channel = handlers;
+    return new Promise((resolve) =>
+      handlers.signal.addEventListener('abort', resolve, { once: true })
+    );
+  });
+  const view = render(<AiLabPanel {...props} api={api} embedded visible />);
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Gửi câu hỏi' })).toBeEnabled());
+  fireEvent.click(screen.getByRole('button', { name: 'Gửi câu hỏi' }));
+  await screen.findByText('Đang chuẩn bị ngữ cảnh cho R1…');
+  await waitFor(() => expect(api.events).toHaveBeenCalledTimes(1));
+  const status = screen.getByRole('status', { name: 'Trạng thái trợ lý' });
+  const avatar = statusAvatar(status);
+  expect(avatar).toHaveAttribute('data-state', 'working');
+  expect(avatar).toHaveAttribute('data-paused', 'false');
+  await act(async () =>
+    channel.onEvent({ id: '2', data: request('RUNNING', { progress: progress(2, 'ANALYZING') }) })
+  );
+  expect(status).toHaveTextContent('Đang phân tích nhiệm vụ trên R1…');
+  expect(statusAvatar(status)).toBe(avatar);
+  view.rerender(<AiLabPanel {...props} api={api} embedded visible={false} />);
+  expect(avatar).toHaveAttribute('data-paused', 'true');
+  view.rerender(<AiLabPanel {...props} api={api} embedded visible />);
+  expect(api.events).toHaveBeenCalledTimes(1);
+  await act(async () => channel.onEvent({ id: '3', data: request() }));
+  expect(status).toHaveTextContent('Đã trả lời.');
+  expect(statusAvatar(status)).toBeNull();
+  const reply = screen.getByRole('article', { name: 'Gợi ý từ hệ thống' });
+  expect(statusAvatar(reply)).toHaveAttribute('data-paused', 'true');
+  expect(statusAvatar(reply)).toHaveAttribute('data-state', 'default');
+  expect(api.create).toHaveBeenCalledTimes(1);
 });
 
 test('reset action closes options, focuses confirmation and preserves history until confirmed', async () => {

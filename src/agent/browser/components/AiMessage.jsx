@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import AiIcon from './AiIcon.jsx';
+import DroidAvatar from './DroidAvatar.jsx';
 import useClipboard, { COPY_ERROR } from '../hooks/useClipboard.js';
 
 const claims = {
@@ -126,7 +127,7 @@ export default function AiMessage({
     >
       <div className="ai-lab-message__meta">
         <span className="ai-lab-avatar">
-          <AiIcon name="assistant" size={17} />
+          <DroidAvatar size={26} appearance="flower" animate={false} decorative />
         </span>
         <strong>{responseMode === 'LLM' ? 'Trợ lý AI' : 'Gợi ý từ hệ thống'}</strong>
         <span>{claims[result.answer.claimType]}</span>

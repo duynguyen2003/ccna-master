@@ -72,6 +72,9 @@ importers:
       '@ccna/agent-contracts':
         specifier: workspace:*
         version: link:../contracts
+      bot-avatars:
+        specifier: 0.2.2
+        version: 0.2.2(react@18.3.1)
 
   src/agent/contracts:
     dependencies:
@@ -2270,6 +2273,11 @@ packages:
 
   boolbase@1.0.0:
     resolution: {integrity: sha512-JZOSA7Mo9sNGB8+UjSgzdLtokWAky1zbztM3WRLCbZ70/3cTANmQmOdR7y2g+J0e2WXywy1yS468tY+IruqEww==}
+
+  bot-avatars@0.2.2:
+    resolution: {integrity: sha512-EszpDsXfbO7SD3Jv/g8/7mt3I4EpN4WuDy6Uk3reuzIgU+dl4iKtk+fuIzGgfXjOraF1jQqUjaDOdcql1khXHQ==}
+    peerDependencies:
+      react: '>=18.0.0'
 
   brace-expansion@1.1.18:
     resolution: {integrity: sha512-Edep/X9fGqVNmzKBVsDYIOtD+z1tuezV70LBjdCst9Tqu76lsnvRiZ6oTic1n+/BIwX6QDGAO94PN4N2SADvtw==}
@@ -9265,6 +9273,10 @@ snapshots:
       multicast-dns: 7.2.5
 
   boolbase@1.0.0: {}
+
+  bot-avatars@0.2.2(react@18.3.1):
+    dependencies:
+      react: 18.3.1
 
   brace-expansion@1.1.18:
     dependencies:

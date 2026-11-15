@@ -65,7 +65,7 @@ const checkImport = (filename, request) => {
     if (issuerLayer === 'agent-browser') {
       if (!request.startsWith('.'))
         assert.ok(
-          ['react', 'react/jsx-runtime', '@ccna/agent-contracts'].includes(request),
+          ['react', 'react/jsx-runtime', '@ccna/agent-contracts', 'bot-avatars'].includes(request),
           'Agent browser UI may only use its declared browser dependencies'
         );
       assert.ok(

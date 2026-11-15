@@ -7,6 +7,8 @@
     "**/*.css"
   ],
   "exports": {
+    "./avatar": "./avatar.js",
+    "./intro": "./intro.js",
     "./panel": "./panel.js",
     "./loader": "./loader.js",
     "./feedback": "./feedback.js",
@@ -17,6 +19,7 @@
     "./clipboard": "./clipboard.js"
   },
   "dependencies": {
+    "bot-avatars": "0.2.2",
     "@ccna/agent-contracts": "workspace:*"
   },
   "peerDependencies": {

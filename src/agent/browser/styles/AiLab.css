@@ -21,6 +21,46 @@
 .ai-lab-dialog * {
   box-sizing: border-box;
 }
+.cli-lab-theme.ai-lab-root--embedded {
+  position: relative;
+  inset: auto;
+  width: 100%;
+  height: 100%;
+  flex: 1;
+  border: 0;
+  box-shadow: none;
+}
+.ai-lab-root--embedded .ai-lab-hint-budget > .ai-lab-info {
+  flex: 0 0 auto;
+  order: 0;
+}
+.ai-lab-root.ai-lab-root--embedded .ai-lab-info .ai-lab-tools > div {
+  top: auto;
+  bottom: calc(100% + 8px);
+  width: 260px;
+  max-width: calc(100vw - 40px);
+  max-height: min(45vh, 320px);
+  overflow-y: auto;
+}
+.ai-lab-root--embedded .ai-lab-tools > summary {
+  display: flex;
+  align-items: center;
+  min-height: 32px;
+  cursor: pointer;
+}
+.ai-lab-embedded-tools {
+  flex: 0 0 auto;
+  padding: 8px 12px;
+  border-top: 1px solid var(--border-subtle);
+}
+.ai-lab-root--embedded .ai-lab-embedded-tools .ai-lab-info {
+  justify-content: flex-end;
+}
+@media (pointer: coarse) {
+  .ai-lab-root--embedded .ai-lab-tools > summary {
+    min-height: 44px;
+  }
+}
 .ai-lab-root :is(h2, h3, p) {
   margin: 0;
 }
@@ -1377,16 +1417,15 @@
   gap: 9px;
   min-height: 42px;
 }
-.ai-lab-root .ai-lab-status--working::before {
-  content: '';
-  flex: 0 0 6px;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: currentColor;
-  animation: ai-status-pulse 1.6s ease-in-out infinite;
+.ai-lab-status-avatar {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 30px;
 }
-.ai-lab-root .ai-lab-status--working > span {
+.ai-lab-status-text {
+  min-width: 0;
+}
+.ai-lab-root .ai-lab-status--working > .ai-lab-status-text {
   animation: ai-lab-message-in 180ms ease-out both;
 }
 .ai-lab-source-count {
@@ -1396,20 +1435,8 @@
   font-weight: 600;
   white-space: nowrap;
 }
-@keyframes ai-status-pulse {
-  0%,
-  100% {
-    opacity: 0.45;
-    transform: scale(0.85);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
 @media (prefers-reduced-motion: reduce) {
-  .ai-lab-root .ai-lab-status--working::before,
-  .ai-lab-root .ai-lab-status--working > span {
+  .ai-lab-root .ai-lab-status--working > .ai-lab-status-text {
     animation: none;
   }
 }
