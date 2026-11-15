@@ -4,6 +4,8 @@ backups
 .vercel
 src/backend/src/generated
 pnpm-lock.yaml
+# Generated protocol data is validated by check:protocol-lessons, including canonical hashes.
+src/frontend/src/features/protocols/data/lessons/*.json
 *.min.js
 *.min.css
 

@@ -1,0 +1,870 @@
+{
+  "id": "tls",
+  "name": "TLS/SSL",
+  "title": "Encryption",
+  "layer": 6,
+  "nodes": [
+    "client",
+    "router",
+    "internet",
+    "web"
+  ],
+  "latency": {
+    "client-web": 0.017
+  },
+  "labels": {
+    "web": [
+      "www.example.com",
+      "203.0.113.10"
+    ]
+  },
+  "legend": [
+    [
+      "green",
+      "TCP"
+    ],
+    [
+      "teal",
+      "TLS handshake"
+    ],
+    [
+      "amber",
+      "From browser"
+    ],
+    [
+      "violet",
+      "From server"
+    ],
+    [
+      null,
+      "Data ACKs not shown"
+    ]
+  ],
+  "overview": {
+    "full": "Transport Layer Security",
+    "description": "TLS puts a secure channel on top of TCP. It proves the server’s identity with a certificate, agrees on fresh keys, then encrypts and authenticates everything sent. HTTPS, secure email and many other protocols run inside it. SSL was the name of its predecessor.",
+    "facts": [
+      [
+        "Sits",
+        "Between TCP and the app"
+      ],
+      [
+        "OSI layer",
+        "Often placed at 6"
+      ],
+      [
+        "Current",
+        "TLS 1.3 (RFC 8446)"
+      ],
+      [
+        "Retired",
+        "SSL 2 and 3, TLS 1.0 and 1.1"
+      ],
+      [
+        "Proves",
+        "Server identity (certificate)"
+      ],
+      [
+        "Port",
+        "The app’s own (443, 993 …)"
+      ]
+    ]
+  },
+  "outro": {
+    "title": "Secure from start to finish",
+    "desc": "One round trip to set up",
+    "text": "One round trip agreed on a version, a cipher and a post-quantum hybrid key. The certificate chain proved who the server was, and every byte after the Server Hello was encrypted and authenticated, right up to the close_notify. Press REPLAY to watch it again.",
+    "facts": [
+      [
+        "Version",
+        "TLS 1.3"
+      ],
+      [
+        "Cipher",
+        "TLS_AES_128_GCM_SHA256"
+      ],
+      [
+        "Key exchange",
+        "X25519MLKEM768"
+      ],
+      [
+        "Setup",
+        "1 round trip"
+      ]
+    ]
+  },
+  "start": {
+    "nodes": [
+      "client"
+    ],
+    "frame": "client"
+  },
+  "steps": [
+    {
+      "title": "Client Hello",
+      "desc": "Everything the browser supports",
+      "detail": "After the TCP handshake the browser lists what it can do: TLS versions, cipher suites, and key shares for the groups it expects, including the post-quantum hybrid X25519MLKEM768. It also names the site (SNI) and the protocols it speaks (ALPN).",
+      "facts": [
+        [
+          "Versions",
+          "TLS 1.3, TLS 1.2"
+        ],
+        [
+          "Key shares",
+          "X25519MLKEM768, X25519"
+        ],
+        [
+          "SNI, ALPN",
+          "www.example.com; h2, http/1.1"
+        ]
+      ],
+      "events": [
+        {
+          "type": "show",
+          "nodes": [
+            "router",
+            "internet",
+            "web"
+          ],
+          "frame": "path"
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "green",
+          "label": "SYN",
+          "payload": [],
+          "row": {
+            "time": "0.000s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.10",
+            "proto": "TCP",
+            "info": "52411 → 443 [SYN] Seq=0",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 52411,
+                "dport": 443,
+                "flags": "S"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "green",
+          "label": "SYN-ACK",
+          "payload": [],
+          "row": {
+            "time": "0.017s",
+            "src": "203.0.113.10",
+            "dst": "192.168.1.10",
+            "proto": "TCP",
+            "info": "443 → 52411 [SYN, ACK] Seq=0 Ack=1",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 443,
+                "dport": 52411,
+                "flags": "SA"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "green",
+          "label": "ACK",
+          "payload": [],
+          "row": {
+            "time": "0.034s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.10",
+            "proto": "TCP",
+            "info": "52411 → 443 [ACK] Seq=1 Ack=1",
+            "len": "60 B",
+            "wire": {
+              "tcp": {
+                "sport": 52411,
+                "dport": 443,
+                "flags": "A"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "teal",
+          "label": "CLIENT HELLO",
+          "payload": [
+            "versions, ciphers, key shares",
+            "SNI www.example.com"
+          ],
+          "row": {
+            "time": "0.034s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.10",
+            "proto": "TLSv1.3",
+            "info": "Client Hello (SNI=www.example.com), 2 segments",
+            "len": "1.9 KB",
+            "wire": {
+              "tcp": {
+                "sport": 52411,
+                "dport": 443,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "handshake",
+                      "legacy": true,
+                      "length": 1845,
+                      "hello": {
+                        "type": 1,
+                        "name": "Client Hello",
+                        "note": "Everything the browser supports. Browsers vary a few details from one connection to the next.",
+                        "fields": [
+                          [
+                            "Server name (SNI)",
+                            "www.example.com"
+                          ],
+                          [
+                            "Versions offered",
+                            "TLS 1.3, TLS 1.2"
+                          ],
+                          [
+                            "Key shares",
+                            "X25519MLKEM768 (1,216 bytes), X25519"
+                          ],
+                          [
+                            "App protocols (ALPN)",
+                            "h2, http/1.1"
+                          ]
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Server Hello",
+      "desc": "Choices made, keys computed",
+      "detail": "The server picks TLS 1.3, the cipher suite and the hybrid group, and sends its own key share. From the two shares both sides compute the same secret without it ever crossing the network. Everything after this message is encrypted.",
+      "facts": [
+        [
+          "Cipher",
+          "TLS_AES_128_GCM_SHA256"
+        ],
+        [
+          "Group",
+          "X25519MLKEM768"
+        ],
+        [
+          "From here on",
+          "Encrypted"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "teal",
+          "label": "SERVER HELLO",
+          "payload": [
+            "TLS 1.3, AES_128_GCM",
+            "its key share"
+          ],
+          "row": {
+            "time": "0.052s",
+            "src": "203.0.113.10",
+            "dst": "192.168.1.10",
+            "proto": "TLSv1.3",
+            "info": "Server Hello, Change Cipher Spec (+ encrypted)",
+            "len": "1514 B",
+            "wire": {
+              "tcp": {
+                "sport": 443,
+                "dport": 52411,
+                "flags": "A",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "handshake",
+                      "length": 1210,
+                      "hello": {
+                        "type": 2,
+                        "name": "Server Hello",
+                        "note": "The server’s choices and its half of the hybrid key exchange.",
+                        "fields": [
+                          [
+                            "Version",
+                            "TLS 1.3"
+                          ],
+                          [
+                            "Cipher suite",
+                            "TLS_AES_128_GCM_SHA256"
+                          ],
+                          [
+                            "Key share",
+                            "X25519MLKEM768 (1,120 bytes)"
+                          ]
+                        ]
+                      }
+                    },
+                    {
+                      "type": "ccs",
+                      "length": 1
+                    },
+                    {
+                      "type": "appdata",
+                      "length": 2724,
+                      "inner": {
+                        "what": "Encrypted Extensions (ALPN: http/1.1), Certificate (the chain), Certificate Verify (the signature), Finished"
+                      }
+                    }
+                  ],
+                  "take": [
+                    0,
+                    1460
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "note",
+          "at": "client",
+          "text": "SHARED SECRET COMPUTED",
+          "tone": "teal"
+        }
+      ]
+    },
+    {
+      "title": "Certificate",
+      "desc": "Who the server is, proven",
+      "detail": "Now encrypted, the flight continues: the chosen protocol (http/1.1), the certificate chain, a signature made with the certificate’s private key, and Finished.",
+      "facts": [
+        [
+          "Chain",
+          "Site → intermediate → root"
+        ],
+        [
+          "Signature",
+          "Proves the private key"
+        ],
+        [
+          "Checked",
+          "Name, dates, trusted root"
+        ]
+      ],
+      "events": [
+        {
+          "type": "stream",
+          "from": "web",
+          "to": "client",
+          "color": "teal",
+          "label": "2 SEGMENTS",
+          "locked": true,
+          "payload": [
+            "encrypted: http/1.1, certificates,",
+            "signature, Finished"
+          ],
+          "packets": [
+            {
+              "type": "packet",
+              "from": "web",
+              "to": "client",
+              "color": "teal",
+              "label": "ENCRYPTED",
+              "payload": [],
+              "row": {
+                "time": "0.052s",
+                "src": "203.0.113.10",
+                "dst": "192.168.1.10",
+                "proto": "TLSv1.3",
+                "info": "Encrypted handshake (continued)",
+                "len": "1514 B",
+                "wire": {
+                  "tcp": {
+                    "sport": 443,
+                    "dport": 52411,
+                    "flags": "A",
+                    "data": {
+                      "tls": [
+                        {
+                          "type": "handshake",
+                          "length": 1210,
+                          "hello": {
+                            "type": 2,
+                            "name": "Server Hello",
+                            "note": "The server’s choices and its half of the hybrid key exchange.",
+                            "fields": [
+                              [
+                                "Version",
+                                "TLS 1.3"
+                              ],
+                              [
+                                "Cipher suite",
+                                "TLS_AES_128_GCM_SHA256"
+                              ],
+                              [
+                                "Key share",
+                                "X25519MLKEM768 (1,120 bytes)"
+                              ]
+                            ]
+                          }
+                        },
+                        {
+                          "type": "ccs",
+                          "length": 1
+                        },
+                        {
+                          "type": "appdata",
+                          "length": 2724,
+                          "inner": {
+                            "what": "Encrypted Extensions (ALPN: http/1.1), Certificate (the chain), Certificate Verify (the signature), Finished"
+                          }
+                        }
+                      ],
+                      "take": [
+                        1460,
+                        2920
+                      ]
+                    }
+                  }
+                }
+              },
+              "locked": true
+            },
+            {
+              "type": "packet",
+              "from": "web",
+              "to": "client",
+              "color": "teal",
+              "label": "ENCRYPTED",
+              "payload": [],
+              "row": {
+                "time": "0.052s",
+                "src": "203.0.113.10",
+                "dst": "192.168.1.10",
+                "proto": "TLSv1.3",
+                "info": "Encrypted handshake (certificate, verify, Finished)",
+                "len": "1084 B",
+                "wire": {
+                  "tcp": {
+                    "sport": 443,
+                    "dport": 52411,
+                    "flags": "PA",
+                    "data": {
+                      "tls": [
+                        {
+                          "type": "handshake",
+                          "length": 1210,
+                          "hello": {
+                            "type": 2,
+                            "name": "Server Hello",
+                            "note": "The server’s choices and its half of the hybrid key exchange.",
+                            "fields": [
+                              [
+                                "Version",
+                                "TLS 1.3"
+                              ],
+                              [
+                                "Cipher suite",
+                                "TLS_AES_128_GCM_SHA256"
+                              ],
+                              [
+                                "Key share",
+                                "X25519MLKEM768 (1,120 bytes)"
+                              ]
+                            ]
+                          }
+                        },
+                        {
+                          "type": "ccs",
+                          "length": 1
+                        },
+                        {
+                          "type": "appdata",
+                          "length": 2724,
+                          "inner": {
+                            "what": "Encrypted Extensions (ALPN: http/1.1), Certificate (the chain), Certificate Verify (the signature), Finished"
+                          }
+                        }
+                      ],
+                      "take": [
+                        2920,
+                        3950
+                      ]
+                    }
+                  }
+                }
+              },
+              "locked": true
+            }
+          ]
+        },
+        {
+          "type": "note",
+          "at": "client",
+          "text": "CHAIN LEADS TO A TRUSTED ROOT",
+          "tone": "green"
+        }
+      ]
+    },
+    {
+      "title": "Finished",
+      "desc": "One round trip, then data",
+      "detail": "The browser sends its own Finished: a check value over everything both sides said, keyed with the new secret, so any tampering with the hellos would show. TLS 1.3 needs one round trip before data flows; TLS 1.2 needed two.",
+      "facts": [
+        [
+          "Round trips",
+          "1 (TLS 1.2: 2)"
+        ],
+        [
+          "Covers",
+          "The whole handshake"
+        ],
+        [
+          "Change Cipher Spec",
+          "For old middleboxes"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "teal",
+          "label": "FINISHED",
+          "payload": [
+            "check value over",
+            "the whole handshake"
+          ],
+          "row": {
+            "time": "0.070s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.10",
+            "proto": "TLSv1.3",
+            "info": "Change Cipher Spec, Finished (encrypted)",
+            "len": "118 B",
+            "wire": {
+              "tcp": {
+                "sport": 52411,
+                "dport": 443,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "ccs",
+                      "length": 1
+                    },
+                    {
+                      "type": "appdata",
+                      "length": 53,
+                      "inner": {
+                        "what": "Finished: a check value over the whole handshake"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "locked": true
+        }
+      ]
+    },
+    {
+      "title": "Encrypted Data",
+      "desc": "Records, tags and tickets",
+      "detail": "HTTP now travels in encrypted records, each with a 16-byte tag that exposes any change. The server also sends two session tickets: next time the browser can resume with one and skip the certificate.",
+      "facts": [
+        [
+          "Per record",
+          "22 bytes of overhead"
+        ],
+        [
+          "Tickets",
+          "2, for resuming later"
+        ],
+        [
+          "Visible",
+          "IPs, SNI, sizes, timing"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "amber",
+          "label": "APP DATA",
+          "payload": [
+            "inside: GET / HTTP/1.1"
+          ],
+          "row": {
+            "time": "0.070s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.10",
+            "proto": "TLSv1.3",
+            "info": "Application Data (HTTP request)",
+            "len": "741 B",
+            "wire": {
+              "tcp": {
+                "sport": 52411,
+                "dport": 443,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "appdata",
+                      "length": 682,
+                      "inner": {
+                        "what": "The HTTP request",
+                        "text": [
+                          "GET / HTTP/1.1",
+                          "Host: www.example.com",
+                          "Connection: keep-alive",
+                          "sec-ch-ua: \"Chromium\";v=\"142\", \"Google Chrome\";v=\"142\", \"Not_A Brand\";v=\"99\"",
+                          "sec-ch-ua-mobile: ?0",
+                          "sec-ch-ua-platform: \"Windows\"",
+                          "Upgrade-Insecure-Requests: 1",
+                          "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+                          "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+                          "Sec-Fetch-Site: none",
+                          "Sec-Fetch-Mode: navigate",
+                          "Sec-Fetch-User: ?1",
+                          "Sec-Fetch-Dest: document",
+                          "Accept-Encoding: gzip, deflate, br, zstd",
+                          "Accept-Language: en-US,en;q=0.9",
+                          ""
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "locked": true
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "violet",
+          "label": "TICKETS",
+          "payload": [
+            "2 session tickets",
+            "for resuming later"
+          ],
+          "row": {
+            "time": "0.087s",
+            "src": "203.0.113.10",
+            "dst": "192.168.1.10",
+            "proto": "TLSv1.3",
+            "info": "New Session Ticket ×2 (encrypted)",
+            "len": "532 B",
+            "wire": {
+              "tcp": {
+                "sport": 443,
+                "dport": 52411,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "appdata",
+                      "length": 234,
+                      "inner": {
+                        "what": "New Session Ticket: lets a later visit resume"
+                      }
+                    },
+                    {
+                      "type": "appdata",
+                      "length": 234,
+                      "inner": {
+                        "what": "New Session Ticket: lets a later visit resume"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "locked": true
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "violet",
+          "label": "APP DATA",
+          "payload": [
+            "inside: HTTP/1.1 200 OK",
+            "9 segments"
+          ],
+          "row": {
+            "time": "0.088s",
+            "src": "203.0.113.10",
+            "dst": "192.168.1.10",
+            "proto": "TLSv1.3",
+            "info": "Application Data (HTTP response), 9 segments",
+            "len": "12.9 KB",
+            "wire": {
+              "tcp": {
+                "sport": 443,
+                "dport": 52411,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "appdata",
+                      "length": 12705,
+                      "inner": {
+                        "what": "The HTTP response, then the 12,500-byte page",
+                        "text": [
+                          "HTTP/1.1 200 OK",
+                          "Date: Sat, 31 Oct 2026 09:41:00 GMT",
+                          "Content-Type: text/html; charset=utf-8",
+                          "Content-Length: 12500",
+                          "Connection: keep-alive",
+                          "Strict-Transport-Security: max-age=31536000",
+                          ""
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "locked": true
+        }
+      ]
+    },
+    {
+      "title": "Closing",
+      "desc": "close_notify, then TCP",
+      "detail": "After 75 idle seconds the server closes the connection. It first sends a close_notify alert, encrypted like everything else, so the browser knows the data ended on purpose and wasn’t cut short by an attacker. Then TCP closes as usual.",
+      "facts": [
+        [
+          "Alert",
+          "close_notify"
+        ],
+        [
+          "Why",
+          "Shows nothing was cut off"
+        ],
+        [
+          "Then",
+          "TCP FIN from both sides"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "violet",
+          "label": "CLOSE_NOTIFY",
+          "payload": [
+            "alert: close_notify",
+            "encrypted"
+          ],
+          "row": {
+            "time": "75.088s",
+            "src": "203.0.113.10",
+            "dst": "192.168.1.10",
+            "proto": "TLSv1.3",
+            "info": "Application Data (inside: close_notify alert)",
+            "len": "78 B",
+            "wire": {
+              "tcp": {
+                "sport": 443,
+                "dport": 52411,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "appdata",
+                      "length": 19,
+                      "inner": {
+                        "what": "Alert: close_notify (the data ends here, on purpose)"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "locked": true
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "green",
+          "label": "FIN",
+          "payload": [],
+          "row": {
+            "time": "75.088s",
+            "src": "203.0.113.10",
+            "dst": "192.168.1.10",
+            "proto": "TCP",
+            "info": "443 → 52411 [FIN, ACK]",
+            "len": "60 B",
+            "wire": {
+              "tcp": {
+                "sport": 443,
+                "dport": 52411,
+                "flags": "FA"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "green",
+          "label": "FIN",
+          "payload": [],
+          "row": {
+            "time": "75.105s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.10",
+            "proto": "TCP",
+            "info": "52411 → 443 [FIN, ACK]",
+            "len": "60 B",
+            "wire": {
+              "tcp": {
+                "sport": 52411,
+                "dport": 443,
+                "flags": "FA"
+              }
+            }
+          },
+          "quick": true
+        }
+      ]
+    }
+  ]
+}

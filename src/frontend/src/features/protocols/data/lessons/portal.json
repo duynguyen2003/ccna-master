@@ -1,0 +1,933 @@
+{
+  "id": "portal",
+  "name": "Captive Portal",
+  "title": "Sign-In",
+  "layer": 7,
+  "nodes": [
+    "client",
+    "router",
+    "internet",
+    "web"
+  ],
+  "latency": {
+    "client-router": 0.002,
+    "client-web": 0.02
+  },
+  "labels": {
+    "router": [
+      "Hotel Router",
+      "192.168.1.1 · captive portal"
+    ],
+    "web": [
+      "msftconnecttest.com",
+      "203.0.113.30"
+    ]
+  },
+  "legend": [
+    [
+      "green",
+      "TCP"
+    ],
+    [
+      "amber",
+      "From the laptop"
+    ],
+    [
+      "violet",
+      "From the router"
+    ],
+    [
+      "blue",
+      "From the test server"
+    ]
+  ],
+  "overview": {
+    "full": "Wi-Fi login pages",
+    "description": "Hotels, cafés, airports and trains often put a login page in front of their Wi-Fi. Until you accept the terms (or pay), the router lets nothing out to the internet. It catches your device’s first plain HTTP request and answers it with a redirect to its own page; your device notices because a test page it knows comes back wrong.",
+    "facts": [
+      [
+        "Where",
+        "Hotels, cafés, airports"
+      ],
+      [
+        "How",
+        "Catches plain HTTP requests"
+      ],
+      [
+        "Noticed by",
+        "Your system’s test page"
+      ],
+      [
+        "Logging in",
+        "Lets your MAC address through"
+      ],
+      [
+        "Newer way",
+        "DHCP option 114 (RFC 8910)"
+      ],
+      [
+        "Described In",
+        "RFC 8952"
+      ]
+    ]
+  },
+  "outro": {
+    "title": "Online",
+    "desc": "Noticed, logged in, let through",
+    "text": "Windows asked a test page for an answer it knows and got a redirect instead, so it knew a portal was in the way and opened the login page. Once the terms were accepted, the router let the laptop through, and the same check came back right. Press REPLAY to watch it again.",
+    "facts": [
+      [
+        "Noticed by",
+        "A plain HTTP test page"
+      ],
+      [
+        "Faked by",
+        "The router (TTL 64)"
+      ],
+      [
+        "Let through",
+        "The laptop’s MAC address"
+      ],
+      [
+        "Open Wi-Fi",
+        "Use HTTPS, or a VPN"
+      ]
+    ]
+  },
+  "start": {
+    "nodes": [
+      "client"
+    ],
+    "frame": "client"
+  },
+  "steps": [
+    {
+      "title": "Joined, Offline",
+      "desc": "An address, but no way out",
+      "detail": "The laptop has joined the hotel’s Wi-Fi, which has no password, and got an address from the router by DHCP. The router answers the laptop itself and passes on its DNS lookups, but drops anything else bound for the internet until the guest has logged in. (An open network also means anyone nearby can read whatever isn’t protected by HTTPS.)",
+      "facts": [
+        [
+          "Address",
+          "192.168.1.10 (by DHCP)"
+        ],
+        [
+          "Wi-Fi password",
+          "None (open network)"
+        ],
+        [
+          "Internet",
+          "Blocked until you log in"
+        ]
+      ],
+      "events": [
+        {
+          "type": "show",
+          "nodes": [
+            "router"
+          ],
+          "frame": "local"
+        },
+        {
+          "type": "note",
+          "at": "client",
+          "text": "CONNECTED, NO INTERNET YET",
+          "tone": "amber"
+        }
+      ]
+    },
+    {
+      "title": "Internet Check",
+      "desc": "Windows checks a test page",
+      "detail": "After joining any network, Windows looks up www.msftconnecttest.com (the router passes the lookup on) and asks it for /connecttest.txt over plain HTTP; the right answer is the text \"Microsoft Connect Test\". The router catches the connection and answers the handshake itself, in the test server’s name. The laptop can’t tell yet.",
+      "facts": [
+        [
+          "Test page",
+          "msftconnecttest.com/connecttest.txt"
+        ],
+        [
+          "Expected",
+          "\"Microsoft Connect Test\""
+        ],
+        [
+          "Answered by",
+          "The router, posing as the server"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "router",
+          "color": "amber",
+          "label": "DNS QUERY",
+          "payload": [
+            "A? www.msftconnecttest.com"
+          ],
+          "row": {
+            "time": "0.000s",
+            "src": "192.168.1.10",
+            "dst": "192.168.1.1",
+            "proto": "DNS",
+            "info": "Standard query A www.msftconnecttest.com",
+            "len": "83 B",
+            "wire": {
+              "udp": {
+                "sport": 58133,
+                "dport": 53,
+                "data": {
+                  "dns": {
+                    "id": 32289,
+                    "rd": true,
+                    "q": [
+                      "www.msftconnecttest.com",
+                      "A"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "router",
+          "to": "client",
+          "color": "violet",
+          "label": "DNS REPLY",
+          "payload": [
+            "A 203.0.113.30"
+          ],
+          "row": {
+            "time": "0.026s",
+            "src": "192.168.1.1",
+            "dst": "192.168.1.10",
+            "proto": "DNS",
+            "info": "Standard query response A 203.0.113.30",
+            "len": "99 B",
+            "wire": {
+              "udp": {
+                "sport": 53,
+                "dport": 58133,
+                "data": {
+                  "dns": {
+                    "id": 32289,
+                    "rd": true,
+                    "q": [
+                      "www.msftconnecttest.com",
+                      "A"
+                    ],
+                    "response": true,
+                    "ra": true,
+                    "an": [
+                      [
+                        "www.msftconnecttest.com",
+                        "A",
+                        46,
+                        "203.0.113.30"
+                      ]
+                    ],
+                    "exampleTtl": true
+                  }
+                }
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "router",
+          "color": "green",
+          "label": "SYN",
+          "payload": [
+            "to 203.0.113.30:80"
+          ],
+          "row": {
+            "time": "0.030s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.30",
+            "proto": "TCP",
+            "info": "52410 → 80 [SYN] Seq=0",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 52410,
+                "dport": 80,
+                "flags": "S"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "router",
+          "to": "client",
+          "color": "green",
+          "label": "SYN-ACK",
+          "payload": [
+            "from \"203.0.113.30\""
+          ],
+          "row": {
+            "time": "0.032s",
+            "src": "203.0.113.30",
+            "dst": "192.168.1.10",
+            "proto": "TCP",
+            "info": "80 → 52410 [SYN, ACK] Seq=0 Ack=1",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 80,
+                "dport": 52410,
+                "flags": "SA"
+              },
+              "ttl": 64,
+              "ttlNote": "Sent with 64 and not lowered at all: it came from the router next door, not from a server 12 routers away."
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "router",
+          "color": "green",
+          "label": "ACK",
+          "payload": [],
+          "row": {
+            "time": "0.034s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.30",
+            "proto": "TCP",
+            "info": "52410 → 80 [ACK] Seq=1 Ack=1",
+            "len": "60 B",
+            "wire": {
+              "tcp": {
+                "sport": 52410,
+                "dport": 80,
+                "flags": "A"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "router",
+          "color": "amber",
+          "label": "GET",
+          "payload": [
+            "/connecttest.txt",
+            "User-Agent: Microsoft NCSI"
+          ],
+          "row": {
+            "time": "0.034s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.30",
+            "proto": "HTTP",
+            "info": "GET /connecttest.txt HTTP/1.1",
+            "len": "165 B",
+            "wire": {
+              "tcp": {
+                "sport": 52410,
+                "dport": 80,
+                "flags": "PA",
+                "data": {
+                  "text": [
+                    "GET /connecttest.txt HTTP/1.1",
+                    "Connection: Close",
+                    "User-Agent: Microsoft NCSI",
+                    "Host: www.msftconnecttest.com",
+                    ""
+                  ],
+                  "name": "HTTP"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Redirected",
+      "desc": "The wrong answer gives it away",
+      "detail": "Instead of the test text, the \"server\" answers 302 Found, pointing to the router’s login page. Its TTL is 64, not lowered at all, because it came straight from the router. Windows sees the wrong answer, marks the network as needing action and opens the browser, whose first request the router redirects the same way, to its login page. This only works with plain HTTP: the router can’t fake an HTTPS page without a certificate error.",
+      "facts": [
+        [
+          "Answer",
+          "302 → 192.168.1.1/login"
+        ],
+        [
+          "Give-away",
+          "TTL 64, from one hop away"
+        ],
+        [
+          "Why HTTP",
+          "HTTPS can’t be faked"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "router",
+          "to": "client",
+          "color": "violet",
+          "label": "302 FOUND",
+          "payload": [
+            "Location: 192.168.1.1/login"
+          ],
+          "row": {
+            "time": "0.037s",
+            "src": "203.0.113.30",
+            "dst": "192.168.1.10",
+            "proto": "HTTP",
+            "info": "HTTP/1.1 302 Found",
+            "len": "150 B",
+            "wire": {
+              "tcp": {
+                "sport": 80,
+                "dport": 52410,
+                "flags": "PA",
+                "data": {
+                  "text": [
+                    "HTTP/1.1 302 Found",
+                    "Location: http://192.168.1.1/login",
+                    "Content-Length: 0",
+                    "Connection: close",
+                    ""
+                  ],
+                  "name": "HTTP"
+                }
+              },
+              "ttl": 64,
+              "ttlNote": "Sent with 64 and not lowered at all: it came from the router next door, not from a server 12 routers away."
+            }
+          }
+        },
+        {
+          "type": "note",
+          "at": "client",
+          "text": "ACTION NEEDED",
+          "tone": "amber"
+        }
+      ]
+    },
+    {
+      "title": "The Login Page",
+      "desc": "Served by the router itself",
+      "detail": "The browser opens http://192.168.1.1/login, a page the router serves itself: the hotel’s name, the terms of use and an Accept button. This connection really does go to the router.",
+      "facts": [
+        [
+          "Page",
+          "http://192.168.1.1/login"
+        ],
+        [
+          "Served by",
+          "The router"
+        ],
+        [
+          "Size",
+          "2,400 bytes of HTML"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "router",
+          "color": "green",
+          "label": "SYN",
+          "payload": [],
+          "row": {
+            "time": "1.500s",
+            "src": "192.168.1.10",
+            "dst": "192.168.1.1",
+            "proto": "TCP",
+            "info": "52411 → 80 [SYN] Seq=0",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 52411,
+                "dport": 80,
+                "flags": "S"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "router",
+          "to": "client",
+          "color": "green",
+          "label": "SYN-ACK",
+          "payload": [],
+          "row": {
+            "time": "1.502s",
+            "src": "192.168.1.1",
+            "dst": "192.168.1.10",
+            "proto": "TCP",
+            "info": "80 → 52411 [SYN, ACK] Seq=0 Ack=1",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 80,
+                "dport": 52411,
+                "flags": "SA"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "router",
+          "color": "green",
+          "label": "ACK",
+          "payload": [],
+          "row": {
+            "time": "1.504s",
+            "src": "192.168.1.10",
+            "dst": "192.168.1.1",
+            "proto": "TCP",
+            "info": "52411 → 80 [ACK] Seq=1 Ack=1",
+            "len": "60 B",
+            "wire": {
+              "tcp": {
+                "sport": 52411,
+                "dport": 80,
+                "flags": "A"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "router",
+          "color": "amber",
+          "label": "GET",
+          "payload": [
+            "/login"
+          ],
+          "row": {
+            "time": "1.504s",
+            "src": "192.168.1.10",
+            "dst": "192.168.1.1",
+            "proto": "HTTP",
+            "info": "GET /login HTTP/1.1",
+            "len": "485 B",
+            "wire": {
+              "tcp": {
+                "sport": 52411,
+                "dport": 80,
+                "flags": "PA",
+                "data": {
+                  "text": [
+                    "GET /login HTTP/1.1",
+                    "Host: 192.168.1.1",
+                    "Connection: keep-alive",
+                    "Upgrade-Insecure-Requests: 1",
+                    "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+                    "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+                    "Accept-Encoding: gzip, deflate",
+                    "Accept-Language: en-US,en;q=0.9",
+                    ""
+                  ],
+                  "name": "HTTP"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "router",
+          "to": "client",
+          "color": "violet",
+          "label": "200 OK",
+          "payload": [
+            "the login page"
+          ],
+          "row": {
+            "time": "1.507s",
+            "src": "192.168.1.1",
+            "dst": "192.168.1.10",
+            "proto": "HTTP",
+            "info": "HTTP/1.1 200 OK (text/html), 2 segments",
+            "len": "2.6 KB",
+            "wire": {
+              "tcp": {
+                "sport": 80,
+                "dport": 52411,
+                "flags": "PA",
+                "data": {
+                  "http": {
+                    "lines": [
+                      "HTTP/1.1 200 OK",
+                      "Content-Type: text/html; charset=utf-8",
+                      "Content-Length: 2400",
+                      "Connection: keep-alive",
+                      ""
+                    ],
+                    "body": 2400,
+                    "what": "the login page"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Accept the Terms",
+      "desc": "The router lets the laptop out",
+      "detail": "Clicking Accept posts a small form back to the router. It adds the laptop’s MAC address to the list of devices allowed out, often for the length of the stay, and redirects the browser on its way.",
+      "facts": [
+        [
+          "Form",
+          "terms=accepted"
+        ],
+        [
+          "Router allows",
+          "The laptop’s MAC address"
+        ],
+        [
+          "Then",
+          "302 to where you were going"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "router",
+          "color": "amber",
+          "label": "POST",
+          "payload": [
+            "/login",
+            "terms=accepted"
+          ],
+          "row": {
+            "time": "9.200s",
+            "src": "192.168.1.10",
+            "dst": "192.168.1.1",
+            "proto": "HTTP",
+            "info": "POST /login HTTP/1.1 (application/x-www-form-urlencoded)",
+            "len": "602 B",
+            "wire": {
+              "tcp": {
+                "sport": 52411,
+                "dport": 80,
+                "flags": "PA",
+                "data": {
+                  "text": [
+                    "POST /login HTTP/1.1",
+                    "Host: 192.168.1.1",
+                    "Connection: keep-alive",
+                    "Content-Length: 14",
+                    "Content-Type: application/x-www-form-urlencoded",
+                    "Origin: http://192.168.1.1",
+                    "Referer: http://192.168.1.1/login",
+                    "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+                    "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+                    "Accept-Encoding: gzip, deflate",
+                    "Accept-Language: en-US,en;q=0.9",
+                    ""
+                  ],
+                  "body": "terms=accepted",
+                  "name": "HTTP"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "router",
+          "to": "client",
+          "color": "violet",
+          "label": "302 FOUND",
+          "payload": [
+            "you’re online"
+          ],
+          "row": {
+            "time": "9.203s",
+            "src": "192.168.1.1",
+            "dst": "192.168.1.10",
+            "proto": "HTTP",
+            "info": "HTTP/1.1 302 Found",
+            "len": "170 B",
+            "wire": {
+              "tcp": {
+                "sport": 80,
+                "dport": 52411,
+                "flags": "PA",
+                "data": {
+                  "text": [
+                    "HTTP/1.1 302 Found",
+                    "Location: http://www.msftconnecttest.com/redirect",
+                    "Content-Length: 0",
+                    "Connection: keep-alive",
+                    ""
+                  ],
+                  "name": "HTTP"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "note",
+          "at": "router",
+          "text": "MAC ADDRESS ALLOWED",
+          "tone": "green"
+        }
+      ]
+    },
+    {
+      "title": "Online",
+      "desc": "The same check, now real",
+      "detail": "Windows checks again. This time the router lets the connection through to the real test server, twelve routers away (its replies arrive with TTL 52), and the answer is the expected text. The network is marked as connected to the internet.",
+      "facts": [
+        [
+          "Answer",
+          "\"Microsoft Connect Test\""
+        ],
+        [
+          "Reply TTL",
+          "52 (64 − 12 routers)"
+        ],
+        [
+          "Status",
+          "Connected to the internet"
+        ]
+      ],
+      "events": [
+        {
+          "type": "show",
+          "nodes": [
+            "internet",
+            "web"
+          ],
+          "frame": "path"
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "green",
+          "label": "SYN",
+          "payload": [],
+          "row": {
+            "time": "9.300s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.30",
+            "proto": "TCP",
+            "info": "52412 → 80 [SYN] Seq=0",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 52412,
+                "dport": 80,
+                "flags": "S"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "green",
+          "label": "SYN-ACK",
+          "payload": [],
+          "row": {
+            "time": "9.320s",
+            "src": "203.0.113.30",
+            "dst": "192.168.1.10",
+            "proto": "TCP",
+            "info": "80 → 52412 [SYN, ACK] Seq=0 Ack=1",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 80,
+                "dport": 52412,
+                "flags": "SA"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "green",
+          "label": "ACK",
+          "payload": [],
+          "row": {
+            "time": "9.340s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.30",
+            "proto": "TCP",
+            "info": "52412 → 80 [ACK] Seq=1 Ack=1",
+            "len": "60 B",
+            "wire": {
+              "tcp": {
+                "sport": 52412,
+                "dport": 80,
+                "flags": "A"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "amber",
+          "label": "GET",
+          "payload": [
+            "/connecttest.txt"
+          ],
+          "row": {
+            "time": "9.340s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.30",
+            "proto": "HTTP",
+            "info": "GET /connecttest.txt HTTP/1.1",
+            "len": "165 B",
+            "wire": {
+              "tcp": {
+                "sport": 52412,
+                "dport": 80,
+                "flags": "PA",
+                "data": {
+                  "text": [
+                    "GET /connecttest.txt HTTP/1.1",
+                    "Connection: Close",
+                    "User-Agent: Microsoft NCSI",
+                    "Host: www.msftconnecttest.com",
+                    ""
+                  ],
+                  "name": "HTTP"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "blue",
+          "label": "200 OK",
+          "payload": [
+            "\"Microsoft Connect Test\""
+          ],
+          "row": {
+            "time": "9.361s",
+            "src": "203.0.113.30",
+            "dst": "192.168.1.10",
+            "proto": "HTTP",
+            "info": "HTTP/1.1 200 OK (text/plain)",
+            "len": "204 B",
+            "wire": {
+              "tcp": {
+                "sport": 80,
+                "dport": 52412,
+                "flags": "PA",
+                "data": {
+                  "text": [
+                    "HTTP/1.1 200 OK",
+                    "Content-Type: text/plain",
+                    "Content-Length: 22",
+                    "Connection: close",
+                    "Cache-Control: max-age=30, must-revalidate",
+                    ""
+                  ],
+                  "body": "Microsoft Connect Test",
+                  "name": "HTTP"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "note",
+          "at": "client",
+          "text": "ONLINE",
+          "tone": "green"
+        }
+      ]
+    }
+  ],
+  "teaching": {
+    "steps": [
+      [
+        "Đã vào mạng, chưa có Internet",
+        "Laptop đã vào Wi-Fi của khách sạn, mạng không có mật khẩu, và nhận địa chỉ từ router qua DHCP. Router tự trả lời laptop và chuyển tiếp các tra cứu DNS, nhưng bỏ mọi thứ khác đi ra Internet cho đến khi khách đăng nhập. (Mạng mở cũng có nghĩa ai ở gần cũng đọc được những gì không được HTTPS bảo vệ.)"
+      ],
+      [
+        "Kiểm tra Internet",
+        "Sau khi vào bất kỳ mạng nào, Windows tra www.msftconnecttest.com (router chuyển tiếp tra cứu) và xin /connecttest.txt qua HTTP thường; câu trả lời đúng là dòng chữ \"Microsoft Connect Test\". Router chặn kết nối và tự trả lời bắt tay, nhân danh máy chủ kiểm tra. Laptop chưa nhận ra."
+      ],
+      [
+        "Bị chuyển hướng",
+        "Thay vì dòng chữ thử, “máy chủ” trả lời 302 Found, chỉ tới trang đăng nhập của router. TTL của nó là 64, hoàn toàn không giảm, vì nó đến thẳng từ router. Windows thấy câu trả lời sai, đánh dấu mạng cần thao tác và mở trình duyệt, yêu cầu đầu tiên của trình duyệt cũng bị router chuyển hướng như vậy, tới trang đăng nhập. Cách này chỉ hiệu quả với HTTP thường: router không giả được trang HTTPS mà không gây lỗi chứng chỉ."
+      ],
+      [
+        "Trang đăng nhập",
+        "Trình duyệt mở http://192.168.1.1/login, trang do chính router phục vụ: tên khách sạn, điều khoản sử dụng và nút Chấp nhận. Kết nối này thật sự đi tới router."
+      ],
+      [
+        "Chấp nhận điều khoản",
+        "Bấm Chấp nhận sẽ gửi một biểu mẫu nhỏ về router. Router thêm địa chỉ MAC của laptop vào danh sách thiết bị được ra ngoài, thường trong suốt thời gian lưu trú, và chuyển trình duyệt đi tiếp."
+      ],
+      [
+        "Đã lên mạng",
+        "Windows kiểm tra lại. Lần này router cho kết nối đi tới máy chủ kiểm tra thật, cách mười hai router (phản hồi đến với TTL 52), và câu trả lời là dòng chữ mong đợi. Mạng được đánh dấu là đã kết nối Internet."
+      ]
+    ],
+    "notes": {
+      "CONNECTED, NO INTERNET YET": "ĐÃ KẾT NỐI, CHƯA CÓ INTERNET",
+      "ACTION NEEDED": "CẦN THAO TÁC",
+      "MAC ADDRESS ALLOWED": "ĐÃ CHO PHÉP ĐỊA CHỈ MAC",
+      "ONLINE": "TRỰC TUYẾN"
+    },
+    "labels": {
+      "Internet": "Internet",
+      "Client": "Máy khách",
+      "Router": "Router",
+      "DNS Resolver": "Bộ phân giải DNS",
+      "Web Server": "Máy chủ web",
+      "Root Server": "Máy chủ gốc",
+      ".com TLD Server": "Máy chủ TLD .com",
+      "Authoritative Server": "Máy chủ có thẩm quyền",
+      "Mail Server": "Máy chủ thư",
+      "Proxy": "Proxy",
+      "App Server": "Máy chủ ứng dụng",
+      "File Server": "Máy chủ tệp",
+      "ISP Router": "Router của ISP",
+      "Transit Router": "Router trung chuyển",
+      "Hosting Router": "Router của nhà lưu trữ",
+      "Their Router": "Router bên kia",
+      "Their Laptop": "Laptop bên kia",
+      "Switch": "Switch",
+      "Access Server": "Máy chủ truy cập",
+      "IP Camera": "Camera IP",
+      "TV Box": "TV box",
+      "Hotel Router": "Router khách sạn",
+      "msftconnecttest.com": "msftconnecttest.com"
+    }
+  }
+}

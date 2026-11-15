@@ -1,0 +1,693 @@
+{
+  "id": "dnssec",
+  "name": "DNSSEC",
+  "title": "Signed Answers",
+  "layer": 7,
+  "nodes": [
+    "client",
+    "router",
+    "internet",
+    "dns",
+    "tld",
+    "auth"
+  ],
+  "latency": {
+    "client-dns": 0.012,
+    "dns-tld": 0.015,
+    "dns-auth": 0.02
+  },
+  "legend": [
+    [
+      "blue",
+      "Question and answer"
+    ],
+    [
+      "amber",
+      "To the name servers"
+    ],
+    [
+      "violet",
+      "Signed answers"
+    ]
+  ],
+  "overview": {
+    "full": "DNS Security Extensions",
+    "description": "Plain DNS answers can be forged: whoever answers first, or sits in the middle, can send a false address. DNSSEC lets a resolver check that an answer really comes from the domain’s owner. Every set of records is signed; each zone’s key is vouched for by its parent, up to the root, whose key resolvers have built in. DNSSEC proves answers are genuine; it doesn’t hide them.",
+    "facts": [
+      [
+        "Layer",
+        "Application (Layer 7)"
+      ],
+      [
+        "Adds records",
+        "RRSIG, DNSKEY, DS"
+      ],
+      [
+        "Checked by",
+        "The resolver"
+      ],
+      [
+        "Trust anchor",
+        "The root’s key (built in)"
+      ],
+      [
+        "Hides queries",
+        "No (that’s DoH)"
+      ],
+      [
+        "Defined In",
+        "RFC 4033, 4034, 4035"
+      ]
+    ]
+  },
+  "outro": {
+    "title": "Answer checked",
+    "desc": "A chain of signatures to the root",
+    "text": "The resolver followed a chain: the address was signed by example.com’s key, that key by its key-signing key, which .com vouched for with a signed DS record, and .com’s key is vouched for by the root, whose key the resolver has built in. A forged answer would have broken the chain. Press REPLAY to watch it again.",
+    "facts": [
+      [
+        "Signatures checked",
+        "3 here (plus cached ones)"
+      ],
+      [
+        "Algorithm",
+        "ECDSA P-256 (13)"
+      ],
+      [
+        "Laptop sees",
+        "The AD flag"
+      ],
+      [
+        "Forged answer",
+        "Fails the check"
+      ]
+    ]
+  },
+  "start": {
+    "nodes": [
+      "client"
+    ],
+    "frame": "client"
+  },
+  "steps": [
+    {
+      "title": "Ask as Usual",
+      "desc": "The laptop’s question doesn’t change",
+      "detail": "The laptop asks its resolver for www.example.com as always. The checking happens at the resolver, which asks the name servers with the DNSSEC OK flag set: send the signatures too.",
+      "facts": [
+        [
+          "Question",
+          "www.example.com, type A"
+        ],
+        [
+          "Checking done by",
+          "The resolver (8.8.8.8)"
+        ],
+        [
+          "Resolver sets",
+          "DNSSEC OK"
+        ]
+      ],
+      "events": [
+        {
+          "type": "show",
+          "nodes": [
+            "router",
+            "internet",
+            "dns"
+          ],
+          "frame": "lookup"
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "dns",
+          "color": "blue",
+          "label": "DNS QUERY",
+          "payload": [
+            "A? www.example.com"
+          ],
+          "row": {
+            "time": "0.000s",
+            "src": "192.168.1.10",
+            "dst": "8.8.8.8",
+            "proto": "DNS",
+            "info": "Standard query A www.example.com",
+            "len": "75 B",
+            "wire": {
+              "udp": {
+                "sport": 61302,
+                "dport": 53,
+                "data": {
+                  "dns": {
+                    "id": 23521,
+                    "rd": true,
+                    "q": [
+                      "www.example.com",
+                      "A"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Signed Answer",
+      "desc": "An RRSIG comes with the A record",
+      "detail": "The resolver already knows example.com’s name server from earlier lookups. That server sends the address with an RRSIG record: a signature over the A record, made with the zone’s private key. The RRSIG says which key signed it (key 47362, the zone-signing key) and when the signature expires. To check it the resolver needs that key.",
+      "facts": [
+        [
+          "Answer",
+          "A 203.0.113.10"
+        ],
+        [
+          "Signature",
+          "RRSIG by key 47362"
+        ],
+        [
+          "Valid",
+          "31 Oct to 21 Nov 2026"
+        ]
+      ],
+      "events": [
+        {
+          "type": "show",
+          "nodes": [
+            "tld",
+            "auth"
+          ],
+          "frame": "full"
+        },
+        {
+          "type": "packet",
+          "from": "dns",
+          "to": "auth",
+          "color": "amber",
+          "label": "A? + DO",
+          "payload": [
+            "www.example.com",
+            "DNSSEC OK"
+          ],
+          "row": {
+            "time": "0.013s",
+            "src": "8.8.8.8",
+            "dst": "198.51.100.53",
+            "proto": "DNS",
+            "info": "Standard query A www.example.com OPT",
+            "len": "86 B",
+            "wire": {
+              "udp": {
+                "sport": 40519,
+                "dport": 53,
+                "data": {
+                  "dns": {
+                    "id": 12039,
+                    "q": [
+                      "www.example.com",
+                      "A"
+                    ],
+                    "edns": {
+                      "size": 1232,
+                      "do": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "auth",
+          "to": "dns",
+          "color": "violet",
+          "label": "A + RRSIG",
+          "payload": [
+            "A 203.0.113.10",
+            "signed by key 47362"
+          ],
+          "row": {
+            "time": "0.033s",
+            "src": "198.51.100.53",
+            "dst": "8.8.8.8",
+            "proto": "DNS",
+            "info": "Standard query response A 203.0.113.10 RRSIG",
+            "len": "209 B",
+            "wire": {
+              "udp": {
+                "sport": 53,
+                "dport": 40519,
+                "data": {
+                  "dns": {
+                    "id": 12039,
+                    "q": [
+                      "www.example.com",
+                      "A"
+                    ],
+                    "edns": {
+                      "size": 1232,
+                      "do": true
+                    },
+                    "response": true,
+                    "aa": true,
+                    "an": [
+                      [
+                        "www.example.com",
+                        "A",
+                        3600,
+                        "203.0.113.10"
+                      ],
+                      [
+                        "www.example.com",
+                        "RRSIG",
+                        3600,
+                        {
+                          "covered": "A",
+                          "labels": 3,
+                          "ttl": 3600,
+                          "tag": 47362,
+                          "signer": "example.com",
+                          "inception": 1793404800,
+                          "expiration": 1795219200
+                        }
+                      ]
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "The Zone’s Keys",
+      "desc": "DNSKEY records, signed too",
+      "detail": "The resolver asks for example.com’s keys. There are two: the zone-signing key (flags 256) that signed the A record, and the key-signing key (flags 257), which signs only the set of keys. With them the resolver checks both signatures. But who says these keys belong to example.com?",
+      "facts": [
+        [
+          "ZSK",
+          "47362, zone-signing (256)"
+        ],
+        [
+          "KSK",
+          "61845, key-signing (257)"
+        ],
+        [
+          "Keys signed by",
+          "The key-signing key"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "dns",
+          "to": "auth",
+          "color": "amber",
+          "label": "DNSKEY?",
+          "payload": [
+            "example.com"
+          ],
+          "row": {
+            "time": "0.054s",
+            "src": "8.8.8.8",
+            "dst": "198.51.100.53",
+            "proto": "DNS",
+            "info": "Standard query DNSKEY example.com OPT",
+            "len": "82 B",
+            "wire": {
+              "udp": {
+                "sport": 40519,
+                "dport": 53,
+                "data": {
+                  "dns": {
+                    "id": 37844,
+                    "q": [
+                      "example.com",
+                      "DNSKEY"
+                    ],
+                    "edns": {
+                      "size": 1232,
+                      "do": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "auth",
+          "to": "dns",
+          "color": "violet",
+          "label": "DNSKEY + RRSIG",
+          "payload": [
+            "two keys",
+            "signed by key 61845"
+          ],
+          "row": {
+            "time": "0.074s",
+            "src": "198.51.100.53",
+            "dst": "8.8.8.8",
+            "proto": "DNS",
+            "info": "Standard query response DNSKEY DNSKEY RRSIG",
+            "len": "349 B",
+            "wire": {
+              "udp": {
+                "sport": 53,
+                "dport": 40519,
+                "data": {
+                  "dns": {
+                    "id": 37844,
+                    "q": [
+                      "example.com",
+                      "DNSKEY"
+                    ],
+                    "edns": {
+                      "size": 1232,
+                      "do": true
+                    },
+                    "response": true,
+                    "aa": true,
+                    "an": [
+                      [
+                        "example.com",
+                        "DNSKEY",
+                        3600,
+                        {
+                          "flags": 256,
+                          "tag": 47362
+                        }
+                      ],
+                      [
+                        "example.com",
+                        "DNSKEY",
+                        3600,
+                        {
+                          "flags": 257,
+                          "tag": 61845
+                        }
+                      ],
+                      [
+                        "example.com",
+                        "RRSIG",
+                        3600,
+                        {
+                          "covered": "DNSKEY",
+                          "labels": 2,
+                          "ttl": 3600,
+                          "tag": 61845,
+                          "signer": "example.com",
+                          "inception": 1793404800,
+                          "expiration": 1795219200
+                        }
+                      ]
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Vouched by .com",
+      "desc": "The parent’s DS record",
+      "detail": "The parent zone answers that. The .com servers hold a DS record for example.com: a hash of its key-signing key, signed with .com’s own key. If the hash matches key 61845, the keys are example.com’s, as far as .com is concerned.",
+      "facts": [
+        [
+          "DS",
+          "Hash of key 61845"
+        ],
+        [
+          "Signed by",
+          ".com (key 19718)"
+        ],
+        [
+          "Matches",
+          "The key-signing key"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "dns",
+          "to": "tld",
+          "color": "amber",
+          "label": "DS?",
+          "payload": [
+            "example.com"
+          ],
+          "row": {
+            "time": "0.095s",
+            "src": "8.8.8.8",
+            "dst": "192.5.6.30",
+            "proto": "DNS",
+            "info": "Standard query DS example.com OPT",
+            "len": "82 B",
+            "wire": {
+              "udp": {
+                "sport": 40519,
+                "dport": 53,
+                "data": {
+                  "dns": {
+                    "id": 19480,
+                    "q": [
+                      "example.com",
+                      "DS"
+                    ],
+                    "edns": {
+                      "size": 1232,
+                      "do": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "tld",
+          "to": "dns",
+          "color": "violet",
+          "label": "DS + RRSIG",
+          "payload": [
+            "hash of key 61845",
+            "signed by .com"
+          ],
+          "row": {
+            "time": "0.110s",
+            "src": "192.5.6.30",
+            "dst": "8.8.8.8",
+            "proto": "DNS",
+            "info": "Standard query response DS RRSIG",
+            "len": "229 B",
+            "wire": {
+              "udp": {
+                "sport": 53,
+                "dport": 40519,
+                "data": {
+                  "dns": {
+                    "id": 19480,
+                    "q": [
+                      "example.com",
+                      "DS"
+                    ],
+                    "edns": {
+                      "size": 1232,
+                      "do": true
+                    },
+                    "response": true,
+                    "aa": true,
+                    "an": [
+                      [
+                        "example.com",
+                        "DS",
+                        86400,
+                        {
+                          "tag": 61845
+                        }
+                      ],
+                      [
+                        "example.com",
+                        "RRSIG",
+                        86400,
+                        {
+                          "covered": "DS",
+                          "labels": 2,
+                          "ttl": 86400,
+                          "tag": 19718,
+                          "signer": "com",
+                          "inception": 1793404800,
+                          "expiration": 1795219200
+                        }
+                      ]
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Up to the Root",
+      "desc": "Where the chain ends",
+      "detail": "The same goes on above: .com’s keys are vouched for by a DS record in the root zone, signed by the root’s key, and that key is built into every validating resolver: the trust anchor. The resolver had those links cached, so the chain is complete: root → .com → example.com → the address.",
+      "facts": [
+        [
+          ".com’s key",
+          "Vouched for by the root"
+        ],
+        [
+          "Root’s key",
+          "Built in (trust anchor)"
+        ],
+        [
+          "Chain",
+          "Root → .com → example.com"
+        ]
+      ],
+      "events": [
+        {
+          "type": "note",
+          "at": "dns",
+          "text": "CHAIN OF TRUST CHECKED",
+          "tone": "green"
+        }
+      ]
+    },
+    {
+      "title": "A Checked Answer",
+      "desc": "With the AD flag",
+      "detail": "The resolver answers the laptop with the address and the AD flag: authenticated data. Had any signature failed, the laptop would have got an error (SERVFAIL) instead of a forged address. DNSSEC doesn’t hide the question or the answer; for that there is DNS over HTTPS.",
+      "facts": [
+        [
+          "Answer",
+          "A 203.0.113.10"
+        ],
+        [
+          "Flag",
+          "AD (authenticated data)"
+        ],
+        [
+          "Bad signature",
+          "SERVFAIL, no address"
+        ]
+      ],
+      "events": [
+        {
+          "type": "camera",
+          "frame": "lookup"
+        },
+        {
+          "type": "packet",
+          "from": "dns",
+          "to": "client",
+          "color": "blue",
+          "label": "DNS REPLY",
+          "payload": [
+            "A 203.0.113.10",
+            "AD: checked"
+          ],
+          "row": {
+            "time": "0.126s",
+            "src": "8.8.8.8",
+            "dst": "192.168.1.10",
+            "proto": "DNS",
+            "info": "Standard query response A 203.0.113.10",
+            "len": "91 B",
+            "wire": {
+              "udp": {
+                "sport": 53,
+                "dport": 61302,
+                "data": {
+                  "dns": {
+                    "id": 23521,
+                    "rd": true,
+                    "q": [
+                      "www.example.com",
+                      "A"
+                    ],
+                    "response": true,
+                    "ra": true,
+                    "ad": true,
+                    "an": [
+                      [
+                        "www.example.com",
+                        "A",
+                        3600,
+                        "203.0.113.10"
+                      ]
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "teaching": {
+    "steps": [
+      [
+        "Hỏi như thường",
+        "Laptop hỏi bộ phân giải www.example.com như mọi khi. Việc kiểm tra diễn ra ở bộ phân giải, nó hỏi các máy chủ tên với cờ DNSSEC OK bật: gửi kèm cả chữ ký."
+      ],
+      [
+        "Câu trả lời có chữ ký",
+        "Bộ phân giải đã biết máy chủ tên của example.com từ các lần tra trước. Máy chủ đó gửi địa chỉ kèm bản ghi RRSIG: chữ ký trên bản ghi A, tạo bằng khóa riêng của vùng. RRSIG cho biết khóa nào đã ký (khóa 47362, khóa ký vùng) và khi nào chữ ký hết hạn. Để kiểm tra, bộ phân giải cần khóa đó."
+      ],
+      [
+        "Khóa của vùng",
+        "Bộ phân giải xin các khóa của example.com. Có hai khóa: khóa ký vùng (cờ 256) đã ký bản ghi A, và khóa ký khóa (cờ 257), chỉ ký tập các khóa. Với chúng, bộ phân giải kiểm tra cả hai chữ ký. Nhưng ai nói các khóa này thuộc về example.com?"
+      ],
+      [
+        ".com bảo đảm",
+        "Vùng cha trả lời câu đó. Các máy chủ .com giữ một bản ghi DS cho example.com: băm của khóa ký khóa của nó, ký bằng khóa của chính .com. Nếu băm khớp với khóa 61845, các khóa là của example.com, theo .com xác nhận."
+      ],
+      [
+        "Lên tới gốc",
+        "Phía trên cũng vậy: các khóa của .com được một bản ghi DS trong vùng gốc bảo đảm, ký bằng khóa của gốc, và khóa đó được tích hợp trong mọi bộ phân giải có xác thực: mốc tin cậy. Bộ phân giải đã lưu đệm các mắt xích đó, nên chuỗi đầy đủ: gốc → .com → example.com → địa chỉ."
+      ],
+      [
+        "Câu trả lời đã kiểm tra",
+        "Bộ phân giải trả lời laptop bằng địa chỉ và cờ AD: dữ liệu đã xác thực. Nếu có chữ ký nào sai, laptop sẽ nhận lỗi (SERVFAIL) thay vì một địa chỉ giả. DNSSEC không giấu câu hỏi hay câu trả lời; việc đó dành cho DNS over HTTPS."
+      ]
+    ],
+    "notes": {
+      "CHAIN OF TRUST CHECKED": "ĐÃ KIỂM TRA CHUỖI TIN CẬY"
+    },
+    "labels": {
+      "Internet": "Internet",
+      "Client": "Máy khách",
+      "Router": "Router",
+      "DNS Resolver": "Bộ phân giải DNS",
+      "Web Server": "Máy chủ web",
+      "Root Server": "Máy chủ gốc",
+      ".com TLD Server": "Máy chủ TLD .com",
+      "Authoritative Server": "Máy chủ có thẩm quyền",
+      "Mail Server": "Máy chủ thư",
+      "Proxy": "Proxy",
+      "App Server": "Máy chủ ứng dụng",
+      "File Server": "Máy chủ tệp",
+      "ISP Router": "Router của ISP",
+      "Transit Router": "Router trung chuyển",
+      "Hosting Router": "Router của nhà lưu trữ",
+      "Their Router": "Router bên kia",
+      "Their Laptop": "Laptop bên kia",
+      "Switch": "Switch",
+      "Access Server": "Máy chủ truy cập",
+      "IP Camera": "Camera IP",
+      "TV Box": "TV box"
+    }
+  }
+}

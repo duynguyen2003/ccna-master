@@ -1,0 +1,78 @@
+.packet-tone--blue {
+  --packet-tone: #2872dd;
+}
+.packet-tone--green {
+  --packet-tone: #118554;
+}
+.packet-tone--amber {
+  --packet-tone: #9b6500;
+}
+.packet-tone--violet {
+  --packet-tone: #7754c9;
+}
+.packet-tone--teal {
+  --packet-tone: #087f8c;
+}
+.packet-tone--slate {
+  --packet-tone: #59708e;
+}
+.packet-tone--danger {
+  --packet-tone: var(--text-danger, #be123c);
+}
+:where([data-theme='dark'], .is-dark) .packet-tone--blue {
+  --packet-tone: #70aaff;
+}
+:where([data-theme='dark'], .is-dark) .packet-tone--green {
+  --packet-tone: #60d7a3;
+}
+:where([data-theme='dark'], .is-dark) .packet-tone--amber {
+  --packet-tone: #f4bf50;
+}
+:where([data-theme='dark'], .is-dark) .packet-tone--violet {
+  --packet-tone: #b89bff;
+}
+:where([data-theme='dark'], .is-dark) .packet-tone--teal {
+  --packet-tone: #68d5df;
+}
+:where([data-theme='dark'], .is-dark) .packet-tone--slate {
+  --packet-tone: #a4b7d0;
+}
+.packet-visual {
+  color: var(--packet-tone);
+}
+.packet-visual__halo {
+  fill: currentColor;
+  opacity: 0.18;
+}
+.packet-visual__core {
+  fill: currentColor;
+  stroke: var(--surface-primary, #fff);
+  stroke-width: 2;
+}
+.packet-visual__body {
+  fill: var(--surface-primary, #fff);
+  stroke: currentColor;
+  stroke-width: 1.5;
+}
+.packet-visual__title-bg {
+  fill: currentColor;
+}
+svg text.packet-visual__title {
+  fill: var(--surface-primary, #fff);
+  font: 700 12px var(--system-ui, sans-serif);
+}
+svg text.packet-visual__field {
+  fill: var(--text-primary, #132336);
+  font:
+    11px ui-monospace,
+    Consolas,
+    monospace;
+}
+.packet-visual__tag {
+  pointer-events: none;
+}
+.packet-visual__lock {
+  fill: none;
+  stroke: var(--surface-primary, #fff);
+  stroke-width: 1.4;
+}

@@ -1,0 +1,931 @@
+{
+  "id": "quic",
+  "name": "QUIC",
+  "title": "HTTP/3 over UDP",
+  "layer": 4,
+  "nodes": [
+    "client",
+    "router",
+    "internet",
+    "web"
+  ],
+  "latency": {
+    "client-web": 0.017
+  },
+  "labels": {
+    "web": [
+      "www.example.com",
+      "203.0.113.10"
+    ]
+  },
+  "legend": [
+    [
+      "teal",
+      "Handshake"
+    ],
+    [
+      "amber",
+      "Request"
+    ],
+    [
+      "violet",
+      "Response"
+    ]
+  ],
+  "overview": {
+    "full": "HTTP/3 over QUIC",
+    "description": "QUIC is a newer transport that runs over UDP and has TLS 1.3 built in. Its first packets do the transport and the encryption handshakes together, so a page request can leave after one round trip. It carries many streams at once, so one lost packet doesn’t hold up the rest, and it survives a change of network. HTTP/3 is HTTP running over QUIC.",
+    "facts": [
+      [
+        "Layer",
+        "Transport (Layer 4)"
+      ],
+      [
+        "Runs over",
+        "UDP, port 443"
+      ],
+      [
+        "Encryption",
+        "TLS 1.3, always"
+      ],
+      [
+        "Handshake",
+        "1 round trip (0 when returning)"
+      ],
+      [
+        "Streams",
+        "Many, independent"
+      ],
+      [
+        "Defined In",
+        "RFC 9000, RFC 9114"
+      ]
+    ]
+  },
+  "outro": {
+    "title": "Page delivered",
+    "desc": "One round trip, then the request",
+    "text": "QUIC folded the transport and TLS handshakes into one round trip, so the request left 36 ms after the first packet; over TCP and TLS it would have waited twice as long. Everything after the first packets was encrypted, even most of each packet’s header. Press REPLAY to watch it again.",
+    "facts": [
+      [
+        "Round trips",
+        "1 before the request (TCP + TLS: 2)"
+      ],
+      [
+        "Datagrams",
+        "10"
+      ],
+      [
+        "Transport",
+        "UDP, port 443"
+      ],
+      [
+        "Lost packet",
+        "Holds up one stream only"
+      ]
+    ]
+  },
+  "start": {
+    "nodes": [
+      "client"
+    ],
+    "frame": "client"
+  },
+  "steps": [
+    {
+      "title": "Choosing HTTP/3",
+      "desc": "An earlier visit said it can",
+      "detail": "On an earlier visit the server answered with Alt-Svc: h3=\":443\", meaning it also speaks HTTP/3 on UDP port 443 (DNS can say the same in an HTTPS record). So this time the browser skips TCP and talks QUIC.",
+      "facts": [
+        [
+          "Learned from",
+          "Alt-Svc header, or DNS"
+        ],
+        [
+          "Transport",
+          "QUIC over UDP 443"
+        ],
+        [
+          "Encryption",
+          "TLS 1.3, built in"
+        ]
+      ],
+      "events": [
+        {
+          "type": "type-url",
+          "text": "www.example.com",
+          "secure": true
+        },
+        {
+          "type": "show",
+          "nodes": [
+            "router",
+            "internet",
+            "web"
+          ],
+          "frame": "path"
+        }
+      ]
+    },
+    {
+      "title": "Initial Packets",
+      "desc": "The Client Hello, straight away",
+      "detail": "There is no separate TCP handshake: the very first packets carry the TLS Client Hello. With its post-quantum key share it is 1,880 bytes, too big for one packet, so it fills two Initial packets. Each datagram is padded to at least 1,200 bytes; a server may send back only three times what it has received, so a forged sender address can’t turn it into an amplifier.",
+      "facts": [
+        [
+          "Datagrams",
+          "2 × 1,250 bytes"
+        ],
+        [
+          "Carries",
+          "The TLS Client Hello"
+        ],
+        [
+          "Readable?",
+          "Yes (Initial keys are public)"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "teal",
+          "label": "INITIAL 1",
+          "payload": [
+            "Client Hello, part 1"
+          ],
+          "row": {
+            "time": "0.000s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.10",
+            "proto": "QUIC",
+            "info": "Initial, CRYPTO (Client Hello, part 1)",
+            "len": "1292 B",
+            "wire": {
+              "udp": {
+                "sport": 59214,
+                "dport": 443,
+                "data": {
+                  "quic": {
+                    "packets": [
+                      {
+                        "type": "initial",
+                        "pn": 0,
+                        "sealed": 1223,
+                        "inner": [
+                          "CRYPTO: Client Hello, bytes 1–1,203 of 1,880",
+                          "SNI www.example.com, ALPN h3, X25519MLKEM768 key share"
+                        ],
+                        "dcid": [
+                          91,
+                          158,
+                          65,
+                          7,
+                          194,
+                          56,
+                          175,
+                          22
+                        ],
+                        "scid": [
+                          138,
+                          47,
+                          96,
+                          212,
+                          19,
+                          126,
+                          149,
+                          177
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "teal",
+          "label": "INITIAL 2",
+          "payload": [
+            "Client Hello, part 2",
+            "padding"
+          ],
+          "row": {
+            "time": "0.000s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.10",
+            "proto": "QUIC",
+            "info": "Initial, CRYPTO (Client Hello, part 2), PADDING",
+            "len": "1292 B",
+            "wire": {
+              "udp": {
+                "sport": 59214,
+                "dport": 443,
+                "data": {
+                  "quic": {
+                    "packets": [
+                      {
+                        "type": "initial",
+                        "pn": 1,
+                        "sealed": 1223,
+                        "inner": [
+                          "CRYPTO: Client Hello, bytes 1,204–1,880",
+                          "PADDING, up to 1,250 bytes"
+                        ],
+                        "dcid": [
+                          91,
+                          158,
+                          65,
+                          7,
+                          194,
+                          56,
+                          175,
+                          22
+                        ],
+                        "scid": [
+                          138,
+                          47,
+                          96,
+                          212,
+                          19,
+                          126,
+                          149,
+                          177
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "quick": true
+        }
+      ]
+    },
+    {
+      "title": "Server Hello",
+      "desc": "Then the certificate, encrypted",
+      "detail": "The server answers with its Server Hello in an Initial packet. Both sides can now work out handshake keys, so the rest (the certificate, its signature and Finished) comes in Handshake packets that only the laptop can read. Four datagrams, well under three times what the laptop sent.",
+      "facts": [
+        [
+          "Initial",
+          "Server Hello"
+        ],
+        [
+          "Handshake",
+          "Certificate, signature, Finished"
+        ],
+        [
+          "Server limit",
+          "3× the bytes received"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "teal",
+          "label": "INITIAL",
+          "payload": [
+            "Server Hello"
+          ],
+          "row": {
+            "time": "0.018s",
+            "src": "203.0.113.10",
+            "dst": "192.168.1.10",
+            "proto": "QUIC",
+            "info": "Initial, ACK, CRYPTO (Server Hello)",
+            "len": "1304 B",
+            "wire": {
+              "udp": {
+                "sport": 443,
+                "dport": 59214,
+                "data": {
+                  "quic": {
+                    "packets": [
+                      {
+                        "type": "initial",
+                        "pn": 0,
+                        "sealed": 1235,
+                        "inner": [
+                          "ACK: packets 0–1 arrived",
+                          "CRYPTO: Server Hello, with its half of the key (1,120 bytes)"
+                        ],
+                        "dcid": [
+                          138,
+                          47,
+                          96,
+                          212,
+                          19,
+                          126,
+                          149,
+                          177
+                        ],
+                        "scid": [
+                          62,
+                          199,
+                          82,
+                          9,
+                          248,
+                          106,
+                          33,
+                          212
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "stream",
+          "from": "web",
+          "to": "client",
+          "color": "teal",
+          "label": "3 HANDSHAKE",
+          "locked": true,
+          "payload": [
+            "certificate, Finished",
+            "encrypted"
+          ],
+          "packets": [
+            {
+              "type": "packet",
+              "from": "web",
+              "to": "client",
+              "color": "teal",
+              "label": "HANDSHAKE 1",
+              "payload": [],
+              "row": {
+                "time": "0.018s",
+                "src": "203.0.113.10",
+                "dst": "192.168.1.10",
+                "proto": "QUIC",
+                "info": "Handshake, CRYPTO (Certificate, part 1)",
+                "len": "1392 B",
+                "wire": {
+                  "udp": {
+                    "sport": 443,
+                    "dport": 59214,
+                    "data": {
+                      "quic": {
+                        "packets": [
+                          {
+                            "type": "handshake",
+                            "pn": 0,
+                            "sealed": 1324,
+                            "inner": [
+                              "CRYPTO: Encrypted Extensions, Certificate (start)"
+                            ],
+                            "dcid": [
+                              138,
+                              47,
+                              96,
+                              212,
+                              19,
+                              126,
+                              149,
+                              177
+                            ],
+                            "scid": [
+                              62,
+                              199,
+                              82,
+                              9,
+                              248,
+                              106,
+                              33,
+                              212
+                            ]
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "type": "packet",
+              "from": "web",
+              "to": "client",
+              "color": "teal",
+              "label": "HANDSHAKE 2",
+              "payload": [],
+              "row": {
+                "time": "0.018s",
+                "src": "203.0.113.10",
+                "dst": "192.168.1.10",
+                "proto": "QUIC",
+                "info": "Handshake, CRYPTO (Certificate, part 2)",
+                "len": "1392 B",
+                "wire": {
+                  "udp": {
+                    "sport": 443,
+                    "dport": 59214,
+                    "data": {
+                      "quic": {
+                        "packets": [
+                          {
+                            "type": "handshake",
+                            "pn": 1,
+                            "sealed": 1324,
+                            "inner": [
+                              "CRYPTO: Certificate (continued)"
+                            ],
+                            "dcid": [
+                              138,
+                              47,
+                              96,
+                              212,
+                              19,
+                              126,
+                              149,
+                              177
+                            ],
+                            "scid": [
+                              62,
+                              199,
+                              82,
+                              9,
+                              248,
+                              106,
+                              33,
+                              212
+                            ]
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "type": "packet",
+              "from": "web",
+              "to": "client",
+              "color": "teal",
+              "label": "HANDSHAKE 3",
+              "payload": [],
+              "row": {
+                "time": "0.018s",
+                "src": "203.0.113.10",
+                "dst": "192.168.1.10",
+                "proto": "QUIC",
+                "info": "Handshake, CRYPTO (Certificate Verify, Finished)",
+                "len": "272 B",
+                "wire": {
+                  "udp": {
+                    "sport": 443,
+                    "dport": 59214,
+                    "data": {
+                      "quic": {
+                        "packets": [
+                          {
+                            "type": "handshake",
+                            "pn": 2,
+                            "sealed": 204,
+                            "inner": [
+                              "CRYPTO: Certificate Verify, Finished"
+                            ],
+                            "dcid": [
+                              138,
+                              47,
+                              96,
+                              212,
+                              19,
+                              126,
+                              149,
+                              177
+                            ],
+                            "scid": [
+                              62,
+                              199,
+                              82,
+                              9,
+                              248,
+                              106,
+                              33,
+                              212
+                            ]
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Finished + GET",
+      "desc": "The request, one round trip in",
+      "detail": "The laptop checks the certificate and sends its Finished, and in the same moment its first HTTP/3 request in a 1-RTT packet: a HEADERS frame on stream 0, its headers compressed with QPACK. One round trip after the first packet, the request is on its way; TCP and TLS together would need two.",
+      "facts": [
+        [
+          "Round trips",
+          "1 (TCP + TLS: 2)"
+        ],
+        [
+          "Request",
+          "HEADERS on stream 0"
+        ],
+        [
+          "Headers",
+          "Compressed (QPACK)"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "teal",
+          "label": "FINISHED",
+          "payload": [
+            "Initial + Handshake"
+          ],
+          "row": {
+            "time": "0.036s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.10",
+            "proto": "QUIC",
+            "info": "Initial, ACK, PADDING; Handshake, ACK, CRYPTO (Finished)",
+            "len": "1292 B",
+            "wire": {
+              "udp": {
+                "sport": 59214,
+                "dport": 443,
+                "data": {
+                  "quic": {
+                    "packets": [
+                      {
+                        "type": "initial",
+                        "pn": 2,
+                        "sealed": 1138,
+                        "inner": [
+                          "ACK: the server’s Initial arrived",
+                          "PADDING, up to 1,250 bytes"
+                        ],
+                        "dcid": [
+                          62,
+                          199,
+                          82,
+                          9,
+                          248,
+                          106,
+                          33,
+                          212
+                        ],
+                        "scid": [
+                          138,
+                          47,
+                          96,
+                          212,
+                          19,
+                          126,
+                          149,
+                          177
+                        ]
+                      },
+                      {
+                        "type": "handshake",
+                        "pn": 0,
+                        "sealed": 59,
+                        "inner": [
+                          "ACK: the Handshake packets arrived",
+                          "CRYPTO: Finished"
+                        ],
+                        "dcid": [
+                          62,
+                          199,
+                          82,
+                          9,
+                          248,
+                          106,
+                          33,
+                          212
+                        ],
+                        "scid": [
+                          138,
+                          47,
+                          96,
+                          212,
+                          19,
+                          126,
+                          149,
+                          177
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "quick": true,
+          "locked": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "amber",
+          "label": "GET /",
+          "payload": [
+            "HTTP/3, stream 0"
+          ],
+          "row": {
+            "time": "0.036s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.10",
+            "proto": "QUIC",
+            "info": "1-RTT, HTTP/3 HEADERS (GET /)",
+            "len": "392 B",
+            "wire": {
+              "udp": {
+                "sport": 59214,
+                "dport": 443,
+                "data": {
+                  "quic": {
+                    "packets": [
+                      {
+                        "type": "1rtt",
+                        "pn": 0,
+                        "sealed": 340,
+                        "inner": [
+                          "STREAM 2: SETTINGS (the control stream)",
+                          "STREAM 0: HEADERS, GET / (QPACK-compressed)"
+                        ],
+                        "dcid": [
+                          62,
+                          199,
+                          82,
+                          9,
+                          248,
+                          106,
+                          33,
+                          212
+                        ],
+                        "scid": [
+                          138,
+                          47,
+                          96,
+                          212,
+                          19,
+                          126,
+                          149,
+                          177
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "locked": true
+        }
+      ]
+    },
+    {
+      "title": "The Response",
+      "desc": "On its own stream",
+      "detail": "The server confirms the handshake is over (HANDSHAKE_DONE) and answers on stream 0: headers, then the page. Every request gets its own stream, so a lost packet holds up only the stream it belonged to. Over TCP one missing segment stalls everything behind it.",
+      "facts": [
+        [
+          "HTTP/3",
+          "Frames on QUIC streams"
+        ],
+        [
+          "Lost packet",
+          "Holds up one stream"
+        ],
+        [
+          "Encrypted",
+          "All but a few header bits"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "violet",
+          "label": "200",
+          "payload": [
+            "HTTP/3, stream 0",
+            "the page"
+          ],
+          "row": {
+            "time": "0.054s",
+            "src": "203.0.113.10",
+            "dst": "192.168.1.10",
+            "proto": "QUIC",
+            "info": "1-RTT, HANDSHAKE_DONE, HTTP/3 HEADERS (200), DATA",
+            "len": "1257 B",
+            "wire": {
+              "udp": {
+                "sport": 443,
+                "dport": 59214,
+                "data": {
+                  "quic": {
+                    "packets": [
+                      {
+                        "type": "1rtt",
+                        "pn": 0,
+                        "sealed": 1205,
+                        "inner": [
+                          "HANDSHAKE_DONE: the handshake is over",
+                          "STREAM 3: SETTINGS",
+                          "STREAM 0: HEADERS 200, then DATA: the page (1,000 bytes)"
+                        ],
+                        "dcid": [
+                          138,
+                          47,
+                          96,
+                          212,
+                          19,
+                          126,
+                          149,
+                          177
+                        ],
+                        "scid": [
+                          62,
+                          199,
+                          82,
+                          9,
+                          248,
+                          106,
+                          33,
+                          212
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "locked": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "amber",
+          "label": "ACK",
+          "payload": [],
+          "row": {
+            "time": "0.071s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.10",
+            "proto": "QUIC",
+            "info": "1-RTT, ACK",
+            "len": "73 B",
+            "wire": {
+              "udp": {
+                "sport": 59214,
+                "dport": 443,
+                "data": {
+                  "quic": {
+                    "packets": [
+                      {
+                        "type": "1rtt",
+                        "pn": 1,
+                        "sealed": 21,
+                        "inner": [
+                          "ACK: the response arrived"
+                        ],
+                        "dcid": [
+                          62,
+                          199,
+                          82,
+                          9,
+                          248,
+                          106,
+                          33,
+                          212
+                        ],
+                        "scid": [
+                          138,
+                          47,
+                          96,
+                          212,
+                          19,
+                          126,
+                          149,
+                          177
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "quick": true,
+          "locked": true
+        },
+        {
+          "type": "render"
+        }
+      ]
+    },
+    {
+      "title": "New Network",
+      "desc": "Known by ID, not by address",
+      "detail": "A QUIC connection is known by its connection IDs, not by addresses and ports. If the laptop moves from Wi-Fi to a phone’s hotspot, its address changes but the connection carries on: the server checks the new path and continues. And on the next visit the browser can send its request in its very first packets (0-RTT).",
+      "facts": [
+        [
+          "Known by",
+          "Connection ID"
+        ],
+        [
+          "New address",
+          "The connection carries on"
+        ],
+        [
+          "Next visit",
+          "0-RTT: request at once"
+        ]
+      ],
+      "events": [
+        {
+          "type": "note",
+          "at": "client",
+          "text": "SAME CONNECTION ON ANY NETWORK",
+          "tone": "navy"
+        }
+      ]
+    }
+  ],
+  "teaching": {
+    "steps": [
+      [
+        "Chọn HTTP/3",
+        "Ở lần truy cập trước, máy chủ trả lời với Alt-Svc: h3=\":443\", nghĩa là nó cũng nói HTTP/3 trên cổng UDP 443 (DNS cũng có thể nói vậy trong bản ghi HTTPS). Nên lần này trình duyệt bỏ qua TCP và dùng QUIC."
+      ],
+      [
+        "Gói Initial",
+        "Không có bắt tay TCP riêng: ngay các gói đầu tiên đã mang TLS Client Hello. Với phần khóa hậu lượng tử, nó dài 1,880 byte, quá lớn cho một gói, nên chiếm hai gói Initial. Mỗi datagram được đệm tới ít nhất 1,200 byte; máy chủ chỉ được gửi lại tối đa gấp ba những gì nó nhận, nên địa chỉ gửi giả mạo không biến nó thành bộ khuếch đại."
+      ],
+      [
+        "Server Hello",
+        "Máy chủ trả lời bằng Server Hello trong một gói Initial. Giờ cả hai bên tính được khóa bắt tay, nên phần còn lại (chứng chỉ, chữ ký và Finished) đến trong các gói Handshake mà chỉ laptop đọc được. Bốn datagram, thấp hơn nhiều so với gấp ba những gì laptop gửi."
+      ],
+      [
+        "Finished + GET",
+        "Laptop kiểm tra chứng chỉ và gửi Finished, đồng thời gửi luôn yêu cầu HTTP/3 đầu tiên trong một gói 1-RTT: một khung HEADERS trên luồng 0, với tiêu đề nén bằng QPACK. Một lượt khứ hồi sau gói đầu, yêu cầu đã lên đường; TCP và TLS cộng lại cần hai."
+      ],
+      [
+        "Phản hồi",
+        "Máy chủ xác nhận bắt tay đã xong (HANDSHAKE_DONE) và trả lời trên luồng 0: tiêu đề, rồi trang. Mỗi yêu cầu có luồng riêng, nên mất gói chỉ làm nghẽn luồng chứa nó. Với TCP, thiếu một đoạn là mọi thứ phía sau phải chờ."
+      ],
+      [
+        "Mạng mới",
+        "Kết nối QUIC được nhận diện bằng ID kết nối, không bằng địa chỉ và cổng. Nếu laptop chuyển từ Wi-Fi sang điểm phát của điện thoại, địa chỉ đổi nhưng kết nối vẫn tiếp tục: máy chủ kiểm tra đường mới và đi tiếp. Và ở lần truy cập sau, trình duyệt có thể gửi yêu cầu ngay trong các gói đầu tiên (0-RTT)."
+      ]
+    ],
+    "notes": {
+      "SAME CONNECTION ON ANY NETWORK": "CÙNG KẾT NỐI TRÊN MỌI MẠNG"
+    },
+    "labels": {
+      "Internet": "Internet",
+      "Client": "Máy khách",
+      "Router": "Router",
+      "DNS Resolver": "Bộ phân giải DNS",
+      "Web Server": "Máy chủ web",
+      "Root Server": "Máy chủ gốc",
+      ".com TLD Server": "Máy chủ TLD .com",
+      "Authoritative Server": "Máy chủ có thẩm quyền",
+      "Mail Server": "Máy chủ thư",
+      "Proxy": "Proxy",
+      "App Server": "Máy chủ ứng dụng",
+      "File Server": "Máy chủ tệp",
+      "ISP Router": "Router của ISP",
+      "Transit Router": "Router trung chuyển",
+      "Hosting Router": "Router của nhà lưu trữ",
+      "Their Router": "Router bên kia",
+      "Their Laptop": "Laptop bên kia",
+      "Switch": "Switch",
+      "Access Server": "Máy chủ truy cập",
+      "IP Camera": "Camera IP",
+      "TV Box": "TV box",
+      "www.example.com": "www.example.com"
+    }
+  }
+}

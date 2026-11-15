@@ -1,0 +1,563 @@
+{
+  "routes": {
+    "client>dns": [
+      "client>router",
+      "router>internet",
+      "internet>dns"
+    ],
+    "dns>client": [
+      "dns>internet",
+      "internet>router",
+      "router>client"
+    ],
+    "client>web": [
+      "client>router",
+      "router>internet",
+      "internet>web"
+    ],
+    "web>client": [
+      "web>internet",
+      "internet>router",
+      "router>client"
+    ],
+    "dns>root": [
+      "dns>internet",
+      "internet>root"
+    ],
+    "root>dns": [
+      "root>internet",
+      "internet>dns"
+    ],
+    "dns>tld": [
+      "dns>internet",
+      "internet>tld"
+    ],
+    "tld>dns": [
+      "tld>internet",
+      "internet>dns"
+    ],
+    "dns>auth": [
+      "dns>internet",
+      "internet>auth"
+    ],
+    "auth>dns": [
+      "auth>internet",
+      "internet>dns"
+    ],
+    "client>router": [
+      "client>router"
+    ],
+    "router>client": [
+      "router>client"
+    ],
+    "client>internet": [
+      "client>router",
+      "router>internet"
+    ],
+    "internet>client": [
+      "internet>router",
+      "router>client"
+    ],
+    "router>web": [
+      "router>internet",
+      "internet>web"
+    ],
+    "web>router": [
+      "web>internet",
+      "internet>router"
+    ],
+    "web>dns": [
+      "web>internet",
+      "internet>dns"
+    ],
+    "dns>web": [
+      "dns>internet",
+      "internet>web"
+    ],
+    "web>mx": [
+      "web>internet",
+      "internet>mx"
+    ],
+    "mx>web": [
+      "mx>internet",
+      "internet>web"
+    ],
+    "client>relay": [
+      "client>router",
+      "router>internet",
+      "internet>relay"
+    ],
+    "relay>client": [
+      "relay>internet",
+      "internet>router",
+      "router>client"
+    ],
+    "relay>web": [
+      "relay>internet",
+      "internet>web"
+    ],
+    "web>relay": [
+      "web>internet",
+      "internet>relay"
+    ],
+    "web>app": [
+      "web>app"
+    ],
+    "app>web": [
+      "app>web"
+    ],
+    "client>lan": [
+      "client>router",
+      "router>lan"
+    ],
+    "lan>client": [
+      "lan>router",
+      "router>client"
+    ],
+    "router>lan": [
+      "router>lan"
+    ],
+    "lan>router": [
+      "lan>router"
+    ],
+    "client>switch": [
+      "client>switch"
+    ],
+    "switch>client": [
+      "switch>client"
+    ],
+    "switch>lan": [
+      "switch>lan"
+    ],
+    "lan>switch": [
+      "lan>switch"
+    ],
+    "switch>router": [
+      "switch>router"
+    ],
+    "router>switch": [
+      "router>switch"
+    ],
+    "router>isp": [
+      "router>isp"
+    ],
+    "isp>router": [
+      "isp>router"
+    ],
+    "router>bng": [
+      "router>bng"
+    ],
+    "bng>router": [
+      "bng>router"
+    ],
+    "client>cam": [
+      "client>router",
+      "router>cam"
+    ],
+    "cam>client": [
+      "cam>router",
+      "router>client"
+    ],
+    "switch>stb": [
+      "switch>stb"
+    ],
+    "stb>switch": [
+      "stb>switch"
+    ],
+    "isp>transit": [
+      "isp>transit"
+    ],
+    "transit>isp": [
+      "transit>isp"
+    ],
+    "hosting>transit": [
+      "hosting>transit"
+    ],
+    "transit>hosting": [
+      "transit>hosting"
+    ],
+    "client>app": [
+      "client>router",
+      "router>isp",
+      "isp>transit",
+      "transit>hosting",
+      "hosting>app"
+    ],
+    "app>client": [
+      "app>hosting",
+      "hosting>transit",
+      "transit>isp",
+      "isp>router",
+      "router>client"
+    ],
+    "client>peer": [
+      "client>router",
+      "router>internet",
+      "internet>remote",
+      "remote>peer"
+    ],
+    "peer>client": [
+      "peer>remote",
+      "remote>internet",
+      "internet>router",
+      "router>client"
+    ],
+    "peer>web": [
+      "peer>remote",
+      "remote>internet",
+      "internet>web"
+    ],
+    "web>peer": [
+      "web>internet",
+      "internet>remote",
+      "remote>peer"
+    ],
+    "peer>relay": [
+      "peer>remote",
+      "remote>internet",
+      "internet>relay"
+    ],
+    "relay>peer": [
+      "relay>internet",
+      "internet>remote",
+      "remote>peer"
+    ]
+  },
+  "positions": {
+    "client": [
+      214,
+      446
+    ],
+    "dns": [
+      701,
+      180
+    ],
+    "router": [
+      440,
+      360
+    ],
+    "internet": [
+      732,
+      458
+    ],
+    "web": [
+      812,
+      206
+    ],
+    "root": [
+      960,
+      296
+    ],
+    "tld": [
+      1005,
+      426
+    ],
+    "auth": [
+      960,
+      571
+    ],
+    "mx": [
+      1010,
+      378
+    ],
+    "relay": [
+      701,
+      180
+    ],
+    "app": [
+      985,
+      303
+    ],
+    "lan": [
+      330,
+      212
+    ],
+    "isp": [
+      595,
+      451
+    ],
+    "transit": [
+      755,
+      351
+    ],
+    "hosting": [
+      880,
+      451
+    ],
+    "remote": [
+      985,
+      351
+    ],
+    "peer": [
+      1186,
+      430
+    ],
+    "switch": [
+      282,
+      338
+    ],
+    "bng": [
+      700,
+      483
+    ],
+    "cam": [
+      332,
+      208
+    ],
+    "stb": [
+      330,
+      200
+    ]
+  },
+  "labels": {
+    "internet": [
+      "Internet",
+      ""
+    ],
+    "client": [
+      "Client",
+      "192.168.1.10"
+    ],
+    "router": [
+      "Router",
+      "192.168.1.1"
+    ],
+    "dns": [
+      "DNS Resolver",
+      "8.8.8.8"
+    ],
+    "web": [
+      "Web Server",
+      "203.0.113.10"
+    ],
+    "root": [
+      "Root Server",
+      "198.41.0.4"
+    ],
+    "tld": [
+      ".com TLD Server",
+      "192.5.6.30"
+    ],
+    "auth": [
+      "Authoritative Server",
+      "198.51.100.53"
+    ],
+    "mx": [
+      "Mail Server",
+      "198.51.100.25"
+    ],
+    "relay": [
+      "Proxy",
+      "192.0.2.80"
+    ],
+    "app": [
+      "App Server",
+      "10.0.0.20"
+    ],
+    "lan": [
+      "File Server",
+      "192.168.1.20"
+    ],
+    "isp": [
+      "ISP Router",
+      "AS 64500"
+    ],
+    "transit": [
+      "Transit Router",
+      "AS 64510"
+    ],
+    "hosting": [
+      "Hosting Router",
+      "AS 64511"
+    ],
+    "remote": [
+      "Their Router",
+      "198.51.100.200"
+    ],
+    "peer": [
+      "Their Laptop",
+      "192.168.0.23"
+    ],
+    "switch": [
+      "Switch",
+      "8 ports"
+    ],
+    "bng": [
+      "Access Server",
+      "198.51.100.1"
+    ],
+    "cam": [
+      "IP Camera",
+      "192.168.1.64"
+    ],
+    "stb": [
+      "TV Box",
+      "192.168.1.30"
+    ]
+  },
+  "frames": {
+    "client": [
+      "client"
+    ],
+    "local": [
+      "client",
+      "router"
+    ],
+    "lookup": [
+      "client",
+      "router",
+      "internet",
+      "dns"
+    ],
+    "root": [
+      "client",
+      "router",
+      "internet",
+      "dns",
+      "root"
+    ],
+    "tld": [
+      "client",
+      "router",
+      "internet",
+      "dns",
+      "root",
+      "tld"
+    ],
+    "path": [
+      "client",
+      "router",
+      "internet",
+      "web"
+    ],
+    "mailhost": [
+      "client",
+      "router",
+      "internet",
+      "dns",
+      "web"
+    ],
+    "servers": [
+      "internet",
+      "dns",
+      "web",
+      "mx"
+    ],
+    "relay": [
+      "client",
+      "router",
+      "internet",
+      "relay"
+    ],
+    "backend": [
+      "internet",
+      "web",
+      "app"
+    ],
+    "office": [
+      "client",
+      "router",
+      "lan"
+    ],
+    "bgp": [
+      "isp",
+      "transit",
+      "hosting",
+      "app"
+    ],
+    "route": [
+      "client",
+      "router",
+      "isp",
+      "transit",
+      "hosting",
+      "app"
+    ],
+    "call": [
+      "client",
+      "router",
+      "internet",
+      "relay",
+      "web",
+      "remote",
+      "peer"
+    ],
+    "switched": [
+      "client",
+      "switch",
+      "lan",
+      "router"
+    ],
+    "uplink": [
+      "client",
+      "switch",
+      "lan",
+      "router",
+      "isp"
+    ],
+    "access": [
+      "client",
+      "router",
+      "bng"
+    ],
+    "line": [
+      "router",
+      "bng"
+    ],
+    "camera": [
+      "client",
+      "router",
+      "cam"
+    ],
+    "tvbox": [
+      "client",
+      "switch",
+      "stb",
+      "router"
+    ],
+    "tvlink": [
+      "client",
+      "switch",
+      "stb",
+      "router",
+      "isp"
+    ],
+    "sipserver": [
+      "client",
+      "router",
+      "internet",
+      "relay"
+    ],
+    "sip": [
+      "client",
+      "router",
+      "internet",
+      "relay",
+      "remote",
+      "peer"
+    ],
+    "full": [
+      "client",
+      "switch",
+      "router",
+      "lan",
+      "cam",
+      "stb",
+      "isp",
+      "bng",
+      "transit",
+      "hosting",
+      "dns",
+      "relay",
+      "internet",
+      "web",
+      "app",
+      "root",
+      "tld",
+      "auth",
+      "mx",
+      "remote",
+      "peer"
+    ]
+  }
+}

@@ -92,6 +92,30 @@ const deferred = () => {
   return { promise, resolve };
 };
 
+test('embedded protocol observation does not update learning progress or expose its mapping marker', async () => {
+  api.getModulesByCourse.mockResolvedValue([
+    {
+      id: 2,
+      title: 'Chương 1',
+      canAccess: true,
+      lessons: [
+        {
+          id: 11,
+          title: 'DNS basics',
+          canAccess: true,
+          contentHtml: 'Read this\n\n<!-- netmaster-protocol:dns -->',
+        },
+      ],
+    },
+  ]);
+  render(<Lesson />);
+  expect(await screen.findByRole('region', { name: 'Mô phỏng DNS' })).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Sự kiện tiếp theo' }));
+  expect(api.updateUserProgress).not.toHaveBeenCalled();
+  expect(screen.queryByText(/<!-- netmaster-protocol/)).not.toBeInTheDocument();
+  expect(screen.getByText('Read this')).toBeInTheDocument();
+});
+
 const gatedLessons = () => [
   {
     id: 11,

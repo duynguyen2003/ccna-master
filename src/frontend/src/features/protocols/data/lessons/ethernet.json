@@ -1,0 +1,658 @@
+{
+  "id": "ethernet",
+  "name": "Ethernet",
+  "title": "Frames & Switches",
+  "layer": 2,
+  "nodes": [
+    "client",
+    "switch",
+    "lan",
+    "router",
+    "isp"
+  ],
+  "links": [
+    "client-switch",
+    "switch-lan",
+    "switch-router",
+    "router-isp"
+  ],
+  "lifelines": [
+    "client",
+    "switch",
+    "lan",
+    "router",
+    "isp"
+  ],
+  "latency": {
+    "client-switch": 0.000001,
+    "switch-lan": 0.000001,
+    "switch-router": 0.000001,
+    "router-isp": 0.002
+  },
+  "labels": {
+    "client": [
+      "Client",
+      "MAC …:53:10"
+    ],
+    "lan": [
+      "NAS",
+      "MAC …:53:20"
+    ],
+    "router": [
+      "Router",
+      "MAC …:53:01"
+    ],
+    "isp": [
+      "ISP Router",
+      "MAC …:53:fe"
+    ]
+  },
+  "legend": [
+    [
+      "slate",
+      "ARP"
+    ],
+    [
+      "green",
+      "To the NAS"
+    ],
+    [
+      "amber",
+      "To the internet"
+    ]
+  ],
+  "overview": {
+    "full": "Ethernet and Switches",
+    "description": "Ethernet carries almost every wired network, and Wi-Fi access points pass their traffic on to it. Every network card has a 48-bit MAC address. A frame says which card it is for and which card sent it, and a switch delivers it: it learns which port each address is behind from the frames it sees, and sends each frame only where it needs to go.",
+    "facts": [
+      [
+        "Layer",
+        "Data Link (Layer 2)"
+      ],
+      [
+        "Address",
+        "48-bit MAC"
+      ],
+      [
+        "Header",
+        "14 bytes, plus a 4-byte FCS"
+      ],
+      [
+        "Frame size",
+        "64 to 1,518 bytes"
+      ],
+      [
+        "Speeds",
+        "10 Mb/s to 800 Gb/s"
+      ],
+      [
+        "Defined In",
+        "IEEE 802.3"
+      ]
+    ]
+  },
+  "outro": {
+    "title": "Switched",
+    "desc": "Learned, flooded, forwarded",
+    "text": "The switch learned where the laptop and the NAS were from the frames they sent, flooded only the broadcast, and sent every other frame out of just the port it needed. MAC addresses carried each frame across one link; at the router the packet moved into a new frame. Press REPLAY to watch it again.",
+    "facts": [
+      [
+        "Learned",
+        "2 addresses, 2 ports"
+      ],
+      [
+        "Flooded",
+        "Only the broadcast"
+      ],
+      [
+        "Frame",
+        "14-byte header, 4-byte FCS"
+      ],
+      [
+        "Forgets after",
+        "5 minutes unused"
+      ]
+    ]
+  },
+  "start": {
+    "nodes": [
+      "client"
+    ],
+    "frame": "client"
+  },
+  "steps": [
+    {
+      "title": "Who Has the NAS?",
+      "desc": "A broadcast asks for a MAC address",
+      "detail": "The laptop wants to reach the NAS at 192.168.1.20. On a local network, frames are delivered by MAC address, and the laptop doesn’t know the NAS’s yet. So it sends an ARP request to ff:ff:ff:ff:ff:ff, the broadcast address, into port 1 of the switch.",
+      "facts": [
+        [
+          "Looking for",
+          "192.168.1.20"
+        ],
+        [
+          "Sent to",
+          "ff:ff:ff:ff:ff:ff (all)"
+        ],
+        [
+          "Into",
+          "Switch port 1"
+        ]
+      ],
+      "events": [
+        {
+          "type": "show",
+          "nodes": [
+            "switch",
+            "lan",
+            "router"
+          ],
+          "frame": "switched"
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "switch",
+          "color": "slate",
+          "label": "ARP REQUEST",
+          "payload": [
+            "who has 192.168.1.20?",
+            "to ff:ff:ff:ff:ff:ff"
+          ],
+          "row": {
+            "time": "0.000000s",
+            "src": "00:00:5e:00:53:10",
+            "dst": "Broadcast",
+            "proto": "ARP",
+            "info": "In port 1 · Who has 192.168.1.20? Tell 192.168.1.10",
+            "len": "60 B",
+            "wire": {
+              "arp": {
+                "op": 1,
+                "sender": [
+                  "00:00:5e:00:53:10",
+                  "192.168.1.10"
+                ],
+                "target": [
+                  "00:00:00:00:00:00",
+                  "192.168.1.20"
+                ]
+              },
+              "at": "Seen going into the switch, port 1"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Learn, Then Flood",
+      "desc": "The switch notes where the laptop is",
+      "detail": "A switch reads each frame’s source address and notes it in its MAC table: 00:00:5e:00:53:10 is on port 1. A broadcast is for everyone, so it sends a copy out of every other port: to the NAS on port 2 and the router on port 8. Frames for unknown addresses are flooded too.",
+      "facts": [
+        [
+          "Learned",
+          "…:53:10 is on port 1"
+        ],
+        [
+          "Copies",
+          "Out of every other port"
+        ],
+        [
+          "Unknown address",
+          "Flooded the same way"
+        ]
+      ],
+      "events": [
+        {
+          "type": "note",
+          "at": "switch",
+          "text": "…:53:10 IS ON PORT 1",
+          "tone": "navy"
+        },
+        {
+          "type": "stream",
+          "from": "switch",
+          "to": "lan",
+          "color": "slate",
+          "label": "ARP REQUEST",
+          "payload": [
+            "copies out of ports 2 and 8"
+          ],
+          "spacing": 0,
+          "packets": [
+            {
+              "type": "packet",
+              "from": "switch",
+              "to": "lan",
+              "color": "slate",
+              "label": "ARP REQUEST",
+              "payload": [
+                "flooded: port 2"
+              ],
+              "row": {
+                "time": "0.000005s",
+                "src": "00:00:5e:00:53:10",
+                "dst": "Broadcast",
+                "proto": "ARP",
+                "info": "Out port 2 (flooded) · Who has 192.168.1.20?",
+                "len": "60 B",
+                "wire": {
+                  "copyOf": -1,
+                  "at": "Seen leaving the switch, port 2"
+                }
+              }
+            },
+            {
+              "type": "packet",
+              "from": "switch",
+              "to": "router",
+              "color": "slate",
+              "label": "ARP REQUEST",
+              "payload": [
+                "flooded: port 8"
+              ],
+              "row": {
+                "time": "0.000005s",
+                "src": "00:00:5e:00:53:10",
+                "dst": "Broadcast",
+                "proto": "ARP",
+                "info": "Out port 8 (flooded) · Who has 192.168.1.20?",
+                "len": "60 B",
+                "wire": {
+                  "copyOf": -2,
+                  "at": "Seen leaving the switch, port 8"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Only the NAS Answers",
+      "desc": "The reply goes to one port",
+      "detail": "Every device reads the request, but only the NAS has 192.168.1.20, so only it answers, straight to the laptop’s MAC; the router ignores it. The switch learns that 00:00:5e:00:53:20 is on port 2. It already knows where the laptop is, so the reply leaves by port 1 alone.",
+      "facts": [
+        [
+          "Answer",
+          "To the laptop only"
+        ],
+        [
+          "Learned",
+          "…:53:20 is on port 2"
+        ],
+        [
+          "Out of",
+          "Port 1"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "lan",
+          "to": "switch",
+          "color": "slate",
+          "label": "ARP REPLY",
+          "payload": [
+            "192.168.1.20 is at",
+            "00:00:5e:00:53:20"
+          ],
+          "row": {
+            "time": "0.000052s",
+            "src": "00:00:5e:00:53:20",
+            "dst": "00:00:5e:00:53:10",
+            "proto": "ARP",
+            "info": "In port 2 · 192.168.1.20 is at 00:00:5e:00:53:20",
+            "len": "60 B",
+            "wire": {
+              "arp": {
+                "op": 2,
+                "sender": [
+                  "00:00:5e:00:53:20",
+                  "192.168.1.20"
+                ],
+                "target": [
+                  "00:00:5e:00:53:10",
+                  "192.168.1.10"
+                ]
+              },
+              "at": "Seen going into the switch, port 2"
+            }
+          }
+        },
+        {
+          "type": "note",
+          "at": "switch",
+          "text": "…:53:20 IS ON PORT 2",
+          "tone": "navy"
+        },
+        {
+          "type": "packet",
+          "from": "switch",
+          "to": "client",
+          "color": "slate",
+          "label": "ARP REPLY",
+          "payload": [
+            "port 1 only"
+          ],
+          "row": {
+            "time": "0.000057s",
+            "src": "00:00:5e:00:53:20",
+            "dst": "00:00:5e:00:53:10",
+            "proto": "ARP",
+            "info": "Out port 1 only · 192.168.1.20 is at 00:00:5e:00:53:20",
+            "len": "60 B",
+            "wire": {
+              "copyOf": -1,
+              "at": "Seen leaving the switch, port 1"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Port to Port",
+      "desc": "Frames go only where they must",
+      "detail": "The laptop connects to the NAS. Each frame starts with the NAS’s MAC, then its own, then a type: 0x0800, an IPv4 packet. After the packet, the card adds a 4-byte checksum. The switch looks up the destination and sends each frame out of port 2 only. The router never sees them.",
+      "facts": [
+        [
+          "Header",
+          "To, from, type: 14 bytes"
+        ],
+        [
+          "Checksum",
+          "4 bytes, added by the card"
+        ],
+        [
+          "Router sees",
+          "Nothing"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "switch",
+          "color": "green",
+          "label": "SYN",
+          "payload": [
+            "to 00:00:5e:00:53:20",
+            "type 0x0800 (IPv4)"
+          ],
+          "row": {
+            "time": "0.000231s",
+            "src": "192.168.1.10",
+            "dst": "192.168.1.20",
+            "proto": "TCP",
+            "info": "In port 1 · 50532 → 445 [SYN]",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 50532,
+                "dport": 445,
+                "flags": "S"
+              },
+              "at": "Seen going into the switch, port 1"
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "switch",
+          "to": "lan",
+          "color": "green",
+          "label": "SYN",
+          "payload": [
+            "out of port 2 only"
+          ],
+          "row": {
+            "time": "0.000236s",
+            "src": "192.168.1.10",
+            "dst": "192.168.1.20",
+            "proto": "TCP",
+            "info": "Out port 2 · 50532 → 445 [SYN]",
+            "len": "66 B",
+            "wire": {
+              "copyOf": -1,
+              "at": "Seen leaving the switch, port 2"
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "lan",
+          "to": "switch",
+          "color": "green",
+          "label": "SYN-ACK",
+          "payload": [],
+          "row": {
+            "time": "0.000281s",
+            "src": "192.168.1.20",
+            "dst": "192.168.1.10",
+            "proto": "TCP",
+            "info": "In port 2 · 445 → 50532 [SYN, ACK]",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 445,
+                "dport": 50532,
+                "flags": "SA"
+              },
+              "at": "Seen going into the switch, port 2"
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "switch",
+          "to": "client",
+          "color": "green",
+          "label": "SYN-ACK",
+          "payload": [],
+          "row": {
+            "time": "0.000286s",
+            "src": "192.168.1.20",
+            "dst": "192.168.1.10",
+            "proto": "TCP",
+            "info": "Out port 1 · 445 → 50532 [SYN, ACK]",
+            "len": "66 B",
+            "wire": {
+              "copyOf": -1,
+              "at": "Seen leaving the switch, port 1"
+            }
+          },
+          "quick": true
+        }
+      ]
+    },
+    {
+      "title": "Off the Network",
+      "desc": "A frame for the router",
+      "detail": "Next the laptop opens a website at 203.0.113.10. That address isn’t on the local network, so the frame goes to the router: the router’s MAC, known from an earlier ARP, is the destination, while the packet inside still names 203.0.113.10. The switch sends it out of port 8.",
+      "facts": [
+        [
+          "Frame to",
+          "The router’s MAC"
+        ],
+        [
+          "Packet to",
+          "203.0.113.10"
+        ],
+        [
+          "Out of",
+          "Port 8"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "switch",
+          "color": "amber",
+          "label": "SYN",
+          "payload": [
+            "to 00:00:5e:00:53:01",
+            "IP packet to 203.0.113.10"
+          ],
+          "row": {
+            "time": "0.004128s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.10",
+            "proto": "TCP",
+            "info": "In port 1 · 52344 → 443 [SYN] (frame to the router)",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 52344,
+                "dport": 443,
+                "flags": "S"
+              },
+              "at": "Seen going into the switch, port 1"
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "switch",
+          "to": "router",
+          "color": "amber",
+          "label": "SYN",
+          "payload": [
+            "out of port 8"
+          ],
+          "row": {
+            "time": "0.004133s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.10",
+            "proto": "TCP",
+            "info": "Out port 8 · 52344 → 443 [SYN]",
+            "len": "66 B",
+            "wire": {
+              "copyOf": -1,
+              "at": "Seen leaving the switch, port 8"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "A New Frame",
+      "desc": "Every hop rewraps the packet",
+      "detail": "The router takes the packet out of the frame, lowers its TTL and swaps in its public address (NAT). Then it puts the packet in a new frame for its next link: its internet-side MAC as the source, the provider’s router as the destination. MAC addresses only ever cross one link.",
+      "facts": [
+        [
+          "From",
+          "The router’s internet port"
+        ],
+        [
+          "To",
+          "The provider’s router"
+        ],
+        [
+          "Packet to",
+          "Still 203.0.113.10"
+        ]
+      ],
+      "events": [
+        {
+          "type": "show",
+          "nodes": [
+            "isp"
+          ],
+          "frame": "uplink"
+        },
+        {
+          "type": "packet",
+          "from": "router",
+          "to": "isp",
+          "color": "amber",
+          "label": "NEW FRAME",
+          "payload": [
+            "from the router’s internet port",
+            "IP still to 203.0.113.10"
+          ],
+          "row": {
+            "time": "0.004190s",
+            "src": "198.51.100.7",
+            "dst": "203.0.113.10",
+            "proto": "TCP",
+            "info": "TTL 127 · 40112 → 443 [SYN] (new frame, after NAT)",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 40112,
+                "dport": 443,
+                "flags": "S",
+                "seq": 0
+              },
+              "ttl": 127,
+              "ttlNote": "The laptop sent it with 128; the router took 1 when it passed it on.",
+              "natOf": -1,
+              "alias": [
+                "198.51.100.7:40112",
+                "192.168.1.10:52344"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "teaching": {
+    "steps": [
+      [
+        "Ai giữ NAS?",
+        "Laptop muốn tới NAS ở 192.168.1.20. Trong mạng cục bộ, khung được giao theo địa chỉ MAC, và laptop chưa biết MAC của NAS. Vì vậy nó gửi một yêu cầu ARP tới ff:ff:ff:ff:ff:ff, địa chỉ quảng bá, vào cổng 1 của switch."
+      ],
+      [
+        "Học rồi phát tràn",
+        "Switch đọc địa chỉ nguồn của mỗi khung và ghi vào bảng MAC: 00:00:5e:00:53:10 ở cổng 1. Gói quảng bá dành cho mọi người, nên nó gửi một bản sao qua mọi cổng khác: tới NAS ở cổng 2 và router ở cổng 8. Khung gửi tới địa chỉ chưa biết cũng bị phát tràn."
+      ],
+      [
+        "Chỉ NAS trả lời",
+        "Mọi thiết bị đều đọc yêu cầu, nhưng chỉ NAS có 192.168.1.20, nên chỉ nó trả lời, thẳng tới MAC của laptop; router bỏ qua. Switch học được rằng 00:00:5e:00:53:20 ở cổng 2. Nó đã biết laptop ở đâu, nên câu trả lời chỉ ra qua cổng 1."
+      ],
+      [
+        "Từ cổng tới cổng",
+        "Laptop kết nối tới NAS. Mỗi khung bắt đầu bằng MAC của NAS, rồi MAC của chính nó, rồi một kiểu: 0x0800, tức gói IPv4. Sau gói tin, card thêm một checksum 4 byte. Switch tra đích và gửi mỗi khung chỉ qua cổng 2. Router không bao giờ thấy chúng."
+      ],
+      [
+        "Ra khỏi mạng",
+        "Tiếp theo laptop mở một trang web ở 203.0.113.10. Địa chỉ đó không thuộc mạng cục bộ, nên khung đi tới router: đích là MAC của router, đã biết từ một lần ARP trước, còn gói tin bên trong vẫn ghi 203.0.113.10. Switch gửi nó qua cổng 8."
+      ],
+      [
+        "Một khung mới",
+        "Router lấy gói tin ra khỏi khung, giảm TTL và thay địa chỉ công khai của nó vào (NAT). Rồi nó đặt gói tin vào một khung mới cho liên kết kế tiếp: MAC phía Internet của nó làm nguồn, router của nhà mạng làm đích. Địa chỉ MAC không bao giờ đi qua quá một liên kết."
+      ]
+    ],
+    "notes": {
+      "…:53:10 IS ON PORT 1": "…:53:10 Ở CỔNG 1",
+      "…:53:20 IS ON PORT 2": "…:53:20 Ở CỔNG 2"
+    },
+    "labels": {
+      "Internet": "Internet",
+      "Client": "Máy khách",
+      "Router": "Router",
+      "DNS Resolver": "Bộ phân giải DNS",
+      "Web Server": "Máy chủ web",
+      "Root Server": "Máy chủ gốc",
+      ".com TLD Server": "Máy chủ TLD .com",
+      "Authoritative Server": "Máy chủ có thẩm quyền",
+      "Mail Server": "Máy chủ thư",
+      "Proxy": "Proxy",
+      "App Server": "Máy chủ ứng dụng",
+      "File Server": "Máy chủ tệp",
+      "ISP Router": "Router của ISP",
+      "Transit Router": "Router trung chuyển",
+      "Hosting Router": "Router của nhà lưu trữ",
+      "Their Router": "Router bên kia",
+      "Their Laptop": "Laptop bên kia",
+      "Switch": "Switch",
+      "Access Server": "Máy chủ truy cập",
+      "IP Camera": "Camera IP",
+      "TV Box": "TV box",
+      "NAS": "NAS"
+    }
+  }
+}

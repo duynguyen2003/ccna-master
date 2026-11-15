@@ -1,0 +1,1700 @@
+{
+  "id": "smtp",
+  "name": "SMTP",
+  "title": "Sending Email",
+  "layer": 7,
+  "nodes": [
+    "client",
+    "router",
+    "internet",
+    "dns",
+    "web",
+    "mx"
+  ],
+  "latency": {
+    "client-web": 0.015,
+    "web-dns": 0.005,
+    "web-mx": 0.02
+  },
+  "lifelines": [
+    "client",
+    "web",
+    "dns",
+    "mx"
+  ],
+  "labels": {
+    "web": [
+      "smtp.example.com",
+      "203.0.113.25"
+    ],
+    "mx": [
+      "mx.example.org",
+      "198.51.100.25"
+    ]
+  },
+  "legend": [
+    [
+      "green",
+      "TCP"
+    ],
+    [
+      "teal",
+      "TLS handshake"
+    ],
+    [
+      "amber",
+      "SMTP command"
+    ],
+    [
+      "violet",
+      "SMTP reply"
+    ],
+    [
+      "blue",
+      "DNS"
+    ]
+  ],
+  "overview": {
+    "full": "Simple Mail Transfer Protocol",
+    "description": "SMTP moves email: from your mail app to your provider’s server, and from that server to the recipient’s. It is a conversation of short text commands, each answered with a three-digit reply code. Reading mail is a different job, done with IMAP or POP3.",
+    "facts": [
+      [
+        "Layer",
+        "Application (Layer 7)"
+      ],
+      [
+        "Ports",
+        "465/587 submit, 25 relay"
+      ],
+      [
+        "Transport",
+        "TCP, usually with TLS"
+      ],
+      [
+        "Commands",
+        "EHLO, MAIL, RCPT, DATA"
+      ],
+      [
+        "Replies",
+        "2xx ok, 3xx go on, 4/5xx error"
+      ],
+      [
+        "Defined In",
+        "RFC 5321, RFC 6409"
+      ]
+    ]
+  },
+  "outro": {
+    "title": "Mail delivered",
+    "desc": "Two hops, one message",
+    "text": "Alice’s app handed the message to her provider over an encrypted, logged-in connection. The provider found Bob’s mail server in DNS and relayed it there, upgrading that link to TLS. It now waits in Bob’s mailbox until he reads it with IMAP or POP3.",
+    "facts": [
+      [
+        "Hops",
+        "Laptop → provider → Bob’s"
+      ],
+      [
+        "Submission",
+        "Port 465, TLS, login"
+      ],
+      [
+        "Relay",
+        "Port 25, STARTTLS"
+      ],
+      [
+        "Checks at Bob’s",
+        "SPF, DKIM, DMARC"
+      ]
+    ]
+  },
+  "start": {
+    "nodes": [
+      "client"
+    ],
+    "frame": "client"
+  },
+  "steps": [
+    {
+      "title": "Connect Securely",
+      "desc": "Port 465, TLS from the start",
+      "detail": "Alice presses Send. Her mail app connects to her provider’s submission server, smtp.example.com, on port 465. On this port TLS starts immediately, so the whole SMTP conversation, including her password, is encrypted.",
+      "facts": [
+        [
+          "Server",
+          "smtp.example.com:465"
+        ],
+        [
+          "Security",
+          "TLS from the start"
+        ],
+        [
+          "Then",
+          "SMTP inside TLS"
+        ]
+      ],
+      "events": [
+        {
+          "type": "show",
+          "nodes": [
+            "router",
+            "internet",
+            "web"
+          ],
+          "frame": "path"
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "green",
+          "label": "SYN",
+          "payload": [],
+          "row": {
+            "time": "0.000s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.25",
+            "proto": "TCP",
+            "info": "52900 → 465 [SYN] Seq=0",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 52900,
+                "dport": 465,
+                "flags": "S"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "green",
+          "label": "SYN-ACK",
+          "payload": [],
+          "row": {
+            "time": "0.015s",
+            "src": "203.0.113.25",
+            "dst": "192.168.1.10",
+            "proto": "TCP",
+            "info": "465 → 52900 [SYN, ACK] Seq=0 Ack=1",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 465,
+                "dport": 52900,
+                "flags": "SA"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "green",
+          "label": "ACK",
+          "payload": [],
+          "row": {
+            "time": "0.030s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.25",
+            "proto": "TCP",
+            "info": "52900 → 465 [ACK] Seq=1 Ack=1",
+            "len": "60 B",
+            "wire": {
+              "tcp": {
+                "sport": 52900,
+                "dport": 465,
+                "flags": "A"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "teal",
+          "label": "CLIENT HELLO",
+          "payload": [],
+          "row": {
+            "time": "0.030s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.25",
+            "proto": "TLSv1.3",
+            "info": "Client Hello (SNI=smtp.example.com)",
+            "len": "571 B",
+            "wire": {
+              "tcp": {
+                "sport": 52900,
+                "dport": 465,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "handshake",
+                      "legacy": true,
+                      "length": 512,
+                      "hello": {
+                        "type": 1,
+                        "name": "Client Hello",
+                        "note": "What this client supports. Its exact contents vary from client to client; this is an example.",
+                        "fields": [
+                          [
+                            "Server name (SNI)",
+                            "smtp.example.com"
+                          ],
+                          [
+                            "Versions offered",
+                            "TLS 1.3, TLS 1.2"
+                          ],
+                          [
+                            "Key share",
+                            "X25519"
+                          ],
+                          [
+                            "Padding",
+                            "up to 512 bytes"
+                          ]
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "teal",
+          "label": "SERVER HELLO",
+          "payload": [],
+          "row": {
+            "time": "0.045s",
+            "src": "203.0.113.25",
+            "dst": "192.168.1.10",
+            "proto": "TLSv1.3",
+            "info": "Server Hello + encrypted handshake, 2 segments",
+            "len": "2.9 KB",
+            "wire": {
+              "tcp": {
+                "sport": 465,
+                "dport": 52900,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "handshake",
+                      "length": 122,
+                      "hello": {
+                        "type": 2,
+                        "name": "Server Hello",
+                        "note": "The server’s choices and its key share.",
+                        "fields": [
+                          [
+                            "Version",
+                            "TLS 1.3"
+                          ],
+                          [
+                            "Cipher suite",
+                            "TLS_AES_128_GCM_SHA256"
+                          ],
+                          [
+                            "Key share",
+                            "X25519"
+                          ]
+                        ]
+                      }
+                    },
+                    {
+                      "type": "ccs",
+                      "length": 1
+                    },
+                    {
+                      "type": "appdata",
+                      "length": 2724,
+                      "inner": {
+                        "what": "Encrypted Extensions, Certificate (the chain), Certificate Verify (the signature), Finished"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "teal",
+          "label": "FINISHED",
+          "payload": [],
+          "row": {
+            "time": "0.062s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.25",
+            "proto": "TLSv1.3",
+            "info": "Change Cipher Spec, Finished (encrypted)",
+            "len": "118 B",
+            "wire": {
+              "tcp": {
+                "sport": 52900,
+                "dport": 465,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "ccs",
+                      "length": 1
+                    },
+                    {
+                      "type": "appdata",
+                      "length": 53,
+                      "inner": {
+                        "what": "Finished: a check value over the whole handshake"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "quick": true
+        }
+      ]
+    },
+    {
+      "title": "Greeting & Login",
+      "desc": "EHLO, then AUTH",
+      "detail": "The server greets with code 220. The app says EHLO and the server lists what it supports, including AUTH. The app logs in with AUTH PLAIN (user name and password, base64-encoded) and gets 235: authenticated.",
+      "facts": [
+        [
+          "Greeting",
+          "220 … ESMTP"
+        ],
+        [
+          "Capabilities",
+          "AUTH, PIPELINING, SIZE …"
+        ],
+        [
+          "Login result",
+          "235 2.7.0"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "violet",
+          "label": "220",
+          "payload": [
+            "220 smtp.example.com ESMTP"
+          ],
+          "row": {
+            "time": "0.077s",
+            "src": "203.0.113.25",
+            "dst": "192.168.1.10",
+            "proto": "SMTP (TLS)",
+            "info": "220 smtp.example.com ESMTP Postfix",
+            "len": "112 B",
+            "wire": {
+              "tcp": {
+                "sport": 465,
+                "dport": 52900,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "appdata",
+                      "length": 53,
+                      "inner": {
+                        "what": "SMTP",
+                        "text": [
+                          "220 smtp.example.com ESMTP Postfix"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "locked": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "amber",
+          "label": "EHLO",
+          "payload": [
+            "EHLO alice-laptop"
+          ],
+          "row": {
+            "time": "0.092s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.25",
+            "proto": "SMTP (TLS)",
+            "info": "EHLO alice-laptop",
+            "len": "95 B",
+            "wire": {
+              "tcp": {
+                "sport": 52900,
+                "dport": 465,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "appdata",
+                      "length": 36,
+                      "inner": {
+                        "what": "SMTP",
+                        "text": [
+                          "EHLO alice-laptop"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "locked": true
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "violet",
+          "label": "250",
+          "payload": [
+            "250-PIPELINING",
+            "250-AUTH PLAIN LOGIN …"
+          ],
+          "row": {
+            "time": "0.107s",
+            "src": "203.0.113.25",
+            "dst": "192.168.1.10",
+            "proto": "SMTP (TLS)",
+            "info": "250 capabilities (PIPELINING, SIZE, AUTH …)",
+            "len": "208 B",
+            "wire": {
+              "tcp": {
+                "sport": 465,
+                "dport": 52900,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "appdata",
+                      "length": 149,
+                      "inner": {
+                        "what": "SMTP",
+                        "text": [
+                          "250-smtp.example.com",
+                          "250-PIPELINING",
+                          "250-SIZE 52428800",
+                          "250-AUTH PLAIN LOGIN",
+                          "250-ENHANCEDSTATUSCODES",
+                          "250-8BITMIME",
+                          "250 SMTPUTF8"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "locked": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "amber",
+          "label": "AUTH",
+          "payload": [
+            "AUTH PLAIN AGFsaWNlAHNl…",
+            "user and password, base64"
+          ],
+          "row": {
+            "time": "0.122s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.25",
+            "proto": "SMTP (TLS)",
+            "info": "AUTH PLAIN (credentials)",
+            "len": "109 B",
+            "wire": {
+              "tcp": {
+                "sport": 52900,
+                "dport": 465,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "appdata",
+                      "length": 50,
+                      "inner": {
+                        "what": "SMTP",
+                        "text": [
+                          "AUTH PLAIN AGFsaWNlAHNlY3JldA=="
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "locked": true
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "violet",
+          "label": "235",
+          "payload": [
+            "235 2.7.0 Authentication",
+            "successful"
+          ],
+          "row": {
+            "time": "0.137s",
+            "src": "203.0.113.25",
+            "dst": "192.168.1.10",
+            "proto": "SMTP (TLS)",
+            "info": "235 2.7.0 Authentication successful",
+            "len": "113 B",
+            "wire": {
+              "tcp": {
+                "sport": 465,
+                "dport": 52900,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "appdata",
+                      "length": 54,
+                      "inner": {
+                        "what": "SMTP",
+                        "text": [
+                          "235 2.7.0 Authentication successful"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "locked": true
+        }
+      ]
+    },
+    {
+      "title": "Send the Message",
+      "desc": "Envelope, then content",
+      "detail": "MAIL FROM and RCPT TO are the envelope: sender and recipient. PIPELINING lets all three commands share one packet. After 354 comes the message, ended by a line holding just a dot.",
+      "facts": [
+        [
+          "Envelope",
+          "alice@ → bob@example.org"
+        ],
+        [
+          "Content ends",
+          "A line with only “.”"
+        ],
+        [
+          "Result",
+          "250 Ok: queued"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "amber",
+          "label": "MAIL · RCPT · DATA",
+          "payload": [
+            "MAIL FROM:<alice@example.com>",
+            "RCPT TO:<bob@example.org>",
+            "DATA"
+          ],
+          "row": {
+            "time": "0.152s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.25",
+            "proto": "SMTP (TLS)",
+            "info": "MAIL FROM, RCPT TO, DATA (pipelined)",
+            "len": "140 B",
+            "wire": {
+              "tcp": {
+                "sport": 52900,
+                "dport": 465,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "appdata",
+                      "length": 81,
+                      "inner": {
+                        "what": "SMTP",
+                        "text": [
+                          "MAIL FROM:<alice@example.com>",
+                          "RCPT TO:<bob@example.org>",
+                          "DATA"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "locked": true
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "violet",
+          "label": "250 · 250 · 354",
+          "payload": [
+            "250 2.1.0 Ok · 250 2.1.5 Ok",
+            "354 End data with",
+            "<CR><LF>.<CR><LF>"
+          ],
+          "row": {
+            "time": "0.167s",
+            "src": "203.0.113.25",
+            "dst": "192.168.1.10",
+            "proto": "SMTP (TLS)",
+            "info": "250 Ok, 250 Ok, 354 End data with <CR><LF>.<CR><LF>",
+            "len": "141 B",
+            "wire": {
+              "tcp": {
+                "sport": 465,
+                "dport": 52900,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "appdata",
+                      "length": 82,
+                      "inner": {
+                        "what": "SMTP",
+                        "text": [
+                          "250 2.1.0 Ok",
+                          "250 2.1.5 Ok",
+                          "354 End data with <CR><LF>.<CR><LF>"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "locked": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "amber",
+          "label": "MESSAGE",
+          "payload": [
+            "Subject: Lunch on Friday?",
+            "… message …",
+            "."
+          ],
+          "row": {
+            "time": "0.182s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.25",
+            "proto": "SMTP (TLS)",
+            "info": "Message (316 bytes), then “.”",
+            "len": "395 B",
+            "wire": {
+              "tcp": {
+                "sport": 52900,
+                "dport": 465,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "appdata",
+                      "length": 336,
+                      "inner": {
+                        "what": "Alice’s message (316 bytes), then a line holding only “.”"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "locked": true
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "violet",
+          "label": "250 QUEUED",
+          "payload": [
+            "250 2.0.0 Ok: queued",
+            "as 4A1F2C3D9E"
+          ],
+          "row": {
+            "time": "0.200s",
+            "src": "203.0.113.25",
+            "dst": "192.168.1.10",
+            "proto": "SMTP (TLS)",
+            "info": "250 2.0.0 Ok: queued as 4A1F2C3D9E",
+            "len": "112 B",
+            "wire": {
+              "tcp": {
+                "sport": 465,
+                "dport": 52900,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "appdata",
+                      "length": 53,
+                      "inner": {
+                        "what": "SMTP",
+                        "text": [
+                          "250 2.0.0 Ok: queued as 4A1F2C3D9E"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "locked": true
+        }
+      ]
+    },
+    {
+      "title": "Find Bob’s Server",
+      "desc": "An MX lookup in DNS",
+      "detail": "Alice’s provider now has to deliver to example.org. It asks DNS for that domain’s MX record, which names the server that accepts its mail, then looks up that server’s address.",
+      "facts": [
+        [
+          "MX record",
+          "10 mx.example.org"
+        ],
+        [
+          "Address",
+          "A 198.51.100.25"
+        ],
+        [
+          "Asked by",
+          "Alice’s provider"
+        ]
+      ],
+      "events": [
+        {
+          "type": "show",
+          "nodes": [
+            "dns"
+          ],
+          "frame": "mailhost"
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "dns",
+          "color": "blue",
+          "label": "DNS QUERY",
+          "payload": [
+            "MX? example.org"
+          ],
+          "row": {
+            "time": "0.205s",
+            "src": "203.0.113.25",
+            "dst": "8.8.8.8",
+            "proto": "DNS",
+            "info": "Standard query MX example.org",
+            "len": "82 B",
+            "wire": {
+              "udp": {
+                "sport": 44210,
+                "dport": 53,
+                "data": {
+                  "dns": {
+                    "rd": true,
+                    "edns": {
+                      "size": 1232
+                    },
+                    "id": 28165,
+                    "q": [
+                      "example.org",
+                      "MX"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "dns",
+          "to": "web",
+          "color": "blue",
+          "label": "DNS REPLY",
+          "payload": [
+            "example.org MX 10",
+            "mx.example.org"
+          ],
+          "row": {
+            "time": "0.210s",
+            "src": "8.8.8.8",
+            "dst": "203.0.113.25",
+            "proto": "DNS",
+            "info": "Standard query response MX 10 mx.example.org",
+            "len": "101 B",
+            "wire": {
+              "udp": {
+                "sport": 53,
+                "dport": 44210,
+                "data": {
+                  "dns": {
+                    "response": true,
+                    "rd": true,
+                    "ra": true,
+                    "edns": {
+                      "size": 1232
+                    },
+                    "exampleTtl": true,
+                    "id": 28165,
+                    "q": [
+                      "example.org",
+                      "MX"
+                    ],
+                    "an": [
+                      [
+                        "example.org",
+                        "MX",
+                        3600,
+                        [
+                          10,
+                          "mx.example.org"
+                        ]
+                      ]
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "dns",
+          "color": "blue",
+          "label": "DNS QUERY",
+          "payload": [
+            "A? mx.example.org"
+          ],
+          "row": {
+            "time": "0.215s",
+            "src": "203.0.113.25",
+            "dst": "8.8.8.8",
+            "proto": "DNS",
+            "info": "Standard query A mx.example.org",
+            "len": "85 B",
+            "wire": {
+              "udp": {
+                "sport": 44210,
+                "dport": 53,
+                "data": {
+                  "dns": {
+                    "rd": true,
+                    "edns": {
+                      "size": 1232
+                    },
+                    "id": 8146,
+                    "q": [
+                      "mx.example.org",
+                      "A"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "dns",
+          "to": "web",
+          "color": "blue",
+          "label": "DNS REPLY",
+          "payload": [
+            "mx.example.org",
+            "A 198.51.100.25"
+          ],
+          "row": {
+            "time": "0.220s",
+            "src": "8.8.8.8",
+            "dst": "203.0.113.25",
+            "proto": "DNS",
+            "info": "Standard query response A 198.51.100.25",
+            "len": "101 B",
+            "wire": {
+              "udp": {
+                "sport": 53,
+                "dport": 44210,
+                "data": {
+                  "dns": {
+                    "response": true,
+                    "rd": true,
+                    "ra": true,
+                    "edns": {
+                      "size": 1232
+                    },
+                    "exampleTtl": true,
+                    "id": 8146,
+                    "q": [
+                      "mx.example.org",
+                      "A"
+                    ],
+                    "an": [
+                      [
+                        "mx.example.org",
+                        "A",
+                        3600,
+                        "198.51.100.25"
+                      ]
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Server to Server",
+      "desc": "Port 25, upgraded with STARTTLS",
+      "detail": "The provider connects to mx.example.org on port 25. This conversation starts in plain text: the greeting and EHLO reply advertise STARTTLS, the provider asks for it, gets 220 and both sides switch to TLS.",
+      "facts": [
+        [
+          "Server",
+          "mx.example.org:25"
+        ],
+        [
+          "Starts as",
+          "Plain text"
+        ],
+        [
+          "Upgrade",
+          "STARTTLS → 220 → TLS"
+        ]
+      ],
+      "events": [
+        {
+          "type": "show",
+          "nodes": [
+            "mx"
+          ],
+          "frame": "full"
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "mx",
+          "color": "green",
+          "label": "SYN",
+          "payload": [],
+          "row": {
+            "time": "0.225s",
+            "src": "203.0.113.25",
+            "dst": "198.51.100.25",
+            "proto": "TCP",
+            "info": "41522 → 25 [SYN] Seq=0",
+            "len": "74 B",
+            "wire": {
+              "tcp": {
+                "sport": 41522,
+                "dport": 25,
+                "flags": "S"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "mx",
+          "to": "web",
+          "color": "green",
+          "label": "SYN-ACK",
+          "payload": [],
+          "row": {
+            "time": "0.245s",
+            "src": "198.51.100.25",
+            "dst": "203.0.113.25",
+            "proto": "TCP",
+            "info": "25 → 41522 [SYN, ACK] Seq=0 Ack=1",
+            "len": "74 B",
+            "wire": {
+              "tcp": {
+                "sport": 25,
+                "dport": 41522,
+                "flags": "SA"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "mx",
+          "color": "green",
+          "label": "ACK",
+          "payload": [],
+          "row": {
+            "time": "0.265s",
+            "src": "203.0.113.25",
+            "dst": "198.51.100.25",
+            "proto": "TCP",
+            "info": "41522 → 25 [ACK] Seq=1 Ack=1",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 41522,
+                "dport": 25,
+                "flags": "A"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "mx",
+          "to": "web",
+          "color": "violet",
+          "label": "220",
+          "payload": [
+            "220 mx.example.org ESMTP"
+          ],
+          "row": {
+            "time": "0.285s",
+            "src": "198.51.100.25",
+            "dst": "203.0.113.25",
+            "proto": "SMTP",
+            "info": "220 mx.example.org ESMTP Postfix",
+            "len": "100 B",
+            "wire": {
+              "tcp": {
+                "sport": 25,
+                "dport": 41522,
+                "flags": "PA",
+                "data": {
+                  "text": [
+                    "220 mx.example.org ESMTP Postfix"
+                  ],
+                  "name": "SMTP"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "mx",
+          "color": "amber",
+          "label": "EHLO",
+          "payload": [
+            "EHLO smtp.example.com"
+          ],
+          "row": {
+            "time": "0.305s",
+            "src": "203.0.113.25",
+            "dst": "198.51.100.25",
+            "proto": "SMTP",
+            "info": "EHLO smtp.example.com",
+            "len": "89 B",
+            "wire": {
+              "tcp": {
+                "sport": 41522,
+                "dport": 25,
+                "flags": "PA",
+                "data": {
+                  "text": [
+                    "EHLO smtp.example.com"
+                  ],
+                  "name": "SMTP"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "mx",
+          "to": "web",
+          "color": "violet",
+          "label": "250",
+          "payload": [
+            "250-PIPELINING",
+            "250-STARTTLS …"
+          ],
+          "row": {
+            "time": "0.325s",
+            "src": "198.51.100.25",
+            "dst": "203.0.113.25",
+            "proto": "SMTP",
+            "info": "250 capabilities (PIPELINING, STARTTLS …)",
+            "len": "188 B",
+            "wire": {
+              "tcp": {
+                "sport": 25,
+                "dport": 41522,
+                "flags": "PA",
+                "data": {
+                  "text": [
+                    "250-mx.example.org",
+                    "250-PIPELINING",
+                    "250-SIZE 52428800",
+                    "250-STARTTLS",
+                    "250-ENHANCEDSTATUSCODES",
+                    "250-8BITMIME",
+                    "250 SMTPUTF8"
+                  ],
+                  "name": "SMTP"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "mx",
+          "color": "amber",
+          "label": "STARTTLS",
+          "payload": [
+            "STARTTLS"
+          ],
+          "row": {
+            "time": "0.345s",
+            "src": "203.0.113.25",
+            "dst": "198.51.100.25",
+            "proto": "SMTP",
+            "info": "STARTTLS",
+            "len": "76 B",
+            "wire": {
+              "tcp": {
+                "sport": 41522,
+                "dport": 25,
+                "flags": "PA",
+                "data": {
+                  "text": [
+                    "STARTTLS"
+                  ],
+                  "name": "SMTP"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "mx",
+          "to": "web",
+          "color": "violet",
+          "label": "220",
+          "payload": [
+            "220 2.0.0 Ready to",
+            "start TLS"
+          ],
+          "row": {
+            "time": "0.365s",
+            "src": "198.51.100.25",
+            "dst": "203.0.113.25",
+            "proto": "SMTP",
+            "info": "220 2.0.0 Ready to start TLS",
+            "len": "96 B",
+            "wire": {
+              "tcp": {
+                "sport": 25,
+                "dport": 41522,
+                "flags": "PA",
+                "data": {
+                  "text": [
+                    "220 2.0.0 Ready to start TLS"
+                  ],
+                  "name": "SMTP"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "mx",
+          "color": "teal",
+          "label": "CLIENT HELLO",
+          "payload": [],
+          "row": {
+            "time": "0.385s",
+            "src": "203.0.113.25",
+            "dst": "198.51.100.25",
+            "proto": "TLSv1.3",
+            "info": "Client Hello (SNI=mx.example.org)",
+            "len": "583 B",
+            "wire": {
+              "tcp": {
+                "sport": 41522,
+                "dport": 25,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "handshake",
+                      "legacy": true,
+                      "length": 512,
+                      "hello": {
+                        "type": 1,
+                        "name": "Client Hello",
+                        "note": "What this client supports. Its exact contents vary from client to client; this is an example.",
+                        "fields": [
+                          [
+                            "Server name (SNI)",
+                            "mx.example.org"
+                          ],
+                          [
+                            "Versions offered",
+                            "TLS 1.3, TLS 1.2"
+                          ],
+                          [
+                            "Key share",
+                            "X25519"
+                          ],
+                          [
+                            "Padding",
+                            "up to 512 bytes"
+                          ]
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "mx",
+          "to": "web",
+          "color": "teal",
+          "label": "SERVER HELLO",
+          "payload": [],
+          "row": {
+            "time": "0.405s",
+            "src": "198.51.100.25",
+            "dst": "203.0.113.25",
+            "proto": "TLSv1.3",
+            "info": "Server Hello + encrypted handshake, 2 segments",
+            "len": "2.9 KB",
+            "wire": {
+              "tcp": {
+                "sport": 25,
+                "dport": 41522,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "handshake",
+                      "length": 122,
+                      "hello": {
+                        "type": 2,
+                        "name": "Server Hello",
+                        "note": "The server’s choices and its key share.",
+                        "fields": [
+                          [
+                            "Version",
+                            "TLS 1.3"
+                          ],
+                          [
+                            "Cipher suite",
+                            "TLS_AES_128_GCM_SHA256"
+                          ],
+                          [
+                            "Key share",
+                            "X25519"
+                          ]
+                        ]
+                      }
+                    },
+                    {
+                      "type": "ccs",
+                      "length": 1
+                    },
+                    {
+                      "type": "appdata",
+                      "length": 2724,
+                      "inner": {
+                        "what": "Encrypted Extensions, Certificate (the chain), Certificate Verify (the signature), Finished"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "mx",
+          "color": "teal",
+          "label": "FINISHED",
+          "payload": [],
+          "row": {
+            "time": "0.427s",
+            "src": "203.0.113.25",
+            "dst": "198.51.100.25",
+            "proto": "TLSv1.3",
+            "info": "Change Cipher Spec, Finished (encrypted)",
+            "len": "130 B",
+            "wire": {
+              "tcp": {
+                "sport": 41522,
+                "dport": 25,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "ccs",
+                      "length": 1
+                    },
+                    {
+                      "type": "appdata",
+                      "length": 53,
+                      "inner": {
+                        "what": "Finished: a check value over the whole handshake"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "quick": true
+        }
+      ]
+    },
+    {
+      "title": "Deliver",
+      "desc": "The same transaction again",
+      "detail": "With TLS on, the provider repeats EHLO, then the envelope and the message, now with a DKIM signature and a Received header added. Bob’s server checks SPF, DKIM and DMARC and accepts it.",
+      "facts": [
+        [
+          "Login needed",
+          "No (server to server)"
+        ],
+        [
+          "Message",
+          "1,316 bytes (signed)"
+        ],
+        [
+          "Result",
+          "250 Ok: queued"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "mx",
+          "color": "amber",
+          "label": "EHLO",
+          "payload": [
+            "EHLO smtp.example.com"
+          ],
+          "row": {
+            "time": "0.427s",
+            "src": "203.0.113.25",
+            "dst": "198.51.100.25",
+            "proto": "SMTP (TLS)",
+            "info": "EHLO smtp.example.com",
+            "len": "111 B",
+            "wire": {
+              "tcp": {
+                "sport": 41522,
+                "dport": 25,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "appdata",
+                      "length": 40,
+                      "inner": {
+                        "what": "SMTP",
+                        "text": [
+                          "EHLO smtp.example.com"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "locked": true
+        },
+        {
+          "type": "packet",
+          "from": "mx",
+          "to": "web",
+          "color": "violet",
+          "label": "250",
+          "payload": [
+            "250-PIPELINING",
+            "250-SIZE …"
+          ],
+          "row": {
+            "time": "0.447s",
+            "src": "198.51.100.25",
+            "dst": "203.0.113.25",
+            "proto": "SMTP (TLS)",
+            "info": "250 capabilities (PIPELINING, SIZE …)",
+            "len": "196 B",
+            "wire": {
+              "tcp": {
+                "sport": 25,
+                "dport": 41522,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "appdata",
+                      "length": 125,
+                      "inner": {
+                        "what": "SMTP",
+                        "text": [
+                          "250-mx.example.org",
+                          "250-PIPELINING",
+                          "250-SIZE 52428800",
+                          "250-ENHANCEDSTATUSCODES",
+                          "250-8BITMIME",
+                          "250 SMTPUTF8"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "locked": true
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "mx",
+          "color": "amber",
+          "label": "MAIL · RCPT · DATA",
+          "payload": [
+            "MAIL FROM:<alice@example.com>",
+            "RCPT TO:<bob@example.org>",
+            "DATA"
+          ],
+          "row": {
+            "time": "0.467s",
+            "src": "203.0.113.25",
+            "dst": "198.51.100.25",
+            "proto": "SMTP (TLS)",
+            "info": "MAIL FROM (SIZE=1316), RCPT TO, DATA",
+            "len": "162 B",
+            "wire": {
+              "tcp": {
+                "sport": 41522,
+                "dport": 25,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "appdata",
+                      "length": 91,
+                      "inner": {
+                        "what": "SMTP",
+                        "text": [
+                          "MAIL FROM:<alice@example.com> SIZE=1316",
+                          "RCPT TO:<bob@example.org>",
+                          "DATA"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "locked": true
+        },
+        {
+          "type": "packet",
+          "from": "mx",
+          "to": "web",
+          "color": "violet",
+          "label": "250 · 250 · 354",
+          "payload": [
+            "250 2.1.0 Ok · 250 2.1.5 Ok",
+            "354 End data with",
+            "<CR><LF>.<CR><LF>"
+          ],
+          "row": {
+            "time": "0.487s",
+            "src": "198.51.100.25",
+            "dst": "203.0.113.25",
+            "proto": "SMTP (TLS)",
+            "info": "250 Ok, 250 Ok, 354 End data with <CR><LF>.<CR><LF>",
+            "len": "153 B",
+            "wire": {
+              "tcp": {
+                "sport": 25,
+                "dport": 41522,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "appdata",
+                      "length": 82,
+                      "inner": {
+                        "what": "SMTP",
+                        "text": [
+                          "250 2.1.0 Ok",
+                          "250 2.1.5 Ok",
+                          "354 End data with <CR><LF>.<CR><LF>"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "locked": true
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "mx",
+          "color": "amber",
+          "label": "MESSAGE",
+          "payload": [
+            "DKIM-Signature: …",
+            "… message …",
+            "."
+          ],
+          "row": {
+            "time": "0.507s",
+            "src": "203.0.113.25",
+            "dst": "198.51.100.25",
+            "proto": "SMTP (TLS)",
+            "info": "Message (1,316 bytes), then “.”",
+            "len": "1407 B",
+            "wire": {
+              "tcp": {
+                "sport": 41522,
+                "dport": 25,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "appdata",
+                      "length": 1336,
+                      "inner": {
+                        "what": "The signed message (1,316 bytes), then a line holding only “.”"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "locked": true
+        },
+        {
+          "type": "packet",
+          "from": "mx",
+          "to": "web",
+          "color": "violet",
+          "label": "250 QUEUED",
+          "payload": [
+            "250 2.0.0 Ok: queued",
+            "as 7B3E9F01A2"
+          ],
+          "row": {
+            "time": "0.538s",
+            "src": "198.51.100.25",
+            "dst": "203.0.113.25",
+            "proto": "SMTP (TLS)",
+            "info": "250 2.0.0 Ok: queued as 7B3E9F01A2",
+            "len": "124 B",
+            "wire": {
+              "tcp": {
+                "sport": 25,
+                "dport": 41522,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "appdata",
+                      "length": 53,
+                      "inner": {
+                        "what": "SMTP",
+                        "text": [
+                          "250 2.0.0 Ok: queued as 7B3E9F01A2"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "locked": true
+        },
+        {
+          "type": "note",
+          "at": "mx",
+          "text": "IN BOB’S MAILBOX",
+          "tone": "green"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,474 @@
+{
+  "id": "http",
+  "name": "HTTP",
+  "title": "Web Communication",
+  "layer": 7,
+  "nodes": [
+    "client",
+    "router",
+    "dns",
+    "internet",
+    "web"
+  ],
+  "latency": {
+    "client-dns": 0.012,
+    "client-web": 0.017
+  },
+  "legend": [
+    [
+      "blue",
+      "DNS"
+    ],
+    [
+      "green",
+      "TCP"
+    ],
+    [
+      "amber",
+      "Request"
+    ],
+    [
+      "violet",
+      "Response"
+    ],
+    [
+      null,
+      "Data ACKs not shown"
+    ]
+  ],
+  "overview": {
+    "full": "Hypertext Transfer Protocol",
+    "description": "HTTP is the protocol of the web: a client asks for a resource, such as an HTML page, and the server answers with a status code, headers and usually a body. Every exchange is one request and one response, written as readable text in HTTP/1.1.",
+    "facts": [
+      [
+        "Layer",
+        "Application (Layer 7)"
+      ],
+      [
+        "Default Port",
+        "80 (HTTPS: 443)"
+      ],
+      [
+        "Transport",
+        "TCP"
+      ],
+      [
+        "Data Format",
+        "Text (headers + optional body)"
+      ],
+      [
+        "Common Methods",
+        "GET, POST, PUT, DELETE, HEAD"
+      ],
+      [
+        "Defined In",
+        "RFC 9110, RFC 9112"
+      ]
+    ]
+  },
+  "outro": {
+    "title": "Page delivered",
+    "desc": "One request, one response",
+    "text": "In under a tenth of a second the laptop looked up an address, opened a TCP connection and exchanged one HTTP request and response, all of it readable by anyone on the path. Press REPLAY to watch it again.",
+    "facts": [
+      [
+        "Round trips",
+        "3 (DNS, TCP, HTTP)"
+      ],
+      [
+        "Total time",
+        "0.094 s"
+      ],
+      [
+        "Page size",
+        "12.2 KB"
+      ],
+      [
+        "Response",
+        "Sent as 9 TCP segments"
+      ]
+    ]
+  },
+  "start": {
+    "nodes": [
+      "client"
+    ],
+    "frame": "client"
+  },
+  "steps": [
+    {
+      "title": "Client Request",
+      "desc": "Browser prepares the request",
+      "detail": "You open http://www.example.com. The browser will send a GET request, but packets travel to IP addresses, not names, so first it needs the server’s address. (Browsers now try https:// first; this is the plain version.)",
+      "facts": [
+        [
+          "URL",
+          "http://www.example.com/"
+        ],
+        [
+          "Method",
+          "GET"
+        ],
+        [
+          "Next hop",
+          "Router 192.168.1.1"
+        ]
+      ],
+      "events": [
+        {
+          "type": "type-url",
+          "text": "www.example.com"
+        },
+        {
+          "type": "show",
+          "nodes": [
+            "router"
+          ],
+          "frame": "local"
+        }
+      ]
+    },
+    {
+      "title": "DNS Resolution",
+      "desc": "Finds the server’s IP address",
+      "detail": "The laptop asks the DNS server it was given by DHCP, 8.8.8.8, for the address of www.example.com. The query goes over UDP port 53 and the answer is an A record with the IPv4 address. (On a network with IPv6 it would also ask for an AAAA record.)",
+      "facts": [
+        [
+          "Resolver",
+          "8.8.8.8 (had it cached)"
+        ],
+        [
+          "Transport",
+          "UDP, port 53"
+        ],
+        [
+          "Answer",
+          "A 203.0.113.10"
+        ]
+      ],
+      "events": [
+        {
+          "type": "show",
+          "nodes": [
+            "internet",
+            "dns"
+          ],
+          "frame": "lookup"
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "dns",
+          "color": "blue",
+          "label": "DNS QUERY",
+          "payload": [
+            "A? www.example.com"
+          ],
+          "row": {
+            "time": "0.000s",
+            "src": "192.168.1.10",
+            "dst": "8.8.8.8",
+            "proto": "DNS",
+            "info": "Standard query A www.example.com",
+            "len": "75 B",
+            "wire": {
+              "udp": {
+                "sport": 59321,
+                "dport": 53,
+                "data": {
+                  "dns": {
+                    "id": 15642,
+                    "rd": true,
+                    "q": [
+                      "www.example.com",
+                      "A"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "dns",
+          "to": "client",
+          "color": "blue",
+          "label": "DNS REPLY",
+          "payload": [
+            "A 203.0.113.10"
+          ],
+          "row": {
+            "time": "0.012s",
+            "src": "8.8.8.8",
+            "dst": "192.168.1.10",
+            "proto": "DNS",
+            "info": "Standard query response A 203.0.113.10",
+            "len": "91 B",
+            "wire": {
+              "udp": {
+                "sport": 53,
+                "dport": 59321,
+                "data": {
+                  "dns": {
+                    "id": 15642,
+                    "rd": true,
+                    "q": [
+                      "www.example.com",
+                      "A"
+                    ],
+                    "response": true,
+                    "ra": true,
+                    "an": [
+                      [
+                        "www.example.com",
+                        "A",
+                        1745,
+                        "203.0.113.10"
+                      ]
+                    ],
+                    "exampleTtl": true
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "TCP Connection",
+      "desc": "Establishes a reliable link",
+      "detail": "HTTP runs on top of TCP. Before any page data moves, the laptop and the server open a connection to port 80 with a three-way handshake: SYN, SYN-ACK, ACK.",
+      "facts": [
+        [
+          "Server port",
+          "80"
+        ],
+        [
+          "Client port",
+          "52344 (ephemeral)"
+        ],
+        [
+          "Handshake",
+          "SYN → SYN-ACK → ACK"
+        ]
+      ],
+      "events": [
+        {
+          "type": "show",
+          "nodes": [
+            "web"
+          ],
+          "frame": "full"
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "green",
+          "label": "SYN",
+          "payload": [
+            "seq=0"
+          ],
+          "row": {
+            "time": "0.024s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.10",
+            "proto": "TCP",
+            "info": "52344 → 80 [SYN] Seq=0",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 52344,
+                "dport": 80,
+                "flags": "S"
+              }
+            }
+          },
+          "quick": false
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "green",
+          "label": "SYN-ACK",
+          "payload": [
+            "seq=0 ack=1"
+          ],
+          "row": {
+            "time": "0.041s",
+            "src": "203.0.113.10",
+            "dst": "192.168.1.10",
+            "proto": "TCP",
+            "info": "80 → 52344 [SYN, ACK] Seq=0 Ack=1",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 80,
+                "dport": 52344,
+                "flags": "SA"
+              }
+            }
+          },
+          "quick": false
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "green",
+          "label": "ACK",
+          "payload": [
+            "seq=1 ack=1"
+          ],
+          "row": {
+            "time": "0.058s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.10",
+            "proto": "TCP",
+            "info": "52344 → 80 [ACK] Seq=1 Ack=1",
+            "len": "60 B",
+            "wire": {
+              "tcp": {
+                "sport": 52344,
+                "dport": 80,
+                "flags": "A"
+              }
+            }
+          },
+          "quick": false
+        }
+      ]
+    },
+    {
+      "title": "HTTP Exchange",
+      "desc": "Request and response messages",
+      "detail": "The browser sends a GET request with a Host header. The server answers 200 OK with the HTML in the body: 12.2 KB, too big for one packet, so TCP splits it into 9 segments of up to 1460 bytes (drawn here as one).",
+      "facts": [
+        [
+          "Status",
+          "200 OK"
+        ],
+        [
+          "Body",
+          "text/html, 12.2 KB"
+        ],
+        [
+          "Sent as",
+          "9 TCP segments"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "amber",
+          "label": "GET /",
+          "payload": [
+            "GET / HTTP/1.1",
+            "Host: www.example.com"
+          ],
+          "row": {
+            "time": "0.058s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.10",
+            "proto": "HTTP",
+            "info": "GET / HTTP/1.1",
+            "len": "484 B",
+            "wire": {
+              "tcp": {
+                "sport": 52344,
+                "dport": 80,
+                "flags": "PA",
+                "data": {
+                  "text": [
+                    "GET / HTTP/1.1",
+                    "Host: www.example.com",
+                    "Connection: keep-alive",
+                    "Upgrade-Insecure-Requests: 1",
+                    "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+                    "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+                    "Accept-Encoding: gzip, deflate",
+                    "Accept-Language: en-US,en;q=0.9",
+                    ""
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "violet",
+          "label": "200 OK",
+          "payload": [
+            "HTTP/1.1 200 OK",
+            "12.2 KB in 9 segments"
+          ],
+          "row": {
+            "time": "0.076s",
+            "src": "203.0.113.10",
+            "dst": "192.168.1.10",
+            "proto": "HTTP",
+            "info": "HTTP/1.1 200 OK (text/html), 9 segments",
+            "len": "12.8 KB",
+            "wire": {
+              "tcp": {
+                "sport": 80,
+                "dport": 52344,
+                "flags": "PA",
+                "data": {
+                  "http": {
+                    "lines": [
+                      "HTTP/1.1 200 OK",
+                      "Date: Sat, 31 Oct 2026 09:41:00 GMT",
+                      "Content-Type: text/html; charset=utf-8",
+                      "Content-Length: 12500",
+                      "Connection: keep-alive",
+                      ""
+                    ],
+                    "body": 12500,
+                    "what": "the HTML page"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Page Rendering",
+      "desc": "Browser displays the content",
+      "detail": "The browser parses the HTML and paints the page. Linked CSS, images and scripts would each start more requests just like this one, reusing the open connection where they can.",
+      "facts": [
+        [
+          "Document",
+          "text/html, 12.2 KB"
+        ],
+        [
+          "Connection",
+          "Kept open for reuse"
+        ],
+        [
+          "Total time",
+          "0.094 s"
+        ]
+      ],
+      "events": [
+        {
+          "type": "camera",
+          "frame": "client"
+        },
+        {
+          "type": "render"
+        }
+      ]
+    }
+  ]
+}

@@ -18,6 +18,8 @@ import {
 import { useAuth } from '../../../context/AuthContext';
 import api from '../../../services/Api';
 import InstructorNotes from '../components/InstructorNotes';
+import ProtocolLessonPlayer from '../components/ProtocolLessonPlayer';
+import { protocolForLesson, setLessonProtocol } from '../../protocols/data/lessonCatalog';
 import HeartbeatLoader from '../../../components/ui/HeartbeatLoader';
 import Dialog from '../../../components/ui/Dialog';
 import errorIllustration from '../../../assets/images/fix1.webp';
@@ -986,7 +988,16 @@ const Lesson = () => {
                 </p>
               </header>
 
-              {!selectedLesson.videoUrl && <InstructorNotes content={selectedLesson.contentHtml} />}
+              {protocolForLesson(selectedLesson.contentHtml) && (
+                <ProtocolLessonPlayer
+                  protocolId={protocolForLesson(selectedLesson.contentHtml)}
+                  userId={user?.id}
+                  lessonId={selectedLesson.id}
+                />
+              )}
+              {!selectedLesson.videoUrl && (
+                <InstructorNotes content={setLessonProtocol(selectedLesson.contentHtml)} />
+              )}
               {selectedLesson.videoUrl ? (
                 <section className="lc-progress-card" aria-label="Tiến độ học bài">
                   <div className="lc-progress-head">
@@ -1096,7 +1107,9 @@ const Lesson = () => {
                 </section>
               )}
 
-              {selectedLesson.videoUrl && <InstructorNotes content={selectedLesson.contentHtml} />}
+              {selectedLesson.videoUrl && (
+                <InstructorNotes content={setLessonProtocol(selectedLesson.contentHtml)} />
+              )}
             </div>
           </div>
         </div>

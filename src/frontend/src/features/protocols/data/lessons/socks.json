@@ -1,0 +1,767 @@
+{
+  "id": "socks",
+  "name": "SOCKS5",
+  "title": "Any Connection",
+  "layer": 5,
+  "nodes": [
+    "client",
+    "router",
+    "internet",
+    "relay",
+    "web"
+  ],
+  "latency": {
+    "client-relay": 0.01,
+    "relay-web": 0.008
+  },
+  "labels": {
+    "relay": [
+      "SOCKS Proxy",
+      "192.0.2.80:1080"
+    ],
+    "web": [
+      "www.example.com",
+      "203.0.113.10"
+    ]
+  },
+  "legend": [
+    [
+      "green",
+      "TCP"
+    ],
+    [
+      "amber",
+      "From the laptop"
+    ],
+    [
+      "violet",
+      "From the proxy"
+    ],
+    [
+      "teal",
+      "TLS, through the tunnel"
+    ]
+  ],
+  "overview": {
+    "full": "Socket Secure, version 5",
+    "description": "SOCKS is a general-purpose proxy. Where an HTTP proxy understands web requests, a SOCKS proxy simply opens a connection on your behalf and copies the bytes, whatever the protocol: web, email, games, SSH. Apps use it to reach a network through one gateway, or to hide their own address; ssh -D and Tor both offer one.",
+    "facts": [
+      [
+        "Layer",
+        "Session (Layer 5)"
+      ],
+      [
+        "Port",
+        "1080"
+      ],
+      [
+        "Carries",
+        "Any TCP, and UDP"
+      ],
+      [
+        "Logins",
+        "None, or user and password"
+      ],
+      [
+        "Offered by",
+        "ssh -D, Tor, proxy servers"
+      ],
+      [
+        "Defined In",
+        "RFC 1928, RFC 1929"
+      ]
+    ]
+  },
+  "outro": {
+    "title": "Tunnel open",
+    "desc": "A few bytes, then just copying",
+    "text": "Four tiny messages told the proxy where to connect; after that it only copied bytes. The website saw the proxy’s address, and because the laptop sent a name rather than an address, even the DNS lookup happened at the proxy. Press REPLAY to watch it again.",
+    "facts": [
+      [
+        "Setup",
+        "4 messages, 37 bytes"
+      ],
+      [
+        "Server sees",
+        "The proxy (192.0.2.80)"
+      ],
+      [
+        "DNS lookup",
+        "At the proxy"
+      ],
+      [
+        "Encryption",
+        "Only the TLS inside"
+      ]
+    ]
+  },
+  "start": {
+    "nodes": [
+      "client"
+    ],
+    "frame": "client"
+  },
+  "steps": [
+    {
+      "title": "To the Proxy",
+      "desc": "TCP to port 1080",
+      "detail": "An app set to use a SOCKS proxy (a browser, a game launcher, or a tunnel made with ssh -D) opens a TCP connection to it, port 1080. SOCKS doesn’t care what will travel inside: it can carry any TCP connection.",
+      "facts": [
+        [
+          "Proxy",
+          "192.0.2.80:1080"
+        ],
+        [
+          "Carries",
+          "Any TCP connection"
+        ],
+        [
+          "Wants to reach",
+          "https://www.example.com"
+        ]
+      ],
+      "events": [
+        {
+          "type": "show",
+          "nodes": [
+            "router",
+            "internet",
+            "relay"
+          ],
+          "frame": "relay"
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "relay",
+          "color": "green",
+          "label": "SYN",
+          "payload": [],
+          "row": {
+            "time": "0.000s",
+            "src": "192.168.1.10",
+            "dst": "192.0.2.80",
+            "proto": "TCP",
+            "info": "52380 → 1080 [SYN] Seq=0",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 52380,
+                "dport": 1080,
+                "flags": "S"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "relay",
+          "to": "client",
+          "color": "green",
+          "label": "SYN-ACK",
+          "payload": [],
+          "row": {
+            "time": "0.010s",
+            "src": "192.0.2.80",
+            "dst": "192.168.1.10",
+            "proto": "TCP",
+            "info": "1080 → 52380 [SYN, ACK] Seq=0 Ack=1",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 1080,
+                "dport": 52380,
+                "flags": "SA"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "relay",
+          "color": "green",
+          "label": "ACK",
+          "payload": [],
+          "row": {
+            "time": "0.020s",
+            "src": "192.168.1.10",
+            "dst": "192.0.2.80",
+            "proto": "TCP",
+            "info": "52380 → 1080 [ACK] Seq=1 Ack=1",
+            "len": "60 B",
+            "wire": {
+              "tcp": {
+                "sport": 52380,
+                "dport": 1080,
+                "flags": "A"
+              }
+            }
+          },
+          "quick": true
+        }
+      ]
+    },
+    {
+      "title": "Greeting",
+      "desc": "Version 5, and how to log in",
+      "detail": "The laptop sends three bytes: version 5, one login method offered, and that method, 0: no login. The proxy answers with two: version 5, method 0. Had it chosen method 2, the app would next send a user name and password, in plain text.",
+      "facts": [
+        [
+          "Laptop sends",
+          "05 01 00 (3 bytes)"
+        ],
+        [
+          "Proxy answers",
+          "05 00 (2 bytes)"
+        ],
+        [
+          "Login",
+          "None needed here"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "relay",
+          "color": "amber",
+          "label": "GREETING",
+          "payload": [
+            "05 01 00",
+            "no login, please"
+          ],
+          "row": {
+            "time": "0.020s",
+            "src": "192.168.1.10",
+            "dst": "192.0.2.80",
+            "proto": "SOCKS5",
+            "info": "Version 5, 1 method: no login",
+            "len": "60 B",
+            "wire": {
+              "tcp": {
+                "sport": 52380,
+                "dport": 1080,
+                "flags": "PA",
+                "data": {
+                  "socks": {
+                    "name": "greeting",
+                    "methods": [
+                      0
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "relay",
+          "to": "client",
+          "color": "violet",
+          "label": "METHOD",
+          "payload": [
+            "05 00",
+            "no login needed"
+          ],
+          "row": {
+            "time": "0.030s",
+            "src": "192.0.2.80",
+            "dst": "192.168.1.10",
+            "proto": "SOCKS5",
+            "info": "Version 5, method chosen: no login",
+            "len": "60 B",
+            "wire": {
+              "tcp": {
+                "sport": 1080,
+                "dport": 52380,
+                "flags": "PA",
+                "data": {
+                  "socks": {
+                    "name": "method chosen",
+                    "method": 0
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Where To?",
+      "desc": "Connect to www.example.com:443",
+      "detail": "The laptop asks the proxy to connect to www.example.com, port 443. It gives the name rather than an address, so the proxy does the DNS lookup and the laptop needs none. The proxy opens its own TCP connection to the server, then replies: succeeded, and the address and port it connected from.",
+      "facts": [
+        [
+          "Command",
+          "1 (CONNECT)"
+        ],
+        [
+          "Address",
+          "www.example.com (a name)"
+        ],
+        [
+          "Reply",
+          "Succeeded, from 192.0.2.80:40220"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "relay",
+          "color": "amber",
+          "label": "CONNECT",
+          "payload": [
+            "www.example.com:443"
+          ],
+          "row": {
+            "time": "0.040s",
+            "src": "192.168.1.10",
+            "dst": "192.0.2.80",
+            "proto": "SOCKS5",
+            "info": "Connect to www.example.com:443",
+            "len": "76 B",
+            "wire": {
+              "tcp": {
+                "sport": 52380,
+                "dport": 1080,
+                "flags": "PA",
+                "data": {
+                  "socks": {
+                    "name": "connect request",
+                    "host": "www.example.com",
+                    "port": 443
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "show",
+          "nodes": [
+            "web"
+          ],
+          "frame": "full"
+        },
+        {
+          "type": "packet",
+          "from": "relay",
+          "to": "web",
+          "color": "green",
+          "label": "SYN",
+          "payload": [],
+          "row": {
+            "time": "0.055s",
+            "src": "192.0.2.80",
+            "dst": "203.0.113.10",
+            "proto": "TCP",
+            "info": "40220 → 443 [SYN] Seq=0",
+            "len": "74 B",
+            "wire": {
+              "tcp": {
+                "sport": 40220,
+                "dport": 443,
+                "flags": "S"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "relay",
+          "color": "green",
+          "label": "SYN-ACK",
+          "payload": [],
+          "row": {
+            "time": "0.063s",
+            "src": "203.0.113.10",
+            "dst": "192.0.2.80",
+            "proto": "TCP",
+            "info": "443 → 40220 [SYN, ACK] Seq=0 Ack=1",
+            "len": "74 B",
+            "wire": {
+              "tcp": {
+                "sport": 443,
+                "dport": 40220,
+                "flags": "SA"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "relay",
+          "to": "web",
+          "color": "green",
+          "label": "ACK",
+          "payload": [],
+          "row": {
+            "time": "0.071s",
+            "src": "192.0.2.80",
+            "dst": "203.0.113.10",
+            "proto": "TCP",
+            "info": "40220 → 443 [ACK] Seq=1 Ack=1",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 40220,
+                "dport": 443,
+                "flags": "A"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "relay",
+          "to": "client",
+          "color": "violet",
+          "label": "SUCCEEDED",
+          "payload": [
+            "from 192.0.2.80:40220"
+          ],
+          "row": {
+            "time": "0.071s",
+            "src": "192.0.2.80",
+            "dst": "192.168.1.10",
+            "proto": "SOCKS5",
+            "info": "Succeeded, bound to 192.0.2.80:40220",
+            "len": "64 B",
+            "wire": {
+              "tcp": {
+                "sport": 1080,
+                "dport": 52380,
+                "flags": "PA",
+                "data": {
+                  "socks": {
+                    "name": "reply",
+                    "reply": true,
+                    "ip": "192.0.2.80",
+                    "port": 40220
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "In the Tunnel",
+      "desc": "Copied both ways, unread",
+      "detail": "Now the proxy just copies. The app starts TLS with the server: its Client Hello goes in on the laptop’s connection and comes out unchanged on the proxy’s, and the server’s answer comes back the same way. The server only ever sees the proxy’s address; the proxy sees only encrypted bytes.",
+      "facts": [
+        [
+          "Server sees",
+          "The proxy’s address"
+        ],
+        [
+          "Proxy sees",
+          "Encrypted bytes"
+        ],
+        [
+          "Same bytes",
+          "On both connections"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "relay",
+          "color": "teal",
+          "label": "CLIENT HELLO",
+          "payload": [
+            "SNI www.example.com"
+          ],
+          "row": {
+            "time": "0.081s",
+            "src": "192.168.1.10",
+            "dst": "192.0.2.80",
+            "proto": "TLSv1.3",
+            "info": "Client Hello (SNI=www.example.com)",
+            "len": "571 B",
+            "wire": {
+              "tcp": {
+                "sport": 52380,
+                "dport": 1080,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "handshake",
+                      "legacy": true,
+                      "length": 512,
+                      "hello": {
+                        "type": 1,
+                        "name": "Client Hello",
+                        "note": "What this client supports. Its exact contents vary from client to client; this is an example.",
+                        "fields": [
+                          [
+                            "Server name (SNI)",
+                            "www.example.com"
+                          ],
+                          [
+                            "Versions offered",
+                            "TLS 1.3, TLS 1.2"
+                          ],
+                          [
+                            "Key share",
+                            "X25519"
+                          ],
+                          [
+                            "Padding",
+                            "up to 512 bytes"
+                          ]
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "relay",
+          "to": "web",
+          "color": "teal",
+          "label": "CLIENT HELLO",
+          "payload": [
+            "unchanged"
+          ],
+          "row": {
+            "time": "0.091s",
+            "src": "192.0.2.80",
+            "dst": "203.0.113.10",
+            "proto": "TLSv1.3",
+            "info": "Client Hello (SNI=www.example.com)",
+            "len": "583 B",
+            "wire": {
+              "tcp": {
+                "sport": 40220,
+                "dport": 443,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "handshake",
+                      "legacy": true,
+                      "length": 512,
+                      "hello": {
+                        "type": 1,
+                        "name": "Client Hello",
+                        "note": "What this client supports. Its exact contents vary from client to client; this is an example.",
+                        "fields": [
+                          [
+                            "Server name (SNI)",
+                            "www.example.com"
+                          ],
+                          [
+                            "Versions offered",
+                            "TLS 1.3, TLS 1.2"
+                          ],
+                          [
+                            "Key share",
+                            "X25519"
+                          ],
+                          [
+                            "Padding",
+                            "up to 512 bytes"
+                          ]
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "relay",
+          "color": "teal",
+          "label": "SERVER HELLO",
+          "payload": [
+            "+ encrypted handshake"
+          ],
+          "row": {
+            "time": "0.100s",
+            "src": "203.0.113.10",
+            "dst": "192.0.2.80",
+            "proto": "TLSv1.3",
+            "info": "Server Hello + encrypted handshake, 2 segments",
+            "len": "2.9 KB",
+            "wire": {
+              "tcp": {
+                "sport": 443,
+                "dport": 40220,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "handshake",
+                      "length": 122,
+                      "hello": {
+                        "type": 2,
+                        "name": "Server Hello",
+                        "note": "The server’s choices and its key share.",
+                        "fields": [
+                          [
+                            "Version",
+                            "TLS 1.3"
+                          ],
+                          [
+                            "Cipher suite",
+                            "TLS_AES_128_GCM_SHA256"
+                          ],
+                          [
+                            "Key share",
+                            "X25519"
+                          ]
+                        ]
+                      }
+                    },
+                    {
+                      "type": "ccs",
+                      "length": 1
+                    },
+                    {
+                      "type": "appdata",
+                      "length": 2724,
+                      "inner": {
+                        "what": "Encrypted Extensions, Certificate (the chain), Certificate Verify (the signature), Finished"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "relay",
+          "to": "client",
+          "color": "teal",
+          "label": "SERVER HELLO",
+          "payload": [
+            "unchanged"
+          ],
+          "row": {
+            "time": "0.108s",
+            "src": "192.0.2.80",
+            "dst": "192.168.1.10",
+            "proto": "TLSv1.3",
+            "info": "Server Hello + encrypted handshake, 2 segments",
+            "len": "2.9 KB",
+            "wire": {
+              "tcp": {
+                "sport": 1080,
+                "dport": 52380,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "handshake",
+                      "length": 122,
+                      "hello": {
+                        "type": 2,
+                        "name": "Server Hello",
+                        "note": "The server’s choices and its key share.",
+                        "fields": [
+                          [
+                            "Version",
+                            "TLS 1.3"
+                          ],
+                          [
+                            "Cipher suite",
+                            "TLS_AES_128_GCM_SHA256"
+                          ],
+                          [
+                            "Key share",
+                            "X25519"
+                          ]
+                        ]
+                      }
+                    },
+                    {
+                      "type": "ccs",
+                      "length": 1
+                    },
+                    {
+                      "type": "appdata",
+                      "length": 2724,
+                      "inner": {
+                        "what": "Encrypted Extensions, Certificate (the chain), Certificate Verify (the signature), Finished"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "teaching": {
+    "steps": [
+      [
+        "Tới proxy",
+        "Một ứng dụng được đặt để dùng proxy SOCKS (trình duyệt, trình chạy game hoặc đường hầm tạo bằng ssh -D) mở kết nối TCP tới nó, cổng 1080. SOCKS không quan tâm thứ gì sẽ đi bên trong: nó mang được mọi kết nối TCP."
+      ],
+      [
+        "Lời chào",
+        "Laptop gửi ba byte: phiên bản 5, một cách đăng nhập được đề xuất, và cách đó là 0: không đăng nhập. Proxy trả lời hai byte: phiên bản 5, cách 0. Nếu nó chọn cách 2, ứng dụng sẽ gửi tiếp tên người dùng và mật khẩu, ở dạng văn bản thường."
+      ],
+      [
+        "Đi đâu?",
+        "Laptop nhờ proxy kết nối tới www.example.com, cổng 443. Nó đưa tên thay vì địa chỉ, nên proxy làm tra cứu DNS và laptop không cần. Proxy mở kết nối TCP riêng tới máy chủ, rồi trả lời: thành công, kèm địa chỉ và cổng nó kết nối từ đó."
+      ],
+      [
+        "Trong đường hầm",
+        "Giờ proxy chỉ sao chép. Ứng dụng bắt đầu TLS với máy chủ: Client Hello của nó đi vào trên kết nối của laptop và đi ra nguyên vẹn trên kết nối của proxy, và câu trả lời của máy chủ quay về theo cùng cách. Máy chủ chỉ luôn thấy địa chỉ của proxy; proxy chỉ thấy byte đã mã hóa."
+      ]
+    ],
+    "notes": {},
+    "labels": {
+      "Internet": "Internet",
+      "Client": "Máy khách",
+      "Router": "Router",
+      "DNS Resolver": "Bộ phân giải DNS",
+      "Web Server": "Máy chủ web",
+      "Root Server": "Máy chủ gốc",
+      ".com TLD Server": "Máy chủ TLD .com",
+      "Authoritative Server": "Máy chủ có thẩm quyền",
+      "Mail Server": "Máy chủ thư",
+      "Proxy": "Proxy",
+      "App Server": "Máy chủ ứng dụng",
+      "File Server": "Máy chủ tệp",
+      "ISP Router": "Router của ISP",
+      "Transit Router": "Router trung chuyển",
+      "Hosting Router": "Router của nhà lưu trữ",
+      "Their Router": "Router bên kia",
+      "Their Laptop": "Laptop bên kia",
+      "Switch": "Switch",
+      "Access Server": "Máy chủ truy cập",
+      "IP Camera": "Camera IP",
+      "TV Box": "TV box",
+      "SOCKS Proxy": "Proxy SOCKS",
+      "www.example.com": "www.example.com"
+    }
+  }
+}

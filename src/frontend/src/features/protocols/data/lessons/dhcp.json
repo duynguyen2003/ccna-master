@@ -1,0 +1,679 @@
+{
+  "id": "dhcp",
+  "name": "DHCP",
+  "title": "Getting an Address",
+  "layer": 7,
+  "nodes": [
+    "client",
+    "router"
+  ],
+  "latency": {
+    "client-router": 0.001
+  },
+  "labels": {
+    "client": [
+      "Client",
+      "No IP address"
+    ],
+    "router": [
+      "Router",
+      "192.168.1.1 · DHCP server"
+    ]
+  },
+  "legend": [
+    [
+      "amber",
+      "From the laptop"
+    ],
+    [
+      "violet",
+      "From the DHCP server"
+    ]
+  ],
+  "overview": {
+    "full": "Dynamic Host Configuration Protocol",
+    "description": "DHCP hands a device everything it needs to use a network: an IP address, the subnet mask, the router to send traffic through and the DNS servers to ask. Addresses are leased for a set time and renewed while the device stays on the network.",
+    "facts": [
+      [
+        "Layer",
+        "Application (Layer 7)"
+      ],
+      [
+        "Ports",
+        "UDP 67 (server), 68 (client)"
+      ],
+      [
+        "Hands out",
+        "IP, mask, gateway, DNS"
+      ],
+      [
+        "Exchange",
+        "Discover, Offer, Request, Ack"
+      ],
+      [
+        "Lease",
+        "Renewed at half its time"
+      ],
+      [
+        "Defined In",
+        "RFC 2131, RFC 2132"
+      ]
+    ]
+  },
+  "outro": {
+    "title": "On the network",
+    "desc": "Leased, and kept up to date",
+    "text": "Four messages took the laptop from no address to a working configuration, and halfway through the 24-hour lease it renewed it with a direct request to the router. Press REPLAY to watch it again.",
+    "facts": [
+      [
+        "Messages",
+        "4 to join, 2 per renewal"
+      ],
+      [
+        "Address",
+        "192.168.1.10/24"
+      ],
+      [
+        "Lease",
+        "24 h, renewed at 12 h"
+      ],
+      [
+        "Ports",
+        "UDP 68 → 67"
+      ]
+    ]
+  },
+  "start": {
+    "nodes": [
+      "client"
+    ],
+    "frame": "client"
+  },
+  "steps": [
+    {
+      "title": "No Address Yet",
+      "desc": "The laptop joins the network",
+      "detail": "The laptop has just connected. It has a MAC address built in, but no IP address, no gateway and no DNS server, so it can’t talk to anything beyond its own network yet. It asks for them with DHCP.",
+      "facts": [
+        [
+          "IP address",
+          "None (uses 0.0.0.0)"
+        ],
+        [
+          "MAC address",
+          "00:00:5e:00:53:10"
+        ],
+        [
+          "Needs",
+          "IP, mask, gateway, DNS"
+        ]
+      ],
+      "events": [
+        {
+          "type": "note",
+          "at": "client",
+          "text": "NO IP ADDRESS YET",
+          "tone": "amber"
+        },
+        {
+          "type": "show",
+          "nodes": [
+            "router"
+          ],
+          "frame": "local"
+        }
+      ]
+    },
+    {
+      "title": "Discover",
+      "desc": "Shout to the whole network",
+      "detail": "Without an address of its own, the laptop sends from 0.0.0.0 to the broadcast address 255.255.255.255, so every device on the local network receives it. Only DHCP servers answer.",
+      "facts": [
+        [
+          "From",
+          "0.0.0.0, UDP port 68"
+        ],
+        [
+          "To",
+          "255.255.255.255, port 67"
+        ],
+        [
+          "Carries",
+          "MAC, transaction ID"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "router",
+          "color": "amber",
+          "label": "DISCOVER",
+          "payload": [
+            "0.0.0.0 → 255.255.255.255",
+            "any DHCP server out there?"
+          ],
+          "row": {
+            "time": "0.000s",
+            "src": "0.0.0.0",
+            "dst": "255.255.255.255",
+            "proto": "DHCP",
+            "info": "DHCP Discover - Transaction ID 0x3903f326",
+            "len": "342 B",
+            "wire": {
+              "udp": {
+                "sport": 68,
+                "dport": 67,
+                "data": {
+                  "dhcp": {
+                    "op": 1,
+                    "xid": 956560166,
+                    "options": [
+                      [
+                        53,
+                        1
+                      ],
+                      [
+                        61,
+                        "mac"
+                      ],
+                      [
+                        12,
+                        "alice-laptop"
+                      ],
+                      [
+                        60,
+                        "MSFT 5.0"
+                      ],
+                      [
+                        55,
+                        [
+                          1,
+                          3,
+                          6,
+                          15,
+                          31,
+                          33,
+                          43,
+                          44,
+                          46,
+                          47,
+                          119,
+                          121,
+                          249,
+                          252
+                        ]
+                      ]
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Offer",
+      "desc": "The router proposes an address",
+      "detail": "The router’s DHCP server picks a free address and offers it with the rest of the settings. The laptop can’t use an IP address yet, so the offer goes straight to its MAC address (some clients ask for a broadcast instead).",
+      "facts": [
+        [
+          "Offered",
+          "192.168.1.10/24"
+        ],
+        [
+          "Gateway, DNS",
+          "192.168.1.1, 8.8.8.8"
+        ],
+        [
+          "Lease",
+          "86,400 s (24 h)"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "router",
+          "to": "client",
+          "color": "violet",
+          "label": "OFFER",
+          "payload": [
+            "offer: 192.168.1.10/24",
+            "gateway, DNS, lease 24 h"
+          ],
+          "row": {
+            "time": "0.004s",
+            "src": "192.168.1.1",
+            "dst": "192.168.1.10",
+            "proto": "DHCP",
+            "info": "DHCP Offer - Transaction ID 0x3903f326",
+            "len": "342 B",
+            "wire": {
+              "udp": {
+                "sport": 67,
+                "dport": 68,
+                "data": {
+                  "dhcp": {
+                    "op": 2,
+                    "xid": 956560166,
+                    "yiaddr": "192.168.1.10",
+                    "options": [
+                      [
+                        53,
+                        2
+                      ],
+                      [
+                        54,
+                        "192.168.1.1"
+                      ],
+                      [
+                        51,
+                        86400
+                      ],
+                      [
+                        58,
+                        43200
+                      ],
+                      [
+                        59,
+                        75600
+                      ],
+                      [
+                        1,
+                        "255.255.255.0"
+                      ],
+                      [
+                        28,
+                        "192.168.1.255"
+                      ],
+                      [
+                        3,
+                        "192.168.1.1"
+                      ],
+                      [
+                        6,
+                        "8.8.8.8"
+                      ]
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Request",
+      "desc": "Accept, out loud",
+      "detail": "The laptop asks for the offered address, naming the server it chose. It still broadcasts, so any other DHCP server that made an offer learns it wasn’t picked and can release its address.",
+      "facts": [
+        [
+          "Requests",
+          "192.168.1.10"
+        ],
+        [
+          "Chosen server",
+          "192.168.1.1"
+        ],
+        [
+          "Sent to",
+          "255.255.255.255"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "router",
+          "color": "amber",
+          "label": "REQUEST",
+          "payload": [
+            "I’ll take 192.168.1.10",
+            "from server 192.168.1.1"
+          ],
+          "row": {
+            "time": "0.006s",
+            "src": "0.0.0.0",
+            "dst": "255.255.255.255",
+            "proto": "DHCP",
+            "info": "DHCP Request - Transaction ID 0x3903f326",
+            "len": "364 B",
+            "wire": {
+              "udp": {
+                "sport": 68,
+                "dport": 67,
+                "data": {
+                  "dhcp": {
+                    "op": 1,
+                    "xid": 956560166,
+                    "options": [
+                      [
+                        53,
+                        3
+                      ],
+                      [
+                        61,
+                        "mac"
+                      ],
+                      [
+                        50,
+                        "192.168.1.10"
+                      ],
+                      [
+                        54,
+                        "192.168.1.1"
+                      ],
+                      [
+                        12,
+                        "alice-laptop"
+                      ],
+                      [
+                        81,
+                        "alice-laptop"
+                      ],
+                      [
+                        60,
+                        "MSFT 5.0"
+                      ],
+                      [
+                        55,
+                        [
+                          1,
+                          3,
+                          6,
+                          15,
+                          31,
+                          33,
+                          43,
+                          44,
+                          46,
+                          47,
+                          119,
+                          121,
+                          249,
+                          252
+                        ]
+                      ]
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Acknowledge",
+      "desc": "The address is the laptop’s",
+      "detail": "The server confirms, and the laptop configures its address, mask, gateway and DNS server. Many systems first check with ARP that no other device is already using the address.",
+      "facts": [
+        [
+          "Address",
+          "192.168.1.10/24"
+        ],
+        [
+          "Gateway",
+          "192.168.1.1"
+        ],
+        [
+          "DNS server",
+          "8.8.8.8"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "router",
+          "to": "client",
+          "color": "violet",
+          "label": "ACK",
+          "payload": [
+            "192.168.1.10 is yours",
+            "for 24 hours"
+          ],
+          "row": {
+            "time": "0.009s",
+            "src": "192.168.1.1",
+            "dst": "192.168.1.10",
+            "proto": "DHCP",
+            "info": "DHCP ACK - Transaction ID 0x3903f326",
+            "len": "342 B",
+            "wire": {
+              "udp": {
+                "sport": 67,
+                "dport": 68,
+                "data": {
+                  "dhcp": {
+                    "op": 2,
+                    "xid": 956560166,
+                    "yiaddr": "192.168.1.10",
+                    "options": [
+                      [
+                        53,
+                        5
+                      ],
+                      [
+                        54,
+                        "192.168.1.1"
+                      ],
+                      [
+                        51,
+                        86400
+                      ],
+                      [
+                        58,
+                        43200
+                      ],
+                      [
+                        59,
+                        75600
+                      ],
+                      [
+                        1,
+                        "255.255.255.0"
+                      ],
+                      [
+                        28,
+                        "192.168.1.255"
+                      ],
+                      [
+                        3,
+                        "192.168.1.1"
+                      ],
+                      [
+                        6,
+                        "8.8.8.8"
+                      ]
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "label",
+          "at": "client",
+          "label": [
+            "Client",
+            "192.168.1.10"
+          ]
+        },
+        {
+          "type": "note",
+          "at": "client",
+          "text": "192.168.1.10/24 · 24 H LEASE",
+          "tone": "green"
+        }
+      ]
+    },
+    {
+      "title": "Renew",
+      "desc": "Halfway through the lease",
+      "detail": "Twelve hours later, half the lease has passed. The laptop now has an address, so it asks the router directly to extend the lease, and the router resets it to 24 hours. If the router didn’t answer, it would broadcast at 87.5%.",
+      "facts": [
+        [
+          "When",
+          "50% of lease (T1 = 12 h)"
+        ],
+        [
+          "Sent to",
+          "The router (unicast)"
+        ],
+        [
+          "If unanswered",
+          "Broadcast at 87.5% (T2)"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "router",
+          "color": "amber",
+          "label": "REQUEST",
+          "payload": [
+            "renew 192.168.1.10",
+            "sent straight to 192.168.1.1"
+          ],
+          "row": {
+            "time": "43200.000s",
+            "src": "192.168.1.10",
+            "dst": "192.168.1.1",
+            "proto": "DHCP",
+            "info": "DHCP Request - Transaction ID 0x7a1c22e5",
+            "len": "352 B",
+            "wire": {
+              "udp": {
+                "sport": 68,
+                "dport": 67,
+                "data": {
+                  "dhcp": {
+                    "op": 1,
+                    "xid": 2048664293,
+                    "ciaddr": "192.168.1.10",
+                    "options": [
+                      [
+                        53,
+                        3
+                      ],
+                      [
+                        61,
+                        "mac"
+                      ],
+                      [
+                        12,
+                        "alice-laptop"
+                      ],
+                      [
+                        81,
+                        "alice-laptop"
+                      ],
+                      [
+                        60,
+                        "MSFT 5.0"
+                      ],
+                      [
+                        55,
+                        [
+                          1,
+                          3,
+                          6,
+                          15,
+                          31,
+                          33,
+                          43,
+                          44,
+                          46,
+                          47,
+                          119,
+                          121,
+                          249,
+                          252
+                        ]
+                      ]
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "router",
+          "to": "client",
+          "color": "violet",
+          "label": "ACK",
+          "payload": [
+            "lease renewed",
+            "another 24 hours"
+          ],
+          "row": {
+            "time": "43200.003s",
+            "src": "192.168.1.1",
+            "dst": "192.168.1.10",
+            "proto": "DHCP",
+            "info": "DHCP ACK - Transaction ID 0x7a1c22e5",
+            "len": "342 B",
+            "wire": {
+              "udp": {
+                "sport": 67,
+                "dport": 68,
+                "data": {
+                  "dhcp": {
+                    "op": 2,
+                    "xid": 2048664293,
+                    "ciaddr": "192.168.1.10",
+                    "yiaddr": "192.168.1.10",
+                    "options": [
+                      [
+                        53,
+                        5
+                      ],
+                      [
+                        54,
+                        "192.168.1.1"
+                      ],
+                      [
+                        51,
+                        86400
+                      ],
+                      [
+                        58,
+                        43200
+                      ],
+                      [
+                        59,
+                        75600
+                      ],
+                      [
+                        1,
+                        "255.255.255.0"
+                      ],
+                      [
+                        28,
+                        "192.168.1.255"
+                      ],
+                      [
+                        3,
+                        "192.168.1.1"
+                      ],
+                      [
+                        6,
+                        "8.8.8.8"
+                      ]
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,1329 @@
+{
+  "id": "webrtc",
+  "name": "WebRTC",
+  "title": "A Video Call",
+  "layer": 7,
+  "nodes": [
+    "client",
+    "router",
+    "internet",
+    "relay",
+    "web",
+    "remote",
+    "peer"
+  ],
+  "latency": {
+    "client-web": 0.017,
+    "client-relay": 0.01,
+    "web-peer": 0.02,
+    "client-peer": 0.025
+  },
+  "labels": {
+    "relay": [
+      "STUN Server",
+      "192.0.2.19"
+    ],
+    "web": [
+      "call.example.com",
+      "203.0.113.10"
+    ],
+    "remote": [
+      "Sam’s Router",
+      "198.51.100.200"
+    ],
+    "peer": [
+      "Sam’s Laptop",
+      "192.168.0.23"
+    ]
+  },
+  "legend": [
+    [
+      "blue",
+      "Signalling"
+    ],
+    [
+      "amber",
+      "STUN and ICE"
+    ],
+    [
+      "teal",
+      "DTLS"
+    ],
+    [
+      "violet",
+      "Media"
+    ]
+  ],
+  "overview": {
+    "full": "Web Real-Time Communication",
+    "description": "WebRTC lets two browsers call each other, with audio, video and data going straight between them, not through a server. A server only introduces them: they swap descriptions of what they can send and where they can be reached (signalling), find a way through both home routers with ICE and STUN, encrypt with DTLS, and send the media over UDP as SRTP.",
+    "facts": [
+      [
+        "Layer",
+        "Application (Layer 7)"
+      ],
+      [
+        "Media over",
+        "UDP (SRTP)"
+      ],
+      [
+        "Setup",
+        "SDP, ICE, STUN, DTLS"
+      ],
+      [
+        "Encryption",
+        "Always on"
+      ],
+      [
+        "Works in",
+        "Every major browser"
+      ],
+      [
+        "Defined In",
+        "W3C; RFC 8825 and others"
+      ]
+    ]
+  },
+  "outro": {
+    "title": "On the call",
+    "desc": "Introduced by a server, then direct",
+    "text": "The signalling server passed the offer and the answer between the two browsers, a STUN server told the laptop its public address, and an ICE check found a way through both home routers. After a DTLS handshake, encrypted audio and video went straight from one laptop to the other. Press REPLAY to watch it again.",
+    "facts": [
+      [
+        "Signalling",
+        "Via call.example.com"
+      ],
+      [
+        "Media path",
+        "Direct, through 2 NATs"
+      ],
+      [
+        "Encryption",
+        "DTLS, then SRTP"
+      ],
+      [
+        "If blocked",
+        "A TURN relay"
+      ]
+    ]
+  },
+  "start": {
+    "nodes": [
+      "client"
+    ],
+    "frame": "client"
+  },
+  "steps": [
+    {
+      "title": "Join the Call",
+      "desc": "Through a signalling server",
+      "detail": "The laptop opens a call page on call.example.com, and the page keeps a WebSocket open to the server, inside TLS. It joins room 42, where Sam is already waiting. The server will pass messages between the two browsers. WebRTC doesn’t say how: every app does this signalling its own way.",
+      "facts": [
+        [
+          "Signalling",
+          "The app’s own server"
+        ],
+        [
+          "Here",
+          "A WebSocket in TLS"
+        ],
+        [
+          "Room",
+          "42, with Sam"
+        ]
+      ],
+      "events": [
+        {
+          "type": "show",
+          "nodes": [
+            "router",
+            "internet",
+            "relay",
+            "web",
+            "remote",
+            "peer"
+          ],
+          "frame": "call"
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "blue",
+          "label": "JOIN",
+          "payload": [
+            "room 42"
+          ],
+          "row": {
+            "time": "0.000s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.10",
+            "proto": "TLSv1.3",
+            "info": "Application Data (WebSocket: join)",
+            "len": "109 B",
+            "wire": {
+              "tcp": {
+                "sport": 50918,
+                "dport": 443,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "appdata",
+                      "length": 50,
+                      "inner": {
+                        "what": "A WebSocket text message",
+                        "text": [
+                          "{\"type\":\"join\",\"room\":\"42\"}"
+                        ]
+                      }
+                    }
+                  ]
+                },
+                "opened": {
+                  "bytes": [
+                    2817,
+                    5934
+                  ]
+                }
+              }
+            }
+          },
+          "locked": true
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "blue",
+          "label": "SAM IS HERE",
+          "payload": [
+            "peer: Sam"
+          ],
+          "row": {
+            "time": "0.018s",
+            "src": "203.0.113.10",
+            "dst": "192.168.1.10",
+            "proto": "TLSv1.3",
+            "info": "Application Data (WebSocket: peer)",
+            "len": "106 B",
+            "wire": {
+              "tcp": {
+                "sport": 443,
+                "dport": 50918,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "appdata",
+                      "length": 47,
+                      "inner": {
+                        "what": "A WebSocket text message",
+                        "text": [
+                          "{\"type\":\"peer\",\"name\":\"Sam\"}"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "locked": true
+        }
+      ]
+    },
+    {
+      "title": "Public Address?",
+      "desc": "Ask a STUN server",
+      "detail": "Behind its home router the laptop knows only its private address, 192.168.1.10, which nobody on the internet can reach. So it asks a STUN server named in the call page’s settings, with one small UDP request. The answer says where the request seemed to come from, 198.51.100.7 port 61022: the router’s public address and the port its NAT opened for this conversation.",
+      "facts": [
+        [
+          "STUN",
+          "UDP 3478"
+        ],
+        [
+          "Private",
+          "192.168.1.10:56143"
+        ],
+        [
+          "Public",
+          "198.51.100.7:61022"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "relay",
+          "color": "amber",
+          "label": "BINDING?",
+          "payload": [
+            "what is my address?"
+          ],
+          "row": {
+            "time": "0.040s",
+            "src": "192.168.1.10",
+            "dst": "192.0.2.19",
+            "proto": "STUN",
+            "info": "Binding Request",
+            "len": "62 B",
+            "wire": {
+              "udp": {
+                "sport": 56143,
+                "dport": 3478,
+                "data": {
+                  "stun": {
+                    "type": 1,
+                    "tid": [
+                      78,
+                      33,
+                      156,
+                      7,
+                      179,
+                      90,
+                      17,
+                      232,
+                      98,
+                      13,
+                      159,
+                      52
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "relay",
+          "to": "client",
+          "color": "amber",
+          "label": "YOUR ADDRESS",
+          "payload": [
+            "198.51.100.7:61022"
+          ],
+          "row": {
+            "time": "0.050s",
+            "src": "192.0.2.19",
+            "dst": "192.168.1.10",
+            "proto": "STUN",
+            "info": "Binding Success Response XOR-MAPPED-ADDRESS: 198.51.100.7:61022",
+            "len": "74 B",
+            "wire": {
+              "udp": {
+                "sport": 3478,
+                "dport": 56143,
+                "data": {
+                  "stun": {
+                    "type": 257,
+                    "tid": [
+                      78,
+                      33,
+                      156,
+                      7,
+                      179,
+                      90,
+                      17,
+                      232,
+                      98,
+                      13,
+                      159,
+                      52
+                    ],
+                    "attrs": [
+                      [
+                        "XOR-MAPPED-ADDRESS",
+                        "198.51.100.7:61022"
+                      ]
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "The Offer",
+      "desc": "An SDP description, via the server",
+      "detail": "The browser writes an offer in SDP: the media it wants to send (Opus audio; video in VP8, H.264 and others), the fingerprint of its DTLS certificate, its ICE user name and password, and its candidates, the addresses it might be reached at. Its private address is hidden behind a random .local name. The signalling server passes the offer on to Sam.",
+      "facts": [
+        [
+          "Format",
+          "SDP, in a JSON message"
+        ],
+        [
+          "Candidates",
+          ".local name, 198.51.100.7"
+        ],
+        [
+          "Size",
+          "About 4.7 KB"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "blue",
+          "label": "OFFER",
+          "payload": [
+            "SDP: audio, video",
+            "candidates"
+          ],
+          "row": {
+            "time": "0.070s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.10",
+            "proto": "TLSv1.3",
+            "info": "Application Data (WebSocket: offer), 4 segments",
+            "len": "4.9 KB",
+            "wire": {
+              "tcp": {
+                "sport": 50918,
+                "dport": 443,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "appdata",
+                      "length": 4763,
+                      "inner": {
+                        "what": "A WebSocket text message",
+                        "text": [
+                          "{\"type\":\"offer\",\"sdp\":\"v=0 …\"}",
+                          "m=audio: Opus; m=video: VP8, H.264, AV1 …",
+                          "a=fingerprint:sha-256 4F:2A:… (its DTLS certificate)",
+                          "a=ice-ufrag:Hk2w a=ice-pwd:…",
+                          "a=candidate: host 2b9c…e1.local, srflx 198.51.100.7 61022"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "locked": true
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "peer",
+          "color": "blue",
+          "label": "OFFER",
+          "payload": [
+            "to Sam"
+          ],
+          "row": {
+            "time": "0.088s",
+            "src": "203.0.113.10",
+            "dst": "198.51.100.200",
+            "proto": "TLSv1.3",
+            "info": "Application Data (WebSocket: offer), 4 segments",
+            "len": "4.9 KB",
+            "wire": {
+              "tcp": {
+                "sport": 443,
+                "dport": 50731,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "appdata",
+                      "length": 4775,
+                      "inner": {
+                        "what": "A WebSocket text message",
+                        "text": [
+                          "{\"type\":\"offer\",\"sdp\":\"v=0 …\"}",
+                          "m=audio: Opus; m=video: VP8, H.264, AV1 …",
+                          "a=fingerprint:sha-256 4F:2A:… (its DTLS certificate)",
+                          "a=ice-ufrag:Hk2w a=ice-pwd:…",
+                          "a=candidate: host 2b9c…e1.local, srflx 198.51.100.7 61022"
+                        ]
+                      }
+                    }
+                  ]
+                },
+                "opened": {
+                  "bytes": [
+                    4410,
+                    1934
+                  ],
+                  "ts": true
+                }
+              }
+            }
+          },
+          "locked": true
+        }
+      ]
+    },
+    {
+      "title": "The Answer",
+      "desc": "Sam’s browser replies",
+      "detail": "Sam accepts the call. Sam’s browser answers with SDP of its own: the codecs it picked from the offer, its certificate fingerprint, its ICE user name and password, and its candidates, including its public address, 198.51.100.200 port 49170, which it learned from a STUN server the same way. It also says it will start the encryption handshake. Now each browser knows where the other might be reached.",
+      "facts": [
+        [
+          "Codecs",
+          "Opus, VP8"
+        ],
+        [
+          "Sam’s address",
+          "198.51.100.200:49170"
+        ],
+        [
+          "Starts DTLS",
+          "Sam’s browser"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "peer",
+          "to": "web",
+          "color": "blue",
+          "label": "ANSWER",
+          "payload": [
+            "SDP: Opus, VP8",
+            "candidates"
+          ],
+          "row": {
+            "time": "2.400s",
+            "src": "198.51.100.200",
+            "dst": "203.0.113.10",
+            "proto": "TLSv1.3",
+            "info": "Application Data (WebSocket: answer), 3 segments",
+            "len": "3.1 KB",
+            "wire": {
+              "tcp": {
+                "sport": 50731,
+                "dport": 443,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "appdata",
+                      "length": 2925,
+                      "inner": {
+                        "what": "A WebSocket text message",
+                        "text": [
+                          "{\"type\":\"answer\",\"sdp\":\"v=0 …\"}",
+                          "Chosen: Opus, VP8",
+                          "a=setup:active (Sam’s browser starts DTLS)",
+                          "a=fingerprint:sha-256 9C:71:… a=ice-ufrag:q7Rz",
+                          "a=candidate: srflx 198.51.100.200 49170, and others"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              },
+              "ttl": 63
+            }
+          },
+          "locked": true
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "blue",
+          "label": "ANSWER",
+          "payload": [
+            "from Sam"
+          ],
+          "row": {
+            "time": "2.421s",
+            "src": "203.0.113.10",
+            "dst": "192.168.1.10",
+            "proto": "TLSv1.3",
+            "info": "Application Data (WebSocket: answer), 3 segments",
+            "len": "3.0 KB",
+            "wire": {
+              "tcp": {
+                "sport": 443,
+                "dport": 50918,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "appdata",
+                      "length": 2937,
+                      "inner": {
+                        "what": "A WebSocket text message",
+                        "text": [
+                          "{\"type\":\"answer\",\"sdp\":\"v=0 …\"}",
+                          "Chosen: Opus, VP8",
+                          "a=setup:active (Sam’s browser starts DTLS)",
+                          "a=fingerprint:sha-256 9C:71:… a=ice-ufrag:q7Rz",
+                          "a=candidate: srflx 198.51.100.200 49170, and others"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "locked": true
+        }
+      ]
+    },
+    {
+      "title": "Punch Through",
+      "desc": "Checks straight to each other",
+      "detail": "Now the browsers try pairs of addresses with STUN checks sent straight to each other (ICE). Each check also opens a way back through the sender’s own router, so once both sides have sent one, checks get through both NATs. This one is answered: the direct path works. The laptop then repeats the check with USE-CANDIDATE, choosing this pair for the call.",
+      "facts": [
+        [
+          "Checks",
+          "STUN, peer to peer"
+        ],
+        [
+          "Protected by",
+          "The ICE password"
+        ],
+        [
+          "Result",
+          "A direct path"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "peer",
+          "color": "amber",
+          "label": "CHECK",
+          "payload": [
+            "to 198.51.100.200:49170"
+          ],
+          "row": {
+            "time": "2.440s",
+            "src": "192.168.1.10",
+            "dst": "198.51.100.200",
+            "proto": "STUN",
+            "info": "Binding Request user: q7Rz:Hk2w",
+            "len": "130 B",
+            "wire": {
+              "udp": {
+                "sport": 56143,
+                "dport": 49170,
+                "data": {
+                  "stun": {
+                    "type": 1,
+                    "tid": [
+                      8,
+                      123,
+                      210,
+                      69,
+                      145,
+                      60,
+                      174,
+                      96,
+                      23,
+                      245,
+                      43,
+                      201
+                    ],
+                    "attrs": [
+                      [
+                        "USERNAME",
+                        "q7Rz:Hk2w"
+                      ],
+                      [
+                        "PRIORITY",
+                        1853824767
+                      ],
+                      [
+                        "ICE-CONTROLLING"
+                      ],
+                      [
+                        "MESSAGE-INTEGRITY"
+                      ],
+                      [
+                        "FINGERPRINT"
+                      ]
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "peer",
+          "to": "client",
+          "color": "amber",
+          "label": "IT WORKS",
+          "payload": [
+            "direct path"
+          ],
+          "row": {
+            "time": "2.466s",
+            "src": "198.51.100.200",
+            "dst": "192.168.1.10",
+            "proto": "STUN",
+            "info": "Binding Success Response XOR-MAPPED-ADDRESS: 198.51.100.7:61022",
+            "len": "106 B",
+            "wire": {
+              "udp": {
+                "sport": 49170,
+                "dport": 56143,
+                "data": {
+                  "stun": {
+                    "type": 257,
+                    "tid": [
+                      8,
+                      123,
+                      210,
+                      69,
+                      145,
+                      60,
+                      174,
+                      96,
+                      23,
+                      245,
+                      43,
+                      201
+                    ],
+                    "peer": true,
+                    "attrs": [
+                      [
+                        "XOR-MAPPED-ADDRESS",
+                        "198.51.100.7:61022"
+                      ],
+                      [
+                        "MESSAGE-INTEGRITY"
+                      ],
+                      [
+                        "FINGERPRINT"
+                      ]
+                    ]
+                  }
+                }
+              },
+              "ttl": 51
+            }
+          }
+        },
+        {
+          "type": "note",
+          "at": "internet",
+          "text": "THROUGH BOTH ROUTERS",
+          "tone": "green"
+        }
+      ]
+    },
+    {
+      "title": "DTLS Handshake",
+      "desc": "Keys for the media",
+      "detail": "Over the same path the browsers run a DTLS handshake: TLS for UDP. Their certificates are self-signed, so each checks the other’s against the fingerprint in the SDP, which came through the signalling server inside TLS. The handshake also agrees the keys for SRTP, which encrypts the audio and video. WebRTC never sends media unencrypted.",
+      "facts": [
+        [
+          "DTLS",
+          "1.2, TLS over UDP"
+        ],
+        [
+          "Certificates",
+          "Checked by fingerprint"
+        ],
+        [
+          "Gives",
+          "The SRTP keys"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "peer",
+          "to": "client",
+          "color": "teal",
+          "label": "CLIENT HELLO",
+          "payload": [],
+          "row": {
+            "time": "2.470s",
+            "src": "198.51.100.200",
+            "dst": "192.168.1.10",
+            "proto": "DTLSv1.2",
+            "info": "Client Hello",
+            "len": "218 B",
+            "wire": {
+              "udp": {
+                "sport": 49170,
+                "dport": 56143,
+                "data": {
+                  "dtls": {
+                    "name": "Client Hello",
+                    "records": [
+                      {
+                        "msg": 1,
+                        "mseq": 0,
+                        "epoch": 0,
+                        "seq": 0,
+                        "body": 151,
+                        "what": [
+                          "Cipher suites: ECDHE-ECDSA with AES-GCM, and others",
+                          "use_srtp: the SRTP protection it supports"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              },
+              "ttl": 51
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "peer",
+          "color": "teal",
+          "label": "SERVER HELLO",
+          "payload": [
+            "certificate"
+          ],
+          "row": {
+            "time": "2.497s",
+            "src": "192.168.1.10",
+            "dst": "198.51.100.200",
+            "proto": "DTLSv1.2",
+            "info": "Server Hello, Certificate, Key Exchange, Cert Request, Hello Done",
+            "len": "714 B",
+            "wire": {
+              "udp": {
+                "sport": 56143,
+                "dport": 49170,
+                "data": {
+                  "dtls": {
+                    "name": "Server Hello … Server Hello Done",
+                    "records": [
+                      {
+                        "msg": 2,
+                        "mseq": 0,
+                        "epoch": 0,
+                        "seq": 0,
+                        "body": 88,
+                        "what": [
+                          "Chosen: ECDHE-ECDSA-AES128-GCM-SHA256",
+                          "use_srtp: SRTP_AEAD_AES_128_GCM"
+                        ]
+                      },
+                      {
+                        "msg": 11,
+                        "mseq": 1,
+                        "epoch": 0,
+                        "seq": 1,
+                        "body": 322,
+                        "what": [
+                          "A self-signed certificate the browser made; its fingerprint was in the offer"
+                        ]
+                      },
+                      {
+                        "msg": 12,
+                        "mseq": 2,
+                        "epoch": 0,
+                        "seq": 2,
+                        "body": 111,
+                        "what": [
+                          "Its half of an X25519 key exchange, signed"
+                        ]
+                      },
+                      {
+                        "msg": 13,
+                        "mseq": 3,
+                        "epoch": 0,
+                        "seq": 3,
+                        "body": 26,
+                        "what": [
+                          "Asks Sam’s browser for its certificate too"
+                        ]
+                      },
+                      {
+                        "msg": 14,
+                        "mseq": 4,
+                        "epoch": 0,
+                        "seq": 4,
+                        "body": 0
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "peer",
+          "to": "client",
+          "color": "teal",
+          "label": "CERTIFICATE",
+          "payload": [
+            "Finished"
+          ],
+          "row": {
+            "time": "2.530s",
+            "src": "198.51.100.200",
+            "dst": "192.168.1.10",
+            "proto": "DTLSv1.2",
+            "info": "Certificate, Key Exchange, Cert Verify, Change Cipher Spec, Finished",
+            "len": "622 B",
+            "wire": {
+              "udp": {
+                "sport": 49170,
+                "dport": 56143,
+                "data": {
+                  "dtls": {
+                    "name": "Certificate … Finished",
+                    "records": [
+                      {
+                        "msg": 11,
+                        "mseq": 1,
+                        "epoch": 0,
+                        "seq": 1,
+                        "body": 322,
+                        "what": [
+                          "Sam’s self-signed certificate; its fingerprint was in the answer"
+                        ]
+                      },
+                      {
+                        "msg": 16,
+                        "mseq": 2,
+                        "epoch": 0,
+                        "seq": 2,
+                        "body": 33,
+                        "what": [
+                          "Its half of the X25519 key exchange"
+                        ]
+                      },
+                      {
+                        "msg": 15,
+                        "mseq": 3,
+                        "epoch": 0,
+                        "seq": 3,
+                        "body": 75,
+                        "what": [
+                          "A signature that proves it holds the certificate’s key"
+                        ]
+                      },
+                      {
+                        "ccs": true,
+                        "epoch": 0,
+                        "seq": 4
+                      },
+                      {
+                        "sealed": 48,
+                        "epoch": 1,
+                        "seq": 0
+                      }
+                    ]
+                  }
+                }
+              },
+              "ttl": 51
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "peer",
+          "color": "teal",
+          "label": "FINISHED",
+          "payload": [],
+          "row": {
+            "time": "2.557s",
+            "src": "192.168.1.10",
+            "dst": "198.51.100.200",
+            "proto": "DTLSv1.2",
+            "info": "Change Cipher Spec, Finished",
+            "len": "117 B",
+            "wire": {
+              "udp": {
+                "sport": 56143,
+                "dport": 49170,
+                "data": {
+                  "dtls": {
+                    "name": "Change Cipher Spec, Finished",
+                    "records": [
+                      {
+                        "ccs": true,
+                        "epoch": 0,
+                        "seq": 5
+                      },
+                      {
+                        "sealed": 48,
+                        "epoch": 1,
+                        "seq": 0
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "quick": true,
+          "locked": true
+        }
+      ]
+    },
+    {
+      "title": "Media Flows",
+      "desc": "Audio and video, direct",
+      "detail": "Audio goes in an SRTP packet every 20 ms, and video as frames split over several packets. Each packet has a readable RTP header (sequence number, timestamp, stream ID) and encrypted media. None of it passes through call.example.com. Both browsers watch delay and loss and adjust the video quality to suit, and a data channel for chat or files can share the same path.",
+      "facts": [
+        [
+          "Audio",
+          "Opus, a packet per 20 ms"
+        ],
+        [
+          "Video",
+          "VP8, adapts to the network"
+        ],
+        [
+          "Server sees",
+          "None of it"
+        ]
+      ],
+      "events": [
+        {
+          "type": "stream",
+          "from": "client",
+          "to": "peer",
+          "color": "violet",
+          "label": "AUDIO",
+          "locked": true,
+          "payload": [
+            "Opus, every 20 ms"
+          ],
+          "packets": [
+            {
+              "type": "packet",
+              "from": "client",
+              "to": "peer",
+              "color": "violet",
+              "label": "AUDIO",
+              "payload": [],
+              "row": {
+                "time": "2.590s",
+                "src": "192.168.1.10",
+                "dst": "198.51.100.200",
+                "proto": "SRTP",
+                "info": "PT=111, SSRC=0x5D2E81A4, Seq=9021, Time=416820",
+                "len": "144 B",
+                "wire": {
+                  "udp": {
+                    "sport": 56143,
+                    "dport": 49170,
+                    "data": {
+                      "srtp": {
+                        "pt": 111,
+                        "seq": 9021,
+                        "ts": 416820,
+                        "ssrc": 1563328932,
+                        "level": 38,
+                        "tw": 12,
+                        "media": 62
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "type": "packet",
+              "from": "client",
+              "to": "peer",
+              "color": "violet",
+              "label": "AUDIO",
+              "payload": [],
+              "row": {
+                "time": "2.610s",
+                "src": "192.168.1.10",
+                "dst": "198.51.100.200",
+                "proto": "SRTP",
+                "info": "PT=111, SSRC=0x5D2E81A4, Seq=9022, Time=417780",
+                "len": "144 B",
+                "wire": {
+                  "udp": {
+                    "sport": 56143,
+                    "dport": 49170,
+                    "data": {
+                      "srtp": {
+                        "pt": 111,
+                        "seq": 9022,
+                        "ts": 417780,
+                        "ssrc": 1563328932,
+                        "level": 39,
+                        "tw": 13,
+                        "media": 62
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "type": "packet",
+              "from": "client",
+              "to": "peer",
+              "color": "violet",
+              "label": "AUDIO",
+              "payload": [],
+              "row": {
+                "time": "2.630s",
+                "src": "192.168.1.10",
+                "dst": "198.51.100.200",
+                "proto": "SRTP",
+                "info": "PT=111, SSRC=0x5D2E81A4, Seq=9023, Time=418740",
+                "len": "144 B",
+                "wire": {
+                  "udp": {
+                    "sport": 56143,
+                    "dport": 49170,
+                    "data": {
+                      "srtp": {
+                        "pt": 111,
+                        "seq": 9023,
+                        "ts": 418740,
+                        "ssrc": 1563328932,
+                        "level": 40,
+                        "tw": 14,
+                        "media": 62
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "stream",
+          "from": "peer",
+          "to": "client",
+          "color": "violet",
+          "label": "VIDEO",
+          "locked": true,
+          "payload": [
+            "VP8, a frame in 3 packets"
+          ],
+          "packets": [
+            {
+              "type": "packet",
+              "from": "peer",
+              "to": "client",
+              "color": "violet",
+              "label": "VIDEO",
+              "payload": [],
+              "row": {
+                "time": "2.660s",
+                "src": "198.51.100.200",
+                "dst": "192.168.1.10",
+                "proto": "SRTP",
+                "info": "PT=96, SSRC=0x1B7C3F90, Seq=30117, Time=2286000",
+                "len": "1182 B",
+                "wire": {
+                  "udp": {
+                    "sport": 49170,
+                    "dport": 56143,
+                    "data": {
+                      "srtp": {
+                        "video": true,
+                        "pt": 96,
+                        "marker": false,
+                        "seq": 30117,
+                        "ts": 2286000,
+                        "ssrc": 461127568,
+                        "sent": 2772752,
+                        "tw": 40,
+                        "media": 1100
+                      }
+                    }
+                  },
+                  "ttl": 51
+                }
+              }
+            },
+            {
+              "type": "packet",
+              "from": "peer",
+              "to": "client",
+              "color": "violet",
+              "label": "VIDEO",
+              "payload": [],
+              "row": {
+                "time": "2.662s",
+                "src": "198.51.100.200",
+                "dst": "192.168.1.10",
+                "proto": "SRTP",
+                "info": "PT=96, SSRC=0x1B7C3F90, Seq=30118, Time=2286000",
+                "len": "1182 B",
+                "wire": {
+                  "udp": {
+                    "sport": 49170,
+                    "dport": 56143,
+                    "data": {
+                      "srtp": {
+                        "video": true,
+                        "pt": 96,
+                        "marker": false,
+                        "seq": 30118,
+                        "ts": 2286000,
+                        "ssrc": 461127568,
+                        "sent": 2772753,
+                        "tw": 41,
+                        "media": 1100
+                      }
+                    }
+                  },
+                  "ttl": 51
+                }
+              }
+            },
+            {
+              "type": "packet",
+              "from": "peer",
+              "to": "client",
+              "color": "violet",
+              "label": "VIDEO",
+              "payload": [],
+              "row": {
+                "time": "2.664s",
+                "src": "198.51.100.200",
+                "dst": "192.168.1.10",
+                "proto": "SRTP",
+                "info": "PT=96, SSRC=0x1B7C3F90, Seq=30119, Time=2286000, Mark",
+                "len": "812 B",
+                "wire": {
+                  "udp": {
+                    "sport": 49170,
+                    "dport": 56143,
+                    "data": {
+                      "srtp": {
+                        "video": true,
+                        "pt": 96,
+                        "marker": true,
+                        "seq": 30119,
+                        "ts": 2286000,
+                        "ssrc": 461127568,
+                        "sent": 2772754,
+                        "tw": 42,
+                        "media": 730
+                      }
+                    }
+                  },
+                  "ttl": 51
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Peer to Peer",
+      "desc": "And when it can’t be",
+      "detail": "The server helped the two browsers find each other, then stepped aside: the call goes straight between the two homes. When a network won’t let direct packets through (some company firewalls, some mobile networks), ICE falls back to a TURN server that relays the encrypted media without being able to read it. Group calls usually send media through a server too, called an SFU.",
+      "facts": [
+        [
+          "Media path",
+          "Laptop to laptop"
+        ],
+        [
+          "Fallback",
+          "TURN relay (encrypted)"
+        ],
+        [
+          "Group calls",
+          "Usually via an SFU"
+        ]
+      ],
+      "events": [
+        {
+          "type": "note",
+          "at": "internet",
+          "text": "NO SERVER IN THE MIDDLE",
+          "tone": "navy"
+        }
+      ]
+    }
+  ],
+  "teaching": {
+    "steps": [
+      [
+        "Vào cuộc gọi",
+        "Laptop mở một trang gọi trên call.example.com, và trang giữ một WebSocket mở tới máy chủ, bên trong TLS. Nó vào phòng 42, nơi Sam đang chờ. Máy chủ sẽ chuyển thông điệp giữa hai trình duyệt. WebRTC không quy định cách làm: mỗi ứng dụng làm phần báo hiệu này theo cách riêng."
+      ],
+      [
+        "Địa chỉ công khai?",
+        "Sau router ở nhà, laptop chỉ biết địa chỉ riêng 192.168.1.10, mà không ai trên Internet tới được. Nên nó hỏi một máy chủ STUN ghi trong thiết lập của trang gọi, bằng một yêu cầu UDP nhỏ. Câu trả lời cho biết yêu cầu dường như đến từ đâu, 198.51.100.7 cổng 61022: địa chỉ công khai của router và cổng mà NAT của nó mở cho cuộc trao đổi này."
+      ],
+      [
+        "Lời mời",
+        "Trình duyệt viết lời mời bằng SDP: media nó muốn gửi (âm thanh Opus; video VP8, H.264 và các loại khác), dấu vân tay chứng chỉ DTLS của nó, tên người dùng và mật khẩu ICE, và các ứng viên, tức những địa chỉ có thể tới được nó. Địa chỉ riêng được giấu sau một tên .local ngẫu nhiên. Máy chủ báo hiệu chuyển lời mời tới Sam."
+      ],
+      [
+        "Câu trả lời",
+        "Sam nhận cuộc gọi. Trình duyệt của Sam trả lời bằng SDP của mình: các codec chọn từ lời mời, dấu vân tay chứng chỉ, tên người dùng và mật khẩu ICE, và các ứng viên, gồm cả địa chỉ công khai 198.51.100.200 cổng 49170, biết được từ một máy chủ STUN theo cùng cách. Nó cũng nói nó sẽ bắt đầu bắt tay mã hóa. Giờ mỗi trình duyệt biết bên kia có thể tới được ở đâu."
+      ],
+      [
+        "Xuyên qua",
+        "Giờ các trình duyệt thử từng cặp địa chỉ bằng các lần kiểm tra STUN gửi thẳng cho nhau (ICE). Mỗi lần kiểm tra còn mở một đường về qua router của chính bên gửi, nên khi cả hai bên đã gửi một lần, các kiểm tra đi qua được cả hai NAT. Lần này có trả lời: đường trực tiếp hoạt động. Laptop rồi lặp lại kiểm tra với USE-CANDIDATE, chọn cặp này cho cuộc gọi."
+      ],
+      [
+        "Bắt tay DTLS",
+        "Trên cùng đường đó, các trình duyệt chạy bắt tay DTLS: TLS cho UDP. Chứng chỉ của chúng tự ký, nên mỗi bên kiểm tra chứng chỉ bên kia bằng dấu vân tay trong SDP, thứ đã đi qua máy chủ báo hiệu bên trong TLS. Cuộc bắt tay cũng thỏa thuận khóa cho SRTP, thứ mã hóa âm thanh và video. WebRTC không bao giờ gửi media chưa mã hóa."
+      ],
+      [
+        "Media chạy",
+        "Âm thanh đi trong một gói SRTP mỗi 20 ms, còn video là các khung hình chia ra nhiều gói. Mỗi gói có tiêu đề RTP đọc được (số thứ tự, dấu thời gian, ID luồng) và media đã mã hóa. Không gì trong đó đi qua call.example.com. Cả hai trình duyệt theo dõi độ trễ và mất gói rồi điều chỉnh chất lượng video cho phù hợp, và một kênh dữ liệu cho chat hay tệp có thể dùng chung đường đó."
+      ],
+      [
+        "Ngang hàng",
+        "Máy chủ giúp hai trình duyệt tìm thấy nhau, rồi lui ra: cuộc gọi đi thẳng giữa hai nhà. Khi một mạng không cho gói trực tiếp đi qua (một số tường lửa công ty, một số mạng di động), ICE chuyển sang một máy chủ TURN chuyển tiếp media đã mã hóa mà không đọc được. Cuộc gọi nhóm cũng thường gửi media qua một máy chủ, gọi là SFU."
+      ]
+    ],
+    "notes": {
+      "THROUGH BOTH ROUTERS": "QUA CẢ HAI ROUTER",
+      "NO SERVER IN THE MIDDLE": "KHÔNG CÓ MÁY CHỦ Ở GIỮA"
+    },
+    "labels": {
+      "Internet": "Internet",
+      "Client": "Máy khách",
+      "Router": "Router",
+      "DNS Resolver": "Bộ phân giải DNS",
+      "Web Server": "Máy chủ web",
+      "Root Server": "Máy chủ gốc",
+      ".com TLD Server": "Máy chủ TLD .com",
+      "Authoritative Server": "Máy chủ có thẩm quyền",
+      "Mail Server": "Máy chủ thư",
+      "Proxy": "Proxy",
+      "App Server": "Máy chủ ứng dụng",
+      "File Server": "Máy chủ tệp",
+      "ISP Router": "Router của ISP",
+      "Transit Router": "Router trung chuyển",
+      "Hosting Router": "Router của nhà lưu trữ",
+      "Their Router": "Router bên kia",
+      "Their Laptop": "Laptop bên kia",
+      "Switch": "Switch",
+      "Access Server": "Máy chủ truy cập",
+      "IP Camera": "Camera IP",
+      "TV Box": "TV box",
+      "STUN Server": "Máy chủ STUN",
+      "call.example.com": "call.example.com",
+      "Sam’s Router": "Router của Sam",
+      "Sam’s Laptop": "Laptop của Sam"
+    }
+  }
+}

@@ -10,6 +10,7 @@ const COL_COURSES = [
 ];
 
 const COL_RESOURCES = [
+  { label: 'Mô phỏng giao thức', to: '/protocols' },
   { label: 'Công cụ Subnetting Calculator', to: '/tools/subnet' },
   { label: 'Công cụ VLSM Calculator', to: '/tools/vlsm' },
   { label: 'Tra cứu Cisco CLI', to: '/tools/cli' },

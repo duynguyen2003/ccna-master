@@ -1,0 +1,905 @@
+{
+  "id": "proxy",
+  "name": "HTTP Proxy",
+  "title": "Via a Proxy",
+  "layer": 7,
+  "nodes": [
+    "client",
+    "router",
+    "internet",
+    "relay",
+    "web"
+  ],
+  "latency": {
+    "client-relay": 0.01,
+    "relay-web": 0.008
+  },
+  "labels": {
+    "relay": [
+      "Proxy",
+      "192.0.2.80:8080"
+    ],
+    "web": [
+      "www.example.com",
+      "203.0.113.10"
+    ]
+  },
+  "legend": [
+    [
+      "green",
+      "TCP"
+    ],
+    [
+      "amber",
+      "Request"
+    ],
+    [
+      "violet",
+      "Response"
+    ],
+    [
+      "teal",
+      "TLS, through the tunnel"
+    ]
+  ],
+  "overview": {
+    "full": "Forward proxy, and CONNECT for HTTPS",
+    "description": "A forward proxy fetches web pages on your behalf. Companies and schools use one to filter sites, keep copies of popular pages and log what goes out; the sites you visit see the proxy, not you. Plain HTTP passes through it in the clear. For HTTPS the browser asks the proxy for a tunnel, and the encrypted connection runs through it unread.",
+    "facts": [
+      [
+        "Layer",
+        "Application (Layer 7)"
+      ],
+      [
+        "Common ports",
+        "8080, 3128"
+      ],
+      [
+        "http:// pages",
+        "Fetched by the proxy"
+      ],
+      [
+        "https:// pages",
+        "Tunnelled with CONNECT"
+      ],
+      [
+        "Used for",
+        "Filtering, caching, logging"
+      ],
+      [
+        "Defined In",
+        "RFC 9110 (CONNECT: §9.3.6)"
+      ]
+    ]
+  },
+  "outro": {
+    "title": "Two ways through",
+    "desc": "Fetched for you, or tunnelled",
+    "text": "For the plain page, the proxy did the work: it read the request, fetched the page on its own connection and could have kept, changed or refused it. For HTTPS it only opened a tunnel and copied encrypted bytes, knowing nothing but the site’s name. Press REPLAY to watch it again.",
+    "facts": [
+      [
+        "Server sees",
+        "The proxy (192.0.2.80)"
+      ],
+      [
+        "Plain HTTP",
+        "The proxy reads it all"
+      ],
+      [
+        "HTTPS",
+        "Name and sizes only"
+      ],
+      [
+        "DNS for the site",
+        "Done by the proxy"
+      ]
+    ]
+  },
+  "start": {
+    "nodes": [
+      "client"
+    ],
+    "frame": "client"
+  },
+  "steps": [
+    {
+      "title": "Proxy Settings",
+      "desc": "The browser sends everything there",
+      "detail": "The browser is set to send everything through a proxy at 192.0.2.80, port 8080, as many companies and schools require. You open http://www.example.com. The browser doesn’t look up www.example.com itself: it connects to the proxy and leaves the rest to it.",
+      "facts": [
+        [
+          "Proxy",
+          "192.0.2.80:8080"
+        ],
+        [
+          "DNS for the site",
+          "Left to the proxy"
+        ],
+        [
+          "URL",
+          "http://www.example.com/"
+        ]
+      ],
+      "events": [
+        {
+          "type": "type-url",
+          "text": "www.example.com"
+        },
+        {
+          "type": "show",
+          "nodes": [
+            "router"
+          ],
+          "frame": "local"
+        }
+      ]
+    },
+    {
+      "title": "To the Proxy",
+      "desc": "TCP to port 8080",
+      "detail": "The laptop opens an ordinary TCP connection, not to the website, but to the proxy’s port 8080.",
+      "facts": [
+        [
+          "To",
+          "192.0.2.80, port 8080"
+        ],
+        [
+          "Not to",
+          "www.example.com"
+        ],
+        [
+          "Handshake",
+          "SYN → SYN-ACK → ACK"
+        ]
+      ],
+      "events": [
+        {
+          "type": "show",
+          "nodes": [
+            "internet",
+            "relay"
+          ],
+          "frame": "relay"
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "relay",
+          "color": "green",
+          "label": "SYN",
+          "payload": [],
+          "row": {
+            "time": "0.000s",
+            "src": "192.168.1.10",
+            "dst": "192.0.2.80",
+            "proto": "TCP",
+            "info": "52370 → 8080 [SYN] Seq=0",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 52370,
+                "dport": 8080,
+                "flags": "S"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "relay",
+          "to": "client",
+          "color": "green",
+          "label": "SYN-ACK",
+          "payload": [],
+          "row": {
+            "time": "0.010s",
+            "src": "192.0.2.80",
+            "dst": "192.168.1.10",
+            "proto": "TCP",
+            "info": "8080 → 52370 [SYN, ACK] Seq=0 Ack=1",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 8080,
+                "dport": 52370,
+                "flags": "SA"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "relay",
+          "color": "green",
+          "label": "ACK",
+          "payload": [],
+          "row": {
+            "time": "0.020s",
+            "src": "192.168.1.10",
+            "dst": "192.0.2.80",
+            "proto": "TCP",
+            "info": "52370 → 8080 [ACK] Seq=1 Ack=1",
+            "len": "60 B",
+            "wire": {
+              "tcp": {
+                "sport": 52370,
+                "dport": 8080,
+                "flags": "A"
+              }
+            }
+          },
+          "quick": true
+        }
+      ]
+    },
+    {
+      "title": "The Whole URL",
+      "desc": "GET http://www.example.com/",
+      "detail": "Sent to a proxy, the request line carries the whole address, not just the path: GET http://www.example.com/ HTTP/1.1. That is how the proxy knows where to go. Chrome adds Proxy-Connection: keep-alive, a header only proxies read.",
+      "facts": [
+        [
+          "Request line",
+          "GET http://www.example.com/"
+        ],
+        [
+          "To a server",
+          "GET /"
+        ],
+        [
+          "Readable by",
+          "The proxy (plain HTTP)"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "relay",
+          "color": "amber",
+          "label": "GET",
+          "payload": [
+            "GET http://www.example.com/",
+            "to the proxy"
+          ],
+          "row": {
+            "time": "0.020s",
+            "src": "192.168.1.10",
+            "dst": "192.0.2.80",
+            "proto": "HTTP",
+            "info": "GET http://www.example.com/ HTTP/1.1",
+            "len": "512 B",
+            "wire": {
+              "tcp": {
+                "sport": 52370,
+                "dport": 8080,
+                "flags": "PA",
+                "data": {
+                  "text": [
+                    "GET http://www.example.com/ HTTP/1.1",
+                    "Host: www.example.com",
+                    "Proxy-Connection: keep-alive",
+                    "Upgrade-Insecure-Requests: 1",
+                    "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+                    "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+                    "Accept-Encoding: gzip, deflate",
+                    "Accept-Language: en-US,en;q=0.9",
+                    ""
+                  ],
+                  "name": "HTTP"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Proxy Fetches It",
+      "desc": "Its own connection to the server",
+      "detail": "The proxy looks up www.example.com itself (not shown) and opens its own connection to the server. Its request is the ordinary kind, GET /, with headers of its own: Via names the proxy, and X-Forwarded-For gives the address the request came from (the home router’s public address, since the laptop is behind NAT).",
+      "facts": [
+        [
+          "Connection",
+          "The proxy’s own"
+        ],
+        [
+          "Via",
+          "1.1 proxy.example.net"
+        ],
+        [
+          "Forwarded for",
+          "198.51.100.7"
+        ]
+      ],
+      "events": [
+        {
+          "type": "show",
+          "nodes": [
+            "web"
+          ],
+          "frame": "full"
+        },
+        {
+          "type": "packet",
+          "from": "relay",
+          "to": "web",
+          "color": "green",
+          "label": "SYN",
+          "payload": [],
+          "row": {
+            "time": "0.036s",
+            "src": "192.0.2.80",
+            "dst": "203.0.113.10",
+            "proto": "TCP",
+            "info": "40210 → 80 [SYN] Seq=0",
+            "len": "74 B",
+            "wire": {
+              "tcp": {
+                "sport": 40210,
+                "dport": 80,
+                "flags": "S"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "relay",
+          "color": "green",
+          "label": "SYN-ACK",
+          "payload": [],
+          "row": {
+            "time": "0.044s",
+            "src": "203.0.113.10",
+            "dst": "192.0.2.80",
+            "proto": "TCP",
+            "info": "80 → 40210 [SYN, ACK] Seq=0 Ack=1",
+            "len": "74 B",
+            "wire": {
+              "tcp": {
+                "sport": 80,
+                "dport": 40210,
+                "flags": "SA"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "relay",
+          "to": "web",
+          "color": "green",
+          "label": "ACK",
+          "payload": [],
+          "row": {
+            "time": "0.052s",
+            "src": "192.0.2.80",
+            "dst": "203.0.113.10",
+            "proto": "TCP",
+            "info": "40210 → 80 [ACK] Seq=1 Ack=1",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 40210,
+                "dport": 80,
+                "flags": "A"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "relay",
+          "to": "web",
+          "color": "amber",
+          "label": "GET",
+          "payload": [
+            "GET / HTTP/1.1",
+            "Via, X-Forwarded-For"
+          ],
+          "row": {
+            "time": "0.052s",
+            "src": "192.0.2.80",
+            "dst": "203.0.113.10",
+            "proto": "HTTP",
+            "info": "GET / HTTP/1.1",
+            "len": "568 B",
+            "wire": {
+              "tcp": {
+                "sport": 40210,
+                "dport": 80,
+                "flags": "PA",
+                "data": {
+                  "text": [
+                    "GET / HTTP/1.1",
+                    "Host: www.example.com",
+                    "Upgrade-Insecure-Requests: 1",
+                    "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+                    "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+                    "Accept-Encoding: gzip, deflate",
+                    "Accept-Language: en-US,en;q=0.9",
+                    "Via: 1.1 proxy.example.net (squid/6.10)",
+                    "X-Forwarded-For: 198.51.100.7",
+                    "Connection: keep-alive",
+                    ""
+                  ],
+                  "name": "HTTP"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Page Passed On",
+      "desc": "The page, passed on",
+      "detail": "The server answers the proxy, and the proxy passes the page on to the laptop with a Via header of its own. It could keep a copy and give it to the next person who asks without troubling the server (X-Cache: MISS says it had none yet), and it can refuse sites that aren’t allowed.",
+      "facts": [
+        [
+          "Server sees",
+          "The proxy, not the laptop"
+        ],
+        [
+          "Cache",
+          "MISS (first request)"
+        ],
+        [
+          "Proxy can",
+          "Cache, filter, log, change"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "relay",
+          "color": "violet",
+          "label": "200 OK",
+          "payload": [
+            "HTTP/1.1 200 OK",
+            "9 segments"
+          ],
+          "row": {
+            "time": "0.061s",
+            "src": "203.0.113.10",
+            "dst": "192.0.2.80",
+            "proto": "HTTP",
+            "info": "HTTP/1.1 200 OK (text/html), 9 segments",
+            "len": "12.9 KB",
+            "wire": {
+              "tcp": {
+                "sport": 80,
+                "dport": 40210,
+                "flags": "PA",
+                "data": {
+                  "http": {
+                    "lines": [
+                      "HTTP/1.1 200 OK",
+                      "Date: Sat, 31 Oct 2026 09:41:00 GMT",
+                      "Content-Type: text/html; charset=utf-8",
+                      "Content-Length: 12500",
+                      "Connection: keep-alive",
+                      ""
+                    ],
+                    "body": 12500,
+                    "what": "the HTML page"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "relay",
+          "to": "client",
+          "color": "violet",
+          "label": "200 OK",
+          "payload": [
+            "Via: 1.1 proxy.example.net",
+            "9 segments"
+          ],
+          "row": {
+            "time": "0.071s",
+            "src": "192.0.2.80",
+            "dst": "192.168.1.10",
+            "proto": "HTTP",
+            "info": "HTTP/1.1 200 OK (text/html), 9 segments",
+            "len": "12.9 KB",
+            "wire": {
+              "tcp": {
+                "sport": 8080,
+                "dport": 52370,
+                "flags": "PA",
+                "data": {
+                  "http": {
+                    "lines": [
+                      "HTTP/1.1 200 OK",
+                      "Date: Sat, 31 Oct 2026 09:41:00 GMT",
+                      "Content-Type: text/html; charset=utf-8",
+                      "Content-Length: 12500",
+                      "X-Cache: MISS from proxy.example.net",
+                      "Via: 1.1 proxy.example.net (squid/6.10)",
+                      "Connection: keep-alive",
+                      ""
+                    ],
+                    "body": 12500,
+                    "what": "the HTML page"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "HTTPS: CONNECT",
+      "desc": "CONNECT www.example.com:443",
+      "detail": "Now you open https://www.example.com. A proxy can’t fetch an HTTPS page for you without breaking its encryption, so the browser asks for a tunnel instead: CONNECT www.example.com:443. The proxy opens a TCP connection to port 443 and answers 200 Connection established.",
+      "facts": [
+        [
+          "Request",
+          "CONNECT www.example.com:443"
+        ],
+        [
+          "Proxy opens",
+          "TCP to port 443"
+        ],
+        [
+          "Answer",
+          "200 Connection established"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "relay",
+          "color": "amber",
+          "label": "CONNECT",
+          "payload": [
+            "www.example.com:443"
+          ],
+          "row": {
+            "time": "3.000s",
+            "src": "192.168.1.10",
+            "dst": "192.0.2.80",
+            "proto": "HTTP",
+            "info": "CONNECT www.example.com:443 HTTP/1.1",
+            "len": "276 B",
+            "wire": {
+              "tcp": {
+                "sport": 52370,
+                "dport": 8080,
+                "flags": "PA",
+                "data": {
+                  "text": [
+                    "CONNECT www.example.com:443 HTTP/1.1",
+                    "Host: www.example.com:443",
+                    "Proxy-Connection: keep-alive",
+                    "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+                    ""
+                  ],
+                  "name": "HTTP"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "relay",
+          "to": "web",
+          "color": "green",
+          "label": "SYN",
+          "payload": [],
+          "row": {
+            "time": "3.011s",
+            "src": "192.0.2.80",
+            "dst": "203.0.113.10",
+            "proto": "TCP",
+            "info": "40214 → 443 [SYN] Seq=0",
+            "len": "74 B",
+            "wire": {
+              "tcp": {
+                "sport": 40214,
+                "dport": 443,
+                "flags": "S"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "relay",
+          "color": "green",
+          "label": "SYN-ACK",
+          "payload": [],
+          "row": {
+            "time": "3.019s",
+            "src": "203.0.113.10",
+            "dst": "192.0.2.80",
+            "proto": "TCP",
+            "info": "443 → 40214 [SYN, ACK] Seq=0 Ack=1",
+            "len": "74 B",
+            "wire": {
+              "tcp": {
+                "sport": 443,
+                "dport": 40214,
+                "flags": "SA"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "relay",
+          "to": "web",
+          "color": "green",
+          "label": "ACK",
+          "payload": [],
+          "row": {
+            "time": "3.027s",
+            "src": "192.0.2.80",
+            "dst": "203.0.113.10",
+            "proto": "TCP",
+            "info": "40214 → 443 [ACK] Seq=1 Ack=1",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 40214,
+                "dport": 443,
+                "flags": "A"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "relay",
+          "to": "client",
+          "color": "violet",
+          "label": "200",
+          "payload": [
+            "Connection established"
+          ],
+          "row": {
+            "time": "3.027s",
+            "src": "192.0.2.80",
+            "dst": "192.168.1.10",
+            "proto": "HTTP",
+            "info": "HTTP/1.1 200 Connection established",
+            "len": "93 B",
+            "wire": {
+              "tcp": {
+                "sport": 8080,
+                "dport": 52370,
+                "flags": "PA",
+                "data": {
+                  "text": [
+                    "HTTP/1.1 200 Connection established",
+                    ""
+                  ],
+                  "name": "HTTP"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "In the Tunnel",
+      "desc": "The proxy copies, unread",
+      "detail": "From now on the proxy copies bytes both ways without reading them. The browser’s TLS Client Hello goes in on the laptop’s connection and comes out, byte for byte the same, on the proxy’s connection to the server. TLS runs from end to end, so the proxy learns the site’s name and the sizes, never the pages. (Some company proxies do open HTTPS, using a certificate authority installed on every company laptop; then they see everything.)",
+      "facts": [
+        [
+          "Proxy sees",
+          "Site name, sizes, timing"
+        ],
+        [
+          "Hidden from it",
+          "Pages, passwords, cookies"
+        ],
+        [
+          "Encryption",
+          "TLS, laptop to server"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "relay",
+          "color": "teal",
+          "label": "CLIENT HELLO",
+          "payload": [
+            "SNI www.example.com"
+          ],
+          "row": {
+            "time": "3.037s",
+            "src": "192.168.1.10",
+            "dst": "192.0.2.80",
+            "proto": "TLSv1.3",
+            "info": "Client Hello (SNI=www.example.com)",
+            "len": "571 B",
+            "wire": {
+              "tcp": {
+                "sport": 52370,
+                "dport": 8080,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "handshake",
+                      "legacy": true,
+                      "length": 512,
+                      "hello": {
+                        "type": 1,
+                        "name": "Client Hello",
+                        "note": "What this client supports. Its exact contents vary from client to client; this is an example.",
+                        "fields": [
+                          [
+                            "Server name (SNI)",
+                            "www.example.com"
+                          ],
+                          [
+                            "Versions offered",
+                            "TLS 1.3, TLS 1.2"
+                          ],
+                          [
+                            "Key share",
+                            "X25519"
+                          ],
+                          [
+                            "Padding",
+                            "up to 512 bytes"
+                          ]
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "relay",
+          "to": "web",
+          "color": "teal",
+          "label": "CLIENT HELLO",
+          "payload": [
+            "the same bytes"
+          ],
+          "row": {
+            "time": "3.047s",
+            "src": "192.0.2.80",
+            "dst": "203.0.113.10",
+            "proto": "TLSv1.3",
+            "info": "Client Hello (SNI=www.example.com)",
+            "len": "583 B",
+            "wire": {
+              "tcp": {
+                "sport": 40214,
+                "dport": 443,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "handshake",
+                      "legacy": true,
+                      "length": 512,
+                      "hello": {
+                        "type": 1,
+                        "name": "Client Hello",
+                        "note": "What this client supports. Its exact contents vary from client to client; this is an example.",
+                        "fields": [
+                          [
+                            "Server name (SNI)",
+                            "www.example.com"
+                          ],
+                          [
+                            "Versions offered",
+                            "TLS 1.3, TLS 1.2"
+                          ],
+                          [
+                            "Key share",
+                            "X25519"
+                          ],
+                          [
+                            "Padding",
+                            "up to 512 bytes"
+                          ]
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "note",
+          "at": "relay",
+          "text": "COPIES BYTES, CAN’T READ THEM",
+          "tone": "navy"
+        }
+      ]
+    }
+  ],
+  "teaching": {
+    "steps": [
+      [
+        "Thiết lập proxy",
+        "Trình duyệt được đặt để gửi mọi thứ qua proxy tại 192.0.2.80, cổng 8080, như nhiều công ty và trường học yêu cầu. Bạn mở http://www.example.com. Trình duyệt không tự tra www.example.com: nó kết nối tới proxy và để proxy lo phần còn lại."
+      ],
+      [
+        "Tới proxy",
+        "Laptop mở một kết nối TCP bình thường, không phải tới trang web, mà tới cổng 8080 của proxy."
+      ],
+      [
+        "Cả URL",
+        "Khi gửi tới proxy, dòng yêu cầu mang cả địa chỉ, không chỉ đường dẫn: GET http://www.example.com/ HTTP/1.1. Nhờ đó proxy biết phải đi đâu. Chrome thêm Proxy-Connection: keep-alive, một tiêu đề chỉ proxy đọc."
+      ],
+      [
+        "Proxy tải về",
+        "Proxy tự tra www.example.com (không hiện) và mở kết nối riêng tới máy chủ. Yêu cầu của nó là loại thông thường, GET /, với tiêu đề riêng: Via nêu tên proxy, và X-Forwarded-For cho biết yêu cầu đến từ địa chỉ nào (địa chỉ công khai của router ở nhà, vì laptop nằm sau NAT)."
+      ],
+      [
+        "Đã chuyển trang",
+        "Máy chủ trả lời proxy, và proxy chuyển trang cho laptop kèm tiêu đề Via của nó. Nó có thể giữ một bản sao và đưa cho người tiếp theo hỏi mà không làm phiền máy chủ (X-Cache: MISS cho biết nó chưa có bản nào), và có thể từ chối các trang không được phép."
+      ],
+      [
+        "HTTPS: CONNECT",
+        "Giờ bạn mở https://www.example.com. Proxy không thể tải trang HTTPS thay bạn mà không phá mã hóa, nên trình duyệt xin một đường hầm: CONNECT www.example.com:443. Proxy mở kết nối TCP tới cổng 443 và trả lời 200 Connection established."
+      ],
+      [
+        "Trong đường hầm",
+        "Từ giờ proxy sao chép byte theo cả hai chiều mà không đọc. TLS Client Hello của trình duyệt đi vào trên kết nối của laptop và đi ra, giống hệt từng byte, trên kết nối của proxy tới máy chủ. TLS chạy từ đầu đến cuối, nên proxy chỉ biết tên trang và kích thước, không bao giờ thấy nội dung. (Một số proxy công ty vẫn mở HTTPS, bằng một tổ chức chứng thực cài trên mọi laptop công ty; khi đó chúng thấy hết.)"
+      ]
+    ],
+    "notes": {
+      "COPIES BYTES, CAN’T READ THEM": "SAO CHÉP BYTE, KHÔNG ĐỌC ĐƯỢC"
+    },
+    "labels": {
+      "Internet": "Internet",
+      "Client": "Máy khách",
+      "Router": "Router",
+      "DNS Resolver": "Bộ phân giải DNS",
+      "Web Server": "Máy chủ web",
+      "Root Server": "Máy chủ gốc",
+      ".com TLD Server": "Máy chủ TLD .com",
+      "Authoritative Server": "Máy chủ có thẩm quyền",
+      "Mail Server": "Máy chủ thư",
+      "Proxy": "Proxy",
+      "App Server": "Máy chủ ứng dụng",
+      "File Server": "Máy chủ tệp",
+      "ISP Router": "Router của ISP",
+      "Transit Router": "Router trung chuyển",
+      "Hosting Router": "Router của nhà lưu trữ",
+      "Their Router": "Router bên kia",
+      "Their Laptop": "Laptop bên kia",
+      "Switch": "Switch",
+      "Access Server": "Máy chủ truy cập",
+      "IP Camera": "Camera IP",
+      "TV Box": "TV box",
+      "www.example.com": "www.example.com"
+    }
+  }
+}

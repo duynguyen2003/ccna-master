@@ -1,0 +1,591 @@
+{
+  "id": "ipsec",
+  "name": "IPsec",
+  "title": "IKEv2 and ESP",
+  "layer": 3,
+  "nodes": [
+    "client",
+    "router",
+    "internet",
+    "relay",
+    "web"
+  ],
+  "latency": {
+    "client-relay": 0.015,
+    "relay-web": 0.01
+  },
+  "labels": {
+    "relay": [
+      "VPN Gateway",
+      "192.0.2.51"
+    ],
+    "web": [
+      "www.example.com",
+      "203.0.113.10"
+    ]
+  },
+  "legend": [
+    [
+      "amber",
+      "IKE"
+    ],
+    [
+      "teal",
+      "ESP (encrypted)"
+    ],
+    [
+      "green",
+      "TCP beyond the gateway"
+    ]
+  ],
+  "overview": {
+    "full": "IP Security",
+    "description": "IPsec protects IP packets themselves. IKEv2 sets things up: the two sides agree on algorithms, make keys and prove who they are with certificates or other credentials. Then ESP carries each packet encrypted inside another. IPsec links offices together and brings laptops into company networks, and it is built into most operating systems and firewalls.",
+    "facts": [
+      [
+        "Layer",
+        "Network (Layer 3)"
+      ],
+      [
+        "Setup",
+        "IKEv2, UDP 500"
+      ],
+      [
+        "Behind NAT",
+        "UDP 4500"
+      ],
+      [
+        "Data",
+        "ESP (IP protocol 50)"
+      ],
+      [
+        "Identity",
+        "Certificates, EAP, keys"
+      ],
+      [
+        "Defined In",
+        "RFC 7296, RFC 4303"
+      ]
+    ]
+  },
+  "outro": {
+    "title": "Tunnel up",
+    "desc": "IKE to set up, ESP to carry",
+    "text": "Four IKE messages agreed on algorithms, found the NAT, proved both identities and set up the tunnel. After that each packet travelled whole inside ESP, encrypted and checked, and wrapped in UDP to get through the home router. Press REPLAY to watch it again.",
+    "facts": [
+      [
+        "IKE messages",
+        "4 (2 exchanges)"
+      ],
+      [
+        "NAT traversal",
+        "UDP 4500"
+      ],
+      [
+        "ESP",
+        "One SPI each way"
+      ],
+      [
+        "Inside address",
+        "10.8.0.2"
+      ]
+    ]
+  },
+  "start": {
+    "nodes": [
+      "client"
+    ],
+    "frame": "client"
+  },
+  "steps": [
+    {
+      "title": "IKE_SA_INIT",
+      "desc": "Agree on algorithms, swap keys",
+      "detail": "The VPN client opens with IKE on UDP port 500. Its first message proposes the algorithms (AES-GCM with 256-bit keys, SHA-256, Curve25519) and carries a public key and a random nonce; the gateway picks the proposal and sends its own key and nonce. Both now share a secret, but neither has proved who it is yet.",
+      "facts": [
+        [
+          "Port",
+          "UDP 500"
+        ],
+        [
+          "Proposed",
+          "AES-GCM-256, Curve25519"
+        ],
+        [
+          "After this",
+          "Shared keys, no identities"
+        ]
+      ],
+      "events": [
+        {
+          "type": "show",
+          "nodes": [
+            "router",
+            "internet",
+            "relay"
+          ],
+          "frame": "relay"
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "relay",
+          "color": "amber",
+          "label": "IKE_SA_INIT",
+          "payload": [
+            "proposal, key, nonce",
+            "NAT detection"
+          ],
+          "row": {
+            "time": "0.000s",
+            "src": "192.168.1.10",
+            "dst": "192.0.2.51",
+            "proto": "ISAKMP",
+            "info": "IKE_SA_INIT MID=00 Initiator Request",
+            "len": "242 B",
+            "wire": {
+              "udp": {
+                "sport": 500,
+                "dport": 500,
+                "data": {
+                  "ike": {
+                    "exchange": 34,
+                    "spiI": 9167668316052413000
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "relay",
+          "to": "client",
+          "color": "amber",
+          "label": "IKE_SA_INIT",
+          "payload": [
+            "chosen proposal, key, nonce"
+          ],
+          "row": {
+            "time": "0.017s",
+            "src": "192.0.2.51",
+            "dst": "192.168.1.10",
+            "proto": "ISAKMP",
+            "info": "IKE_SA_INIT MID=00 Responder Response",
+            "len": "242 B",
+            "wire": {
+              "udp": {
+                "sport": 500,
+                "dport": 500,
+                "data": {
+                  "ike": {
+                    "exchange": 34,
+                    "response": true,
+                    "spiI": 9167668316052413000,
+                    "spiR": 3201509163735963600
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "A NAT in the Way",
+      "desc": "So everything moves to port 4500",
+      "detail": "Both messages also carried hashes of the address and port each side sent from. At the gateway they don’t match what arrived: the home router rewrote the laptop’s address on the way (NAT). ESP has no port numbers, so a NAT can’t pass it; both sides move to UDP port 4500 and wrap ESP in UDP from now on.",
+      "facts": [
+        [
+          "Hashes of",
+          "Address and port sent from"
+        ],
+        [
+          "Mismatch",
+          "The router rewrote them"
+        ],
+        [
+          "Fix",
+          "Everything over UDP 4500"
+        ]
+      ],
+      "events": [
+        {
+          "type": "note",
+          "at": "router",
+          "text": "NAT DETECTED",
+          "tone": "amber"
+        }
+      ]
+    },
+    {
+      "title": "IKE_AUTH",
+      "desc": "Prove who you are, encrypted",
+      "detail": "Now encrypted, each side sends its identity, its certificate and a signature over everything said so far, so anyone in the middle would be caught. The laptop asks for an address inside the network and gets 10.8.0.2. The same exchange sets up the ESP tunnel itself, with its own keys and an SPI for each direction.",
+      "facts": [
+        [
+          "Port",
+          "UDP 4500 (NAT traversal)"
+        ],
+        [
+          "Proves",
+          "Identity, by certificate"
+        ],
+        [
+          "Laptop gets",
+          "10.8.0.2, and a DNS server"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "relay",
+          "color": "amber",
+          "label": "IKE_AUTH",
+          "payload": [
+            "identity, certificate",
+            "signature"
+          ],
+          "row": {
+            "time": "0.034s",
+            "src": "192.168.1.10",
+            "dst": "192.0.2.51",
+            "proto": "ISAKMP",
+            "info": "IKE_AUTH MID=01 Initiator Request",
+            "len": "1230 B",
+            "wire": {
+              "udp": {
+                "sport": 4500,
+                "dport": 4500,
+                "data": {
+                  "ike": {
+                    "exchange": 35,
+                    "nonEsp": true,
+                    "spiI": 9167668316052413000,
+                    "spiR": 3201509163735963600,
+                    "first": 35,
+                    "sealed": 1128,
+                    "inner": [
+                      "IDi, CERT, AUTH: who the laptop is, proven",
+                      "CP: asks for an inside address and DNS",
+                      "SA: what to use for ESP (AES-GCM)",
+                      "TSi, TSr: which traffic goes in the tunnel"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "locked": true
+        },
+        {
+          "type": "packet",
+          "from": "relay",
+          "to": "client",
+          "color": "amber",
+          "label": "IKE_AUTH",
+          "payload": [
+            "identity, certificate",
+            "address 10.8.0.2"
+          ],
+          "row": {
+            "time": "0.052s",
+            "src": "192.0.2.51",
+            "dst": "192.168.1.10",
+            "proto": "ISAKMP",
+            "info": "IKE_AUTH MID=01 Responder Response",
+            "len": "1182 B",
+            "wire": {
+              "udp": {
+                "sport": 4500,
+                "dport": 4500,
+                "data": {
+                  "ike": {
+                    "exchange": 35,
+                    "nonEsp": true,
+                    "response": true,
+                    "spiI": 9167668316052413000,
+                    "spiR": 3201509163735963600,
+                    "first": 36,
+                    "sealed": 1080,
+                    "inner": [
+                      "IDr, CERT, AUTH: who the gateway is, proven",
+                      "CP: inside address 10.8.0.2, DNS 10.8.0.1",
+                      "SA: ESP with AES-GCM, and the SPIs",
+                      "TSi, TSr: everything (0.0.0.0/0)"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "locked": true
+        }
+      ]
+    },
+    {
+      "title": "Into the Tunnel",
+      "desc": "The whole packet, encrypted",
+      "detail": "You open https://www.example.com, looked up through the tunnel at the DNS server the gateway gave (not shown). The SYN from 10.8.0.2 is encrypted whole into an ESP packet: an SPI that names the tunnel, a sequence number, then the encrypted packet and a check value, all inside UDP port 4500. Its UDP checksum is zero: ESP checks its own contents.",
+      "facts": [
+        [
+          "SPI",
+          "Names the tunnel"
+        ],
+        [
+          "Inside",
+          "The whole IP packet"
+        ],
+        [
+          "Overhead",
+          "62 bytes + padding"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "relay",
+          "color": "teal",
+          "label": "ESP",
+          "payload": [
+            "inside: TCP SYN to :443"
+          ],
+          "row": {
+            "time": "0.070s",
+            "src": "192.168.1.10",
+            "dst": "192.0.2.51",
+            "proto": "ESP",
+            "info": "ESP (SPI=0xc5a1e7d2)",
+            "len": "130 B",
+            "wire": {
+              "udp": {
+                "sport": 4500,
+                "dport": 4500,
+                "data": {
+                  "esp": {
+                    "spi": 3315722194,
+                    "seq": 1,
+                    "sealed": 56,
+                    "inner": [
+                      "IPv4 10.8.0.2 → 203.0.113.10",
+                      "TCP 52344 → 443 [SYN]",
+                      "then padding, pad length and next header (4)"
+                    ]
+                  }
+                },
+                "noChecksum": true
+              }
+            }
+          },
+          "locked": true
+        }
+      ]
+    },
+    {
+      "title": "Out and Back",
+      "desc": "Through the gateway and home again",
+      "detail": "The gateway decrypts the packet and sends the SYN on from its own address, one hop older. The answer comes back to the gateway and returns through the tunnel as another ESP packet, with the SPI for the laptop’s direction and its own sequence numbers.",
+      "facts": [
+        [
+          "Website sees",
+          "192.0.2.51 (the gateway)"
+        ],
+        [
+          "Each direction",
+          "Its own SPI and keys"
+        ],
+        [
+          "Replays",
+          "Thrown away"
+        ]
+      ],
+      "events": [
+        {
+          "type": "show",
+          "nodes": [
+            "web"
+          ],
+          "frame": "full"
+        },
+        {
+          "type": "packet",
+          "from": "relay",
+          "to": "web",
+          "color": "green",
+          "label": "SYN",
+          "payload": [
+            "from 192.0.2.51"
+          ],
+          "row": {
+            "time": "0.085s",
+            "src": "192.0.2.51",
+            "dst": "203.0.113.10",
+            "proto": "TCP",
+            "info": "52344 → 443 [SYN] Seq=0",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 52344,
+                "dport": 443,
+                "flags": "S",
+                "mss": 1360
+              },
+              "alias": [
+                "192.0.2.51:52344",
+                "10.8.0.2:52344"
+              ],
+              "ttl": 127,
+              "ttlNote": "The laptop sent it with 128; the gateway took 1 when it passed it on."
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "relay",
+          "color": "green",
+          "label": "SYN-ACK",
+          "payload": [
+            "to 192.0.2.51"
+          ],
+          "row": {
+            "time": "0.095s",
+            "src": "203.0.113.10",
+            "dst": "192.0.2.51",
+            "proto": "TCP",
+            "info": "443 → 52344 [SYN, ACK] Seq=0 Ack=1",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 443,
+                "dport": 52344,
+                "flags": "SA"
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "relay",
+          "to": "client",
+          "color": "teal",
+          "label": "ESP",
+          "payload": [
+            "inside: TCP SYN-ACK"
+          ],
+          "row": {
+            "time": "0.105s",
+            "src": "192.0.2.51",
+            "dst": "192.168.1.10",
+            "proto": "ESP",
+            "info": "ESP (SPI=0x8b3f6a11)",
+            "len": "130 B",
+            "wire": {
+              "udp": {
+                "sport": 4500,
+                "dport": 4500,
+                "data": {
+                  "esp": {
+                    "spi": 2336188945,
+                    "seq": 1,
+                    "sealed": 56,
+                    "inner": [
+                      "IPv4 203.0.113.10 → 10.8.0.2",
+                      "TCP 443 → 52344 [SYN, ACK]",
+                      "then padding, pad length and next header (4)"
+                    ]
+                  }
+                },
+                "noChecksum": true
+              }
+            }
+          },
+          "locked": true
+        }
+      ]
+    },
+    {
+      "title": "Which VPN?",
+      "desc": "IPsec or WireGuard",
+      "detail": "IPsec is older and very flexible: it negotiates its algorithms, takes many kinds of credentials and is built into Windows, macOS, iOS, Android and most firewalls, which makes it the usual way to join a company network or link two offices. WireGuard does less, with far less code and one fixed set of algorithms.",
+      "facts": [
+        [
+          "Built into",
+          "Windows, macOS, iOS, Android"
+        ],
+        [
+          "Also links",
+          "Office to office"
+        ],
+        [
+          "Negotiates",
+          "Its algorithms (WireGuard: no)"
+        ]
+      ],
+      "events": [
+        {
+          "type": "camera",
+          "frame": "relay"
+        }
+      ]
+    }
+  ],
+  "teaching": {
+    "steps": [
+      [
+        "IKE_SA_INIT",
+        "Máy khách VPN mở đầu bằng IKE trên cổng UDP 500. Thông điệp đầu tiên đề xuất thuật toán (AES-GCM với khóa 256 bit, SHA-256, Curve25519) và mang một khóa công khai và một nonce ngẫu nhiên; cổng chọn đề xuất và gửi khóa và nonce của nó. Giờ cả hai có chung một bí mật, nhưng chưa bên nào chứng minh mình là ai."
+      ],
+      [
+        "Có NAT cản đường",
+        "Cả hai thông điệp còn mang giá trị băm của địa chỉ và cổng mỗi bên gửi đi. Tại cổng, chúng không khớp với những gì đến: router ở nhà đã viết lại địa chỉ laptop trên đường (NAT). ESP không có số cổng, nên NAT không cho nó qua được; cả hai bên chuyển sang cổng UDP 4500 và từ giờ gói ESP trong UDP."
+      ],
+      [
+        "IKE_AUTH",
+        "Giờ đã mã hóa, mỗi bên gửi danh tính, chứng chỉ và một chữ ký trên mọi thứ đã nói đến giờ, nên ai đứng giữa cũng sẽ bị phát hiện. Laptop xin một địa chỉ bên trong mạng và nhận 10.8.0.2. Cùng lần trao đổi đó thiết lập chính đường hầm ESP, với khóa riêng và một SPI cho mỗi chiều."
+      ],
+      [
+        "Vào đường hầm",
+        "Bạn mở https://www.example.com, được tra qua đường hầm tại máy chủ DNS mà cổng cấp (không hiện). SYN từ 10.8.0.2 được mã hóa nguyên vẹn vào một gói ESP: một SPI chỉ định đường hầm, một số thứ tự, rồi gói đã mã hóa và một giá trị kiểm tra, tất cả bên trong cổng UDP 4500. Checksum UDP của nó bằng 0: ESP tự kiểm tra nội dung của mình."
+      ],
+      [
+        "Đi và về",
+        "Cổng giải mã gói và gửi SYN đi tiếp từ địa chỉ của nó, già thêm một chặng. Câu trả lời quay về cổng và đi lại qua đường hầm dưới dạng một gói ESP khác, với SPI của chiều về laptop và số thứ tự riêng."
+      ],
+      [
+        "VPN nào?",
+        "IPsec lâu đời hơn và rất linh hoạt: nó thương lượng thuật toán, nhận nhiều loại thông tin xác thực và được tích hợp trong Windows, macOS, iOS, Android và hầu hết tường lửa, nên là cách thường dùng để vào mạng công ty hay nối hai văn phòng. WireGuard làm ít hơn, với ít mã hơn nhiều và một bộ thuật toán cố định."
+      ]
+    ],
+    "notes": {
+      "NAT DETECTED": "PHÁT HIỆN NAT"
+    },
+    "labels": {
+      "Internet": "Internet",
+      "Client": "Máy khách",
+      "Router": "Router",
+      "DNS Resolver": "Bộ phân giải DNS",
+      "Web Server": "Máy chủ web",
+      "Root Server": "Máy chủ gốc",
+      ".com TLD Server": "Máy chủ TLD .com",
+      "Authoritative Server": "Máy chủ có thẩm quyền",
+      "Mail Server": "Máy chủ thư",
+      "Proxy": "Proxy",
+      "App Server": "Máy chủ ứng dụng",
+      "File Server": "Máy chủ tệp",
+      "ISP Router": "Router của ISP",
+      "Transit Router": "Router trung chuyển",
+      "Hosting Router": "Router của nhà lưu trữ",
+      "Their Router": "Router bên kia",
+      "Their Laptop": "Laptop bên kia",
+      "Switch": "Switch",
+      "Access Server": "Máy chủ truy cập",
+      "IP Camera": "Camera IP",
+      "TV Box": "TV box",
+      "VPN Gateway": "Cổng VPN",
+      "www.example.com": "www.example.com"
+    }
+  }
+}

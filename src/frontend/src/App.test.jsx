@@ -78,3 +78,21 @@ test('renders the matching page when browser history moves back and forward', as
   act(() => window.history.forward());
   expect(await screen.findByRole('heading', { name: 'Hồ sơ thử' })).toBeInTheDocument();
 });
+
+test('protects the native protocol library and redirects the former tool URL', async () => {
+  open('/tools/protocol-explorer');
+  expect(await screen.findByRole('heading', { name: 'Đăng nhập thử' })).toBeInTheDocument();
+  expect(screen.queryByTitle(/Protocol Explorer/)).not.toBeInTheDocument();
+
+  open('/tools/protocol-explorer', 'STUDENT');
+  expect(await screen.findByRole('heading', { name: 'Mô phỏng giao thức' })).toBeInTheDocument();
+  expect(window.location.pathname).toBe('/protocols');
+  expect(
+    screen.queryByTitle('Protocol Explorer — Mô phỏng 14 giao thức mạng')
+  ).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Chọn mô phỏng' })).toHaveAttribute(
+    'aria-haspopup',
+    'dialog'
+  );
+  expect(screen.queryByRole('navigation', { name: 'Chọn giao thức' })).not.toBeInTheDocument();
+});

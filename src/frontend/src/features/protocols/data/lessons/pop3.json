@@ -1,0 +1,1057 @@
+{
+  "id": "pop3",
+  "name": "POP3",
+  "title": "Downloading Email",
+  "layer": 7,
+  "nodes": [
+    "client",
+    "router",
+    "internet",
+    "web"
+  ],
+  "latency": {
+    "client-web": 0.015
+  },
+  "labels": {
+    "web": [
+      "pop.example.org",
+      "198.51.100.110"
+    ]
+  },
+  "legend": [
+    [
+      "green",
+      "TCP"
+    ],
+    [
+      "teal",
+      "TLS handshake"
+    ],
+    [
+      "amber",
+      "POP3 command"
+    ],
+    [
+      "violet",
+      "POP3 reply"
+    ],
+    [
+      null,
+      "Data ACKs not shown"
+    ]
+  ],
+  "overview": {
+    "full": "Post Office Protocol, version 3",
+    "description": "POP3 lets a mail app download messages from a mailbox on a server. It was designed for one device that fetches mail and then removes it from the server. Commands are short words, and every reply starts with +OK or -ERR.",
+    "facts": [
+      [
+        "Layer",
+        "Application (Layer 7)"
+      ],
+      [
+        "Ports",
+        "995 (TLS), 110 (STLS)"
+      ],
+      [
+        "Transport",
+        "TCP"
+      ],
+      [
+        "Model",
+        "Download, then delete"
+      ],
+      [
+        "Replies",
+        "+OK or -ERR"
+      ],
+      [
+        "Defined In",
+        "RFC 1939"
+      ]
+    ]
+  },
+  "outro": {
+    "title": "Mail downloaded",
+    "desc": "And gone from the server",
+    "text": "Bob’s app logged in, saw two messages, downloaded the first and deleted it, which the server carried out at QUIT. That message now lives only on this laptop, which is why POP3 suits one device and IMAP suits several.",
+    "facts": [
+      [
+        "Messages",
+        "2 waiting, 1 downloaded"
+      ],
+      [
+        "Deleted",
+        "At QUIT (UPDATE state)"
+      ],
+      [
+        "Port",
+        "995, TLS from the start"
+      ],
+      [
+        "Best for",
+        "A single device"
+      ]
+    ]
+  },
+  "start": {
+    "nodes": [
+      "client"
+    ],
+    "frame": "client"
+  },
+  "steps": [
+    {
+      "title": "Connect Securely",
+      "desc": "Port 995, TLS from the start",
+      "detail": "Bob’s mail app connects to pop.example.org on port 995, where TLS starts right away. Inside it, the server greets with +OK. (On port 110 the session starts in plain text and is upgraded with the STLS command.)",
+      "facts": [
+        [
+          "Server",
+          "pop.example.org:995"
+        ],
+        [
+          "Security",
+          "TLS from the start"
+        ],
+        [
+          "Greeting",
+          "+OK Dovecot ready."
+        ]
+      ],
+      "events": [
+        {
+          "type": "show",
+          "nodes": [
+            "router",
+            "internet",
+            "web"
+          ],
+          "frame": "path"
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "green",
+          "label": "SYN",
+          "payload": [],
+          "row": {
+            "time": "0.000s",
+            "src": "192.168.1.10",
+            "dst": "198.51.100.110",
+            "proto": "TCP",
+            "info": "53010 → 995 [SYN] Seq=0",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 53010,
+                "dport": 995,
+                "flags": "S"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "green",
+          "label": "SYN-ACK",
+          "payload": [],
+          "row": {
+            "time": "0.015s",
+            "src": "198.51.100.110",
+            "dst": "192.168.1.10",
+            "proto": "TCP",
+            "info": "995 → 53010 [SYN, ACK] Seq=0 Ack=1",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 995,
+                "dport": 53010,
+                "flags": "SA"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "green",
+          "label": "ACK",
+          "payload": [],
+          "row": {
+            "time": "0.030s",
+            "src": "192.168.1.10",
+            "dst": "198.51.100.110",
+            "proto": "TCP",
+            "info": "53010 → 995 [ACK] Seq=1 Ack=1",
+            "len": "60 B",
+            "wire": {
+              "tcp": {
+                "sport": 53010,
+                "dport": 995,
+                "flags": "A"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "teal",
+          "label": "CLIENT HELLO",
+          "payload": [],
+          "row": {
+            "time": "0.030s",
+            "src": "192.168.1.10",
+            "dst": "198.51.100.110",
+            "proto": "TLSv1.3",
+            "info": "Client Hello (SNI=pop.example.org)",
+            "len": "571 B",
+            "wire": {
+              "tcp": {
+                "sport": 53010,
+                "dport": 995,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "handshake",
+                      "legacy": true,
+                      "length": 512,
+                      "hello": {
+                        "type": 1,
+                        "name": "Client Hello",
+                        "note": "What this client supports. Its exact contents vary from client to client; this is an example.",
+                        "fields": [
+                          [
+                            "Server name (SNI)",
+                            "pop.example.org"
+                          ],
+                          [
+                            "Versions offered",
+                            "TLS 1.3, TLS 1.2"
+                          ],
+                          [
+                            "Key share",
+                            "X25519"
+                          ],
+                          [
+                            "Padding",
+                            "up to 512 bytes"
+                          ]
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "teal",
+          "label": "SERVER HELLO",
+          "payload": [],
+          "row": {
+            "time": "0.045s",
+            "src": "198.51.100.110",
+            "dst": "192.168.1.10",
+            "proto": "TLSv1.3",
+            "info": "Server Hello + encrypted handshake, 2 segments",
+            "len": "2.9 KB",
+            "wire": {
+              "tcp": {
+                "sport": 995,
+                "dport": 53010,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "handshake",
+                      "length": 122,
+                      "hello": {
+                        "type": 2,
+                        "name": "Server Hello",
+                        "note": "The server’s choices and its key share.",
+                        "fields": [
+                          [
+                            "Version",
+                            "TLS 1.3"
+                          ],
+                          [
+                            "Cipher suite",
+                            "TLS_AES_128_GCM_SHA256"
+                          ],
+                          [
+                            "Key share",
+                            "X25519"
+                          ]
+                        ]
+                      }
+                    },
+                    {
+                      "type": "ccs",
+                      "length": 1
+                    },
+                    {
+                      "type": "appdata",
+                      "length": 2724,
+                      "inner": {
+                        "what": "Encrypted Extensions, Certificate (the chain), Certificate Verify (the signature), Finished"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "teal",
+          "label": "FINISHED",
+          "payload": [],
+          "row": {
+            "time": "0.062s",
+            "src": "192.168.1.10",
+            "dst": "198.51.100.110",
+            "proto": "TLSv1.3",
+            "info": "Change Cipher Spec, Finished (encrypted)",
+            "len": "118 B",
+            "wire": {
+              "tcp": {
+                "sport": 53010,
+                "dport": 995,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "ccs",
+                      "length": 1
+                    },
+                    {
+                      "type": "appdata",
+                      "length": 53,
+                      "inner": {
+                        "what": "Finished: a check value over the whole handshake"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "violet",
+          "label": "+OK",
+          "payload": [
+            "+OK Dovecot ready."
+          ],
+          "row": {
+            "time": "0.077s",
+            "src": "198.51.100.110",
+            "dst": "192.168.1.10",
+            "proto": "POP (TLS)",
+            "info": "+OK Dovecot ready.",
+            "len": "96 B",
+            "wire": {
+              "tcp": {
+                "sport": 995,
+                "dport": 53010,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "appdata",
+                      "length": 37,
+                      "inner": {
+                        "what": "POP3",
+                        "text": [
+                          "+OK Dovecot ready."
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "locked": true
+        }
+      ]
+    },
+    {
+      "title": "Log In",
+      "desc": "USER, then PASS",
+      "detail": "The app sends the user name with USER and the password with PASS. Each command gets its own +OK. Because the session is inside TLS, the password isn’t readable on the way.",
+      "facts": [
+        [
+          "Commands",
+          "USER bob, PASS ••••"
+        ],
+        [
+          "Replies",
+          "+OK, +OK Logged in."
+        ],
+        [
+          "Protected by",
+          "TLS"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "amber",
+          "label": "USER",
+          "payload": [
+            "USER bob"
+          ],
+          "row": {
+            "time": "0.092s",
+            "src": "192.168.1.10",
+            "dst": "198.51.100.110",
+            "proto": "POP (TLS)",
+            "info": "USER bob",
+            "len": "86 B",
+            "wire": {
+              "tcp": {
+                "sport": 53010,
+                "dport": 995,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "appdata",
+                      "length": 27,
+                      "inner": {
+                        "what": "POP3",
+                        "text": [
+                          "USER bob"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "locked": true
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "violet",
+          "label": "+OK",
+          "payload": [
+            "+OK"
+          ],
+          "row": {
+            "time": "0.107s",
+            "src": "198.51.100.110",
+            "dst": "192.168.1.10",
+            "proto": "POP (TLS)",
+            "info": "+OK",
+            "len": "81 B",
+            "wire": {
+              "tcp": {
+                "sport": 995,
+                "dport": 53010,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "appdata",
+                      "length": 22,
+                      "inner": {
+                        "what": "POP3",
+                        "text": [
+                          "+OK"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "locked": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "amber",
+          "label": "PASS",
+          "payload": [
+            "PASS ••••••"
+          ],
+          "row": {
+            "time": "0.122s",
+            "src": "192.168.1.10",
+            "dst": "198.51.100.110",
+            "proto": "POP (TLS)",
+            "info": "PASS (password)",
+            "len": "89 B",
+            "wire": {
+              "tcp": {
+                "sport": 53010,
+                "dport": 995,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "appdata",
+                      "length": 30,
+                      "inner": {
+                        "what": "POP3",
+                        "text": [
+                          "PASS secret"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "locked": true
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "violet",
+          "label": "+OK",
+          "payload": [
+            "+OK Logged in."
+          ],
+          "row": {
+            "time": "0.137s",
+            "src": "198.51.100.110",
+            "dst": "192.168.1.10",
+            "proto": "POP (TLS)",
+            "info": "+OK Logged in.",
+            "len": "92 B",
+            "wire": {
+              "tcp": {
+                "sport": 995,
+                "dport": 53010,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "appdata",
+                      "length": 33,
+                      "inner": {
+                        "what": "POP3",
+                        "text": [
+                          "+OK Logged in."
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "locked": true
+        }
+      ]
+    },
+    {
+      "title": "Check the Mailbox",
+      "desc": "STAT and LIST",
+      "detail": "STAT returns the number of messages and their total size: 2 messages, 5120 bytes. LIST gives each message’s number and size, ending with a line holding just a dot.",
+      "facts": [
+        [
+          "STAT",
+          "+OK 2 5120"
+        ],
+        [
+          "Message 1",
+          "1904 bytes"
+        ],
+        [
+          "Message 2",
+          "3216 bytes"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "amber",
+          "label": "STAT",
+          "payload": [
+            "STAT"
+          ],
+          "row": {
+            "time": "0.152s",
+            "src": "192.168.1.10",
+            "dst": "198.51.100.110",
+            "proto": "POP (TLS)",
+            "info": "STAT",
+            "len": "82 B",
+            "wire": {
+              "tcp": {
+                "sport": 53010,
+                "dport": 995,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "appdata",
+                      "length": 23,
+                      "inner": {
+                        "what": "POP3",
+                        "text": [
+                          "STAT"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "locked": true
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "violet",
+          "label": "+OK",
+          "payload": [
+            "+OK 2 5120"
+          ],
+          "row": {
+            "time": "0.167s",
+            "src": "198.51.100.110",
+            "dst": "192.168.1.10",
+            "proto": "POP (TLS)",
+            "info": "+OK 2 5120",
+            "len": "88 B",
+            "wire": {
+              "tcp": {
+                "sport": 995,
+                "dport": 53010,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "appdata",
+                      "length": 29,
+                      "inner": {
+                        "what": "POP3",
+                        "text": [
+                          "+OK 2 5120"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "locked": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "amber",
+          "label": "LIST",
+          "payload": [
+            "LIST"
+          ],
+          "row": {
+            "time": "0.182s",
+            "src": "192.168.1.10",
+            "dst": "198.51.100.110",
+            "proto": "POP (TLS)",
+            "info": "LIST",
+            "len": "82 B",
+            "wire": {
+              "tcp": {
+                "sport": 53010,
+                "dport": 995,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "appdata",
+                      "length": 23,
+                      "inner": {
+                        "what": "POP3",
+                        "text": [
+                          "LIST"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "locked": true
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "violet",
+          "label": "+OK",
+          "payload": [
+            "+OK 2 messages:",
+            "1 1904 · 2 3216 · ."
+          ],
+          "row": {
+            "time": "0.197s",
+            "src": "198.51.100.110",
+            "dst": "192.168.1.10",
+            "proto": "POP (TLS)",
+            "info": "+OK 2 messages: 1 1904, 2 3216",
+            "len": "112 B",
+            "wire": {
+              "tcp": {
+                "sport": 995,
+                "dport": 53010,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "appdata",
+                      "length": 53,
+                      "inner": {
+                        "what": "POP3",
+                        "text": [
+                          "+OK 2 messages:",
+                          "1 1904",
+                          "2 3216",
+                          "."
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "locked": true
+        }
+      ]
+    },
+    {
+      "title": "Download",
+      "desc": "RETR 1",
+      "detail": "RETR 1 asks for the first message. The server answers +OK with its size, then the message and a closing dot: 1904 bytes plus the reply line, two TCP segments.",
+      "facts": [
+        [
+          "Command",
+          "RETR 1"
+        ],
+        [
+          "Reply",
+          "+OK 1904 octets"
+        ],
+        [
+          "Sent as",
+          "2 TCP segments"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "amber",
+          "label": "RETR 1",
+          "payload": [
+            "RETR 1"
+          ],
+          "row": {
+            "time": "0.212s",
+            "src": "192.168.1.10",
+            "dst": "198.51.100.110",
+            "proto": "POP (TLS)",
+            "info": "RETR 1",
+            "len": "84 B",
+            "wire": {
+              "tcp": {
+                "sport": 53010,
+                "dport": 995,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "appdata",
+                      "length": 25,
+                      "inner": {
+                        "what": "POP3",
+                        "text": [
+                          "RETR 1"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "locked": true
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "violet",
+          "label": "MESSAGE",
+          "payload": [
+            "+OK 1904 octets",
+            "… message …",
+            "."
+          ],
+          "row": {
+            "time": "0.227s",
+            "src": "198.51.100.110",
+            "dst": "192.168.1.10",
+            "proto": "POP (TLS)",
+            "info": "+OK 1904 octets, message, “.” (2 segments)",
+            "len": "2.0 KB",
+            "wire": {
+              "tcp": {
+                "sport": 995,
+                "dport": 53010,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "appdata",
+                      "length": 1941,
+                      "inner": {
+                        "what": "+OK 1904 octets, the 1,904-byte message, then a line holding only “.”"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "locked": true
+        }
+      ]
+    },
+    {
+      "title": "Delete & Quit",
+      "desc": "Deleted only at QUIT",
+      "detail": "DELE 1 only marks the message. The server removes it when the app says QUIT: if the connection dropped before that, nothing would be deleted. Many apps offer “leave a copy on the server”, which skips DELE.",
+      "facts": [
+        [
+          "DELE 1",
+          "Marks message 1"
+        ],
+        [
+          "Removed",
+          "At QUIT"
+        ],
+        [
+          "Option",
+          "Leave a copy on server"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "amber",
+          "label": "DELE 1",
+          "payload": [
+            "DELE 1"
+          ],
+          "row": {
+            "time": "0.242s",
+            "src": "192.168.1.10",
+            "dst": "198.51.100.110",
+            "proto": "POP (TLS)",
+            "info": "DELE 1",
+            "len": "84 B",
+            "wire": {
+              "tcp": {
+                "sport": 53010,
+                "dport": 995,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "appdata",
+                      "length": 25,
+                      "inner": {
+                        "what": "POP3",
+                        "text": [
+                          "DELE 1"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "locked": true
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "violet",
+          "label": "+OK",
+          "payload": [
+            "+OK Marked to be deleted."
+          ],
+          "row": {
+            "time": "0.257s",
+            "src": "198.51.100.110",
+            "dst": "192.168.1.10",
+            "proto": "POP (TLS)",
+            "info": "+OK Marked to be deleted.",
+            "len": "103 B",
+            "wire": {
+              "tcp": {
+                "sport": 995,
+                "dport": 53010,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "appdata",
+                      "length": 44,
+                      "inner": {
+                        "what": "POP3",
+                        "text": [
+                          "+OK Marked to be deleted."
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "locked": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "amber",
+          "label": "QUIT",
+          "payload": [
+            "QUIT"
+          ],
+          "row": {
+            "time": "0.272s",
+            "src": "192.168.1.10",
+            "dst": "198.51.100.110",
+            "proto": "POP (TLS)",
+            "info": "QUIT",
+            "len": "82 B",
+            "wire": {
+              "tcp": {
+                "sport": 53010,
+                "dport": 995,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "appdata",
+                      "length": 23,
+                      "inner": {
+                        "what": "POP3",
+                        "text": [
+                          "QUIT"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "locked": true
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "violet",
+          "label": "+OK",
+          "payload": [
+            "+OK Logging out,",
+            "messages deleted."
+          ],
+          "row": {
+            "time": "0.287s",
+            "src": "198.51.100.110",
+            "dst": "192.168.1.10",
+            "proto": "POP (TLS)",
+            "info": "+OK Logging out, messages deleted.",
+            "len": "112 B",
+            "wire": {
+              "tcp": {
+                "sport": 995,
+                "dport": 53010,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "appdata",
+                      "length": 53,
+                      "inner": {
+                        "what": "POP3",
+                        "text": [
+                          "+OK Logging out, messages deleted."
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "locked": true
+        },
+        {
+          "type": "note",
+          "at": "web",
+          "text": "MESSAGE 1 DELETED",
+          "tone": "amber"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,795 @@
+{
+  "id": "reverse",
+  "name": "Reverse Proxy",
+  "title": "Offloading",
+  "layer": 7,
+  "nodes": [
+    "client",
+    "router",
+    "internet",
+    "web",
+    "app"
+  ],
+  "latency": {
+    "client-web": 0.017,
+    "web-app": 0.0005
+  },
+  "labels": {
+    "web": [
+      "Reverse Proxy",
+      "203.0.113.10"
+    ],
+    "app": [
+      "App Server",
+      "10.0.0.20:8080"
+    ]
+  },
+  "legend": [
+    [
+      "green",
+      "TCP"
+    ],
+    [
+      "teal",
+      "TLS"
+    ],
+    [
+      "amber",
+      "Request"
+    ],
+    [
+      "violet",
+      "Response"
+    ]
+  ],
+  "overview": {
+    "full": "TLS (SSL) offloading",
+    "description": "A reverse proxy stands in front of a website’s servers: visitors connect to it, and it passes their requests on to an app server behind it. It can spread the load over many servers, keep copies of pages and turn away attacks. Often it also does the TLS work, decrypting HTTPS at the edge so the servers behind it speak plain HTTP. That is SSL (or TLS) offloading.",
+    "facts": [
+      [
+        "Layer",
+        "Application (Layer 7)"
+      ],
+      [
+        "Visitors reach",
+        "The proxy, never the app"
+      ],
+      [
+        "TLS ends",
+        "At the proxy (offloading)"
+      ],
+      [
+        "Inside",
+        "Plain HTTP (or TLS again)"
+      ],
+      [
+        "Adds",
+        "X-Forwarded-For, -Proto"
+      ],
+      [
+        "For example",
+        "nginx, HAProxy, cloud LBs"
+      ]
+    ]
+  },
+  "outro": {
+    "title": "Served from the edge",
+    "desc": "Encrypted outside, plain inside",
+    "text": "The laptop saw one HTTPS website. Behind it, the reverse proxy decrypted the request, asked an app server in plain HTTP over the private network and encrypted the answer for the trip back. Press REPLAY to watch it again.",
+    "facts": [
+      [
+        "TLS",
+        "Laptop ↔ proxy only"
+      ],
+      [
+        "Inside",
+        "Plain HTTP"
+      ],
+      [
+        "App learns visitor",
+        "From X-Forwarded-For"
+      ],
+      [
+        "Certificate kept",
+        "On the proxy"
+      ]
+    ]
+  },
+  "start": {
+    "nodes": [
+      "client"
+    ],
+    "frame": "client"
+  },
+  "steps": [
+    {
+      "title": "The Front Door",
+      "desc": "The proxy holds the certificate",
+      "detail": "The laptop opens https://www.example.com. The address DNS gives for the name belongs to the reverse proxy, which holds the site’s certificate and does the TLS handshake. Nothing tells the laptop there is another server behind it.",
+      "facts": [
+        [
+          "Laptop connects to",
+          "203.0.113.10:443"
+        ],
+        [
+          "Certificate",
+          "On the reverse proxy"
+        ],
+        [
+          "Also called",
+          "Load balancer, edge"
+        ]
+      ],
+      "events": [
+        {
+          "type": "show",
+          "nodes": [
+            "router",
+            "internet",
+            "web"
+          ],
+          "frame": "path"
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "green",
+          "label": "SYN",
+          "payload": [],
+          "row": {
+            "time": "0.000s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.10",
+            "proto": "TCP",
+            "info": "52390 → 443 [SYN] Seq=0",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 52390,
+                "dport": 443,
+                "flags": "S"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "green",
+          "label": "SYN-ACK",
+          "payload": [],
+          "row": {
+            "time": "0.017s",
+            "src": "203.0.113.10",
+            "dst": "192.168.1.10",
+            "proto": "TCP",
+            "info": "443 → 52390 [SYN, ACK] Seq=0 Ack=1",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 443,
+                "dport": 52390,
+                "flags": "SA"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "green",
+          "label": "ACK",
+          "payload": [],
+          "row": {
+            "time": "0.034s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.10",
+            "proto": "TCP",
+            "info": "52390 → 443 [ACK] Seq=1 Ack=1",
+            "len": "60 B",
+            "wire": {
+              "tcp": {
+                "sport": 52390,
+                "dport": 443,
+                "flags": "A"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "teal",
+          "label": "CLIENT HELLO",
+          "payload": [],
+          "row": {
+            "time": "0.034s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.10",
+            "proto": "TLSv1.3",
+            "info": "Client Hello (SNI=www.example.com)",
+            "len": "571 B",
+            "wire": {
+              "tcp": {
+                "sport": 52390,
+                "dport": 443,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "handshake",
+                      "legacy": true,
+                      "length": 512,
+                      "hello": {
+                        "type": 1,
+                        "name": "Client Hello",
+                        "note": "What this client supports. Its exact contents vary from client to client; this is an example.",
+                        "fields": [
+                          [
+                            "Server name (SNI)",
+                            "www.example.com"
+                          ],
+                          [
+                            "Versions offered",
+                            "TLS 1.3, TLS 1.2"
+                          ],
+                          [
+                            "Key share",
+                            "X25519"
+                          ],
+                          [
+                            "Padding",
+                            "up to 512 bytes"
+                          ]
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "teal",
+          "label": "SERVER HELLO",
+          "payload": [],
+          "row": {
+            "time": "0.052s",
+            "src": "203.0.113.10",
+            "dst": "192.168.1.10",
+            "proto": "TLSv1.3",
+            "info": "Server Hello + encrypted handshake, 2 segments",
+            "len": "2.9 KB",
+            "wire": {
+              "tcp": {
+                "sport": 443,
+                "dport": 52390,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "handshake",
+                      "length": 122,
+                      "hello": {
+                        "type": 2,
+                        "name": "Server Hello",
+                        "note": "The server’s choices and its key share.",
+                        "fields": [
+                          [
+                            "Version",
+                            "TLS 1.3"
+                          ],
+                          [
+                            "Cipher suite",
+                            "TLS_AES_128_GCM_SHA256"
+                          ],
+                          [
+                            "Key share",
+                            "X25519"
+                          ]
+                        ]
+                      }
+                    },
+                    {
+                      "type": "ccs",
+                      "length": 1
+                    },
+                    {
+                      "type": "appdata",
+                      "length": 2724,
+                      "inner": {
+                        "what": "Encrypted Extensions, Certificate (the chain), Certificate Verify (the signature), Finished"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "teal",
+          "label": "FINISHED",
+          "payload": [],
+          "row": {
+            "time": "0.069s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.10",
+            "proto": "TLSv1.3",
+            "info": "Change Cipher Spec, Finished (encrypted)",
+            "len": "118 B",
+            "wire": {
+              "tcp": {
+                "sport": 52390,
+                "dport": 443,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "ccs",
+                      "length": 1
+                    },
+                    {
+                      "type": "appdata",
+                      "length": 53,
+                      "inner": {
+                        "what": "Finished: a check value over the whole handshake"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "quick": true
+        }
+      ]
+    },
+    {
+      "title": "TLS Ends Here",
+      "desc": "Offloading: the proxy does the TLS work",
+      "detail": "The request arrives encrypted, and the reverse proxy decrypts it. That is the offloading: the TLS work is done here, once, instead of on every app server. Now the proxy can read the URL, headers and cookies, and pick a server by them.",
+      "facts": [
+        [
+          "TLS ends",
+          "At the reverse proxy"
+        ],
+        [
+          "Proxy can read",
+          "URL, headers, cookies"
+        ],
+        [
+          "Then picks",
+          "An app server"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "amber",
+          "label": "APP DATA",
+          "payload": [
+            "inside: GET / HTTP/1.1"
+          ],
+          "row": {
+            "time": "0.069s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.10",
+            "proto": "TLSv1.3",
+            "info": "Application Data (HTTP request)",
+            "len": "486 B",
+            "wire": {
+              "tcp": {
+                "sport": 52390,
+                "dport": 443,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "appdata",
+                      "length": 427,
+                      "inner": {
+                        "what": "The HTTP request",
+                        "text": [
+                          "GET / HTTP/1.1",
+                          "Host: www.example.com",
+                          "Connection: keep-alive",
+                          "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+                          "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+                          "Accept-Encoding: gzip, deflate, br, zstd",
+                          "Accept-Language: en-US,en;q=0.9",
+                          ""
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "locked": true
+        },
+        {
+          "type": "note",
+          "at": "web",
+          "text": "TLS ENDS HERE",
+          "tone": "amber"
+        }
+      ]
+    },
+    {
+      "title": "In the Clear",
+      "desc": "Passed on to the app server",
+      "detail": "The proxy passes the request on over the data centre’s private network, as plain HTTP to port 8080. It adds X-Forwarded-For, the visitor’s address, and X-Forwarded-Proto: https, how the visitor came in; otherwise the app would see only the proxy. Anyone able to watch this private network could read it all.",
+      "facts": [
+        [
+          "To",
+          "10.0.0.20:8080"
+        ],
+        [
+          "Encrypted",
+          "No"
+        ],
+        [
+          "Adds",
+          "X-Forwarded-For, -Proto"
+        ]
+      ],
+      "events": [
+        {
+          "type": "show",
+          "nodes": [
+            "app"
+          ],
+          "frame": "backend"
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "app",
+          "color": "green",
+          "label": "SYN",
+          "payload": [],
+          "row": {
+            "time": "0.087s",
+            "src": "10.0.0.10",
+            "dst": "10.0.0.20",
+            "proto": "TCP",
+            "info": "45110 → 8080 [SYN] Seq=0",
+            "len": "74 B",
+            "wire": {
+              "tcp": {
+                "sport": 45110,
+                "dport": 8080,
+                "flags": "S"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "app",
+          "to": "web",
+          "color": "green",
+          "label": "SYN-ACK",
+          "payload": [],
+          "row": {
+            "time": "0.088s",
+            "src": "10.0.0.20",
+            "dst": "10.0.0.10",
+            "proto": "TCP",
+            "info": "8080 → 45110 [SYN, ACK] Seq=0 Ack=1",
+            "len": "74 B",
+            "wire": {
+              "tcp": {
+                "sport": 8080,
+                "dport": 45110,
+                "flags": "SA"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "app",
+          "color": "green",
+          "label": "ACK",
+          "payload": [],
+          "row": {
+            "time": "0.089s",
+            "src": "10.0.0.10",
+            "dst": "10.0.0.20",
+            "proto": "TCP",
+            "info": "45110 → 8080 [ACK] Seq=1 Ack=1",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 45110,
+                "dport": 8080,
+                "flags": "A"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "app",
+          "color": "amber",
+          "label": "GET",
+          "payload": [
+            "GET / HTTP/1.1",
+            "X-Forwarded-For: 198.51.100.7"
+          ],
+          "row": {
+            "time": "0.089s",
+            "src": "10.0.0.10",
+            "dst": "10.0.0.20",
+            "proto": "HTTP",
+            "info": "GET / HTTP/1.1",
+            "len": "533 B",
+            "wire": {
+              "tcp": {
+                "sport": 45110,
+                "dport": 8080,
+                "flags": "PA",
+                "data": {
+                  "text": [
+                    "GET / HTTP/1.1",
+                    "Host: www.example.com",
+                    "X-Forwarded-For: 198.51.100.7",
+                    "X-Forwarded-Proto: https",
+                    "Connection: keep-alive",
+                    "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+                    "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+                    "Accept-Encoding: gzip, deflate, br, zstd",
+                    "Accept-Language: en-US,en;q=0.9",
+                    ""
+                  ],
+                  "name": "HTTP"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "The App Answers",
+      "desc": "In plain HTTP too",
+      "detail": "The app server builds the page and answers the proxy, in plain HTTP: it never deals with TLS or certificates at all.",
+      "facts": [
+        [
+          "Status",
+          "200 OK"
+        ],
+        [
+          "Body",
+          "text/html, 12,500 bytes"
+        ],
+        [
+          "Sent as",
+          "9 TCP segments"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "app",
+          "to": "web",
+          "color": "violet",
+          "label": "200 OK",
+          "payload": [
+            "HTTP/1.1 200 OK",
+            "readable inside"
+          ],
+          "row": {
+            "time": "0.093s",
+            "src": "10.0.0.20",
+            "dst": "10.0.0.10",
+            "proto": "HTTP",
+            "info": "HTTP/1.1 200 OK (text/html), 9 segments",
+            "len": "12.9 KB",
+            "wire": {
+              "tcp": {
+                "sport": 8080,
+                "dport": 45110,
+                "flags": "PA",
+                "data": {
+                  "http": {
+                    "lines": [
+                      "HTTP/1.1 200 OK",
+                      "Date: Sat, 31 Oct 2026 09:41:00 GMT",
+                      "Content-Type: text/html; charset=utf-8",
+                      "Content-Length: 12500",
+                      "Connection: keep-alive",
+                      ""
+                    ],
+                    "body": 12500,
+                    "what": "the HTML page"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Encrypted Again",
+      "desc": "An ordinary HTTPS answer",
+      "detail": "The reverse proxy encrypts the answer in the TLS session it holds with the laptop and sends it on. From outside, it is an ordinary HTTPS site.",
+      "facts": [
+        [
+          "Laptop sees",
+          "One HTTPS server"
+        ],
+        [
+          "App servers",
+          "Never handle TLS"
+        ],
+        [
+          "Certificates",
+          "Renewed in one place"
+        ]
+      ],
+      "events": [
+        {
+          "type": "camera",
+          "frame": "full"
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "violet",
+          "label": "APP DATA",
+          "payload": [
+            "inside: HTTP/1.1 200 OK",
+            "9 segments"
+          ],
+          "row": {
+            "time": "0.094s",
+            "src": "203.0.113.10",
+            "dst": "192.168.1.10",
+            "proto": "TLSv1.3",
+            "info": "Application Data (HTTP response), 9 segments",
+            "len": "12.8 KB",
+            "wire": {
+              "tcp": {
+                "sport": 443,
+                "dport": 52390,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "appdata",
+                      "length": 12660,
+                      "inner": {
+                        "what": "The HTTP response, then the 12,500-byte page",
+                        "text": [
+                          "HTTP/1.1 200 OK",
+                          "Date: Sat, 31 Oct 2026 09:41:00 GMT",
+                          "Content-Type: text/html; charset=utf-8",
+                          "Content-Length: 12500",
+                          "Connection: keep-alive",
+                          ""
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "locked": true
+        }
+      ]
+    },
+    {
+      "title": "Three Options",
+      "desc": "Offload, re-encrypt or pass through",
+      "detail": "Offloading, as here, is simple and fast but leaves the inside traffic readable. Re-encrypting opens a second TLS connection from the proxy to the app server, so it stays encrypted inside too. Passing through forwards the TLS bytes without opening them: the certificate lives on the app servers, and the proxy can only choose a server by address and the name in the Client Hello, not by URL.",
+      "facts": [
+        [
+          "Offload",
+          "Plain HTTP inside"
+        ],
+        [
+          "Re-encrypt",
+          "TLS inside as well"
+        ],
+        [
+          "Pass through",
+          "Proxy can’t read it"
+        ]
+      ],
+      "events": [
+        {
+          "type": "note",
+          "at": "app",
+          "text": "PLAIN HTTP INSIDE",
+          "tone": "amber"
+        }
+      ]
+    }
+  ],
+  "teaching": {
+    "steps": [
+      [
+        "Cửa trước",
+        "Laptop mở https://www.example.com. Địa chỉ DNS cho tên đó thuộc về reverse proxy, nơi giữ chứng chỉ của trang và làm bắt tay TLS. Không có gì cho laptop biết phía sau còn một máy chủ khác."
+      ],
+      [
+        "TLS kết thúc ở đây",
+        "Yêu cầu đến dạng mã hóa, và reverse proxy giải mã nó. Đó là giảm tải: phần việc TLS làm ở đây, một lần, thay vì trên từng máy chủ ứng dụng. Giờ proxy đọc được URL, tiêu đề và cookie, và chọn máy chủ dựa vào chúng."
+      ],
+      [
+        "Dạng rõ",
+        "Proxy chuyển yêu cầu qua mạng riêng của trung tâm dữ liệu, dưới dạng HTTP thường tới cổng 8080. Nó thêm X-Forwarded-For, địa chỉ của khách, và X-Forwarded-Proto: https, cách khách đi vào; nếu không ứng dụng chỉ thấy proxy. Ai theo dõi được mạng riêng này cũng đọc được hết."
+      ],
+      [
+        "Ứng dụng trả lời",
+        "Máy chủ ứng dụng dựng trang và trả lời proxy bằng HTTP thường: nó không bao giờ phải lo TLS hay chứng chỉ."
+      ],
+      [
+        "Lại được mã hóa",
+        "Reverse proxy mã hóa câu trả lời trong phiên TLS nó giữ với laptop và gửi đi. Nhìn từ ngoài, đó là một trang HTTPS bình thường."
+      ],
+      [
+        "Ba lựa chọn",
+        "Giảm tải, như ở đây, đơn giản và nhanh nhưng để lưu lượng bên trong đọc được. Mã hóa lại mở kết nối TLS thứ hai từ proxy tới máy chủ ứng dụng, nên bên trong cũng được mã hóa. Cho đi qua chuyển tiếp byte TLS mà không mở: chứng chỉ nằm trên máy chủ ứng dụng, và proxy chỉ chọn máy chủ được theo địa chỉ và tên trong Client Hello, không theo URL."
+      ]
+    ],
+    "notes": {
+      "TLS ENDS HERE": "TLS KẾT THÚC Ở ĐÂY",
+      "PLAIN HTTP INSIDE": "BÊN TRONG LÀ HTTP THƯỜNG"
+    },
+    "labels": {
+      "Internet": "Internet",
+      "Client": "Máy khách",
+      "Router": "Router",
+      "DNS Resolver": "Bộ phân giải DNS",
+      "Web Server": "Máy chủ web",
+      "Root Server": "Máy chủ gốc",
+      ".com TLD Server": "Máy chủ TLD .com",
+      "Authoritative Server": "Máy chủ có thẩm quyền",
+      "Mail Server": "Máy chủ thư",
+      "Proxy": "Proxy",
+      "App Server": "Máy chủ ứng dụng",
+      "File Server": "Máy chủ tệp",
+      "ISP Router": "Router của ISP",
+      "Transit Router": "Router trung chuyển",
+      "Hosting Router": "Router của nhà lưu trữ",
+      "Their Router": "Router bên kia",
+      "Their Laptop": "Laptop bên kia",
+      "Switch": "Switch",
+      "Access Server": "Máy chủ truy cập",
+      "IP Camera": "Camera IP",
+      "TV Box": "TV box",
+      "Reverse Proxy": "Reverse proxy"
+    }
+  }
+}

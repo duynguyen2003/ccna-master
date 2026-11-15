@@ -1,0 +1,1075 @@
+{
+  "id": "rtmp",
+  "name": "RTMP",
+  "title": "Live Streaming Upload",
+  "layer": 7,
+  "nodes": [
+    "client",
+    "router",
+    "internet",
+    "web"
+  ],
+  "latency": {
+    "client-web": 0.017
+  },
+  "labels": {
+    "web": [
+      "Ingest Server",
+      "203.0.113.10"
+    ]
+  },
+  "legend": [
+    [
+      "green",
+      "TCP"
+    ],
+    [
+      "slate",
+      "RTMP handshake"
+    ],
+    [
+      "amber",
+      "Commands"
+    ],
+    [
+      "violet",
+      "Replies"
+    ],
+    [
+      "blue",
+      "Video and audio"
+    ]
+  ],
+  "overview": {
+    "full": "Real-Time Messaging Protocol",
+    "description": "RTMP is how most streamers send live video to a platform: OBS and other apps push it to an ingest server, which turns it into streams for viewers. Made for Flash, it outlived Flash as the way to upload. Everything shares one TCP connection: commands, audio and video, cut into chunks.",
+    "facts": [
+      [
+        "Layer",
+        "Application (Layer 7)"
+      ],
+      [
+        "Port",
+        "TCP 1935"
+      ],
+      [
+        "Carries",
+        "H.264 video, AAC audio"
+      ],
+      [
+        "Commands",
+        "Encoded in AMF0"
+      ],
+      [
+        "Secure version",
+        "RTMPS, over TLS"
+      ],
+      [
+        "Defined In",
+        "Adobe specification (2012)"
+      ]
+    ]
+  },
+  "outro": {
+    "title": "Live",
+    "desc": "Connected, published, streamed",
+    "text": "OBS shook hands with the ingest server, connected to its live app, got stream 1 and published to it with the stream key. The video and audio then flowed in chunks over the same TCP connection until the streamer stopped. Press REPLAY to watch it again.",
+    "facts": [
+      [
+        "Connection",
+        "One TCP, port 1935"
+      ],
+      [
+        "Stream",
+        "ID 1"
+      ],
+      [
+        "Chunks",
+        "Up to 4,096 bytes"
+      ],
+      [
+        "Encryption",
+        "None: RTMPS adds TLS"
+      ]
+    ]
+  },
+  "start": {
+    "nodes": [
+      "client"
+    ],
+    "frame": "client"
+  },
+  "steps": [
+    {
+      "title": "Handshake",
+      "desc": "TCP, then RTMP’s own",
+      "detail": "The streamer clicks Start Streaming. OBS connects to the ingest server on TCP port 1935, then RTMP has its own handshake: version 3 and 1,536 random bytes each way, which each side sends back. It shows both ends speak RTMP; it encrypts nothing.",
+      "facts": [
+        [
+          "Port",
+          "TCP 1935"
+        ],
+        [
+          "Version",
+          "3"
+        ],
+        [
+          "Each side",
+          "Sends 3,073 bytes"
+        ]
+      ],
+      "events": [
+        {
+          "type": "show",
+          "nodes": [
+            "router",
+            "internet",
+            "web"
+          ],
+          "frame": "path"
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "green",
+          "label": "SYN",
+          "payload": [],
+          "row": {
+            "time": "0.000s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.10",
+            "proto": "TCP",
+            "info": "52630 → 1935 [SYN] Seq=0",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 52630,
+                "dport": 1935,
+                "flags": "S"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "green",
+          "label": "SYN-ACK",
+          "payload": [],
+          "row": {
+            "time": "0.017s",
+            "src": "203.0.113.10",
+            "dst": "192.168.1.10",
+            "proto": "TCP",
+            "info": "1935 → 52630 [SYN, ACK] Seq=0 Ack=1",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 1935,
+                "dport": 52630,
+                "flags": "SA"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "green",
+          "label": "ACK",
+          "payload": [],
+          "row": {
+            "time": "0.034s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.10",
+            "proto": "TCP",
+            "info": "52630 → 1935 [ACK] Seq=1 Ack=1",
+            "len": "60 B",
+            "wire": {
+              "tcp": {
+                "sport": 52630,
+                "dport": 1935,
+                "flags": "A"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "slate",
+          "label": "C0+C1",
+          "payload": [
+            "version 3",
+            "1,536 random bytes"
+          ],
+          "row": {
+            "time": "0.034s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.10",
+            "proto": "RTMP",
+            "info": "Handshake C0+C1, 2 segments",
+            "len": "1.6 KB",
+            "wire": {
+              "tcp": {
+                "sport": 52630,
+                "dport": 1935,
+                "flags": "PA",
+                "data": {
+                  "rtmp": {
+                    "handshake": "C0+C1"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "slate",
+          "label": "S0+S1+S2",
+          "payload": [
+            "version 3, its own bytes",
+            "and C1 sent back"
+          ],
+          "row": {
+            "time": "0.052s",
+            "src": "203.0.113.10",
+            "dst": "192.168.1.10",
+            "proto": "RTMP",
+            "info": "Handshake S0+S1+S2, 3 segments",
+            "len": "3.2 KB",
+            "wire": {
+              "tcp": {
+                "sport": 1935,
+                "dport": 52630,
+                "flags": "PA",
+                "data": {
+                  "rtmp": {
+                    "handshake": "S0+S1+S2"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "slate",
+          "label": "C2",
+          "payload": [
+            "S1 sent back"
+          ],
+          "row": {
+            "time": "0.070s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.10",
+            "proto": "RTMP",
+            "info": "Handshake C2, 2 segments",
+            "len": "1.6 KB",
+            "wire": {
+              "tcp": {
+                "sport": 52630,
+                "dport": 1935,
+                "flags": "PA",
+                "data": {
+                  "rtmp": {
+                    "handshake": "C2"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Connect",
+      "desc": "To the server’s live app",
+      "detail": "OBS raises its chunk size to 4,096 bytes and sends connect for the app called live, in AMF0, a compact binary format from Flash. The server sets its own window, bandwidth and chunk size, and answers _result: NetConnection.Connect.Success.",
+      "facts": [
+        [
+          "App",
+          "live"
+        ],
+        [
+          "Encoding",
+          "AMF0"
+        ],
+        [
+          "Chunks",
+          "Up to 4,096 bytes"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "amber",
+          "label": "CONNECT",
+          "payload": [
+            "app: live",
+            "chunk size 4,096"
+          ],
+          "row": {
+            "time": "0.071s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.10",
+            "proto": "RTMP",
+            "info": "Set Chunk Size 4096|connect('live')",
+            "len": "257 B",
+            "wire": {
+              "tcp": {
+                "sport": 52630,
+                "dport": 1935,
+                "flags": "PA",
+                "data": {
+                  "rtmp": {
+                    "chunk": 128,
+                    "messages": [
+                      {
+                        "type": 1,
+                        "csid": 2,
+                        "size": 4096
+                      },
+                      {
+                        "type": 20,
+                        "csid": 3,
+                        "name": "connect",
+                        "tx": 1,
+                        "args": [
+                          [
+                            "Command object",
+                            {
+                              "app": "live",
+                              "type": "nonprivate",
+                              "flashVer": "FMLE/3.0 (compatible; FMSc/1.0)",
+                              "swfUrl": "rtmp://live.example.com/live",
+                              "tcUrl": "rtmp://live.example.com/live"
+                            },
+                            "Which app on the server, and the address OBS was given."
+                          ]
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "violet",
+          "label": "_RESULT",
+          "payload": [
+            "Connect.Success",
+            "window, bandwidth, chunks"
+          ],
+          "row": {
+            "time": "0.089s",
+            "src": "203.0.113.10",
+            "dst": "192.168.1.10",
+            "proto": "RTMP",
+            "info": "Window Ack Size|Set Peer Bandwidth|Set Chunk Size|_result()",
+            "len": "305 B",
+            "wire": {
+              "tcp": {
+                "sport": 1935,
+                "dport": 52630,
+                "flags": "PA",
+                "data": {
+                  "rtmp": {
+                    "chunk": 128,
+                    "messages": [
+                      {
+                        "type": 5,
+                        "csid": 2,
+                        "size": 5000000
+                      },
+                      {
+                        "type": 6,
+                        "csid": 2,
+                        "size": 5000000
+                      },
+                      {
+                        "type": 1,
+                        "csid": 2,
+                        "size": 4096
+                      },
+                      {
+                        "type": 20,
+                        "csid": 3,
+                        "name": "_result",
+                        "tx": 1,
+                        "args": [
+                          [
+                            "Properties",
+                            {
+                              "fmsVer": "FMS/3,0,1,123",
+                              "capabilities": 31
+                            }
+                          ],
+                          [
+                            "Information",
+                            {
+                              "level": "status",
+                              "code": "NetConnection.Connect.Success",
+                              "description": "Connection succeeded.",
+                              "objectEncoding": 0
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Make a Stream",
+      "desc": "createStream returns stream 1",
+      "detail": "Every message names a message stream; 0 is the connection itself. OBS releases and announces its stream key, then asks createStream for a stream to send on, all three commands in one packet. The server answers with stream ID 1.",
+      "facts": [
+        [
+          "Commands",
+          "3 in one packet"
+        ],
+        [
+          "Asks",
+          "createStream"
+        ],
+        [
+          "Gets",
+          "Stream ID 1"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "amber",
+          "label": "CREATESTREAM",
+          "payload": [
+            "releaseStream, FCPublish",
+            "createStream"
+          ],
+          "row": {
+            "time": "0.107s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.10",
+            "proto": "RTMP",
+            "info": "releaseStream()|FCPublish()|createStream()",
+            "len": "203 B",
+            "wire": {
+              "tcp": {
+                "sport": 52630,
+                "dport": 1935,
+                "flags": "PA",
+                "data": {
+                  "rtmp": {
+                    "chunk": 4096,
+                    "messages": [
+                      {
+                        "type": 20,
+                        "csid": 3,
+                        "name": "releaseStream",
+                        "tx": 2,
+                        "args": [
+                          [
+                            "Command object",
+                            null,
+                            "Nothing: AMF0 null."
+                          ],
+                          [
+                            "Stream key",
+                            "live_29481_xk3Qe7",
+                            "Which channel this is. It works like a password, and here it travels unencrypted."
+                          ]
+                        ]
+                      },
+                      {
+                        "type": 20,
+                        "csid": 3,
+                        "name": "FCPublish",
+                        "tx": 3,
+                        "args": [
+                          [
+                            "Command object",
+                            null,
+                            "Nothing: AMF0 null."
+                          ],
+                          [
+                            "Stream key",
+                            "live_29481_xk3Qe7",
+                            "Which channel this is. It works like a password, and here it travels unencrypted."
+                          ]
+                        ]
+                      },
+                      {
+                        "type": 20,
+                        "csid": 3,
+                        "name": "createStream",
+                        "tx": 4,
+                        "args": [
+                          [
+                            "Command object",
+                            null,
+                            "Nothing: AMF0 null."
+                          ]
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "violet",
+          "label": "_RESULT",
+          "payload": [
+            "stream ID 1"
+          ],
+          "row": {
+            "time": "0.125s",
+            "src": "203.0.113.10",
+            "dst": "192.168.1.10",
+            "proto": "RTMP",
+            "info": "_result()",
+            "len": "95 B",
+            "wire": {
+              "tcp": {
+                "sport": 1935,
+                "dport": 52630,
+                "flags": "PA",
+                "data": {
+                  "rtmp": {
+                    "chunk": 4096,
+                    "messages": [
+                      {
+                        "type": 20,
+                        "csid": 3,
+                        "name": "_result",
+                        "tx": 4,
+                        "args": [
+                          [
+                            "Command object",
+                            null,
+                            "Nothing: AMF0 null."
+                          ],
+                          [
+                            "Stream ID",
+                            1,
+                            "The new stream: video and audio will go on it."
+                          ]
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Publish",
+      "desc": "The stream key goes live",
+      "detail": "publish names the stream key, the secret that says whose channel this is. RTMP has no encryption, so the key crosses in plain text; platforms prefer RTMPS, the same over TLS. The server checks the key and answers NetStream.Publish.Start.",
+      "facts": [
+        [
+          "Sends",
+          "The stream key"
+        ],
+        [
+          "Encryption",
+          "None (RTMPS adds TLS)"
+        ],
+        [
+          "Answer",
+          "Publish.Start"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "amber",
+          "label": "PUBLISH",
+          "payload": [
+            "on stream 1",
+            "stream key, live"
+          ],
+          "row": {
+            "time": "0.143s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.10",
+            "proto": "RTMP",
+            "info": "publish('live_29481_xk3Qe7')",
+            "len": "113 B",
+            "wire": {
+              "tcp": {
+                "sport": 52630,
+                "dport": 1935,
+                "flags": "PA",
+                "data": {
+                  "rtmp": {
+                    "chunk": 4096,
+                    "messages": [
+                      {
+                        "type": 20,
+                        "csid": 4,
+                        "stream": 1,
+                        "name": "publish",
+                        "tx": 5,
+                        "args": [
+                          [
+                            "Command object",
+                            null,
+                            "Nothing: AMF0 null."
+                          ],
+                          [
+                            "Stream key",
+                            "live_29481_xk3Qe7",
+                            "Which channel this is. It works like a password, and here it travels unencrypted."
+                          ],
+                          [
+                            "Publishing type",
+                            "live",
+                            "Live: not recorded by this request."
+                          ]
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "violet",
+          "label": "ONSTATUS",
+          "payload": [
+            "Publish.Start"
+          ],
+          "row": {
+            "time": "0.161s",
+            "src": "203.0.113.10",
+            "dst": "192.168.1.10",
+            "proto": "RTMP",
+            "info": "onStatus('NetStream.Publish.Start')",
+            "len": "171 B",
+            "wire": {
+              "tcp": {
+                "sport": 1935,
+                "dport": 52630,
+                "flags": "PA",
+                "data": {
+                  "rtmp": {
+                    "chunk": 4096,
+                    "messages": [
+                      {
+                        "type": 20,
+                        "csid": 5,
+                        "stream": 1,
+                        "name": "onStatus",
+                        "tx": 0,
+                        "args": [
+                          [
+                            "Command object",
+                            null,
+                            "Nothing: AMF0 null."
+                          ],
+                          [
+                            "Information",
+                            {
+                              "level": "status",
+                              "code": "NetStream.Publish.Start",
+                              "description": "Start publishing"
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Video and Sound",
+      "desc": "Metadata, settings, then frames",
+      "detail": "OBS describes the stream: 1920×1080 at 30 frames a second, H.264 video, AAC audio. It sends the decoders’ settings, then a key frame, about 30 KB cut into 4,096-byte chunks. Frames follow non-stop, on the same TCP connection.",
+      "facts": [
+        [
+          "Video",
+          "H.264, 1920×1080, 30 fps"
+        ],
+        [
+          "Audio",
+          "AAC, 48 kHz stereo"
+        ],
+        [
+          "Key frame",
+          "30 KB in 8 chunks"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "blue",
+          "label": "METADATA",
+          "payload": [
+            "1920×1080, 30 fps",
+            "H.264 + AAC settings"
+          ],
+          "row": {
+            "time": "0.179s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.10",
+            "proto": "RTMP",
+            "info": "@setDataFrame()|Video Data|Audio Data",
+            "len": "500 B",
+            "wire": {
+              "tcp": {
+                "sport": 52630,
+                "dport": 1935,
+                "flags": "PA",
+                "data": {
+                  "rtmp": {
+                    "chunk": 4096,
+                    "messages": [
+                      {
+                        "type": 18,
+                        "csid": 4,
+                        "stream": 1,
+                        "args": [
+                          [
+                            "Handler",
+                            "@setDataFrame"
+                          ],
+                          [
+                            "Event",
+                            "onMetaData"
+                          ],
+                          [
+                            "Metadata",
+                            {
+                              "ecma": {
+                                "duration": 0,
+                                "fileSize": 0,
+                                "width": 1920,
+                                "height": 1080,
+                                "videocodecid": 7,
+                                "videodatarate": 6000,
+                                "framerate": 30,
+                                "audiocodecid": 10,
+                                "audiodatarate": 160,
+                                "audiosamplerate": 48000,
+                                "audiosamplesize": 16,
+                                "audiochannels": 2,
+                                "stereo": true,
+                                "encoder": "obs-output module (libobs version 30.2.3)"
+                              }
+                            },
+                            "Codec IDs as in Flash video files: 7 is H.264, 10 is AAC."
+                          ]
+                        ]
+                      },
+                      {
+                        "type": 9,
+                        "csid": 6,
+                        "stream": 1,
+                        "key": true,
+                        "config": true,
+                        "video": 40
+                      },
+                      {
+                        "type": 8,
+                        "csid": 4,
+                        "stream": 1,
+                        "config": true,
+                        "audio": 2
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "blue",
+          "label": "KEY FRAME",
+          "payload": [
+            "30 KB of H.264",
+            "8 chunks"
+          ],
+          "row": {
+            "time": "0.180s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.10",
+            "proto": "RTMP",
+            "info": "Video Data, 21 segments",
+            "len": "30.4 KB",
+            "wire": {
+              "tcp": {
+                "sport": 52630,
+                "dport": 1935,
+                "flags": "PA",
+                "data": {
+                  "rtmp": {
+                    "chunk": 4096,
+                    "messages": [
+                      {
+                        "type": 9,
+                        "csid": 6,
+                        "stream": 1,
+                        "key": true,
+                        "video": 30000
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Stop Streaming",
+      "desc": "FCUnpublish and deleteStream",
+      "detail": "When the streamer clicks Stop Streaming, OBS sends FCUnpublish and deleteStream for stream 1. The server answers NetStream.Unpublish.Success and ends the broadcast for viewers. Then OBS closes the TCP connection.",
+      "facts": [
+        [
+          "Commands",
+          "FCUnpublish, deleteStream"
+        ],
+        [
+          "Answer",
+          "Unpublish.Success"
+        ],
+        [
+          "Then",
+          "TCP closes"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "amber",
+          "label": "DELETESTREAM",
+          "payload": [
+            "FCUnpublish",
+            "deleteStream 1"
+          ],
+          "row": {
+            "time": "1834.620s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.10",
+            "proto": "RTMP",
+            "info": "FCUnpublish()|deleteStream()",
+            "len": "156 B",
+            "wire": {
+              "tcp": {
+                "sport": 52630,
+                "dport": 1935,
+                "flags": "PA",
+                "data": {
+                  "rtmp": {
+                    "chunk": 4096,
+                    "messages": [
+                      {
+                        "type": 20,
+                        "csid": 3,
+                        "name": "FCUnpublish",
+                        "tx": 6,
+                        "args": [
+                          [
+                            "Command object",
+                            null,
+                            "Nothing: AMF0 null."
+                          ],
+                          [
+                            "Stream key",
+                            "live_29481_xk3Qe7",
+                            "Which channel this is. It works like a password, and here it travels unencrypted."
+                          ]
+                        ]
+                      },
+                      {
+                        "type": 20,
+                        "csid": 3,
+                        "name": "deleteStream",
+                        "tx": 7,
+                        "args": [
+                          [
+                            "Command object",
+                            null,
+                            "Nothing: AMF0 null."
+                          ],
+                          [
+                            "Stream ID",
+                            1
+                          ]
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "violet",
+          "label": "ONSTATUS",
+          "payload": [
+            "Unpublish.Success"
+          ],
+          "row": {
+            "time": "1834.638s",
+            "src": "203.0.113.10",
+            "dst": "192.168.1.10",
+            "proto": "RTMP",
+            "info": "onStatus('NetStream.Unpublish.Success')",
+            "len": "174 B",
+            "wire": {
+              "tcp": {
+                "sport": 1935,
+                "dport": 52630,
+                "flags": "PA",
+                "data": {
+                  "rtmp": {
+                    "chunk": 4096,
+                    "messages": [
+                      {
+                        "type": 20,
+                        "csid": 5,
+                        "stream": 1,
+                        "name": "onStatus",
+                        "tx": 0,
+                        "args": [
+                          [
+                            "Command object",
+                            null,
+                            "Nothing: AMF0 null."
+                          ],
+                          [
+                            "Information",
+                            {
+                              "level": "status",
+                              "code": "NetStream.Unpublish.Success",
+                              "description": "Stop publishing"
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "teaching": {
+    "steps": [
+      [
+        "Bắt tay",
+        "Streamer bấm Bắt đầu phát. OBS kết nối tới máy chủ ingest ở cổng TCP 1935, rồi RTMP có màn bắt tay riêng: phiên bản 3 và 1.536 byte ngẫu nhiên mỗi chiều, mỗi bên gửi lại cho bên kia. Nó cho thấy hai đầu cùng nói RTMP; nó không mã hóa gì cả."
+      ],
+      [
+        "Kết nối",
+        "OBS nâng kích thước chunk lên 4.096 byte và gửi connect cho ứng dụng tên live, bằng AMF0, một định dạng nhị phân gọn có từ thời Flash. Máy chủ đặt cửa sổ, băng thông và kích thước chunk của riêng nó, rồi trả lời _result: NetConnection.Connect.Success."
+      ],
+      [
+        "Tạo một stream",
+        "Mỗi thông điệp nêu một luồng thông điệp; 0 là chính kết nối. OBS giải phóng và công bố khóa stream của mình, rồi dùng createStream xin một stream để gửi, cả ba lệnh trong một gói. Máy chủ trả lời bằng stream ID 1."
+      ],
+      [
+        "Đăng",
+        "publish nêu khóa stream, bí mật cho biết kênh này của ai. RTMP không mã hóa gì, nên khóa đi dưới dạng văn bản thuần; các nền tảng ưa RTMPS hơn, tức cùng thứ đó chạy qua TLS. Máy chủ kiểm tra khóa và trả lời NetStream.Publish.Start."
+      ],
+      [
+        "Hình và Tiếng",
+        "OBS mô tả buổi phát: 1920×1080 với 30 khung hình mỗi giây, video H.264, âm thanh AAC. Nó gửi thiết lập cho bộ giải mã, rồi một khung hình chính khoảng 30 KB cắt thành chunk 4.096 byte. Sau đó khung hình tới liên tục trên cùng kết nối TCP."
+      ],
+      [
+        "Dừng Phát",
+        "Khi streamer bấm Dừng phát, OBS gửi FCUnpublish và deleteStream cho stream 1. Máy chủ trả lời NetStream.Unpublish.Success và kết thúc buổi phát cho người xem. Sau đó OBS đóng kết nối TCP."
+      ]
+    ],
+    "notes": {},
+    "labels": {
+      "Internet": "Internet",
+      "Client": "Máy khách",
+      "Router": "Router",
+      "DNS Resolver": "Bộ phân giải DNS",
+      "Web Server": "Máy chủ web",
+      "Root Server": "Máy chủ gốc",
+      ".com TLD Server": "Máy chủ TLD .com",
+      "Authoritative Server": "Máy chủ có thẩm quyền",
+      "Mail Server": "Máy chủ thư",
+      "Proxy": "Proxy",
+      "App Server": "Máy chủ ứng dụng",
+      "File Server": "Máy chủ tệp",
+      "ISP Router": "Router của ISP",
+      "Transit Router": "Router trung chuyển",
+      "Hosting Router": "Router của nhà lưu trữ",
+      "Their Router": "Router bên kia",
+      "Their Laptop": "Laptop bên kia",
+      "Switch": "Switch",
+      "Access Server": "Máy chủ truy cập",
+      "IP Camera": "Camera IP",
+      "TV Box": "TV box",
+      "Ingest Server": "Máy chủ ingest"
+    }
+  }
+}

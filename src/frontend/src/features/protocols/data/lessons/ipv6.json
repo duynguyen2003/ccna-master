@@ -1,0 +1,538 @@
+{
+  "id": "ipv6",
+  "name": "IPv6",
+  "title": "Address Setup",
+  "layer": 3,
+  "nodes": [
+    "client",
+    "router"
+  ],
+  "latency": {
+    "client-router": 0.001
+  },
+  "labels": {
+    "client": [
+      "Client",
+      "No IPv6 address"
+    ],
+    "router": [
+      "Router",
+      "fe80::1"
+    ]
+  },
+  "legend": [
+    [
+      "amber",
+      "From the laptop"
+    ],
+    [
+      "violet",
+      "From the router"
+    ]
+  ],
+  "overview": {
+    "full": "IPv6: SLAAC and neighbour discovery",
+    "description": "IPv6 addresses are 128 bits long, enough for every device to have its own. A device can usually set itself up with no DHCP server: it makes a link-local address, asks for a router, and builds its global address from the prefix the router advertises (SLAAC). Neighbour discovery, part of ICMPv6, finds MAC addresses and does the work ARP does for IPv4.",
+    "facts": [
+      [
+        "Layer",
+        "Network (Layer 3)"
+      ],
+      [
+        "Address",
+        "128 bits"
+      ],
+      [
+        "Addresses",
+        "SLAAC: no server needed"
+      ],
+      [
+        "Replaces ARP",
+        "Neighbour discovery"
+      ],
+      [
+        "DHCPv6",
+        "Optional"
+      ],
+      [
+        "Defined In",
+        "RFC 8200, 4861, 4862"
+      ]
+    ]
+  },
+  "outro": {
+    "title": "Two addresses, no DHCP",
+    "desc": "Made by the laptop itself",
+    "text": "The laptop made a link-local address and a global one, checked that nobody else had either, and learned its router, MTU and DNS server from a single advertisement. When packets came for it, neighbour discovery found its MAC address. Press REPLAY to watch it again.",
+    "facts": [
+      [
+        "Link-local",
+        "fe80::8d2e:4f61:a9b0:7c13"
+      ],
+      [
+        "Global",
+        "2001:db8:1234:5678::/64 + its own ID"
+      ],
+      [
+        "Router, DNS",
+        "From one advertisement"
+      ],
+      [
+        "Messages",
+        "6, all ICMPv6"
+      ]
+    ]
+  },
+  "start": {
+    "nodes": [
+      "client"
+    ],
+    "frame": "client"
+  },
+  "steps": [
+    {
+      "title": "Link-Local First",
+      "desc": "Made by the laptop itself",
+      "detail": "Every IPv6 interface gets a link-local address, usable only on its own network. The laptop makes one from fe80:: and a random-looking 64-bit interface ID. First it checks nobody already has it: a Neighbor Solicitation asking for that address, sent from :: because it can’t use the address yet. Nobody answers, so it’s the laptop’s.",
+      "facts": [
+        [
+          "Address",
+          "fe80::8d2e:4f61:a9b0:7c13"
+        ],
+        [
+          "Check",
+          "Duplicate address detection"
+        ],
+        [
+          "Answer",
+          "None: the address is free"
+        ]
+      ],
+      "events": [
+        {
+          "type": "show",
+          "nodes": [
+            "router"
+          ],
+          "frame": "local"
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "router",
+          "color": "amber",
+          "label": "IS IT TAKEN?",
+          "payload": [
+            "from ::",
+            "target fe80::8d2e:4f61:a9b0:7c13"
+          ],
+          "row": {
+            "time": "0.000s",
+            "src": "::",
+            "dst": "ff02::1:ffb0:7c13",
+            "proto": "ICMPv6",
+            "info": "Neighbor Solicitation for fe80::8d2e:4f61:a9b0:7c13",
+            "len": "78 B",
+            "wire": {
+              "ipv6": {
+                "ethSrc": "00:00:5e:00:53:10",
+                "ethDst": "00:00:5e:00:53:01",
+                "src": "::",
+                "dst": "ff02::1:ffb0:7c13",
+                "icmp": {
+                  "type": 135,
+                  "target": "fe80::8d2e:4f61:a9b0:7c13",
+                  "dad": true
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "note",
+          "at": "client",
+          "text": "NO ANSWER: ADDRESS IS FREE",
+          "tone": "green"
+        },
+        {
+          "type": "label",
+          "at": "client",
+          "label": [
+            "Client",
+            "fe80::8d2e:4f61:a9b0:7c13"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Any Routers?",
+      "desc": "A Router Solicitation",
+      "detail": "Link-local addresses can’t reach the internet. The laptop sends a Router Solicitation to ff02::2, the address every router on the network listens to, with its own MAC address attached.",
+      "facts": [
+        [
+          "To",
+          "ff02::2 (all routers)"
+        ],
+        [
+          "From",
+          "fe80::8d2e:4f61:a9b0:7c13"
+        ],
+        [
+          "Includes",
+          "The laptop’s MAC address"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "router",
+          "color": "amber",
+          "label": "ROUTERS?",
+          "payload": [
+            "to ff02::2"
+          ],
+          "row": {
+            "time": "1.010s",
+            "src": "fe80::8d2e:4f61:a9b0:7c13",
+            "dst": "ff02::2",
+            "proto": "ICMPv6",
+            "info": "Router Solicitation from 00:00:5e:00:53:10",
+            "len": "70 B",
+            "wire": {
+              "ipv6": {
+                "ethSrc": "00:00:5e:00:53:10",
+                "ethDst": "00:00:5e:00:53:01",
+                "src": "fe80::8d2e:4f61:a9b0:7c13",
+                "dst": "ff02::2",
+                "icmp": {
+                  "type": 133,
+                  "options": [
+                    {
+                      "type": 1,
+                      "mac": "00:00:5e:00:53:10"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Router Answers",
+      "desc": "Prefix, MTU and DNS in one message",
+      "detail": "The router answers to ff02::1, every device on the network, with a Router Advertisement: use me as your way out for 30 minutes, here is my MAC address, the MTU is 1500, the network’s prefix is 2001:db8:1234:5678::/64 and you may make your own address in it, and ask 2001:4860:4860::8888 for DNS. Routers also send these on their own every few minutes.",
+      "facts": [
+        [
+          "Prefix",
+          "2001:db8:1234:5678::/64"
+        ],
+        [
+          "Make your own",
+          "Yes (flag A)"
+        ],
+        [
+          "DNS server",
+          "2001:4860:4860::8888"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "router",
+          "to": "client",
+          "color": "violet",
+          "label": "ADVERTISEMENT",
+          "payload": [
+            "prefix 2001:db8:1234:5678::/64",
+            "MTU, DNS"
+          ],
+          "row": {
+            "time": "1.012s",
+            "src": "fe80::1",
+            "dst": "ff02::1",
+            "proto": "ICMPv6",
+            "info": "Router Advertisement from 00:00:5e:00:53:01",
+            "len": "142 B",
+            "wire": {
+              "ipv6": {
+                "ethSrc": "00:00:5e:00:53:01",
+                "ethDst": "00:00:5e:00:53:10",
+                "src": "fe80::1",
+                "dst": "ff02::1",
+                "icmp": {
+                  "type": 134,
+                  "options": [
+                    {
+                      "type": 1,
+                      "mac": "00:00:5e:00:53:01"
+                    },
+                    {
+                      "type": 5,
+                      "mtu": 1500
+                    },
+                    {
+                      "type": 3,
+                      "prefix": "2001:db8:1234:5678::",
+                      "valid": 86400,
+                      "preferred": 14400
+                    },
+                    {
+                      "type": 25,
+                      "dns": "2001:4860:4860::8888",
+                      "lifetime": 3600
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "A Global Address",
+      "desc": "Prefix + interface ID",
+      "detail": "The laptop joins the prefix and its interface ID into a global address, 2001:db8:1234:5678:8d2e:4f61:a9b0:7c13, and checks it the same way. Windows also makes a temporary address with a random ID that changes every day, used for outgoing connections so websites can’t follow one device by its address.",
+      "facts": [
+        [
+          "Global",
+          "…:5678:8d2e:4f61:a9b0:7c13"
+        ],
+        [
+          "Check",
+          "Duplicate address detection"
+        ],
+        [
+          "Also made",
+          "A temporary address"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "router",
+          "color": "amber",
+          "label": "IS IT TAKEN?",
+          "payload": [
+            "from ::",
+            "target the global address"
+          ],
+          "row": {
+            "time": "1.020s",
+            "src": "::",
+            "dst": "ff02::1:ffb0:7c13",
+            "proto": "ICMPv6",
+            "info": "Neighbor Solicitation for 2001:db8:1234:5678:8d2e:4f61:a9b0:7c13",
+            "len": "78 B",
+            "wire": {
+              "ipv6": {
+                "ethSrc": "00:00:5e:00:53:10",
+                "ethDst": "00:00:5e:00:53:01",
+                "src": "::",
+                "dst": "ff02::1:ffb0:7c13",
+                "icmp": {
+                  "type": 135,
+                  "target": "2001:db8:1234:5678:8d2e:4f61:a9b0:7c13",
+                  "dad": true
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "note",
+          "at": "client",
+          "text": "NO ANSWER: ADDRESS IS FREE",
+          "tone": "green"
+        },
+        {
+          "type": "label",
+          "at": "client",
+          "label": [
+            "Client",
+            "2001:db8:1234:5678:…"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Neighbour Lookup",
+      "desc": "Who has this address? (ARP’s job)",
+      "detail": "A reply from the internet arrives at the router for the laptop’s global address. To deliver it, the router needs the MAC address that goes with it: it sends a Neighbor Solicitation to the address’s solicited-node group, so only devices whose address ends the same way even look. The laptop answers with a Neighbor Advertisement carrying its MAC address.",
+      "facts": [
+        [
+          "Asked to",
+          "ff02::1:ffb0:7c13"
+        ],
+        [
+          "Answer",
+          "00:00:5e:00:53:10"
+        ],
+        [
+          "Instead of",
+          "ARP broadcasts to everyone"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "router",
+          "to": "client",
+          "color": "violet",
+          "label": "WHO HAS?",
+          "payload": [
+            "the global address"
+          ],
+          "row": {
+            "time": "2.500s",
+            "src": "fe80::1",
+            "dst": "ff02::1:ffb0:7c13",
+            "proto": "ICMPv6",
+            "info": "Neighbor Solicitation for 2001:db8:1234:5678:8d2e:4f61:a9b0:7c13 from 00:00:5e:00:53:01",
+            "len": "86 B",
+            "wire": {
+              "ipv6": {
+                "ethSrc": "00:00:5e:00:53:01",
+                "ethDst": "00:00:5e:00:53:10",
+                "src": "fe80::1",
+                "dst": "ff02::1:ffb0:7c13",
+                "icmp": {
+                  "type": 135,
+                  "target": "2001:db8:1234:5678:8d2e:4f61:a9b0:7c13",
+                  "options": [
+                    {
+                      "type": 1,
+                      "mac": "00:00:5e:00:53:01"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "router",
+          "color": "amber",
+          "label": "IT’S ME",
+          "payload": [
+            "MAC 00:00:5e:00:53:10"
+          ],
+          "row": {
+            "time": "2.502s",
+            "src": "fe80::8d2e:4f61:a9b0:7c13",
+            "dst": "fe80::1",
+            "proto": "ICMPv6",
+            "info": "Neighbor Advertisement 2001:db8:1234:5678:8d2e:4f61:a9b0:7c13 (sol, ovr) is at 00:00:5e:00:53:10",
+            "len": "86 B",
+            "wire": {
+              "ipv6": {
+                "ethSrc": "00:00:5e:00:53:10",
+                "ethDst": "00:00:5e:00:53:01",
+                "src": "fe80::8d2e:4f61:a9b0:7c13",
+                "dst": "fe80::1",
+                "icmp": {
+                  "type": 136,
+                  "target": "2001:db8:1234:5678:8d2e:4f61:a9b0:7c13",
+                  "options": [
+                    {
+                      "type": 2,
+                      "mac": "00:00:5e:00:53:10"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Ready, No DHCP",
+      "desc": "And no NAT either",
+      "detail": "The laptop is on the internet with its own global address, and no NAT changes it on the way: the address a website sees is the laptop’s. The home router’s firewall still turns away connections nobody inside asked for. Networks that want to hand out addresses centrally can use DHCPv6 instead.",
+      "facts": [
+        [
+          "NAT",
+          "Not needed"
+        ],
+        [
+          "Incoming",
+          "Blocked by the firewall"
+        ],
+        [
+          "DHCPv6",
+          "Optional (flags M, O)"
+        ]
+      ],
+      "events": [
+        {
+          "type": "note",
+          "at": "client",
+          "text": "ONLINE OVER IPv6",
+          "tone": "green"
+        }
+      ]
+    }
+  ],
+  "teaching": {
+    "steps": [
+      [
+        "Link-local trước",
+        "Mọi giao diện IPv6 đều có địa chỉ link-local, chỉ dùng được trong mạng của nó. Laptop tạo một địa chỉ từ fe80:: và một ID giao diện 64 bit trông như ngẫu nhiên. Trước hết nó kiểm tra chưa ai dùng: một Neighbor Solicitation hỏi địa chỉ đó, gửi từ :: vì nó chưa được dùng địa chỉ. Không ai trả lời, nên địa chỉ là của laptop."
+      ],
+      [
+        "Có router không?",
+        "Địa chỉ link-local không ra được Internet. Laptop gửi Router Solicitation tới ff02::2, địa chỉ mà mọi router trong mạng lắng nghe, kèm địa chỉ MAC của nó."
+      ],
+      [
+        "Router trả lời",
+        "Router trả lời tới ff02::1, mọi thiết bị trong mạng, bằng Router Advertisement: dùng tôi làm lối ra trong 30 phút, đây là địa chỉ MAC của tôi, MTU là 1500, tiền tố của mạng là 2001:db8:1234:5678::/64 và bạn được tự tạo địa chỉ trong đó, và hỏi DNS ở 2001:4860:4860::8888. Router cũng tự gửi các thông điệp này vài phút một lần."
+      ],
+      [
+        "Một địa chỉ toàn cầu",
+        "Laptop ghép tiền tố và ID giao diện thành địa chỉ toàn cầu 2001:db8:1234:5678:8d2e:4f61:a9b0:7c13, và kiểm tra theo cùng cách. Windows còn tạo một địa chỉ tạm thời với ID ngẫu nhiên đổi mỗi ngày, dùng cho kết nối đi ra để các trang web không theo dõi được một thiết bị qua địa chỉ."
+      ],
+      [
+        "Tra láng giềng",
+        "Một phản hồi từ Internet đến router cho địa chỉ toàn cầu của laptop. Để giao nó, router cần địa chỉ MAC tương ứng: nó gửi Neighbor Solicitation tới nhóm solicited-node của địa chỉ đó, nên chỉ thiết bị có địa chỉ kết thúc giống vậy mới để ý. Laptop trả lời bằng Neighbor Advertisement mang địa chỉ MAC của nó."
+      ],
+      [
+        "Sẵn sàng, không DHCP",
+        "Laptop đã lên Internet với địa chỉ toàn cầu của riêng nó, và không NAT nào đổi nó trên đường: địa chỉ trang web thấy chính là của laptop. Tường lửa của router ở nhà vẫn chặn các kết nối mà không ai bên trong yêu cầu. Mạng nào muốn cấp địa chỉ tập trung có thể dùng DHCPv6."
+      ]
+    ],
+    "notes": {
+      "NO ANSWER: ADDRESS IS FREE": "KHÔNG AI TRẢ LỜI: ĐỊA CHỈ TRỐNG",
+      "ONLINE OVER IPv6": "TRỰC TUYẾN QUA IPv6"
+    },
+    "labels": {
+      "Internet": "Internet",
+      "Client": "Máy khách",
+      "Router": "Router",
+      "DNS Resolver": "Bộ phân giải DNS",
+      "Web Server": "Máy chủ web",
+      "Root Server": "Máy chủ gốc",
+      ".com TLD Server": "Máy chủ TLD .com",
+      "Authoritative Server": "Máy chủ có thẩm quyền",
+      "Mail Server": "Máy chủ thư",
+      "Proxy": "Proxy",
+      "App Server": "Máy chủ ứng dụng",
+      "File Server": "Máy chủ tệp",
+      "ISP Router": "Router của ISP",
+      "Transit Router": "Router trung chuyển",
+      "Hosting Router": "Router của nhà lưu trữ",
+      "Their Router": "Router bên kia",
+      "Their Laptop": "Laptop bên kia",
+      "Switch": "Switch",
+      "Access Server": "Máy chủ truy cập",
+      "IP Camera": "Camera IP",
+      "TV Box": "TV box"
+    }
+  }
+}

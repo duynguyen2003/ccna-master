@@ -1,0 +1,613 @@
+{
+  "id": "udp",
+  "name": "UDP",
+  "title": "Fast Datagrams",
+  "layer": 4,
+  "nodes": [
+    "client",
+    "router",
+    "internet",
+    "web"
+  ],
+  "latency": {
+    "client-web": 0.017
+  },
+  "labels": {
+    "web": [
+      "Media Server",
+      "203.0.113.20"
+    ]
+  },
+  "legend": [
+    [
+      "amber",
+      "Your voice"
+    ],
+    [
+      "violet",
+      "Their voice"
+    ]
+  ],
+  "overview": {
+    "full": "User Datagram Protocol",
+    "description": "UDP sends data in independent packets called datagrams, with no connection, no acknowledgements and no resends. That keeps it fast and light: right for voice, video, games and DNS, where a late answer is worse than a missing one.",
+    "facts": [
+      [
+        "Layer",
+        "Transport (Layer 4)"
+      ],
+      [
+        "Connection",
+        "None"
+      ],
+      [
+        "Reliability",
+        "None (no ACKs, no resends)"
+      ],
+      [
+        "Ordering",
+        "Not guaranteed"
+      ],
+      [
+        "Header",
+        "8 bytes"
+      ],
+      [
+        "Defined In",
+        "RFC 768"
+      ]
+    ]
+  },
+  "outro": {
+    "title": "Call keeps flowing",
+    "desc": "Fast, simple, no guarantees",
+    "text": "Audio started with the very first packet, every datagram travelled on its own, and the one that was lost was simply gone: UDP never noticed. The app covered the gap and the call carried on. Press REPLAY to watch it again.",
+    "facts": [
+      [
+        "Datagrams",
+        "11 (1 lost, never resent)"
+      ],
+      [
+        "Setup time",
+        "0 ms (no handshake)"
+      ],
+      [
+        "Header",
+        "8 bytes (TCP: 20+)"
+      ],
+      [
+        "Shown",
+        "The first 0.2 s of a call"
+      ]
+    ]
+  },
+  "start": {
+    "nodes": [
+      "client"
+    ],
+    "frame": "client"
+  },
+  "steps": [
+    {
+      "title": "Send Right Away",
+      "desc": "No handshake, data goes first",
+      "detail": "A call app already knows the media server’s address and port from signing in. It doesn’t open a connection: the very first datagram already carries 20 ms of your voice, behind an 8-byte UDP header.",
+      "facts": [
+        [
+          "Setup",
+          "None"
+        ],
+        [
+          "Header",
+          "8 bytes"
+        ],
+        [
+          "Ports",
+          "50000 → 5004"
+        ]
+      ],
+      "events": [
+        {
+          "type": "show",
+          "nodes": [
+            "router",
+            "internet",
+            "web"
+          ],
+          "frame": "full"
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "amber",
+          "label": "VOICE 1",
+          "payload": [
+            "UDP 50000 → 5004",
+            "92 B of audio, no setup"
+          ],
+          "row": {
+            "time": "0.000s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.20",
+            "proto": "UDP",
+            "info": "50000 → 5004 Len=92",
+            "len": "134 B",
+            "wire": {
+              "udp": {
+                "sport": 50000,
+                "dport": 5004,
+                "data": {
+                  "rtp": {
+                    "seq": 21738,
+                    "ts": 2617440,
+                    "ssrc": 1590076113,
+                    "pt": 111,
+                    "marker": true,
+                    "audio": 80
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "A Stream of Datagrams",
+      "desc": "One every 20 ms, each on its own",
+      "detail": "The app keeps sending a datagram every 20 ms. Each one stands alone, with its own header and no link to the others. UDP doesn’t number them, and nothing comes back to confirm they arrived.",
+      "facts": [
+        [
+          "Rate",
+          "1 datagram / 20 ms"
+        ],
+        [
+          "Numbering",
+          "None in UDP itself"
+        ],
+        [
+          "Confirmation",
+          "None (no ACKs)"
+        ]
+      ],
+      "events": [
+        {
+          "type": "stream",
+          "from": "client",
+          "to": "web",
+          "color": "amber",
+          "label": "4 DATAGRAMS",
+          "payload": [
+            "voice frames 2–5",
+            "each with its own 8-byte header"
+          ],
+          "packets": [
+            {
+              "type": "packet",
+              "from": "client",
+              "to": "web",
+              "color": "amber",
+              "label": "VOICE 2",
+              "payload": [],
+              "row": {
+                "time": "0.020s",
+                "src": "192.168.1.10",
+                "dst": "203.0.113.20",
+                "proto": "UDP",
+                "info": "50000 → 5004 Len=92",
+                "len": "134 B",
+                "wire": {
+                  "udp": {
+                    "sport": 50000,
+                    "dport": 5004,
+                    "data": {
+                      "rtp": {
+                        "seq": 21739,
+                        "ts": 2618400,
+                        "ssrc": 1590076113,
+                        "pt": 111,
+                        "marker": false,
+                        "audio": 80
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "type": "packet",
+              "from": "client",
+              "to": "web",
+              "color": "amber",
+              "label": "VOICE 3",
+              "payload": [],
+              "row": {
+                "time": "0.040s",
+                "src": "192.168.1.10",
+                "dst": "203.0.113.20",
+                "proto": "UDP",
+                "info": "50000 → 5004 Len=92",
+                "len": "134 B",
+                "wire": {
+                  "udp": {
+                    "sport": 50000,
+                    "dport": 5004,
+                    "data": {
+                      "rtp": {
+                        "seq": 21740,
+                        "ts": 2619360,
+                        "ssrc": 1590076113,
+                        "pt": 111,
+                        "marker": false,
+                        "audio": 80
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "type": "packet",
+              "from": "client",
+              "to": "web",
+              "color": "amber",
+              "label": "VOICE 4",
+              "payload": [],
+              "row": {
+                "time": "0.060s",
+                "src": "192.168.1.10",
+                "dst": "203.0.113.20",
+                "proto": "UDP",
+                "info": "50000 → 5004 Len=92",
+                "len": "134 B",
+                "wire": {
+                  "udp": {
+                    "sport": 50000,
+                    "dport": 5004,
+                    "data": {
+                      "rtp": {
+                        "seq": 21741,
+                        "ts": 2620320,
+                        "ssrc": 1590076113,
+                        "pt": 111,
+                        "marker": false,
+                        "audio": 80
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "type": "packet",
+              "from": "client",
+              "to": "web",
+              "color": "amber",
+              "label": "VOICE 5",
+              "payload": [],
+              "row": {
+                "time": "0.080s",
+                "src": "192.168.1.10",
+                "dst": "203.0.113.20",
+                "proto": "UDP",
+                "info": "50000 → 5004 Len=92",
+                "len": "134 B",
+                "wire": {
+                  "udp": {
+                    "sport": 50000,
+                    "dport": 5004,
+                    "data": {
+                      "rtp": {
+                        "seq": 21742,
+                        "ts": 2621280,
+                        "ssrc": 1590076113,
+                        "pt": 111,
+                        "marker": false,
+                        "audio": 80
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Lost on the Way",
+      "desc": "Nobody resends it",
+      "detail": "Frame 7 is dropped somewhere on the internet. The media server never asks for it, and UDP never tells the laptop: there are no acknowledgements to miss. The datagrams after it arrive as normal.",
+      "facts": [
+        [
+          "Lost",
+          "Voice frame 7"
+        ],
+        [
+          "Resent",
+          "Never (no ACKs)"
+        ],
+        [
+          "Missing",
+          "20 ms of audio"
+        ]
+      ],
+      "events": [
+        {
+          "type": "stream",
+          "from": "client",
+          "to": "web",
+          "color": "amber",
+          "label": "3 DATAGRAMS",
+          "payload": [
+            "voice frames 6–8",
+            "frame 7 is lost"
+          ],
+          "packets": [
+            {
+              "type": "packet",
+              "from": "client",
+              "to": "web",
+              "color": "amber",
+              "label": "VOICE 6",
+              "payload": [],
+              "row": {
+                "time": "0.100s",
+                "src": "192.168.1.10",
+                "dst": "203.0.113.20",
+                "proto": "UDP",
+                "info": "50000 → 5004 Len=92",
+                "len": "134 B",
+                "wire": {
+                  "udp": {
+                    "sport": 50000,
+                    "dport": 5004,
+                    "data": {
+                      "rtp": {
+                        "seq": 21743,
+                        "ts": 2622240,
+                        "ssrc": 1590076113,
+                        "pt": 111,
+                        "marker": false,
+                        "audio": 80
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "type": "packet",
+              "from": "client",
+              "to": "web",
+              "color": "amber",
+              "label": "VOICE 7",
+              "payload": [],
+              "row": {
+                "time": "0.120s",
+                "src": "192.168.1.10",
+                "dst": "203.0.113.20",
+                "proto": "UDP",
+                "info": "50000 → 5004 Len=92",
+                "len": "134 B",
+                "wire": {
+                  "udp": {
+                    "sport": 50000,
+                    "dport": 5004,
+                    "data": {
+                      "rtp": {
+                        "seq": 21744,
+                        "ts": 2623200,
+                        "ssrc": 1590076113,
+                        "pt": 111,
+                        "marker": false,
+                        "audio": 80
+                      }
+                    }
+                  }
+                }
+              },
+              "lost": true
+            },
+            {
+              "type": "packet",
+              "from": "client",
+              "to": "web",
+              "color": "amber",
+              "label": "VOICE 8",
+              "payload": [],
+              "row": {
+                "time": "0.140s",
+                "src": "192.168.1.10",
+                "dst": "203.0.113.20",
+                "proto": "UDP",
+                "info": "50000 → 5004 Len=92",
+                "len": "134 B",
+                "wire": {
+                  "udp": {
+                    "sport": 50000,
+                    "dport": 5004,
+                    "data": {
+                      "rtp": {
+                        "seq": 21745,
+                        "ts": 2624160,
+                        "ssrc": 1590076113,
+                        "pt": 111,
+                        "marker": false,
+                        "audio": 80
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "note",
+          "at": "web",
+          "text": "FRAME 7 LOST · NOT RESENT",
+          "tone": "amber"
+        }
+      ]
+    },
+    {
+      "title": "Replies Come Back",
+      "desc": "The other voice comes back",
+      "detail": "The other person’s voice arrives the same way, as separate datagrams sent to port 50000. They get back in because your router remembered the outgoing port when it translated your address (NAT).",
+      "facts": [
+        [
+          "Ports",
+          "5004 → 50000"
+        ],
+        [
+          "Direction",
+          "Independent of ours"
+        ],
+        [
+          "Through NAT",
+          "Router remembers the port"
+        ]
+      ],
+      "events": [
+        {
+          "type": "stream",
+          "from": "web",
+          "to": "client",
+          "color": "violet",
+          "label": "3 DATAGRAMS",
+          "payload": [
+            "the other person’s voice",
+            "sent to port 50000"
+          ],
+          "packets": [
+            {
+              "type": "packet",
+              "from": "web",
+              "to": "client",
+              "color": "violet",
+              "label": "REMOTE 1",
+              "payload": [],
+              "row": {
+                "time": "0.150s",
+                "src": "203.0.113.20",
+                "dst": "192.168.1.10",
+                "proto": "UDP",
+                "info": "5004 → 50000 Len=92",
+                "len": "134 B",
+                "wire": {
+                  "udp": {
+                    "sport": 5004,
+                    "dport": 50000,
+                    "data": {
+                      "rtp": {
+                        "seq": 4419,
+                        "ts": 913280,
+                        "ssrc": 460833806,
+                        "pt": 111,
+                        "marker": true,
+                        "audio": 80
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "type": "packet",
+              "from": "web",
+              "to": "client",
+              "color": "violet",
+              "label": "REMOTE 2",
+              "payload": [],
+              "row": {
+                "time": "0.170s",
+                "src": "203.0.113.20",
+                "dst": "192.168.1.10",
+                "proto": "UDP",
+                "info": "5004 → 50000 Len=92",
+                "len": "134 B",
+                "wire": {
+                  "udp": {
+                    "sport": 5004,
+                    "dport": 50000,
+                    "data": {
+                      "rtp": {
+                        "seq": 4420,
+                        "ts": 914240,
+                        "ssrc": 460833806,
+                        "pt": 111,
+                        "marker": false,
+                        "audio": 80
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "type": "packet",
+              "from": "web",
+              "to": "client",
+              "color": "violet",
+              "label": "REMOTE 3",
+              "payload": [],
+              "row": {
+                "time": "0.190s",
+                "src": "203.0.113.20",
+                "dst": "192.168.1.10",
+                "proto": "UDP",
+                "info": "5004 → 50000 Len=92",
+                "len": "134 B",
+                "wire": {
+                  "udp": {
+                    "sport": 5004,
+                    "dport": 50000,
+                    "data": {
+                      "rtp": {
+                        "seq": 4421,
+                        "ts": 915200,
+                        "ssrc": 460833806,
+                        "pt": 111,
+                        "marker": false,
+                        "audio": 80
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "The App Decides",
+      "desc": "Reliability is up to the app",
+      "detail": "The call app numbers its own frames (RTP does this), so it sees that frame 7 is missing and smooths over the 20 ms gap instead of waiting. Waiting for a resend would make the whole call lag.",
+      "facts": [
+        [
+          "Ordering",
+          "App’s job (e.g. RTP)"
+        ],
+        [
+          "Loss",
+          "Hidden by the app"
+        ],
+        [
+          "Also on UDP",
+          "DNS, games, QUIC"
+        ]
+      ],
+      "events": [
+        {
+          "type": "note",
+          "at": "client",
+          "text": "APP COVERS THE 20 MS GAP",
+          "tone": "green"
+        }
+      ]
+    }
+  ]
+}

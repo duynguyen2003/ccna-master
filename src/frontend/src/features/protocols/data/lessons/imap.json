@@ -1,0 +1,950 @@
+{
+  "id": "imap",
+  "name": "IMAP",
+  "title": "Mail in Sync",
+  "layer": 7,
+  "nodes": [
+    "client",
+    "router",
+    "internet",
+    "web"
+  ],
+  "latency": {
+    "client-web": 0.015
+  },
+  "labels": {
+    "web": [
+      "imap.example.org",
+      "198.51.100.143"
+    ]
+  },
+  "legend": [
+    [
+      "green",
+      "TCP"
+    ],
+    [
+      "teal",
+      "TLS handshake"
+    ],
+    [
+      "amber",
+      "IMAP command"
+    ],
+    [
+      "violet",
+      "IMAP response"
+    ],
+    [
+      null,
+      "Data ACKs not shown"
+    ]
+  ],
+  "overview": {
+    "full": "Internet Message Access Protocol",
+    "description": "IMAP lets mail apps work with a mailbox that stays on the server. Folders, read and flagged marks and deletions are kept there, so a phone, a laptop and webmail all see the same mailbox. The server can also tell an app about new mail as it arrives.",
+    "facts": [
+      [
+        "Layer",
+        "Application (Layer 7)"
+      ],
+      [
+        "Ports",
+        "993 (TLS), 143 (STARTTLS)"
+      ],
+      [
+        "Transport",
+        "TCP"
+      ],
+      [
+        "Model",
+        "Mail stays on the server"
+      ],
+      [
+        "Syncs",
+        "Folders and flags"
+      ],
+      [
+        "Defined In",
+        "RFC 9051, RFC 3501"
+      ]
+    ]
+  },
+  "outro": {
+    "title": "Mailbox in sync",
+    "desc": "Read once, read everywhere",
+    "text": "Bob’s app opened his inbox, read a message, which marked it \\Seen on the server for all his devices, and then waited with IDLE until the server announced new mail. Nothing was deleted: the server still holds everything.",
+    "facts": [
+      [
+        "Messages",
+        "2, then 3 (new mail)"
+      ],
+      [
+        "Read mark",
+        "\\Seen, stored on server"
+      ],
+      [
+        "New mail",
+        "Pushed during IDLE"
+      ],
+      [
+        "Port",
+        "993, TLS from the start"
+      ]
+    ]
+  },
+  "start": {
+    "nodes": [
+      "client"
+    ],
+    "frame": "client"
+  },
+  "steps": [
+    {
+      "title": "Connect Securely",
+      "desc": "Port 993, TLS from the start",
+      "detail": "Bob’s app connects to imap.example.org on port 993, where TLS starts right away. The server greets with an untagged “* OK” line that also lists its capabilities, such as IDLE.",
+      "facts": [
+        [
+          "Server",
+          "imap.example.org:993"
+        ],
+        [
+          "Security",
+          "TLS from the start"
+        ],
+        [
+          "Greeting",
+          "* OK [CAPABILITY …]"
+        ]
+      ],
+      "events": [
+        {
+          "type": "show",
+          "nodes": [
+            "router",
+            "internet",
+            "web"
+          ],
+          "frame": "path"
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "green",
+          "label": "SYN",
+          "payload": [],
+          "row": {
+            "time": "0.000s",
+            "src": "192.168.1.10",
+            "dst": "198.51.100.143",
+            "proto": "TCP",
+            "info": "53140 → 993 [SYN] Seq=0",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 53140,
+                "dport": 993,
+                "flags": "S"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "green",
+          "label": "SYN-ACK",
+          "payload": [],
+          "row": {
+            "time": "0.015s",
+            "src": "198.51.100.143",
+            "dst": "192.168.1.10",
+            "proto": "TCP",
+            "info": "993 → 53140 [SYN, ACK] Seq=0 Ack=1",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 993,
+                "dport": 53140,
+                "flags": "SA"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "green",
+          "label": "ACK",
+          "payload": [],
+          "row": {
+            "time": "0.030s",
+            "src": "192.168.1.10",
+            "dst": "198.51.100.143",
+            "proto": "TCP",
+            "info": "53140 → 993 [ACK] Seq=1 Ack=1",
+            "len": "60 B",
+            "wire": {
+              "tcp": {
+                "sport": 53140,
+                "dport": 993,
+                "flags": "A"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "teal",
+          "label": "CLIENT HELLO",
+          "payload": [],
+          "row": {
+            "time": "0.030s",
+            "src": "192.168.1.10",
+            "dst": "198.51.100.143",
+            "proto": "TLSv1.3",
+            "info": "Client Hello (SNI=imap.example.org)",
+            "len": "571 B",
+            "wire": {
+              "tcp": {
+                "sport": 53140,
+                "dport": 993,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "handshake",
+                      "legacy": true,
+                      "length": 512,
+                      "hello": {
+                        "type": 1,
+                        "name": "Client Hello",
+                        "note": "What this client supports. Its exact contents vary from client to client; this is an example.",
+                        "fields": [
+                          [
+                            "Server name (SNI)",
+                            "imap.example.org"
+                          ],
+                          [
+                            "Versions offered",
+                            "TLS 1.3, TLS 1.2"
+                          ],
+                          [
+                            "Key share",
+                            "X25519"
+                          ],
+                          [
+                            "Padding",
+                            "up to 512 bytes"
+                          ]
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "teal",
+          "label": "SERVER HELLO",
+          "payload": [],
+          "row": {
+            "time": "0.045s",
+            "src": "198.51.100.143",
+            "dst": "192.168.1.10",
+            "proto": "TLSv1.3",
+            "info": "Server Hello + encrypted handshake, 2 segments",
+            "len": "2.9 KB",
+            "wire": {
+              "tcp": {
+                "sport": 993,
+                "dport": 53140,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "handshake",
+                      "length": 122,
+                      "hello": {
+                        "type": 2,
+                        "name": "Server Hello",
+                        "note": "The server’s choices and its key share.",
+                        "fields": [
+                          [
+                            "Version",
+                            "TLS 1.3"
+                          ],
+                          [
+                            "Cipher suite",
+                            "TLS_AES_128_GCM_SHA256"
+                          ],
+                          [
+                            "Key share",
+                            "X25519"
+                          ]
+                        ]
+                      }
+                    },
+                    {
+                      "type": "ccs",
+                      "length": 1
+                    },
+                    {
+                      "type": "appdata",
+                      "length": 2724,
+                      "inner": {
+                        "what": "Encrypted Extensions, Certificate (the chain), Certificate Verify (the signature), Finished"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "teal",
+          "label": "FINISHED",
+          "payload": [],
+          "row": {
+            "time": "0.062s",
+            "src": "192.168.1.10",
+            "dst": "198.51.100.143",
+            "proto": "TLSv1.3",
+            "info": "Change Cipher Spec, Finished (encrypted)",
+            "len": "118 B",
+            "wire": {
+              "tcp": {
+                "sport": 53140,
+                "dport": 993,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "ccs",
+                      "length": 1
+                    },
+                    {
+                      "type": "appdata",
+                      "length": 53,
+                      "inner": {
+                        "what": "Finished: a check value over the whole handshake"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "violet",
+          "label": "* OK",
+          "payload": [
+            "* OK [CAPABILITY IMAP4rev1",
+            "IDLE …] Service ready"
+          ],
+          "row": {
+            "time": "0.077s",
+            "src": "198.51.100.143",
+            "dst": "192.168.1.10",
+            "proto": "IMAP (TLS)",
+            "info": "* OK [CAPABILITY …] Service ready",
+            "len": "144 B",
+            "wire": {
+              "tcp": {
+                "sport": 993,
+                "dport": 53140,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "appdata",
+                      "length": 85,
+                      "inner": {
+                        "what": "IMAP",
+                        "text": [
+                          "* OK [CAPABILITY IMAP4rev1 IDLE LITERAL+ AUTH=PLAIN] Service ready"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "locked": true
+        }
+      ]
+    },
+    {
+      "title": "Log In",
+      "desc": "Commands carry tags",
+      "detail": "Every command starts with a tag the app chooses, like a1, and the server ends its answer with the same tag. That way several commands can be in flight and each reply is matched up. Lines starting with * are untagged data.",
+      "facts": [
+        [
+          "Command",
+          "a1 LOGIN bob ••••"
+        ],
+        [
+          "Reply",
+          "a1 OK LOGIN completed"
+        ],
+        [
+          "Tags",
+          "Match replies to commands"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "amber",
+          "label": "a1 LOGIN",
+          "payload": [
+            "a1 LOGIN bob ••••••"
+          ],
+          "row": {
+            "time": "0.092s",
+            "src": "192.168.1.10",
+            "dst": "198.51.100.143",
+            "proto": "IMAP (TLS)",
+            "info": "a1 LOGIN (user and password)",
+            "len": "97 B",
+            "wire": {
+              "tcp": {
+                "sport": 53140,
+                "dport": 993,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "appdata",
+                      "length": 38,
+                      "inner": {
+                        "what": "IMAP",
+                        "text": [
+                          "a1 LOGIN bob secret"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "locked": true
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "violet",
+          "label": "a1 OK",
+          "payload": [
+            "a1 OK LOGIN completed"
+          ],
+          "row": {
+            "time": "0.107s",
+            "src": "198.51.100.143",
+            "dst": "192.168.1.10",
+            "proto": "IMAP (TLS)",
+            "info": "a1 OK LOGIN completed",
+            "len": "99 B",
+            "wire": {
+              "tcp": {
+                "sport": 993,
+                "dport": 53140,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "appdata",
+                      "length": 40,
+                      "inner": {
+                        "what": "IMAP",
+                        "text": [
+                          "a1 OK LOGIN completed"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "locked": true
+        }
+      ]
+    },
+    {
+      "title": "Open the Inbox",
+      "desc": "SELECT a folder",
+      "detail": "SELECT INBOX opens the folder. The server reports the message count, the flags it supports and the first unread message, then confirms the folder is open read-write.",
+      "facts": [
+        [
+          "Messages",
+          "* 2 EXISTS"
+        ],
+        [
+          "First unread",
+          "Message 2"
+        ],
+        [
+          "Access",
+          "[READ-WRITE]"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "amber",
+          "label": "a2 SELECT",
+          "payload": [
+            "a2 SELECT INBOX"
+          ],
+          "row": {
+            "time": "0.122s",
+            "src": "192.168.1.10",
+            "dst": "198.51.100.143",
+            "proto": "IMAP (TLS)",
+            "info": "a2 SELECT INBOX",
+            "len": "93 B",
+            "wire": {
+              "tcp": {
+                "sport": 53140,
+                "dport": 993,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "appdata",
+                      "length": 34,
+                      "inner": {
+                        "what": "IMAP",
+                        "text": [
+                          "a2 SELECT INBOX"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "locked": true
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "violet",
+          "label": "a2 OK",
+          "payload": [
+            "* 2 EXISTS",
+            "* OK [UNSEEN 2]",
+            "a2 OK [READ-WRITE]"
+          ],
+          "row": {
+            "time": "0.137s",
+            "src": "198.51.100.143",
+            "dst": "192.168.1.10",
+            "proto": "IMAP (TLS)",
+            "info": "* 2 EXISTS … a2 OK [READ-WRITE] SELECT completed",
+            "len": "396 B",
+            "wire": {
+              "tcp": {
+                "sport": 993,
+                "dport": 53140,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "appdata",
+                      "length": 337,
+                      "inner": {
+                        "what": "IMAP",
+                        "text": [
+                          "* FLAGS (\\Answered \\Flagged \\Deleted \\Seen \\Draft)",
+                          "* OK [PERMANENTFLAGS (\\Answered \\Flagged \\Deleted \\Seen \\Draft \\*)] Flags permitted",
+                          "* 2 EXISTS",
+                          "* 0 RECENT",
+                          "* OK [UNSEEN 2] Message 2 is first unseen",
+                          "* OK [UIDVALIDITY 1700000000] UIDs valid",
+                          "* OK [UIDNEXT 3] Predicted next UID",
+                          "a2 OK [READ-WRITE] SELECT completed"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "locked": true
+        }
+      ]
+    },
+    {
+      "title": "Read a Message",
+      "desc": "FETCH, and the \\Seen flag",
+      "detail": "FETCH 2 BODY[] downloads message 2 (three TCP segments). That sets its \\Seen flag on the server, so it shows as read on Bob’s phone too, and the message stays there.",
+      "facts": [
+        [
+          "Command",
+          "a3 FETCH 2 BODY[]"
+        ],
+        [
+          "Flag set",
+          "\\Seen (on the server)"
+        ],
+        [
+          "Sent as",
+          "3 TCP segments"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "amber",
+          "label": "a3 FETCH",
+          "payload": [
+            "a3 FETCH 2 BODY[]"
+          ],
+          "row": {
+            "time": "0.152s",
+            "src": "192.168.1.10",
+            "dst": "198.51.100.143",
+            "proto": "IMAP (TLS)",
+            "info": "a3 FETCH 2 BODY[]",
+            "len": "95 B",
+            "wire": {
+              "tcp": {
+                "sport": 53140,
+                "dport": 993,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "appdata",
+                      "length": 36,
+                      "inner": {
+                        "what": "IMAP",
+                        "text": [
+                          "a3 FETCH 2 BODY[]"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "locked": true
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "violet",
+          "label": "MESSAGE",
+          "payload": [
+            "* 2 FETCH (FLAGS (\\Seen)",
+            "BODY[] {3216} …)",
+            "a3 OK FETCH completed"
+          ],
+          "row": {
+            "time": "0.167s",
+            "src": "198.51.100.143",
+            "dst": "192.168.1.10",
+            "proto": "IMAP (TLS)",
+            "info": "* 2 FETCH (FLAGS (\\Seen) BODY[] …), 3 segments",
+            "len": "3.4 KB",
+            "wire": {
+              "tcp": {
+                "sport": 993,
+                "dport": 53140,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "appdata",
+                      "length": 3299,
+                      "inner": {
+                        "what": "* 2 FETCH (FLAGS (\\Seen) BODY[] {3216}, the 3,216-byte message, then a3 OK FETCH completed"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "locked": true
+        },
+        {
+          "type": "note",
+          "at": "web",
+          "text": "STILL ON SERVER · \\SEEN",
+          "tone": "green"
+        }
+      ]
+    },
+    {
+      "title": "Wait for New Mail",
+      "desc": "IDLE: the server pushes",
+      "detail": "IDLE tells the server “let me know when something changes”. About 42 seconds later Alice’s message arrives and the server pushes “* 3 EXISTS” straight away. The app ends IDLE with DONE and can fetch the new mail.",
+      "facts": [
+        [
+          "Command",
+          "a4 IDLE"
+        ],
+        [
+          "Server says",
+          "* 3 EXISTS (new mail)"
+        ],
+        [
+          "Ended by",
+          "DONE"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "amber",
+          "label": "a4 IDLE",
+          "payload": [
+            "a4 IDLE"
+          ],
+          "row": {
+            "time": "0.182s",
+            "src": "192.168.1.10",
+            "dst": "198.51.100.143",
+            "proto": "IMAP (TLS)",
+            "info": "a4 IDLE",
+            "len": "85 B",
+            "wire": {
+              "tcp": {
+                "sport": 53140,
+                "dport": 993,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "appdata",
+                      "length": 26,
+                      "inner": {
+                        "what": "IMAP",
+                        "text": [
+                          "a4 IDLE"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "locked": true
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "violet",
+          "label": "+ idling",
+          "payload": [
+            "+ idling"
+          ],
+          "row": {
+            "time": "0.197s",
+            "src": "198.51.100.143",
+            "dst": "192.168.1.10",
+            "proto": "IMAP (TLS)",
+            "info": "+ idling",
+            "len": "86 B",
+            "wire": {
+              "tcp": {
+                "sport": 993,
+                "dport": 53140,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "appdata",
+                      "length": 27,
+                      "inner": {
+                        "what": "IMAP",
+                        "text": [
+                          "+ idling"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "locked": true
+        },
+        {
+          "type": "note",
+          "at": "web",
+          "text": "NEW MAIL ARRIVED",
+          "tone": "navy"
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "violet",
+          "label": "* 3 EXISTS",
+          "payload": [
+            "* 3 EXISTS",
+            "* 1 RECENT"
+          ],
+          "row": {
+            "time": "42.515s",
+            "src": "198.51.100.143",
+            "dst": "192.168.1.10",
+            "proto": "IMAP (TLS)",
+            "info": "* 3 EXISTS, * 1 RECENT",
+            "len": "100 B",
+            "wire": {
+              "tcp": {
+                "sport": 993,
+                "dport": 53140,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "appdata",
+                      "length": 41,
+                      "inner": {
+                        "what": "IMAP",
+                        "text": [
+                          "* 3 EXISTS",
+                          "* 1 RECENT"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "locked": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "amber",
+          "label": "DONE",
+          "payload": [
+            "DONE"
+          ],
+          "row": {
+            "time": "42.530s",
+            "src": "192.168.1.10",
+            "dst": "198.51.100.143",
+            "proto": "IMAP (TLS)",
+            "info": "DONE",
+            "len": "82 B",
+            "wire": {
+              "tcp": {
+                "sport": 53140,
+                "dport": 993,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "appdata",
+                      "length": 23,
+                      "inner": {
+                        "what": "IMAP",
+                        "text": [
+                          "DONE"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "locked": true
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "violet",
+          "label": "a4 OK",
+          "payload": [
+            "a4 OK IDLE terminated"
+          ],
+          "row": {
+            "time": "42.545s",
+            "src": "198.51.100.143",
+            "dst": "192.168.1.10",
+            "proto": "IMAP (TLS)",
+            "info": "a4 OK IDLE terminated",
+            "len": "99 B",
+            "wire": {
+              "tcp": {
+                "sport": 993,
+                "dport": 53140,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "appdata",
+                      "length": 40,
+                      "inner": {
+                        "what": "IMAP",
+                        "text": [
+                          "a4 OK IDLE terminated"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "locked": true
+        }
+      ]
+    }
+  ]
+}
