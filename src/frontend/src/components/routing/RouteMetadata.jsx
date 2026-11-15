@@ -18,6 +18,7 @@ const titles = [
   ['/tools/ports', 'Tra cứu port'],
   ['/tools/cli', 'Tra cứu Cisco CLI'],
   ['/protocols', 'Mô phỏng giao thức'],
+  ['/ai-assistant', 'Trợ lý AI'],
   ['/login', 'Đăng nhập'],
   ['/register', 'Đăng ký'],
   ['/forgot-password', 'Quên mật khẩu'],

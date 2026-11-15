@@ -6,6 +6,7 @@ import api, { BACKEND_URL } from '../../../services/Api';
 import course1 from '../../../assets/images/course1.jpg';
 import course2 from '../../../assets/images/course2.jpg';
 import course3 from '../../../assets/images/course3.jpg';
+import { scenarioCatalog } from '../../protocols/data/lessonCatalog';
 
 let mockAuth;
 const originalMatchMedia = window.matchMedia;
@@ -128,15 +129,40 @@ test('places one resume strip after the restored hero and removes the extra road
 test('opens the interactive CLI from the hero and links to the testing center', async () => {
   api.getCourseSummaries.mockResolvedValue([]);
   render(<Home />);
+  fireEvent.click(screen.getByRole('button', { name: 'Thử CLI', exact: true }));
   expect(screen.getByRole('link', { name: 'Luyện thi CCNA' })).toHaveAttribute(
     'href',
     '/exam/testing-center'
   );
-  fireEvent.click(screen.getByRole('button', { name: 'Thử CLI' }));
   const input = await screen.findByRole('textbox', { name: 'Lệnh terminal minh họa' });
   fireEvent.change(input, { target: { value: 'show ip interface brief' } });
   fireEvent.click(screen.getByRole('button', { name: 'Chạy' }));
   expect(within(screen.getByRole('log')).getByText('192.0.2.1')).toBeInTheDocument();
+  fireEvent.change(input, { target: { value: 'show ver' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Mô phỏng', exact: true }));
+  fireEvent.click(screen.getByRole('button', { name: 'Thử CLI', exact: true }));
+  expect(input).toHaveValue('show ver');
+  expect(within(screen.getByRole('log')).getByText('192.0.2.1')).toBeInTheDocument();
+});
+
+test('highlights the real simulation catalog and AI lab entry for visitors', async () => {
+  mockAuth = { token: null, isAuthenticated: false };
+  api.getCourseSummaries.mockResolvedValue([]);
+  render(<Home />);
+  expect(screen.getByRole('link', { name: 'Khám phá mô phỏng' })).toHaveAttribute(
+    'href',
+    '/protocols'
+  );
+  expect(screen.getByText(`${scenarioCatalog.length} kịch bản mô phỏng`)).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: 'Trợ lý AI trong từng bài lab' })).toBeInTheDocument();
+  expect(screen.getByRole('link', { name: 'Thực hành cùng AI' })).toHaveAttribute(
+    'href',
+    '/ai-assistant'
+  );
+  expect(
+    screen.getByRole('complementary', { name: 'Ví dụ giải thích khi học mạng' })
+  ).toBeInTheDocument();
+  await act(async () => Promise.resolve());
 });
 
 test('uses uploaded thumbnails for new and existing courses, including hover backgrounds', async () => {
