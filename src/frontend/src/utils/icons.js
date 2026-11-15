@@ -37,6 +37,7 @@ export { default as Cpu } from 'lucide-react/dist/esm/icons/cpu.js';
 export { default as Database } from 'lucide-react/dist/esm/icons/database.js';
 export { default as Download } from 'lucide-react/dist/esm/icons/download.js';
 export { default as Eye } from 'lucide-react/dist/esm/icons/eye.js';
+export { default as ExternalLink } from 'lucide-react/dist/esm/icons/external-link.js';
 export { default as EyeOff } from 'lucide-react/dist/esm/icons/eye-off.js';
 export { default as File } from 'lucide-react/dist/esm/icons/file.js';
 export { default as FileCode2 } from 'lucide-react/dist/esm/icons/file-code-corner.js';
@@ -86,6 +87,7 @@ export { default as PencilLine } from 'lucide-react/dist/esm/icons/pencil-line.j
 export { default as PieChart } from 'lucide-react/dist/esm/icons/chart-pie.js';
 export { default as Pin } from 'lucide-react/dist/esm/icons/pin.js';
 export { default as Play } from 'lucide-react/dist/esm/icons/play.js';
+export { default as Pause } from 'lucide-react/dist/esm/icons/pause.js';
 export { default as Plus } from 'lucide-react/dist/esm/icons/plus.js';
 export { default as PlusCircle } from 'lucide-react/dist/esm/icons/circle-plus.js';
 export { default as Radio } from 'lucide-react/dist/esm/icons/radio.js';

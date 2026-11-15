@@ -64,6 +64,96 @@
       "sha256": "0da6af8ac1fc6362b827946cf72f9006926dc77b1b5c806e3f4ea5306f98f185",
       "artworkSha256": "847a65ce7f34f87d84abb7174c26de6401642ca4851b246c9228360604e23efa",
       "viewBox": "759.98 130 138.68 152.6"
+    },
+    {
+      "path": "camera-light.svg",
+      "sha256": "701466e938d506d099e40eb2e365dcee5d8c05d15e3c5e2c5fa1fc06f71c2762",
+      "artworkSha256": "2a13ee4c1205362d554f12f657819fe331d3021b89acc4ddc3ddd8da4edf1ae6",
+      "viewBox": "282.97 147 97.53 122",
+      "source": "https://protocol-explorer-alpha.vercel.app/",
+      "sourceEntrySha256": "19e285d11f5fa0b1411ec94aaea6cd04531872e8322bb8a46c80e4f92e262834",
+      "capturedAt": "2026-11-14T18:47:57.850Z",
+      "artBounds": {
+        "x": 286.70001220703125,
+        "y": 160,
+        "width": 90.06997680664062,
+        "height": 96
+      }
+    },
+    {
+      "path": "tv-light.svg",
+      "sha256": "c153e8aae3b1c2e3b3ade6b12b8fb59aeaac28a57498e70a1f5eed3a8c137264",
+      "artworkSha256": "99550e667be2ab6e0fb66ce1767985d1a82df3545f66211e2e544b442fb952ed",
+      "viewBox": "242.32 117 175.48 159",
+      "source": "https://protocol-explorer-alpha.vercel.app/",
+      "sourceEntrySha256": "19e285d11f5fa0b1411ec94aaea6cd04531872e8322bb8a46c80e4f92e262834",
+      "capturedAt": "2026-11-14T18:47:57.856Z",
+      "artBounds": {
+        "x": 282.42999267578125,
+        "y": 137,
+        "width": 95.260009765625,
+        "height": 119
+      }
+    },
+    {
+      "path": "switch-light.svg",
+      "sha256": "c775513f209aac90f95dc2144df4cc3cc2c8d269ee3ef111ee3cc5a8fd077f4f",
+      "artworkSha256": "eab23ce6199e5f381a22fc0bca7b9cb7f2ccd56c66802806142df905a7173d18",
+      "viewBox": "206.31 287 151.22 102",
+      "source": "https://protocol-explorer-alpha.vercel.app/",
+      "sourceEntrySha256": "19e285d11f5fa0b1411ec94aaea6cd04531872e8322bb8a46c80e4f92e262834",
+      "capturedAt": "2026-11-14T18:47:57.866Z",
+      "artBounds": {
+        "x": 229.08999633789062,
+        "y": 301,
+        "width": 105.66000366210938,
+        "height": 74
+      }
+    },
+    {
+      "path": "camera-dark.svg",
+      "sha256": "4b8fa98f159e5a79aa219edb599909300e2741208f7b57c4930fb9b7f67a71db",
+      "artworkSha256": "2a13ee4c1205362d554f12f657819fe331d3021b89acc4ddc3ddd8da4edf1ae6",
+      "viewBox": "282.97 147 97.53 122",
+      "source": "https://protocol-explorer-alpha.vercel.app/",
+      "sourceEntrySha256": "19e285d11f5fa0b1411ec94aaea6cd04531872e8322bb8a46c80e4f92e262834",
+      "capturedAt": "2026-11-14T18:47:58.777Z",
+      "artBounds": {
+        "x": 286.70001220703125,
+        "y": 160,
+        "width": 90.06997680664062,
+        "height": 96
+      }
+    },
+    {
+      "path": "tv-dark.svg",
+      "sha256": "c853bef0743e728612d28ccb05c403d2d15ffb2ea7a778b04c62b3bc6ade2d6f",
+      "artworkSha256": "99550e667be2ab6e0fb66ce1767985d1a82df3545f66211e2e544b442fb952ed",
+      "viewBox": "242.32 117 175.48 159",
+      "source": "https://protocol-explorer-alpha.vercel.app/",
+      "sourceEntrySha256": "19e285d11f5fa0b1411ec94aaea6cd04531872e8322bb8a46c80e4f92e262834",
+      "capturedAt": "2026-11-14T18:47:58.784Z",
+      "artBounds": {
+        "x": 282.42999267578125,
+        "y": 137,
+        "width": 95.260009765625,
+        "height": 119
+      }
+    },
+    {
+      "path": "switch-dark.svg",
+      "sha256": "4f8c101e1784b08d0e0e406f82ebdca8f17bb2c24f87fa4547d17477399a2b86",
+      "artworkSha256": "eab23ce6199e5f381a22fc0bca7b9cb7f2ccd56c66802806142df905a7173d18",
+      "viewBox": "206.31 287 151.22 102",
+      "source": "https://protocol-explorer-alpha.vercel.app/",
+      "sourceEntrySha256": "19e285d11f5fa0b1411ec94aaea6cd04531872e8322bb8a46c80e4f92e262834",
+      "capturedAt": "2026-11-14T18:47:58.790Z",
+      "artBounds": {
+        "x": 229.08999633789062,
+        "y": 301,
+        "width": 105.66000366210938,
+        "height": 74
+      }
     }
   ]
 }
