@@ -332,12 +332,11 @@ export default function GradingSpecBuilder({ value, initialState, onChange, disa
     <section className="cli-editor-section grading-spec-builder" aria-label="Grading Spec builder">
       <div className="cli-editor-section-heading">
         <div>
-          <span className="cli-editor-eyebrow">GRADING SPEC</span>
           <h3>Tiêu chí chấm điểm</h3>
           <p>Chọn đúng loại kiểm tra để form chỉ hiện những trường mà engine hỗ trợ.</p>
         </div>
         <label className="cli-editor-inline-field">
-          <span>Passing score</span>
+          <span>Điểm đạt (%)</span>
           <input
             aria-label="Passing score"
             className="acm-input cli-editor-score-input"

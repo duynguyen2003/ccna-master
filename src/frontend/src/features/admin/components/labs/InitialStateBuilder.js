@@ -91,7 +91,6 @@ const DeviceForm = ({
     <div className="cli-editor-device-card">
       <div className="cli-editor-device-heading">
         <div>
-          <span className="cli-editor-eyebrow">DEVICE STATE</span>
           <h4>{device.id || 'Thiết bị'}</h4>
         </div>
         {onRemoveDevice ? (
@@ -354,8 +353,11 @@ export default function InitialStateBuilder({
   };
   const updateSelected = (nextDevice) => {
     if (!selectedDevice) return;
-    if (!topology) updateState(nextDevice);
-    else
+    if (!topology) {
+      // getDevices adds an ID for selection; the single-device schema has no ID.
+      const { id, ...definition } = nextDevice;
+      updateState(definition);
+    } else
       updateState({
         ...value,
         devices: devices.map((device) => (device.id === selectedDevice.id ? nextDevice : device)),
@@ -366,7 +368,7 @@ export default function InitialStateBuilder({
     let index = 1;
     while (ids.has(`${newType}${index}`)) index += 1;
     const nextDevice = defaultDevice(`${newType}${index}`, newType, devices.length);
-    updateState({ devices: [...devices, nextDevice], links });
+    updateState({ ...value, devices: [...devices, nextDevice], links });
     setSelectedId(nextDevice.id);
   };
   const removeDevice = () => {
@@ -501,7 +503,6 @@ export default function InitialStateBuilder({
     >
       <div className="cli-editor-section-heading">
         <div>
-          <span className="cli-editor-eyebrow">INITIAL STATE</span>
           <h3>Trạng thái ban đầu</h3>
           <p>
             Nhập hostname, cổng, IP/mask và trạng thái bật/tắt theo từng thiết bị. Để trống IP/mask

@@ -35,6 +35,7 @@ import {
 import { adminApi } from '../../../services/api/adminApi';
 import { AuthContext } from '../../../context/AuthContext';
 import AdminModal from '../components/AdminModal';
+import DropdownSelect from '../../../components/ui/DropdownSelect';
 import Toast from '../../../components/ui/Toast';
 import DeleteButton from '../../../components/ui/delete-button';
 import '../styles/AdminViews.css';
@@ -42,6 +43,12 @@ import '../../lessons/styles/Lesson.css';
 import MarkdownRenderer from '../../../components/common/MarkdownRenderer';
 import HeartbeatLoader from '../../../components/ui/HeartbeatLoader';
 import { formatLessonMarkdown } from '../utils/lessonMarkdown';
+import {
+  protocolCatalog,
+  protocolForLesson,
+  setLessonProtocol,
+} from '../../protocols/data/lessonCatalog';
+import ProtocolLessonPlayer from '../../lessons/components/ProtocolLessonPlayer';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const stepLabels = ['Cơ bản', 'Nội dung', 'Rà soát'];
@@ -410,12 +417,15 @@ const CourseDetail = () => {
       const textarea = contentTextareaRef.current;
       if (!textarea) return;
       const result = formatLessonMarkdown(
-        lessonForm.contentHtml,
+        setLessonProtocol(lessonForm.contentHtml),
         textarea.selectionStart,
         textarea.selectionEnd,
         action
       );
-      handleLessonChange('contentHtml', result.value);
+      handleLessonChange(
+        'contentHtml',
+        setLessonProtocol(result.value, protocolForLesson(lessonForm.contentHtml))
+      );
       window.requestAnimationFrame(() => {
         if (contentTextareaRef.current !== textarea) return;
         textarea.focus();
@@ -766,6 +776,27 @@ const CourseDetail = () => {
                 {step === 2 ? (
                   <div className="acm-step-content">
                     <label className="acm-field">
+                      <span>Mô phỏng giao thức</span>
+                      <DropdownSelect
+                        aria-label="Mô phỏng giao thức"
+                        className="acm-input"
+                        value={protocolForLesson(lessonForm.contentHtml) || ''}
+                        onChange={(e) =>
+                          handleLessonChange(
+                            'contentHtml',
+                            setLessonProtocol(lessonForm.contentHtml, e.target.value)
+                          )
+                        }
+                      >
+                        <option value="">Không gắn mô phỏng</option>
+                        {protocolCatalog.map(({ id, name }) => (
+                          <option key={id} value={id}>
+                            {name}
+                          </option>
+                        ))}
+                      </DropdownSelect>
+                    </label>
+                    <label className="acm-field">
                       <span>
                         <Link size={12} /> Video URL
                       </span>
@@ -819,15 +850,23 @@ const CourseDetail = () => {
                             ref={contentTextareaRef}
                             className="acm-editor-textarea"
                             aria-label="Nội dung bài học"
-                            value={lessonForm.contentHtml}
-                            onChange={(e) => handleLessonChange('contentHtml', e.target.value)}
+                            value={setLessonProtocol(lessonForm.contentHtml)}
+                            onChange={(e) =>
+                              handleLessonChange(
+                                'contentHtml',
+                                setLessonProtocol(
+                                  e.target.value,
+                                  protocolForLesson(lessonForm.contentHtml)
+                                )
+                              )
+                            }
                             placeholder="Viết nội dung bài học hoặc chọn các nút định dạng phía trên..."
                           />
                         </div>
                         <div className="acm-editor-preview">
                           <div className="acm-preview-heading">Xem trước nội dung</div>
                           <div className="acm-preview-content">
-                            <MarkdownRenderer content={lessonForm.contentHtml || ''} />
+                            <MarkdownRenderer content={setLessonProtocol(lessonForm.contentHtml)} />
                           </div>
                         </div>
                       </div>
@@ -841,6 +880,14 @@ const CourseDetail = () => {
 
                 {step === 3 ? (
                   <div className="acm-step-content">
+                    {protocolForLesson(lessonForm.contentHtml) && (
+                      <div data-theme="light">
+                        <ProtocolLessonPlayer
+                          protocolId={protocolForLesson(lessonForm.contentHtml)}
+                          lessonId="admin-preview"
+                        />
+                      </div>
+                    )}
                     <div className="acm-review-card">
                       <h5>
                         <Eye size={13} /> Tóm tắt bài học

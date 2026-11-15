@@ -673,7 +673,6 @@ const Labs = () => {
               <span>TRỞ LẠI DANH SÁCH</span>
             </button>
             <h2>{editorMode === 'edit' ? 'Chỉnh sửa bài Lab' : 'Tạo bài Lab mới'}</h2>
-            <p>Nhập thông tin theo từng tab, bố cục giống màn quản lý bài kiểm tra.</p>
           </div>
 
           <SlidingTabs className="labm-tabs" value={activeTab} aria-label="Nội dung chỉnh sửa lab">
@@ -716,6 +715,7 @@ const Labs = () => {
                   <div className="acm-field">
                     <span>Loại Lab</span>
                     <CustomSelect
+                      aria-label="Loại Lab"
                       value={formData.labType}
                       onChange={(value) => setFormData((prev) => ({ ...prev, labType: value }))}
                       options={LAB_TYPE_OPTIONS}
@@ -725,6 +725,7 @@ const Labs = () => {
                   <div className="acm-field">
                     <span>Danh mục</span>
                     <CustomSelect
+                      aria-label="Danh mục"
                       value={formData.category}
                       onChange={(value) => setFormData((prev) => ({ ...prev, category: value }))}
                       options={CATEGORY_OPTIONS}
@@ -734,6 +735,7 @@ const Labs = () => {
                   <div className="acm-field">
                     <span>Độ khó</span>
                     <CustomSelect
+                      aria-label="Độ khó"
                       value={formData.difficulty}
                       onChange={(value) => setFormData((prev) => ({ ...prev, difficulty: value }))}
                       options={DIFFICULTY_OPTIONS}
@@ -765,6 +767,7 @@ const Labs = () => {
                   <div className="acm-field">
                     <span>Trạng thái</span>
                     <CustomSelect
+                      aria-label="Trạng thái"
                       value={formData.status}
                       onChange={(value) => setFormData((prev) => ({ ...prev, status: value }))}
                       options={STATUS_OPTIONS}
@@ -776,6 +779,7 @@ const Labs = () => {
                   <div className="acm-field">
                     <span>Khóa học</span>
                     <CustomSelect
+                      aria-label="Khóa học"
                       value={formData.courseId}
                       onChange={(value) =>
                         setFormData((prev) => ({
@@ -812,6 +816,8 @@ const Labs = () => {
                     </span>
                     <div className={!formData.courseId ? 'labm-select-disabled' : ''}>
                       <CustomSelect
+                        aria-label="Module"
+                        disabled={!formData.courseId || loadingModules}
                         value={formData.moduleId}
                         onChange={(value) =>
                           setFormData((prev) => ({
@@ -879,6 +885,7 @@ const Labs = () => {
                   </label>
                   <span>Nội dung hướng dẫn</span>
                   <CustomSelect
+                    aria-label="Định dạng hướng dẫn"
                     value={formData.guideFormat}
                     onChange={(guideFormat) => setFormData((prev) => ({ ...prev, guideFormat }))}
                     options={[
@@ -1078,7 +1085,9 @@ const Labs = () => {
               type="button"
               className="admin-modal-btn-secondary"
               onClick={handlePreviewDraft}
-              disabled={submitting || formData.labType !== 'CLI_SIMULATION'}
+              disabled={
+                submitting || formData.labType !== 'CLI_SIMULATION' || !cliConfigValidation.valid
+              }
             >
               <Eye size={15} /> Xem trước như học viên
             </button>
