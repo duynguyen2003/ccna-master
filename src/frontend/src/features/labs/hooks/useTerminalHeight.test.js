@@ -1,4 +1,6 @@
-import { act, renderHook } from '@testing-library/react';
+import React from 'react';
+import { act, fireEvent, render, renderHook, screen } from '@testing-library/react';
+import '@testing-library/jest-dom';
 import useTerminalHeight from './useTerminalHeight';
 
 test('pointer resize captures the handle, respects bounds and stops after release', () => {
@@ -61,6 +63,57 @@ test('terminal responds to keyboard, bounds and container changes after the atte
     expect(view.result.current.height).toBe(200);
     view.unmount();
     expect(disconnect).toHaveBeenCalledTimes(1);
+  } finally {
+    global.ResizeObserver = original;
+  }
+});
+
+test('trace height constrains the terminal temporarily and keyboard resizing starts at its visible height', () => {
+  const original = global.ResizeObserver;
+  let measure;
+  global.ResizeObserver = class {
+    constructor(callback) {
+      measure = callback;
+    }
+    observe() {}
+    disconnect() {}
+  };
+  function Workspace({ enabled }) {
+    const sizing = useTerminalHeight(enabled);
+    return (
+      <div ref={sizing.pane} role="group" aria-label="Vùng thực hành">
+        <div className="cli-lab-topology-stage" style={{ minHeight: 190 }} />
+        <div role="group" aria-label="Thanh điều khiển và hành trình" />
+        <div className="cli-lab-terminal-frame" />
+        <div {...sizing.separator} />
+      </div>
+    );
+  }
+  try {
+    const view = render(<Workspace enabled={false} />);
+    let fixed = 120;
+    Object.defineProperty(screen.getByRole('group', { name: 'Vùng thực hành' }), 'clientHeight', {
+      value: 800,
+    });
+    Object.defineProperty(
+      screen.getByRole('group', { name: 'Thanh điều khiển và hành trình' }),
+      'offsetHeight',
+      { get: () => fixed }
+    );
+    view.rerender(<Workspace enabled />);
+    const handle = screen.getByRole('separator');
+    fireEvent.keyDown(handle, { key: 'End' });
+    expect(handle).toHaveAttribute('aria-valuenow', '490');
+    fixed = 300;
+    act(() => measure());
+    expect(handle).toHaveAttribute('aria-valuenow', '310');
+    fixed = 120;
+    act(() => measure());
+    expect(handle).toHaveAttribute('aria-valuenow', '490');
+    fixed = 300;
+    act(() => measure());
+    fireEvent.keyDown(handle, { key: 'ArrowDown' });
+    expect(handle).toHaveAttribute('aria-valuenow', '286');
   } finally {
     global.ResizeObserver = original;
   }

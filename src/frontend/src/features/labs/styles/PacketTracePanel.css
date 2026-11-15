@@ -1,0 +1,239 @@
+.lab-trace {
+  flex: 0 0 auto;
+  min-width: 0;
+}
+.lab-trace-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 10px;
+  min-height: 36px;
+}
+.lab-trace .packet-observer__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: 0 0 auto;
+}
+.lab-trace-flow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+.lab-trace-flow > span:first-child {
+  overflow-wrap: anywhere;
+}
+.lab-trace-protocol {
+  background: var(--bg-accent);
+  color: var(--text-accent);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.lab-trace-open-detail {
+  margin-left: auto;
+  flex: 0 0 auto;
+}
+.lab-trace .lab-trace-hide {
+  display: grid;
+  place-items: center;
+  padding: 4px;
+  min-width: 28px;
+  border: 0;
+  color: var(--text-secondary);
+}
+.lab-trace-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px 5px;
+}
+.lab-trace-toolbar > .app-select__trigger {
+  flex: 0 1 270px;
+  min-width: 0;
+  max-width: 270px;
+  margin-left: auto;
+}
+.lab-trace-toolbar > .app-select__trigger .app-select__value {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.lab-trace-quick {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(220px, 1fr);
+  height: 130px;
+  border-top: 1px solid var(--border-subtle);
+}
+.lab-trace-quick[hidden] {
+  display: none;
+}
+.lab-trace-events {
+  list-style: none;
+  padding: 8px;
+  margin: 0;
+  overflow: auto;
+  min-height: 0;
+  min-width: 0;
+  scrollbar-width: thin;
+}
+.lab-trace-quick .lab-trace-events {
+  display: grid;
+  gap: 5px;
+  align-content: center;
+}
+.lab-trace-quick .lab-trace-events button {
+  min-height: 46px;
+}
+.lab-trace-events button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-align: left;
+  width: 100%;
+  min-height: 48px;
+}
+.lab-trace-events strong {
+  font-weight: 600;
+  display: block;
+  line-height: 1.4;
+}
+.lab-trace-events small {
+  display: block;
+  color: var(--text-secondary);
+  margin-top: 3px;
+  font-size: 11px;
+}
+.lab-trace-events button[aria-current='step'] {
+  border-color: var(--text-accent);
+  background: var(--bg-accent);
+  box-shadow: inset 3px 0 var(--text-accent);
+}
+.lab-trace-event-number {
+  color: var(--text-subtle);
+  font-variant-numeric: tabular-nums;
+  min-width: 18px;
+}
+.lab-trace-error-mark {
+  margin-left: auto;
+  color: var(--text-danger);
+  font-size: 11px;
+}
+.lab-trace-explanation {
+  padding: 10px 12px;
+  border-left: 1px solid var(--border-subtle);
+  min-width: 0;
+  overflow: auto;
+}
+.lab-trace-explanation h3 {
+  margin: 0 0 5px;
+  font-size: 13px;
+}
+.lab-trace-explanation p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.lab-trace-detail {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border: 0;
+}
+.lab-trace-detail-head {
+  padding: 10px;
+  display: grid;
+  gap: 8px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.lab-trace-detail-head button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  justify-self: start;
+}
+.lab-trace-detail > .packet-observer__controls {
+  padding: 8px 10px;
+}
+.lab-trace-local {
+  margin: 0;
+  padding: 10px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.6;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.lab-trace-analysis {
+  display: grid;
+  flex: 1;
+  min-height: 0;
+  grid-template-rows: minmax(120px, 0.8fr) minmax(180px, 1fr);
+}
+.lab-trace-analysis .lab-trace-events li + li {
+  margin-top: 5px;
+}
+.lab-trace-analysis > .packet-inspector {
+  border-top: 1px solid var(--border-subtle);
+  border-left: 0;
+  overflow: auto;
+}
+.lab-trace-analysis > .packet-sequence {
+  min-height: 0;
+}
+.lab-trace-quick .packet-sequence--preview {
+  overflow: hidden;
+}
+.packet-sequence--preview .packet-sequence__actors {
+  height: 32px;
+}
+.packet-sequence--preview .packet-sequence__actors span {
+  top: 6px;
+  max-width: 80px;
+  font-size: 12px;
+  gap: 0;
+}
+.packet-sequence--preview .packet-sequence__actors small {
+  display: none;
+}
+@media (max-height: 800px) and (min-width: 901px) {
+  .lab-trace-summary {
+    gap: 6px;
+    padding-block: 4px;
+  }
+}
+@media (max-width: 900px) {
+  .lab-trace-summary {
+    flex-wrap: wrap;
+    gap: 5px;
+    padding: 6px 10px;
+  }
+  .lab-trace-flow {
+    order: 3;
+    width: 100%;
+  }
+  .lab-trace-toolbar {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .lab-trace-toolbar > .app-select__trigger {
+    max-width: none;
+    flex: 1 1 150px;
+  }
+  .lab-trace-quick {
+    grid-template-columns: 1fr;
+    height: clamp(210px, 30vh, 240px);
+    grid-template-rows: 130px minmax(0, 1fr);
+  }
+  .lab-trace-explanation {
+    border-left: 0;
+    border-top: 1px solid var(--border-subtle);
+  }
+  .lab-trace button,
+  .lab-trace-detail button {
+    min-height: 40px;
+  }
+}

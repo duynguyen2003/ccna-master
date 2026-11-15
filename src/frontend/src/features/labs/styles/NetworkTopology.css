@@ -12,8 +12,6 @@
   max-height: none;
   border: 0;
   background-color: var(--diagram-canvas);
-  background-image: radial-gradient(circle, var(--diagram-border) 0.7px, transparent 0.7px);
-  background-size: 18px 18px;
   touch-action: pan-x pan-y;
 }
 .network-topology.network-diagram--fit {
@@ -40,6 +38,9 @@
   stroke: var(--diagram-wire);
   stroke-width: 1.8;
   vector-effect: non-scaling-stroke;
+}
+.network-diagram .network-link > .link-up {
+  stroke-dasharray: 6 5;
 }
 .network-diagram .network-link > .network-link-hit {
   stroke: transparent;
@@ -132,15 +133,77 @@
   stroke-width: 3;
   stroke-dasharray: 3 3;
 }
-.network-diagram .network-packet-gsap {
-  fill: var(--lab-warning, var(--text-warning, #854d0e));
-  stroke: var(--diagram-surface);
+.network-diagram .network-traffic-layer {
+  color: var(--lab-accent, var(--diagram-accent));
+}
+.network-diagram .network-traffic-layer[data-phase='reply'] {
+  color: var(--lab-success, var(--text-success, #047857));
+}
+.network-diagram .network-traffic-layer[data-phase='arp'] {
+  color: var(--lab-warning, var(--text-warning, #854d0e));
+}
+.network-diagram .network-traffic-layer[data-phase='drop'] {
+  color: var(--lab-danger, var(--text-danger, #be123c));
+}
+.network-diagram .network-traffic-layer[data-observation='true'] {
+  color: var(--packet-tone, var(--diagram-accent));
+}
+.network-diagram .network-node.is-observed .network-device-ring {
+  fill: color-mix(in srgb, var(--packet-tone, var(--diagram-accent)) 10%, transparent);
+  stroke: var(--packet-tone, var(--diagram-accent));
   stroke-width: 2;
 }
-@media (prefers-reduced-motion: reduce) {
-  .network-diagram .network-packet-gsap {
-    display: none;
-  }
+.network-diagram text.network-device-activity {
+  fill: var(--packet-tone, var(--diagram-accent));
+  font-size: 12px;
+  font-weight: 700;
+}
+.network-diagram .network-link.is-observed > .link-up {
+  stroke: var(--packet-tone, var(--diagram-accent));
+  stroke-width: 2.5;
+}
+.network-diagram .network-packet-route,
+.network-diagram .network-packet-arrival {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.5;
+  vector-effect: non-scaling-stroke;
+}
+.network-diagram .network-packet-halo,
+.network-diagram .network-packet-trail {
+  fill: currentColor;
+}
+.network-diagram .network-packet-halo {
+  fill-opacity: 0.13;
+}
+.network-diagram .network-packet-core {
+  fill: currentColor;
+  stroke: var(--diagram-surface);
+  stroke-width: 1.5;
+}
+.network-diagram .network-packet-caption rect,
+.network-diagram .network-packet-cross circle {
+  fill: var(--diagram-surface);
+  stroke: currentColor;
+  stroke-width: 1.2;
+}
+.network-diagram .network-packet-caption text {
+  fill: currentColor;
+  font-size: 11px;
+  font-weight: 650;
+}
+.network-diagram .network-packet-caption .network-packet-detail {
+  fill: var(--diagram-muted);
+  font: 10px var(--lab-code-font, ui-monospace, monospace);
+}
+.network-diagram .network-packet-cross path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.network-diagram [data-phase='drop'] .network-packet-core {
+  opacity: 0;
 }
 
 .network-diagram .network-label-leader {
@@ -175,5 +238,12 @@
   .network-diagram .network-subnet rect,
   .network-diagram .network-link > path {
     transition: none !important;
+  }
+  .network-diagram .network-traffic-layer {
+    display: none;
+  }
+  .network-diagram .network-traffic-layer[data-observation='true'],
+  .network-diagram .network-traffic-layer[data-observation='true'] .network-packet-gsap {
+    display: inline;
   }
 }

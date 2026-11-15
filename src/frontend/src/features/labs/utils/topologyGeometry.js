@@ -136,10 +136,8 @@ export function layoutLinks(devices, links, layout, stp = {}) {
     .filter(Boolean);
 }
 
-export function packetMotionPath(wires, positions, hop) {
-  const from = positions[hop.from],
-    to = positions[hop.to];
-  const wire = wires.find(({ link }) => {
+export function packetWire(wires, hop) {
+  return wires.find(({ link }) => {
     const endpoints = link.a.deviceId === hop.from ? [link.a, link.b] : [link.b, link.a];
     return (
       endpoints[0].deviceId === hop.from &&
@@ -148,6 +146,12 @@ export function packetMotionPath(wires, positions, hop) {
       (!hop.toInterface || endpoints[1].interface === hop.toInterface)
     );
   });
+}
+
+export function packetMotionPath(wires, positions, hop) {
+  const from = positions[hop.from],
+    to = positions[hop.to];
+  const wire = packetWire(wires, hop);
   if (!wire) return `M ${from.x} ${from.y} L ${to.x} ${to.y}`;
   const { start, end, control } = wire.route;
   const [a, b] = wire.link.a.deviceId === hop.from ? [start, end] : [end, start];

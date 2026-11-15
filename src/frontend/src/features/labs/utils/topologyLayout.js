@@ -2,7 +2,7 @@
 const PADDING_X = 80;
 const ROW_GAP = 164;
 const MIN_GAP = 184;
-export function layoutTopology(devices, links, viewport, fit) {
+export function layoutTopology(devices, links, viewport, fit, { compact = false } = {}) {
   const original = Object.fromEntries(
     devices.map((d, i) => [d.id, d.position || { x: 100 + i * 180, y: 100 }])
   );
@@ -41,9 +41,11 @@ export function layoutTopology(devices, links, viewport, fit) {
     const padding = Math.ceil(Math.max(64, ...bounds.map((box) => box.width / 2 + 8)));
     const sequence = devices.length < 2 ? devices.map((d) => d.id) : ordered;
     const columns =
-      sequence.length <= 4
-        ? Math.max(1, sequence.length)
-        : Math.min(6, Math.max(3, Math.floor((viewport.width - 128) / MIN_GAP) + 1));
+      compact && viewport.width < 600
+        ? Math.max(1, Math.min(2, sequence.length))
+        : sequence.length <= 4
+          ? Math.max(1, sequence.length)
+          : Math.min(6, Math.max(3, Math.floor((viewport.width - 128) / MIN_GAP) + 1));
     const rows = Math.max(1, Math.ceil(sequence.length / columns));
     const minWidth = Math.max(
       280,

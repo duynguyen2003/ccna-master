@@ -97,6 +97,8 @@
   color: var(--button-on-primary);
 }
 .cli-lab-theme.cli-lab-stitch .cli-lab-topology-stage {
+  /* Keep the fitted canvas intact when the event inspector expands below it. */
+  flex-shrink: 0;
   background-color: var(--surface-secondary);
   background-image: radial-gradient(circle, var(--border-strong) 0.7px, transparent 0.7px);
   background-size: 20px 20px;
