@@ -1,0 +1,201 @@
+{
+  "recordedAt": "2026-11-16",
+  "scope": "Perceptible greeting motion on Home and AI introduction",
+  "rootCause": [
+    "Normal rendering was active, but speed 0.55, turn 0.2 and jumpEvery 0 made the idle pose hard to distinguish from a still icon.",
+    "Focusing the greeting without preventScroll scrolled the mobile page by 96.8px and moved the avatar partly behind the fixed header."
+  ],
+  "change": {
+    "greetingOnly": true,
+    "speed": 1,
+    "turn": 1,
+    "jumpEverySeconds": 4,
+    "jumpHeightBodyUnits": 22,
+    "material": "plastic",
+    "activationFocus": "preventScroll",
+    "labAndChatDefaults": "unchanged"
+  },
+  "browser": {
+    "engine": "Playwright Chromium; isolated API fixtures",
+    "errors": [],
+    "requestPaths": [
+      "/api/learning/courses/summary"
+    ],
+    "checks": {
+      "before": {
+        "paused": "false",
+        "interactive": "true",
+        "state": "default",
+        "reduce": false,
+        "visibility": "visible",
+        "canvas": true,
+        "svg": false,
+        "rect": {
+          "x": 261,
+          "y": 265.1000061035156,
+          "width": 104,
+          "height": 104,
+          "top": 265.1000061035156,
+          "right": 365,
+          "bottom": 369.1000061035156,
+          "left": 261
+        },
+        "animation": "none"
+      },
+      "greeting": {
+        "sampleCount": 24,
+        "topRange": [
+          7,
+          55
+        ],
+        "bottomRange": [
+          104,
+          132
+        ],
+        "state": "default"
+      },
+      "keyboard": {
+        "focused": true,
+        "state": "default"
+      },
+      "reduced": {
+        "paused": "true",
+        "uniqueFrames": 1,
+        "totalFrames": 3
+      },
+      "layouts": [
+        {
+          "viewport": [
+            1366,
+            768
+          ],
+          "pageWidth": 1356,
+          "paused": "false",
+          "canvasWidth": 156,
+          "button": {
+            "x": 237,
+            "y": 241.90000915527344,
+            "width": 152,
+            "height": 152,
+            "top": 241.90000915527344,
+            "right": 389,
+            "bottom": 393.90000915527344,
+            "left": 237
+          }
+        },
+        {
+          "viewport": [
+            390,
+            844
+          ],
+          "pageWidth": 380,
+          "paused": "false",
+          "canvasWidth": 156,
+          "button": {
+            "x": 49.67499923706055,
+            "y": 136,
+            "width": 124,
+            "height": 124,
+            "top": 136,
+            "right": 173.67499923706055,
+            "bottom": 260,
+            "left": 49.67499923706055
+          }
+        },
+        {
+          "viewport": [
+            320,
+            740
+          ],
+          "pageWidth": 310,
+          "paused": "false",
+          "canvasWidth": 156,
+          "button": {
+            "x": 14.475000381469727,
+            "y": 136,
+            "width": 124,
+            "height": 124,
+            "top": 136,
+            "right": 138.47500038146973,
+            "bottom": 260,
+            "left": 14.475000381469727
+          }
+        }
+      ],
+      "clipping": [
+        {
+          "viewport": [
+            320,
+            740
+          ],
+          "samples": 9,
+          "scrollAfterActivation": 0,
+          "insideViewport": true,
+          "leftMin": 18.475000023841858,
+          "rightMax": 134.47500002384186,
+          "topMin": 118.5999984741211
+        },
+        {
+          "viewport": [
+            390,
+            844
+          ],
+          "samples": 9,
+          "scrollAfterActivation": 0,
+          "insideViewport": true,
+          "leftMin": 53.67499923706055,
+          "rightMax": 168.67499923706055,
+          "topMin": 118.5999984741211
+        }
+      ],
+      "offscreenPaused": true,
+      "home": {
+        "greeting": "true",
+        "state": "default",
+        "examplePaused": "true"
+      },
+      "clickScrollBeforeFix": {
+        "before": 0,
+        "scrollY": 96.80000305175781,
+        "top": 39.20000076293945,
+        "headerBottom": 64
+      }
+    }
+  },
+  "validation": {
+    "suites": 4,
+    "passed": 50,
+    "failed": 0,
+    "tests": [
+      "DroidAvatar.test.jsx",
+      "AiLabAssistant.test.jsx",
+      "App.test.jsx",
+      "Home.test.jsx"
+    ],
+    "routeSuiteRerun": "App.test.jsx passed after preventScroll fix",
+    "eslint": "passed",
+    "prettier": "passed",
+    "boundaries": {
+      "importsAndAssets": 2271,
+      "sourceFiles": 535,
+      "passed": true
+    },
+    "build": "CI=true pnpm build"
+  },
+  "recording": {
+    "file": "avatar-greeting.gif",
+    "frames": 64,
+    "durationMilliseconds": 10417,
+    "source": "Unmodified canvas screenshots from the running page, encoded with original frame timing",
+    "size": [
+      156,
+      157
+    ],
+    "webm": "Unavailable: Playwright ffmpeg binary was missing; GIF used instead"
+  },
+  "limits": [
+    "Automatic approval review rejected scratch deletion with only 'blocked by policy'; raw frames and test logs remain in .tmp.",
+    "Provider and cohort activation were not changed or validated.",
+    "Browser/API fixtures do not validate a real user's account, screen reader or physical touch device."
+  ]
+}

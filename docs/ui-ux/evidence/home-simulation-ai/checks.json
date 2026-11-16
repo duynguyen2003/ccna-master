@@ -1,0 +1,681 @@
+{
+  "recordedAt": "2026-11-15",
+  "scope": "Home live HTTP preview and AI spotlight",
+  "environment": {
+    "site": "http://localhost:3000",
+    "browser": "Playwright Chromium",
+    "api": "All /api/** requests fulfilled with QA fixtures; no DB or provider calls",
+    "authentication": "Synthetic browser-only USER fixture for authenticated route test"
+  },
+  "catalog": {
+    "protocols": 39,
+    "scenarios": 39,
+    "steps": 231,
+    "events": 694,
+    "source": "src/frontend/src/features/protocols/data/lessonCatalog.js",
+    "verifiedBy": "pnpm check:protocol-lessons"
+  },
+  "stitch": {
+    "projectId": "2285210275756823623",
+    "screen": "8a7bf3e432e542ed80fdf5cb402de21f",
+    "url": "https://stitch.withgoogle.com/projects/2285210275756823623",
+    "referenceImage": "stitch-concept.png",
+    "proposalText": "Đã thiết kế hoàn chỉnh phần đầu trang chủ NetMaster (Desktop 1440px) theo chuẩn chuyên môn kỹ thuật mạng máy tính và CCNA:\n\n### Các điểm nhấn thiết kế chính:\n1. **Thanh điều hướng kỹ thuật chuyên nghiệp (Top Navigation)**:\n   - Logo NetMaster nhận diện với màu xanh mạng thương hiệu `#386298` & điểm nhấn `#38bdf8`.\n   - Các chuyên mục chuẩn xác: *Lộ trình*, *Lab*, *Mô phỏng* (đang active), *Công cụ*, cùng các nút hành động *Đăng ký* / *Đăng nhập* và phím tắt CLI.\n\n2. **Khu vực Hero Dark Navy (~600px)**:\n   - **Cột trái (~40%)**: Nhãn *HỌC MẠNG BẰNG THỰC HÀNH*, tiêu đề *Học CCNA theo lộ trình. Thực hành mạng ngay khi học.* với con trỏ nhấp nháy, mô tả ngắn gọn về quan sát gói tin và lab thực hành. Bộ đôi CTA *Khám phá mô phỏng* & *Xem lộ trình*. Badge thực tế minh bạch: *39 kịch bản mô phỏng* (HTTP, DNS, TCP, ARP, VLAN, OSPF, DHCP).\n   - **Cột phải (~60%) - Cửa sổ mô phỏng giao thức thực tế**: Thiết kế dạng live SVG interactive window *Khi bạn mở một trang web*, hỗ trợ chuyển đổi tab giữa *Mô phỏng* và *Thử CLI*. Bộ điều khiển Play/Step/Reset cùng tiến trình trực quan `2/5 · Phân giải DNS (DNS Query)`. Sơ đồ mạng chi tiết gồm PC (Sender, 192.168.1.10), Router Gateway, DNS Server (8.8.8.8), Internet Cloud, và Web Server đích với gói tin UDP đang di chuyển kèm chú thích kỹ thuật rõ ràng.\n\n3. **Khối AI Spotlight (Trợ lý AI trong từng bài lab)**:\n   - Giao diện sáng thanh lịch ngay bên dưới hero, avatar droid kỹ thuật với giá trị cốt lõi: *Gợi ý bước tiếp theo, phân tích kết nối và giải thích cấu hình bạn đang làm*.\n   - Khung \"Ví dụ minh họa tương tác\" giáo dục trực quan (*Tại sao cần phân giải DNS trước khi gửi HTTP GET request?* kèm phân tích đóng gói TCP/IP) hoàn toàn trung thực, không dùng khung chat giả hay tạo cảm giác live chat không có thật trên Home.\n\n4. **Khối mở đầu các lộ trình học tập**:\n   - Hiển thị 3 track cốt lõi: *CCNA 200-301 Lý thuyết & Bài tập*, *Hệ thống Lab tương tác*, và *Mô phỏng luồng giao thức*, tạo cấu trúc phân cấp liền mạch cho trang.",
+    "suggestions": [
+      "Chuyển đổi sang giao diện tab 'Thử CLI' với terminal Cisco IOS thực hành trực tiếp",
+      "Thiết kế phiên bản Mobile responsive cho phần Hero & Mô phỏng gói tin",
+      "Thêm chi tiết khung nhìn gói tin Wireshark / L2-L4 Packet Inspector vào cửa sổ mô phỏng"
+    ],
+    "decisions": [
+      "Adopt split hero, live demo/CLI tabs, AI spotlight and compact hierarchy.",
+      "Keep existing NetMaster tokens, typewriter, navigation, footer and learning content.",
+      "Use only actual HTTP lesson data and catalog counts; do not use generated IP/port/VLAN/ASN telemetry or course/lab totals.",
+      "Keep detailed packet inspector in full simulator; Home is a bounded preview."
+    ]
+  },
+  "checks": {
+    "tests": {
+      "suites": 7,
+      "passed": 32,
+      "failed": 0
+    },
+    "lint": "passed",
+    "format": "passed",
+    "diffCheck": "passed",
+    "boundaries": {
+      "importsAndAssets": 2261,
+      "sourceFiles": 531,
+      "passed": true
+    },
+    "protocolCatalog": "passed",
+    "productionBuild": "Compiled successfully (CI=true, pnpm build)",
+    "guest": {
+      "errors": [],
+      "requestPaths": [
+        "/api/learning/courses/summary",
+        "/api/learning/labs"
+      ],
+      "checks": {
+        "layouts": [
+          {
+            "viewport": [
+              1920,
+              900
+            ],
+            "pageWidth": 1910,
+            "heroHeight": 606,
+            "stage": {
+              "x": 854.75,
+              "y": 225.60000610351562,
+              "width": 751.25,
+              "height": 282,
+              "top": 225.60000610351562,
+              "right": 1606,
+              "bottom": 507.6000061035156,
+              "left": 854.75
+            },
+            "nodes": [
+              {
+                "id": "client",
+                "inside": true
+              },
+              {
+                "id": "router",
+                "inside": true
+              },
+              {
+                "id": "dns",
+                "inside": true
+              },
+              {
+                "id": "internet",
+                "inside": true
+              },
+              {
+                "id": "web",
+                "inside": true
+              }
+            ],
+            "controls": [
+              {
+                "name": "Phát demo",
+                "x": 868.75,
+                "y": 188.60000610351562,
+                "width": 69.0875015258789,
+                "height": 32,
+                "top": 188.60000610351562,
+                "right": 937.8375015258789,
+                "bottom": 220.60000610351562,
+                "left": 868.75
+              },
+              {
+                "name": "Sự kiện trước trong demo",
+                "x": 942.8375244140625,
+                "y": 188.60000610351562,
+                "width": 32,
+                "height": 32,
+                "top": 188.60000610351562,
+                "right": 974.8375244140625,
+                "bottom": 220.60000610351562,
+                "left": 942.8375244140625
+              },
+              {
+                "name": "Sự kiện tiếp theo trong demo",
+                "x": 979.8375244140625,
+                "y": 188.60000610351562,
+                "width": 32,
+                "height": 32,
+                "top": 188.60000610351562,
+                "right": 1011.8375244140625,
+                "bottom": 220.60000610351562,
+                "left": 979.8375244140625
+              },
+              {
+                "name": "Về đầu demo",
+                "x": 1016.8375244140625,
+                "y": 188.60000610351562,
+                "width": 32,
+                "height": 32,
+                "top": 188.60000610351562,
+                "right": 1048.8375244140625,
+                "bottom": 220.60000610351562,
+                "left": 1016.8375244140625
+              }
+            ]
+          },
+          {
+            "viewport": [
+              1366,
+              768
+            ],
+            "pageWidth": 1356,
+            "heroHeight": 606,
+            "stage": {
+              "x": 582.6375122070312,
+              "y": 225.60000610351562,
+              "width": 720.5499877929688,
+              "height": 282,
+              "top": 225.60000610351562,
+              "right": 1303.1875,
+              "bottom": 507.6000061035156,
+              "left": 582.6375122070312
+            },
+            "nodes": [
+              {
+                "id": "client",
+                "inside": true
+              },
+              {
+                "id": "router",
+                "inside": true
+              },
+              {
+                "id": "dns",
+                "inside": true
+              },
+              {
+                "id": "internet",
+                "inside": true
+              },
+              {
+                "id": "web",
+                "inside": true
+              }
+            ],
+            "controls": [
+              {
+                "name": "Phát demo",
+                "x": 596.6375122070312,
+                "y": 188.60000610351562,
+                "width": 69.0875015258789,
+                "height": 32,
+                "top": 188.60000610351562,
+                "right": 665.7250137329102,
+                "bottom": 220.60000610351562,
+                "left": 596.6375122070312
+              },
+              {
+                "name": "Sự kiện trước trong demo",
+                "x": 670.7250366210938,
+                "y": 188.60000610351562,
+                "width": 32,
+                "height": 32,
+                "top": 188.60000610351562,
+                "right": 702.7250366210938,
+                "bottom": 220.60000610351562,
+                "left": 670.7250366210938
+              },
+              {
+                "name": "Sự kiện tiếp theo trong demo",
+                "x": 707.7250366210938,
+                "y": 188.60000610351562,
+                "width": 32,
+                "height": 32,
+                "top": 188.60000610351562,
+                "right": 739.7250366210938,
+                "bottom": 220.60000610351562,
+                "left": 707.7250366210938
+              },
+              {
+                "name": "Về đầu demo",
+                "x": 744.7250366210938,
+                "y": 188.60000610351562,
+                "width": 32,
+                "height": 32,
+                "top": 188.60000610351562,
+                "right": 776.7250366210938,
+                "bottom": 220.60000610351562,
+                "left": 744.7250366210938
+              }
+            ]
+          },
+          {
+            "viewport": [
+              1024,
+              768
+            ],
+            "pageWidth": 1014,
+            "heroHeight": 598,
+            "stage": {
+              "x": 427.8374938964844,
+              "y": 221.60000610351562,
+              "width": 536.9625244140625,
+              "height": 282,
+              "top": 221.60000610351562,
+              "right": 964.8000183105469,
+              "bottom": 503.6000061035156,
+              "left": 427.8374938964844
+            },
+            "nodes": [
+              {
+                "id": "client",
+                "inside": true
+              },
+              {
+                "id": "router",
+                "inside": true
+              },
+              {
+                "id": "dns",
+                "inside": true
+              },
+              {
+                "id": "internet",
+                "inside": true
+              },
+              {
+                "id": "web",
+                "inside": true
+              }
+            ],
+            "controls": [
+              {
+                "name": "Phát demo",
+                "x": 441.8374938964844,
+                "y": 184.60000610351562,
+                "width": 69.0875015258789,
+                "height": 32,
+                "top": 184.60000610351562,
+                "right": 510.9249954223633,
+                "bottom": 216.60000610351562,
+                "left": 441.8374938964844
+              },
+              {
+                "name": "Sự kiện trước trong demo",
+                "x": 515.9249877929688,
+                "y": 184.60000610351562,
+                "width": 32,
+                "height": 32,
+                "top": 184.60000610351562,
+                "right": 547.9249877929688,
+                "bottom": 216.60000610351562,
+                "left": 515.9249877929688
+              },
+              {
+                "name": "Sự kiện tiếp theo trong demo",
+                "x": 552.9249877929688,
+                "y": 184.60000610351562,
+                "width": 32,
+                "height": 32,
+                "top": 184.60000610351562,
+                "right": 584.9249877929688,
+                "bottom": 216.60000610351562,
+                "left": 552.9249877929688
+              },
+              {
+                "name": "Về đầu demo",
+                "x": 589.9249877929688,
+                "y": 184.60000610351562,
+                "width": 32,
+                "height": 32,
+                "top": 184.60000610351562,
+                "right": 621.9249877929688,
+                "bottom": 216.60000610351562,
+                "left": 589.9249877929688
+              }
+            ]
+          },
+          {
+            "viewport": [
+              768,
+              1024
+            ],
+            "pageWidth": 758,
+            "heroHeight": 976.7000122070312,
+            "stage": {
+              "x": 93.5999984741211,
+              "y": 586.7000122070312,
+              "width": 570.4000244140625,
+              "height": 282,
+              "top": 586.7000122070312,
+              "right": 664.0000228881836,
+              "bottom": 868.7000122070312,
+              "left": 93.5999984741211
+            },
+            "nodes": [
+              {
+                "id": "client",
+                "inside": true
+              },
+              {
+                "id": "router",
+                "inside": true
+              },
+              {
+                "id": "dns",
+                "inside": true
+              },
+              {
+                "id": "internet",
+                "inside": true
+              },
+              {
+                "id": "web",
+                "inside": true
+              }
+            ],
+            "controls": [
+              {
+                "name": "Phát demo",
+                "x": 107.5999984741211,
+                "y": 549.7000122070312,
+                "width": 69.0875015258789,
+                "height": 32,
+                "top": 549.7000122070312,
+                "right": 176.6875,
+                "bottom": 581.7000122070312,
+                "left": 107.5999984741211
+              },
+              {
+                "name": "Sự kiện trước trong demo",
+                "x": 181.6875,
+                "y": 549.7000122070312,
+                "width": 32,
+                "height": 32,
+                "top": 549.7000122070312,
+                "right": 213.6875,
+                "bottom": 581.7000122070312,
+                "left": 181.6875
+              },
+              {
+                "name": "Sự kiện tiếp theo trong demo",
+                "x": 218.6875,
+                "y": 549.7000122070312,
+                "width": 32,
+                "height": 32,
+                "top": 549.7000122070312,
+                "right": 250.6875,
+                "bottom": 581.7000122070312,
+                "left": 218.6875
+              },
+              {
+                "name": "Về đầu demo",
+                "x": 255.6875,
+                "y": 549.7000122070312,
+                "width": 32,
+                "height": 32,
+                "top": 549.7000122070312,
+                "right": 287.6875,
+                "bottom": 581.7000122070312,
+                "left": 255.6875
+              }
+            ]
+          },
+          {
+            "viewport": [
+              390,
+              844
+            ],
+            "pageWidth": 380,
+            "heroHeight": 1079.800048828125,
+            "stage": {
+              "x": 26.80000114440918,
+              "y": 469.3999938964844,
+              "width": 326.3999938964844,
+              "height": 266,
+              "top": 469.3999938964844,
+              "right": 353.19999504089355,
+              "bottom": 735.3999938964844,
+              "left": 26.80000114440918
+            },
+            "nodes": [
+              {
+                "id": "client",
+                "inside": true
+              },
+              {
+                "id": "router",
+                "inside": true
+              },
+              {
+                "id": "dns",
+                "inside": true
+              },
+              {
+                "id": "internet",
+                "inside": true
+              },
+              {
+                "id": "web",
+                "inside": true
+              }
+            ],
+            "controls": [
+              {
+                "name": "Phát demo",
+                "x": 36.79999923706055,
+                "y": 420.3999938964844,
+                "width": 44,
+                "height": 44,
+                "top": 420.3999938964844,
+                "right": 80.79999923706055,
+                "bottom": 464.3999938964844,
+                "left": 36.79999923706055
+              },
+              {
+                "name": "Sự kiện trước trong demo",
+                "x": 85.80000305175781,
+                "y": 420.3999938964844,
+                "width": 44,
+                "height": 44,
+                "top": 420.3999938964844,
+                "right": 129.8000030517578,
+                "bottom": 464.3999938964844,
+                "left": 85.80000305175781
+              },
+              {
+                "name": "Sự kiện tiếp theo trong demo",
+                "x": 134.8000030517578,
+                "y": 420.3999938964844,
+                "width": 44,
+                "height": 44,
+                "top": 420.3999938964844,
+                "right": 178.8000030517578,
+                "bottom": 464.3999938964844,
+                "left": 134.8000030517578
+              },
+              {
+                "name": "Về đầu demo",
+                "x": 183.8000030517578,
+                "y": 420.3999938964844,
+                "width": 44,
+                "height": 44,
+                "top": 420.3999938964844,
+                "right": 227.8000030517578,
+                "bottom": 464.3999938964844,
+                "left": 183.8000030517578
+              }
+            ]
+          },
+          {
+            "viewport": [
+              320,
+              740
+            ],
+            "pageWidth": 311,
+            "heroHeight": 1096.300048828125,
+            "stage": {
+              "x": 26.80000114440918,
+              "y": 485.8999938964844,
+              "width": 256,
+              "height": 266,
+              "top": 485.8999938964844,
+              "right": 282.8000011444092,
+              "bottom": 751.8999938964844,
+              "left": 26.80000114440918
+            },
+            "nodes": [
+              {
+                "id": "client",
+                "inside": true
+              },
+              {
+                "id": "router",
+                "inside": true
+              },
+              {
+                "id": "dns",
+                "inside": true
+              },
+              {
+                "id": "internet",
+                "inside": true
+              },
+              {
+                "id": "web",
+                "inside": true
+              }
+            ],
+            "controls": [
+              {
+                "name": "Phát demo",
+                "x": 36.79999923706055,
+                "y": 436.8999938964844,
+                "width": 44,
+                "height": 44,
+                "top": 436.8999938964844,
+                "right": 80.79999923706055,
+                "bottom": 480.8999938964844,
+                "left": 36.79999923706055
+              },
+              {
+                "name": "Sự kiện trước trong demo",
+                "x": 85.80000305175781,
+                "y": 436.8999938964844,
+                "width": 44,
+                "height": 44,
+                "top": 436.8999938964844,
+                "right": 129.8000030517578,
+                "bottom": 480.8999938964844,
+                "left": 85.80000305175781
+              },
+              {
+                "name": "Sự kiện tiếp theo trong demo",
+                "x": 134.8000030517578,
+                "y": 436.8999938964844,
+                "width": 44,
+                "height": 44,
+                "top": 436.8999938964844,
+                "right": 178.8000030517578,
+                "bottom": 480.8999938964844,
+                "left": 134.8000030517578
+              },
+              {
+                "name": "Về đầu demo",
+                "x": 183.8000030517578,
+                "y": 436.8999938964844,
+                "width": 44,
+                "height": 44,
+                "top": 436.8999938964844,
+                "right": 227.8000030517578,
+                "bottom": 480.8999938964844,
+                "left": 183.8000030517578
+              }
+            ]
+          }
+        ],
+        "autoStart": true,
+        "playback": {
+          "end": "13/13",
+          "scan": {
+            "samples": 2421,
+            "outside": [],
+            "running": false,
+            "heroMin": 606,
+            "heroMax": 606
+          },
+          "progressKeys": [],
+          "replay": "1/13"
+        },
+        "cli": {
+          "height": 548,
+          "simulationHeight": 550,
+          "output": "R1# show ip interface brief\nInterface              IP-Address    Status\nGigabitEthernet0/0      192.0.2.1     up\nGigabitEthernet0/1      unassigned    down",
+          "eventAfterReturn": "4/13",
+          "draft": "show ver"
+        },
+        "offscreen": {
+          "paused": true,
+          "index": "4/13"
+        },
+        "documentHidden": {
+          "paused": true,
+          "nativeVisibility": "visible",
+          "simulated": true
+        },
+        "reduced": {
+          "disabled": true,
+          "index": "4/13",
+          "heading": "Học CCNA theo lộ trình. Thực hành mạng ngay khi học."
+        },
+        "dark": {
+          "theme": "dark",
+          "fg": "#e5edf8",
+          "bg": "rgb(17, 29, 48)",
+          "nodeCount": 5
+        },
+        "simulationEntry": {
+          "url": "http://localhost:3000/login",
+          "heading": "Mô phỏng giao thức"
+        },
+        "aiEntry": {
+          "url": "http://localhost:3000/labs",
+          "headings": [
+            "Phòng Lab Thực Hành"
+          ]
+        },
+        "keyboard": {
+          "afterRight": {
+            "text": " Thử CLI",
+            "pressed": "true",
+            "outline": "solid"
+          },
+          "cliShown": true,
+          "simulationSelected": "true",
+          "before": "4/13",
+          "after": "5/13"
+        }
+      }
+    },
+    "authenticated": {
+      "errors": [],
+      "calls": [
+        {
+          "path": "/api/learning/courses/summary",
+          "method": "GET"
+        },
+        {
+          "path": "/api/learning/courses/summary",
+          "method": "GET"
+        },
+        {
+          "path": "/api/learning/learning-path",
+          "method": "GET"
+        },
+        {
+          "path": "/api/learning/learning-path",
+          "method": "GET"
+        }
+      ],
+      "home": {
+        "count": 1,
+        "aiHeading": 1,
+        "event": "1/13",
+        "progressKeys": []
+      },
+      "entry": "http://localhost:3000/protocols"
+    }
+  },
+  "evidence": [
+    "home-desktop.png",
+    "home-dark.png",
+    "home-mobile.png",
+    "stitch-concept.png"
+  ],
+  "limits": [
+    "Browser QA uses synthetic auth/API fixtures, not live account, database or AI provider validation.",
+    "Document visibility hidden was dispatched through an owned QA fixture because headless native visibility stayed visible; native offscreen IntersectionObserver pause was exercised.",
+    "Full simulator keeps existing authentication guard; guest preview on Home is public.",
+    "No production performance measurements or physical touch device validation."
+  ]
+}

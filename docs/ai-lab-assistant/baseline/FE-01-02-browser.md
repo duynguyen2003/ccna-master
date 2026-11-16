@@ -1,5 +1,196 @@
 # FE-01/FE-02 — Ngăn trợ lý lab và kết nối bất đồng bộ
 
+## Avatar chuyển động dễ nhận thấy — 16/11/2026
+
+Avatar cũ có canvas/RAF hoạt động nhưng speed0.55, turn0.2 và jumpEvery0 làm
+chuyển động quá nhẹ. Bổ sung prop `greeting` cho droid trong Home và trang
+giới thiệu AI: speed1, turn1, nhún khoảng4giây/lần, vật liệu plastic để góc
+quay rõ hơn. Avatar lab/chat giữ cấu hình nhẹ cũ và working theo request thật.
+
+Bấm avatar trên mobile từng làm focus tự cuộn96,8px, đẩy hình lên sau header.
+Đã dùng `focus({ preventScroll: true })`: giữ focus lời chào và scrollY0.
+Ảnh động ghi64 khung canvas thật trong khoảng10,4giây:
+[xem avatar](../../ui-ux/evidence/avatar-motion/avatar-greeting.gif).
+
+Kiểm4suite/50test, chạy lại App.test sau sửa focus, ESLint/Prettier/boundaries
+và CI build đạt. Browser lấy24mẫu thấy đỉnh hình thay đổi48px;18mẫu click/hop
+ở320/390px nằm trọn viewport. Enter giữ focus đúng, state vẫn default;
+reduced-motion cho1hình duy nhất qua3mẫu, ra khỏi viewport thì pause.
+Không gọi provider/DB, không thay API/cohort. [Kết quả QA](../../ui-ux/evidence/avatar-motion/checks.json).
+
+Cleanup ảnh/log tạm trong `.tmp` bị kiểm duyệt tự động từ chối (`blocked by policy`),
+nên giữ file scratch; context browser đã đóng. GIF/JSON cuối nằm trong evidence.
+
+## Điểm vào AI từ Home — 15/11/2026
+
+Nút **Thực hành cùng AI** mở route công khai `/ai-assistant`. Trang có droid
+động cạnh khung lời chào, giải thích AI hiện được tích hợp trong bài lab và
+không gian trò chuyện riêng đang phát triển. Các nút dẫn vào lab, lộ trình và
+về Home; bấm avatar bằng chuột/Enter đưa focus tới lời giới thiệu.
+
+UI nằm trong `browser/components/AiAssistantIntro.jsx`, CSS và entry `intro.js`
+của agent, xuất qua `@ccna/agent-ui/intro`. Host chỉ nối route lazy và truyền
+Link. Dùng lại DroidAvatar với idle/interactive, visibility và reduced-motion;
+không tạo controller, ô chat, request AI hoặc trạng thái working cho trang này.
+
+Đã kiểm 6 suite/31 test, ESLint/Prettier/diff check, boundaries2271 imports/assets
+và CI build. Browser guest/auth với fixture, desktop/mobile hai theme: CTA đúng,
+0 page errors, avatar3/3 mẫu idle khác nhau và reduced-motion đứng yên. Không
+thay cohort/quota/provider và chưa kiểm gọi AI bằng tài khoản thật trong lab.
+Xem [báo cáo và ảnh](../../ui-ux/home-simulation-ai.md#cập-nhật-banner-và-trang-giới-thiệu-ai--15112026)
+và [QA JSON](../../ui-ux/evidence/home-ai-entry/checks.json).
+
+## Avatar xanh trong chat streaming — 15/11/2026
+
+Dòng đang xử lý dùng avatar flower xanh, chất liệu fabric, từ bot-avatars0.2.2
+đã có trong dự án, theo ảnh tham khảo. Thay chấm pulse bằng avatar30px cạnh nhãn
+tiến độ; tin trả lời dùng cùng hình26px tĩnh. Header/tab vẫn giữ droid hiện hữu.
+Không thêm dependency hoặc tạo luồng animation riêng cho từng tin nhắn cũ.
+
+DroidAvatar có thêm appearance với mặc định droid, tái dùng toàn bộ gating
+visible/document-hidden/IntersectionObserver/reduced-motion và fallback SVG.
+AiLabPanel dùng assistantIsWorking cho cả avatar và shimmer, chỉ chạy khi đang
+gửi hoặc request QUEUED/RUNNING thật, có kết nối và không lỗi. Avatar không được
+key theo progress phase nên giữ instance khi PREPARING_CONTEXT→ANALYZING→FINALIZING.
+COMPLETED/hủy/lỗi bỏ avatar khỏi dòng xử lý; avatar của câu trả lời luôn paused.
+Icon là trang trí aria-hidden, trạng thái vẫn có chữ và vùng live đặt tên rõ.
+
+SSE hiện truyền tiến độ/request resource; nội dung câu trả lời xuất hiện khi
+server hoàn tất. Đợt này chỉ tích hợp hình biểu diễn vào luồng đó, giữ nguyên
+controller, parser, API, nội dung trả lời và các quy tắc chấm lab.
+
+4 suite/74 test đạt, gồm SSE progress, giữ instance, ẩn/mở, hoàn tất/lỗi/hủy và
+mặc định droid. ESLint/Prettier, boundary2222 imports/assets/525 files, diff check
+và CI production build đạt. Browser1366×768,390×844,320×740 kiểm light/dark:
+
+- SSE fixture dạng ReadableStream đi qua parser/controller thật; không gọi
+  provider/DB. PREPARING/ANALYZING/FINALIZING có avatar working đúng dữ liệu.
+- Canvas working đổi8/8 mẫu; ẩn panel hoặc reduced-motion giữ nguyên ảnh,
+  shimmer và text entrance cũng dừng khi giảm chuyển động.
+- Hoàn tất có0 avatar working, avatar câu trả lời là flower/default/paused và
+  ảnh giữ nguyên. Hủy hoặc HTTP503 cũng có0 avatar working, header về default.
+- Icon30px, ô hỏi và nhãn nằm trong viewport mobile; không tràn ngang. 0 page errors.
+
+File sửa: `src/agent/browser/components/DroidAvatar.jsx`, `AiLabPanel.jsx`,
+`AiMessage.jsx`, `styles/AiLab.css`; regression tests `AiLabAssistant.test.jsx`
+và `DroidAvatar.test.jsx` trong frontend. Không sửa Footer, dữ liệu bài IP,
+engine, API hoặc dependency. Giới hạn: chưa nghiệm thu provider/tài khoản thật.
+
+Ảnh [desktop](../../ui-ux/evidence/lab-workspace-v2/streaming-avatar-desktop.png),
+[mobile](../../ui-ux/evidence/lab-workspace-v2/streaming-avatar-mobile.png),
+[kết quả browser/test](../../ui-ux/evidence/lab-workspace-v2/streaming-avatar-checks.json).
+
+## Một nơi điều hướng AI trong lab — 15/11/2026
+
+Host sidebar sở hữu dải Mục tiêu/AI và nút thu gọn. Header chính chỉ có một nút
+mở lại khi sidebar đóng; mobile dùng nav thực hành. Embedded AiLabPanel và
+AssistantLoader bỏ hàng tên/avatar/đóng bên trong ở cả loading/error/ready.
+Giữ aria-label Trợ lý AI cho vùng chat, avatar ở tab và cạnh tin nhắn.
+
+Tùy chọn đặt dưới composer, mở lên trên và có fallback khi composer bị khóa.
+Mức gợi ý vẫn dùng điều kiện canAsk; menu reset/privacy không bị fieldset đang
+pending vô hiệu hóa. Escape đóng menu trước, lần tiếp theo thu gọn panel. Chọn
+AI tăng focusRequest để focus lại ô hỏi sau khi load xong; không tự gửi request,
+không reload capabilities hoặc remount controller khi đổi pane. Bỏ effect khôi
+phục focus của standalone trong embedded để không kéo focus khỏi tab mới.
+
+Giữ chiều rộng chat380–480px, avatar tương tác và trạng thái working theo callback
+thật. Browser đã kiểm bản nháp qua đóng/mở, options/focus/Escape, RUNNING khi
+sidebar đóng, COMPLETED và lỗi503 trở về default, idle canvas động và reduced
+motion dừng hình. Metadata tiến độ và phản hồi AI là fixture, không gọi provider
+hoặc ghi DB thật. Standalone giữ header và hành vi đóng/focus cũ.
+
+11 suite/98 test liên quan gồm workspace, panel, loader, avatar, sequence và
+playback; lint/format/boundaries/icons và CI production build đạt. Source sửa ở
+`src/agent/browser/components/AiLabPanel.jsx`, `AssistantLoader.jsx`,
+`styles/AiLab.css`; host wiring và regression tests trong frontend.
+
+Ảnh [chat](../../ui-ux/evidence/lab-workspace-v2/lab-navigation-ai.png),
+[probe đúng ngữ cảnh](../../ui-ux/evidence/lab-workspace-v2/lab-navigation-probe.png),
+[QA và giới hạn](../../ui-ux/evidence/lab-workspace-v2/lab-navigation-journey-checks.json).
+Chi tiết bố cục/hành trình: [lab workspace](../../ui-ux/lab-workspace.md).
+
+## Nới khung chat và căn dải tab — 15/11/2026
+
+Host CLI lab tăng sidebar khi chọn AI lên clamp380px/32vw/480px, không sửa width
+hook hoặc lifecycle của package. Chat ở1366px tăng327→436px; mobile vẫn full-width.
+Dải tab thu theo nội dung, bỏ nền kéo dài, hai nút bằng chiều cao và header44px
+ngang với vùng sơ đồ. Khi có ba tab, giấu bộ đếm thị giác để tránh scrollbar đẩy
+lệch header; aria vẫn đọc tiến độ. Giữ avatar tương tác và animation SlidingTabs.
+
+3 suite/59 test liên quan, lint/format và CI build đạt. Browser desktop/tablet/
+mobile320–390, sáng/tối/giảm chuyển động, bàn phím và animation đều được kiểm.
+Giữ lệnh/bản nháp/sự kiện9 khi đổi tab và resize; QA dùng fixture, không gọi model.
+Hai source file ở host: `CliLabWorkspace.js`, `LabWorkspaceLayout.css`.
+Ảnh và số đo: [báo cáo workspace](../../ui-ux/lab-workspace.md).
+
+## Bổ sung tương tác avatar — 15/11/2026
+
+Trước đó wrapper đặt `interactive=false`, `max-width:100%` lên canvas overscan và
+contain paint. Avatar có idle/working nhưng không nhìn theo con trỏ, không phản
+ứng khi bấm; khung vẽ cũng bị bó lại. Hiện tại dùng pointer-follow/click-hop của
+chính bot-avatars, không viết engine animation mới hoặc giả lập trạng thái AI.
+
+- Rê con trỏ gần avatar: đầu/mắt nhìn theo. Bấm/chạm/Enter/Space trên nút AI:
+  nhảy nhẹ và nghiêng; nút mở/đóng chỉ chạy một lần. Forward click qua canvas công
+  khai của thư viện, chặn bubble của click được forward để tránh lặp hành động.
+- Avatar ở header panel là nút “Đặt câu hỏi cho Trợ lý AI”, vùng bấm44×44; bấm
+  đưa focus vào composer. Các avatar nằm trong nút có sẵn vẫn là span, không
+  lồng button. Avatar tin nhắn cũ giữ tĩnh.
+- Canvas giữ overscan đúng tỷ lệ, pointer-events:none để phần trong suốt không
+  chặn tab bên cạnh. Không dùng paint containment cắt cú nhảy. Không thêm timer
+  hay loop motion ở ứng dụng; vẫn dùng RAF chung của thư viện.
+- Hidden/offscreen/document hidden/reduced-motion tiếp tục dừng canvas và bỏ
+  tương tác; nút vẫn thực hiện hành động. Hover/click không đổi busy và không
+  gửi câu hỏi. Khi request đang RUNNING, click avatar vẫn giữ working.
+
+3 suite/62 test đạt: pointer và bàn phím không gọi action hai lần, static/hidden/
+reduced-motion ngừng phản ứng, dọn listener, focus composer, AI lifecycle và
+workspace regression. ESLint/Prettier/boundaries và CI production build đạt.
+Browser canvas thật: mắt dịch3.36px khi chuyển con trỏ trái/phải, cú nhảy có9.1px
+biên độ qua151 frame. Mobile touch390/320px focus đúng, không tràn/cắt nút và giữ
+draft; nhấn sát mép tab Mục tiêu không bị canvas của AI chặn. API/auth dùng fixture,
+không gọi provider/DB thật. Các gesture không phát sinh POST AI.
+
+Ảnh [desktop](../../ui-ux/evidence/lab-workspace-v2/avatar-interaction.png),
+[mobile](../../ui-ux/evidence/lab-workspace-v2/avatar-interaction-mobile.png),
+[số đo và kết quả](../../ui-ux/evidence/lab-workspace-v2/avatar-interaction-checks.json).
+File sửa: `DroidAvatar.jsx`, `DroidAvatar.css`, `AiLabPanel.jsx` trong browser
+package; `DroidAvatar.test.jsx`, `AiLabAssistant.test.jsx` ở bộ test frontend.
+
+## Cập nhật workspace và avatar — 15/11/2026
+
+AI trong CLI Lab hiện mở bằng tab sidebar dùng chung với Mục tiêu; mobile dùng
+tab toàn vùng, không còn yêu cầu dùng laptop. Chế độ standalone của package vẫn
+có drawer/dialog như trước. Phần mô tả28/10 bên dưới ghi lịch sử triển khai.
+
+- `AiLabPanel` nhận `embedded`, `visible`, `onActivityChange`. Embedded bỏ resize
+  riêng và modal mobile; host quản lý layout. Đổi tab/đóng sidebar giữ component,
+  draft, conversation và controller. Document hidden/offline/scope mới vẫn theo
+  lifecycle controller cũ; đóng tab nội bộ không giả lập hoàn tất request.
+- `assistantIsWorking` lấy online/error/phase/pending/status thật. Callback cho
+  header phản ánh yêu cầu còn xử lý khi AI bị thu gọn. COMPLETED hiển thị “Đã trả
+  lời.”; lỗi có alert hiện hữu và avatar trở về trạng thái thường.
+- `DroidAvatar` xuất qua `@ccna/agent-ui/avatar`. Dùng droid của
+  [bot-avatars](https://libraries.dev/bots), pin0.2.2/MIT/React>=18; dự án React18.3.1.
+  Có idle/working thật trên canvas, dừng khi giảm chuyển động, document hidden,
+  không trong viewport hoặc host báo invisible. Tin nhắn cũ dùng avatar tĩnh.
+  Không đưa code agent vào frontend; bridge ứng dụng tiếp tục dùng package entry.
+- `package.json` browser và lockfile thêm đúng dependency trên; checker allowlist
+  thêm `bot-avatars`, vẫn chặn Node/backend/frontend implementation.
+- UI QA dùng response fixture đúng contract để ép RUNNING→COMPLETED và503. Đã đo
+  canvas idle/working thay đổi, hidden/reduced-motion đóng băng; hoàn tất khi đóng
+  sidebar cập nhật header; mở lại không tải lại capabilities hoặc mất bản nháp.
+  NEXT_STEP/DIAGNOSE/EXPLAIN_CONCEPT giữ validation/API/state đang xử lý hiện có.
+- 14 suite/110 test frontend đạt, có test activity callback sending→completed/lỗi
+  khi embedded bị ẩn, draft/controller giữ nguyên, terminal/probe/replay regression.
+  ESLint/format/boundaries và CI production build đạt; không gọi provider hoặc DB.
+
+Ảnh, số đo desktop/mobile, giới hạn kiểm chứng và danh sách file:
+[báo cáo workspace](../../ui-ux/lab-workspace.md).
+
+## Bản triển khai ban đầu — 28/10/2026
+
 Ngày28/10/2026. Trạng thái: hoàn thành triển khai và kiểm local/fake; chưa mở
 provider/cohort hoặc nghiệm thu pilot. UX-01 làm trước, xem
 [wireframe/copy/walkthrough](UX-01-assistant-design.md).

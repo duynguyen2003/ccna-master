@@ -1,0 +1,174 @@
+{
+  "date": "2026-11-15",
+  "environment": "Local Chromium, isolated context, auth/API fixtures. Engine EIGRP01 generates the actual packet traces. No database writes or real AI provider calls.",
+  "viewports": {
+    "desktop": {
+      "width": 1920,
+      "height": 900,
+      "stage": 255,
+      "terminal": 264,
+      "trace": 200,
+      "overflow": false
+    },
+    "laptop": {
+      "closed": {
+        "stage": 235.71250915527344,
+        "terminal": 280.6875,
+        "trace": 79.5999984741211,
+        "overflow": false
+      },
+      "quick": {
+        "stage": 190.40000915527344,
+        "terminal": 226,
+        "trace": 179.60000610351562,
+        "overflow": false
+      },
+      "detail": {
+        "stage": 254.71250915527344,
+        "terminal": 299.6875,
+        "trace": 41.60000228881836,
+        "overflow": false
+      },
+      "resize": {
+        "stage": 190.40000915527344,
+        "terminal": 364,
+        "trace": 41.60000228881836,
+        "overflow": false
+      },
+      "dark": "dark"
+    },
+    "tablet": {
+      "event": "Sự kiện 9: Chuyển frame",
+      "overflow": false,
+      "stage": 190,
+      "terminal": 226,
+      "actors": [
+        "R2",
+        "R3"
+      ]
+    },
+    "mobile": [
+      {
+        "width": 390,
+        "height": 844,
+        "overflow": false,
+        "stage": 358.3000183105469,
+        "traceBottom": 844.0000305175781,
+        "reachable": true,
+        "cut": []
+      },
+      {
+        "width": 320,
+        "height": 740,
+        "overflow": false,
+        "stage": 245.5,
+        "traceBottom": 740,
+        "reachable": true,
+        "cut": []
+      },
+      {
+        "width": 390,
+        "height": 667,
+        "overflow": false,
+        "stage": 214.72500610351562,
+        "traceBottom": 667.2000122070312,
+        "reachable": true,
+        "cut": []
+      },
+      {
+        "width": 390,
+        "height": 600,
+        "overflow": false,
+        "stage": 200,
+        "traceBottom": 645.7000122070312,
+        "reachable": true,
+        "cut": []
+      }
+    ]
+  },
+  "trace": {
+    "local": {
+      "detail": "Sự kiện 2: Đã nhận phản hồi",
+      "selected": "Sự kiện 2: Đã nhận phản hồi",
+      "source": "R1 (192.1.12.1) → 192.1.12.1\nICMP\nThành công\n2 sự kiện",
+      "actors": [
+        "R1"
+      ],
+      "draftKept": true
+    },
+    "multi": {
+      "events": 32,
+      "issues": []
+    },
+    "playback": {
+      "keptPlaying": true,
+      "keptEvent": "Sự kiện 9: Chuyển frame",
+      "frames": 894,
+      "eventsSeen": 32,
+      "cut": 0,
+      "end": "32/32",
+      "replay": "1/32"
+    }
+  },
+  "panels": {
+    "probeFocus": true,
+    "expandedTerminal": {
+      "x": 0.800000011920929,
+      "y": 508.8000183105469,
+      "width": 1036.875048816204,
+      "height": 226.39999389648438
+    },
+    "history": {
+      "focused": true,
+      "box": {
+        "x": 1050.4749755859375,
+        "y": 262.1000061035156,
+        "width": 303.125,
+        "height": 36,
+        "top": 262.1000061035156,
+        "right": 1353.5999755859375,
+        "bottom": 298.1000061035156,
+        "left": 1050.4749755859375
+      }
+    },
+    "historyBack": true
+  },
+  "avatar": {
+    "idleAnimated": true,
+    "workingAnimated": true,
+    "closedFrozen": true,
+    "closedWorking": "working",
+    "completeState": "default",
+    "reducedFrozen": true,
+    "reducedPaused": "true",
+    "messageAvatars": 1,
+    "error": {
+      "state": "default",
+      "alert": "Trợ lý đang bận. Bạn vẫn có thể thực hành."
+    }
+  },
+  "mobileAi": {
+    "draftKept": "Tôi cần kiểm tra đường từ R1 tới R4",
+    "completed": "default",
+    "messageAvatars": 1,
+    "input": {
+      "x": 20.80000114440918,
+      "y": 712.7999877929688,
+      "width": 348.80000495910645,
+      "height": 26
+    }
+  },
+  "errors": [],
+  "verification": {
+    "frontendSuites": 14,
+    "frontendTests": 110,
+    "productionBuild": "CI=true compiled successfully",
+    "legacySingleDevice": "Terminal remains available without a topology (regression test).",
+    "lint": "pass",
+    "format": "pass",
+    "boundaries": "pass",
+    "networkArtwork": "16 variants verified",
+    "icons": "129 exports verified",
+    "catalog": "39 lessons / 231 stages / 694 events verified"
+  }
+}

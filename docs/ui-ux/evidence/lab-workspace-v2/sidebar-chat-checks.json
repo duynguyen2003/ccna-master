@@ -1,0 +1,349 @@
+{
+  "date": "2026-11-15",
+  "environment": "Local Chromium with isolated auth/API fixtures, no real database/provider calls",
+  "before": {
+    "sidebar": {
+      "x": 1037.675048828125,
+      "y": 51.60000228881836,
+      "width": 327.9250183105469,
+      "height": 715.6000366210938,
+      "top": 51.60000228881836,
+      "right": 1365.6000671386719,
+      "bottom": 767.2000389099121,
+      "left": 1037.675048828125
+    },
+    "topologyHead": {
+      "x": 0.800000011920929,
+      "y": 51.60000228881836,
+      "width": 1036.875,
+      "height": 42.79999923706055,
+      "top": 51.60000228881836,
+      "right": 1037.675000011921,
+      "bottom": 94.4000015258789,
+      "left": 0.800000011920929
+    },
+    "sideHead": {
+      "x": 1038.4749755859375,
+      "y": 51.60000228881836,
+      "width": 327.125,
+      "height": 54.79999923706055,
+      "top": 51.60000228881836,
+      "right": 1365.5999755859375,
+      "bottom": 106.4000015258789,
+      "left": 1038.4749755859375
+    },
+    "bar": {
+      "x": 1045.4749755859375,
+      "y": 56.60000228881836,
+      "width": 279.125,
+      "height": 44,
+      "top": 56.60000228881836,
+      "right": 1324.5999755859375,
+      "bottom": 100.60000228881836,
+      "left": 1045.4749755859375
+    },
+    "buttons": [
+      {
+        "text": "Mục tiêu 22/22",
+        "rect": {
+          "x": 1048.4749755859375,
+          "y": 63.60000228881836,
+          "width": 114.4749984741211,
+          "height": 30,
+          "top": 63.60000228881836,
+          "right": 1162.9499740600586,
+          "bottom": 93.60000228881836,
+          "left": 1048.4749755859375
+        }
+      },
+      {
+        "text": " Trợ lý AI",
+        "rect": {
+          "x": 1165.9500732421875,
+          "y": 59.60000228881836,
+          "width": 103.6624984741211,
+          "height": 38,
+          "top": 59.60000228881836,
+          "right": 1269.6125717163086,
+          "bottom": 97.60000228881836,
+          "left": 1165.9500732421875
+        }
+      }
+    ],
+    "background": "rgb(238, 243, 248)",
+    "lastButton": 1269.6125717163086,
+    "flex": "1 1 0%",
+    "chatWidth": 327.125
+  },
+  "after": {
+    "sidebar": {
+      "x": 1037.675048828125,
+      "y": 51.60000228881836,
+      "width": 327.9250183105469,
+      "height": 715.6000366210938,
+      "top": 51.60000228881836,
+      "right": 1365.6000671386719,
+      "bottom": 767.2000389099121,
+      "left": 1037.675048828125
+    },
+    "topologyHead": {
+      "x": 0.800000011920929,
+      "y": 51.60000228881836,
+      "width": 1036.875,
+      "height": 44,
+      "top": 51.60000228881836,
+      "right": 1037.675000011921,
+      "bottom": 95.60000228881836,
+      "left": 0.800000011920929
+    },
+    "sideHead": {
+      "x": 1038.4749755859375,
+      "y": 51.60000228881836,
+      "width": 327.125,
+      "height": 44,
+      "top": 51.60000228881836,
+      "right": 1365.5999755859375,
+      "bottom": 95.60000228881836,
+      "left": 1038.4749755859375
+    },
+    "bar": {
+      "x": 1046.4749755859375,
+      "y": 55.20000076293945,
+      "width": 207.4375,
+      "height": 36,
+      "top": 55.20000076293945,
+      "right": 1253.9124755859375,
+      "bottom": 91.20000076293945,
+      "left": 1046.4749755859375
+    },
+    "buttons": [
+      {
+        "text": "Mục tiêu 22/22",
+        "rect": {
+          "x": 1048.4749755859375,
+          "y": 57.20000076293945,
+          "width": 106.30000305175781,
+          "height": 32,
+          "top": 57.20000076293945,
+          "right": 1154.7749786376953,
+          "bottom": 89.20000076293945,
+          "left": 1048.4749755859375
+        }
+      },
+      {
+        "text": " Trợ lý AI",
+        "rect": {
+          "x": 1156.7750244140625,
+          "y": 57.20000076293945,
+          "width": 95.13750457763672,
+          "height": 32,
+          "top": 57.20000076293945,
+          "right": 1251.9125289916992,
+          "bottom": 89.20000076293945,
+          "left": 1156.7750244140625
+        }
+      }
+    ],
+    "background": "rgba(0, 0, 0, 0)",
+    "lastButton": 1251.9125289916992,
+    "pill": {
+      "x": 1048.4749755859375,
+      "y": 57.20000076293945,
+      "width": 106,
+      "height": 32,
+      "top": 57.20000076293945,
+      "right": 1154.4749755859375,
+      "bottom": 89.20000076293945,
+      "left": 1048.4749755859375
+    }
+  },
+  "chat": {
+    "x": 929.1625366210938,
+    "y": 95.5999984741211,
+    "width": 436.43743896484375,
+    "height": 671.6000137329102
+  },
+  "history": {
+    "header": 44,
+    "topology": 44,
+    "scroll": 248,
+    "width": 248,
+    "countClip": "inset(50%)",
+    "active": " Lịch sử"
+  },
+  "detail": {
+    "sidebar": 546.5499877929688,
+    "head": 44,
+    "barOverflow": false,
+    "pill": {
+      "x": 996.8500366210938,
+      "y": 57.20000076293945,
+      "width": 55,
+      "height": 32,
+      "top": 57.20000076293945,
+      "right": 1051.8500366210938,
+      "bottom": 89.20000076293945,
+      "left": 996.8500366210938
+    },
+    "event": "Sự kiện 6: Chọn đường đi"
+  },
+  "viewports": [
+    {
+      "width": 1920,
+      "height": 900,
+      "sidebar": 480,
+      "bar": 208.1374969482422,
+      "barOverflow": false,
+      "headerDelta": 0,
+      "buttonHeights": [
+        32,
+        32
+      ],
+      "terminal": 233.60000610351562,
+      "inputBottom": 792,
+      "overflow": false,
+      "deviceCuts": 0
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "sidebar": 437.2375183105469,
+      "bar": 208.1374969482422,
+      "barOverflow": false,
+      "headerDelta": 0,
+      "buttonHeights": [
+        32,
+        32
+      ],
+      "terminal": 200.08750915527344,
+      "inputBottom": 660,
+      "overflow": false,
+      "deviceCuts": 0
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "sidebar": 380,
+      "bar": 208.1374969482422,
+      "barOverflow": false,
+      "headerDelta": 0,
+      "buttonHeights": [
+        32,
+        32
+      ],
+      "terminal": 200.28750610351562,
+      "inputBottom": 660,
+      "overflow": false,
+      "deviceCuts": 0
+    },
+    {
+      "width": 902,
+      "height": 768,
+      "sidebar": 380,
+      "bar": 208.1374969482422,
+      "barOverflow": false,
+      "headerDelta": 0,
+      "buttonHeights": [
+        32,
+        32
+      ],
+      "terminal": 200,
+      "inputBottom": 660.7999877929688,
+      "overflow": false,
+      "deviceCuts": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "sidebar": 390.3999938964844,
+      "bar": 208.1374969482422,
+      "barOverflow": false,
+      "headerDelta": null,
+      "buttonHeights": [
+        44,
+        44
+      ],
+      "terminal": null,
+      "inputBottom": 738.7999877929688,
+      "overflow": false,
+      "deviceCuts": 0
+    },
+    {
+      "width": 320,
+      "height": 740,
+      "sidebar": 320,
+      "bar": 208.1374969482422,
+      "barOverflow": false,
+      "headerDelta": null,
+      "buttonHeights": [
+        44,
+        44
+      ],
+      "terminal": null,
+      "inputBottom": 634.7999877929688,
+      "overflow": false,
+      "deviceCuts": 0
+    }
+  ],
+  "preservation": {
+    "terminal": true,
+    "ai": "Giữ bản nháp khi đổi tab.",
+    "event": "Sự kiện 9: Chuyển frame"
+  },
+  "resizeState": [
+    {
+      "label": "selected 9",
+      "event": "9/32",
+      "play": "Phát"
+    },
+    {
+      "label": "1920",
+      "event": "9/32",
+      "play": "Phát"
+    },
+    {
+      "label": "1366",
+      "event": "9/32",
+      "play": "Phát"
+    },
+    {
+      "label": "1024",
+      "event": "9/32",
+      "play": "Phát"
+    },
+    {
+      "label": "mobile network",
+      "event": "9/32",
+      "play": "Phát"
+    },
+    {
+      "label": "back desktop AI",
+      "event": "9/32",
+      "play": "Phát"
+    }
+  ],
+  "motion": {
+    "intermediateFrames": 16,
+    "pill": {
+      "active": " Trợ lý AI",
+      "leftError": 0.47509765625,
+      "widthError": 0.33750152587890625,
+      "transition": "0.4s, 0.4s"
+    }
+  },
+  "dark": {
+    "theme": "dark",
+    "barBg": "rgba(0, 0, 0, 0)",
+    "active": "rgb(56, 189, 248)",
+    "pillBg": "rgb(12, 50, 75)"
+  },
+  "apiPosts": 0,
+  "errors": [],
+  "verification": {
+    "suites": 3,
+    "tests": 59,
+    "eslint": "pass",
+    "prettier": "pass",
+    "build": "CI=true compiled successfully"
+  }
+}

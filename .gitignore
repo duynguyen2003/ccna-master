@@ -54,3 +54,8 @@ pnpm-debug.log*
 **/.pytest_cache/
 **/.ruff_cache/
 *.pyc
+docs/ui-ux/admin-ui-audit.md
+docs/ui-ux/protocol-workspace.md
+
+# Draft UI QA artifacts; reviewed evidence is tracked explicitly
+/docs/ui-ux/evidence/
