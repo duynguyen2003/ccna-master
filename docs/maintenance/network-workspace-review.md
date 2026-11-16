@@ -70,6 +70,9 @@ Artifact Docker chỉ upload file JSON đã lọc; bật rõ tùy chọn cho đ�
 theo [hướng dẫn upload artifact](https://github.com/actions/upload-artifact#uploading-hidden-files).
 Lỗi không tìm thấy artifact sẽ làm bước upload thất bại.
 
+Job PostgreSQL integration cố định runner `ubuntu-24.04`, có
+[gói client 16 trong kho Ubuntu Noble](https://packages.ubuntu.com/noble/postgresql-client-16),
+để việc đổi nền của `ubuntu-latest` không làm mất bộ công cụ cần dùng.
 CI backup/restore dùng `postgresql-client-16` và đường dẫn `PG_DUMP_BIN` /
 `PG_RESTORE_BIN` cụ thể để khớp server test PostgreSQL 16. Client mặc định mới hơn
 trên runner đã sinh `SET transaction_timeout = 0` mà server 16 không nhận. Cố định
