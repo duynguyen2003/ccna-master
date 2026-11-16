@@ -1,0 +1,110 @@
+{
+  "recordedAt": "2026-11-16",
+  "snapshotScope": "Runtime and publication state audited before the source was prepared for a pull request. This snapshot does not claim a later production deployment.",
+  "task": "AI Lab production enablement for student accounts",
+  "currentApplicationAudit": {
+    "environment": "admin-test",
+    "policyVersion": 2,
+    "adminAccess": true,
+    "studentUserAllowlistCount": 0,
+    "labAllowlistCount": 0,
+    "productionPolicyPresent": false,
+    "studentRole": "STUDENT",
+    "activeStudents": 6,
+    "auditMode": "read-only transaction; no messages or personal progress read",
+    "applicationConfigChanged": false,
+    "applicationPolicyChanged": false
+  },
+  "userDecisions": {
+    "deployment": "Vercel frontend + Render backend",
+    "geminiDailyUsd": 0.05,
+    "geminiMonthlyUsd": 0.1,
+    "decision": "User chose Vercel + Render and accepted the proposed existing budget caps."
+  },
+  "publicChecks": {
+    "frontend": {
+      "url": "https://ccna-master.vercel.app/",
+      "status": 200
+    },
+    "backend": {
+      "url": "https://ccna-master.onrender.com/api/health/ready",
+      "status": 200
+    },
+    "providerMetadata": {
+      "status": 200,
+      "configuredModel": "gemini-3.5-flash-lite",
+      "generationSupported": true,
+      "generateContentCalls": 0
+    },
+    "pricingSource": "https://aistudio.google.com/docs/pricing#gemini-3.5-flash-lite",
+    "observedPricingPerMillionUsd": {
+      "input": 0.3,
+      "outputIncludingThinking": 2.5
+    }
+  },
+  "validation": {
+    "docker": {
+      "apiPort": 10000,
+      "health": "healthy",
+      "api": 200,
+      "python": 200,
+      "processes": {
+        "api": true,
+        "python": true,
+        "worker": true,
+        "sweeper": "inline"
+      },
+      "policy": null,
+      "productionRuntimeEnabled": true,
+      "providerCalls": 0,
+      "memoryAtIdle": "351.5MiB / 7.426GiB"
+    },
+    "nodePassed": 274,
+    "pythonPassed": 322,
+    "postgresPassed": 1,
+    "head": "42a447f0db916e94b7704259d6ad32380d25644f",
+    "branch": "developer",
+    "backendImage": "sha256:ae887819396074b771777cde36b25af72a29edeee57c122c8fec1fcec5d4590b",
+    "frontendImage": "sha256:a9457ae6744ab445225657477cc3676d3072600767f42ca434d809692ac09352",
+    "remainingQaContainers": 0,
+    "eslint": "passed",
+    "prettier": "passed",
+    "ruff": "passed",
+    "contracts": "18 schemas verified",
+    "fixtures": "3 datasets / 24 cases verified",
+    "boundaries": {
+      "importsAndAssets": 2310,
+      "sourceFiles": 542
+    },
+    "composeConfig": "passed",
+    "postgres": "Owned new PostgreSQL17 loopback cluster with synthetic data; permission, transaction, idempotence, concurrent rollout, quota preservation and rollback passed; cluster stopped and removed.",
+    "dockerScope": "PostgreSQL16 + production image at PORT10000; no policy admission enabled and no generation calls.",
+    "idleMemoryBeforeMiB": 638,
+    "idleMemoryAfterMiB": 351.5
+  },
+  "implementation": {
+    "mode": "production-gemini",
+    "provider": "gemini-production-v1",
+    "studentPolicy": "Current DB STUDENT role plus selected published lab IDs; normal account/session/attempt/learning access still enforced.",
+    "startup": "API + direct Python + worker with inline sweeper; no extra Node Python launcher or standalone sweeper in production.",
+    "rollout": "Read-only by default; reviewed plan and --apply required. ADMIN actor and active published labs checked. Existing spend/reservations/counters preserved.",
+    "releaseBinding": "Render commit SHA or explicit SHA; conflicting values rejected.",
+    "callbacks": "Loopback only; production service key identity retained for late receipts after dispatch disabled.",
+    "ci": "Production Docker build/smoke gate added before Vercel deploy; not yet run remotely for these uncommitted changes."
+  },
+  "publication": {
+    "committed": false,
+    "pushed": false,
+    "deployed": false,
+    "liveStudentAccessEnabled": false,
+    "renderManagementConnected": false,
+    "renderPlugin": "Available but not installed or connected; suggested to finish deployment management.",
+    "reason": "Code and local/container verification complete. Render runtime/secrets/release and reviewed production policy have not been applied."
+  },
+  "limits": [
+    "Readiness and idle RAM do not prove capacity under classroom load.",
+    "No real student account or production Gemini generation smoke performed.",
+    "Application DB/production host were not modified; current users remain governed by admin-test policy.",
+    "Latest observed GitHub main CI success applies to existing main, not this working-tree change."
+  ]
+}

@@ -1,0 +1,1248 @@
+{
+  "id": "ssh",
+  "name": "SSH",
+  "title": "Secure Remote Login",
+  "layer": 7,
+  "nodes": [
+    "client",
+    "router",
+    "internet",
+    "web"
+  ],
+  "latency": {
+    "client-web": 0.015
+  },
+  "labels": {
+    "web": [
+      "server.example.com",
+      "203.0.113.22"
+    ]
+  },
+  "legend": [
+    [
+      "green",
+      "TCP"
+    ],
+    [
+      "slate",
+      "Plain setup"
+    ],
+    [
+      "teal",
+      "Key exchange"
+    ],
+    [
+      "amber",
+      "From laptop"
+    ],
+    [
+      "violet",
+      "From server"
+    ],
+    [
+      null,
+      "Some packets not shown"
+    ]
+  ],
+  "overview": {
+    "full": "Secure Shell",
+    "description": "SSH gives you an encrypted, authenticated connection to another computer, to run commands on it, copy files (SFTP, scp) or carry other connections. The server proves who it is with a host key; you prove who you are with a key pair or a password.",
+    "facts": [
+      [
+        "Layer",
+        "Application (Layer 7)"
+      ],
+      [
+        "Port",
+        "22"
+      ],
+      [
+        "Transport",
+        "TCP"
+      ],
+      [
+        "Server proves",
+        "Host key (known_hosts)"
+      ],
+      [
+        "You prove",
+        "Key pair or password"
+      ],
+      [
+        "Defined In",
+        "RFC 4251 – 4254"
+      ]
+    ]
+  },
+  "outro": {
+    "title": "Logged in securely",
+    "desc": "Encrypted from the key exchange on",
+    "text": "The two sides agreed on algorithms, built shared keys with a post-quantum hybrid exchange, and the server proved its identity with its host key. Alice proved hers by signing with a private key that never left the laptop, then typed a command, one packet per key.",
+    "facts": [
+      [
+        "Key exchange",
+        "sntrup761 + X25519"
+      ],
+      [
+        "Cipher",
+        "ChaCha20-Poly1305"
+      ],
+      [
+        "Login",
+        "Ed25519 key, no password"
+      ],
+      [
+        "Port",
+        "22"
+      ]
+    ]
+  },
+  "start": {
+    "nodes": [
+      "client"
+    ],
+    "frame": "client"
+  },
+  "steps": [
+    {
+      "title": "Say Hello",
+      "desc": "Versions, in plain text",
+      "detail": "Alice runs “ssh alice@server.example.com”. After the TCP handshake on port 22, each side sends one line of plain text naming the SSH protocol version (2.0) and its software. Everything else in SSH is binary.",
+      "facts": [
+        [
+          "Laptop",
+          "OpenSSH_for_Windows_9.5"
+        ],
+        [
+          "Server",
+          "OpenSSH_9.6p1 Ubuntu"
+        ],
+        [
+          "Protocol",
+          "SSH-2.0"
+        ]
+      ],
+      "events": [
+        {
+          "type": "show",
+          "nodes": [
+            "router",
+            "internet",
+            "web"
+          ],
+          "frame": "path"
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "green",
+          "label": "SYN",
+          "payload": [],
+          "row": {
+            "time": "0.000s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.22",
+            "proto": "TCP",
+            "info": "53210 → 22 [SYN] Seq=0",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 53210,
+                "dport": 22,
+                "flags": "S"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "green",
+          "label": "SYN-ACK",
+          "payload": [],
+          "row": {
+            "time": "0.015s",
+            "src": "203.0.113.22",
+            "dst": "192.168.1.10",
+            "proto": "TCP",
+            "info": "22 → 53210 [SYN, ACK] Seq=0 Ack=1",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 22,
+                "dport": 53210,
+                "flags": "SA"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "green",
+          "label": "ACK",
+          "payload": [],
+          "row": {
+            "time": "0.030s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.22",
+            "proto": "TCP",
+            "info": "53210 → 22 [ACK] Seq=1 Ack=1",
+            "len": "60 B",
+            "wire": {
+              "tcp": {
+                "sport": 53210,
+                "dport": 22,
+                "flags": "A"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "slate",
+          "label": "VERSION",
+          "payload": [
+            "SSH-2.0-",
+            "OpenSSH_for_Windows_9.5"
+          ],
+          "row": {
+            "time": "0.030s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.22",
+            "proto": "SSH",
+            "info": "Client: SSH-2.0-OpenSSH_for_Windows_9.5",
+            "len": "87 B",
+            "wire": {
+              "tcp": {
+                "sport": 53210,
+                "dport": 22,
+                "flags": "PA",
+                "data": {
+                  "text": [
+                    "SSH-2.0-OpenSSH_for_Windows_9.5"
+                  ],
+                  "name": "SSH"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "slate",
+          "label": "VERSION",
+          "payload": [
+            "SSH-2.0-OpenSSH_9.6p1",
+            "Ubuntu-3ubuntu13.5"
+          ],
+          "row": {
+            "time": "0.045s",
+            "src": "203.0.113.22",
+            "dst": "192.168.1.10",
+            "proto": "SSH",
+            "info": "Server: SSH-2.0-OpenSSH_9.6p1 Ubuntu-3ubuntu13.5",
+            "len": "96 B",
+            "wire": {
+              "tcp": {
+                "sport": 22,
+                "dport": 53210,
+                "flags": "PA",
+                "data": {
+                  "text": [
+                    "SSH-2.0-OpenSSH_9.6p1 Ubuntu-3ubuntu13.5"
+                  ],
+                  "name": "SSH"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Agree on Algorithms",
+      "desc": "KEXINIT lists, first match wins",
+      "detail": "Each side sends a KEXINIT listing every algorithm it supports, in order of preference, for key exchange, host keys, encryption, integrity and compression. In each category the first algorithm on the laptop’s list that the server also supports is chosen.",
+      "facts": [
+        [
+          "Key exchange",
+          "sntrup761x25519-sha512"
+        ],
+        [
+          "Host key",
+          "ssh-ed25519"
+        ],
+        [
+          "Cipher",
+          "chacha20-poly1305"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "slate",
+          "label": "KEXINIT",
+          "payload": [
+            "server’s algorithm lists",
+            "in order of preference"
+          ],
+          "row": {
+            "time": "0.045s",
+            "src": "203.0.113.22",
+            "dst": "192.168.1.10",
+            "proto": "SSH",
+            "info": "Server: Key Exchange Init",
+            "len": "1174 B",
+            "wire": {
+              "tcp": {
+                "sport": 22,
+                "dport": 53210,
+                "flags": "PA",
+                "data": {
+                  "ssh": {
+                    "msg": "kexinit",
+                    "kex": [
+                      "sntrup761x25519-sha512@openssh.com",
+                      "curve25519-sha256",
+                      "curve25519-sha256@libssh.org",
+                      "ecdh-sha2-nistp256",
+                      "ecdh-sha2-nistp384",
+                      "ecdh-sha2-nistp521",
+                      "diffie-hellman-group-exchange-sha256",
+                      "diffie-hellman-group16-sha512",
+                      "diffie-hellman-group18-sha512",
+                      "diffie-hellman-group14-sha256",
+                      "ext-info-s",
+                      "kex-strict-s-v00@openssh.com"
+                    ],
+                    "hostkeys": [
+                      "rsa-sha2-512",
+                      "rsa-sha2-256",
+                      "ecdsa-sha2-nistp256",
+                      "ssh-ed25519"
+                    ],
+                    "ciphers": [
+                      "chacha20-poly1305@openssh.com",
+                      "aes128-ctr",
+                      "aes192-ctr",
+                      "aes256-ctr",
+                      "aes128-gcm@openssh.com",
+                      "aes256-gcm@openssh.com"
+                    ],
+                    "macs": [
+                      "umac-64-etm@openssh.com",
+                      "umac-128-etm@openssh.com",
+                      "hmac-sha2-256-etm@openssh.com",
+                      "hmac-sha2-512-etm@openssh.com",
+                      "hmac-sha1-etm@openssh.com",
+                      "umac-64@openssh.com",
+                      "umac-128@openssh.com",
+                      "hmac-sha2-256",
+                      "hmac-sha2-512",
+                      "hmac-sha1"
+                    ],
+                    "compression": [
+                      "none",
+                      "zlib@openssh.com"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "slate",
+          "label": "KEXINIT",
+          "payload": [
+            "laptop’s algorithm lists",
+            "in order of preference"
+          ],
+          "row": {
+            "time": "0.060s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.22",
+            "proto": "SSH",
+            "info": "Client: Key Exchange Init, 2 segments",
+            "len": "1.6 KB",
+            "wire": {
+              "tcp": {
+                "sport": 53210,
+                "dport": 22,
+                "flags": "PA",
+                "data": {
+                  "ssh": {
+                    "msg": "kexinit",
+                    "kex": [
+                      "sntrup761x25519-sha512@openssh.com",
+                      "curve25519-sha256",
+                      "curve25519-sha256@libssh.org",
+                      "ecdh-sha2-nistp256",
+                      "ecdh-sha2-nistp384",
+                      "ecdh-sha2-nistp521",
+                      "diffie-hellman-group-exchange-sha256",
+                      "diffie-hellman-group16-sha512",
+                      "diffie-hellman-group18-sha512",
+                      "diffie-hellman-group14-sha256",
+                      "ext-info-c",
+                      "kex-strict-c-v00@openssh.com"
+                    ],
+                    "hostkeys": [
+                      "ssh-ed25519-cert-v01@openssh.com",
+                      "ecdsa-sha2-nistp256-cert-v01@openssh.com",
+                      "ecdsa-sha2-nistp384-cert-v01@openssh.com",
+                      "ecdsa-sha2-nistp521-cert-v01@openssh.com",
+                      "sk-ssh-ed25519-cert-v01@openssh.com",
+                      "sk-ecdsa-sha2-nistp256-cert-v01@openssh.com",
+                      "rsa-sha2-512-cert-v01@openssh.com",
+                      "rsa-sha2-256-cert-v01@openssh.com",
+                      "ssh-ed25519",
+                      "ecdsa-sha2-nistp256",
+                      "ecdsa-sha2-nistp384",
+                      "ecdsa-sha2-nistp521",
+                      "sk-ssh-ed25519@openssh.com",
+                      "sk-ecdsa-sha2-nistp256@openssh.com",
+                      "rsa-sha2-512",
+                      "rsa-sha2-256"
+                    ],
+                    "ciphers": [
+                      "chacha20-poly1305@openssh.com",
+                      "aes128-ctr",
+                      "aes192-ctr",
+                      "aes256-ctr",
+                      "aes128-gcm@openssh.com",
+                      "aes256-gcm@openssh.com"
+                    ],
+                    "macs": [
+                      "umac-64-etm@openssh.com",
+                      "umac-128-etm@openssh.com",
+                      "hmac-sha2-256-etm@openssh.com",
+                      "hmac-sha2-512-etm@openssh.com",
+                      "hmac-sha1-etm@openssh.com",
+                      "umac-64@openssh.com",
+                      "umac-128@openssh.com",
+                      "hmac-sha2-256",
+                      "hmac-sha2-512",
+                      "hmac-sha1"
+                    ],
+                    "compression": [
+                      "none",
+                      "zlib@openssh.com"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Key Exchange",
+      "desc": "Shared keys, and a host key check",
+      "detail": "The laptop sends its half of a hybrid exchange: a Streamlined NTRU Prime key, chosen to resist future quantum computers, plus an X25519 key. The server answers with its half, its host key and a signature over the exchange. NEWKEYS switches encryption on.",
+      "facts": [
+        [
+          "Hybrid",
+          "sntrup761 + X25519"
+        ],
+        [
+          "Host key",
+          "Matches known_hosts"
+        ],
+        [
+          "First visit",
+          "ssh asks you to confirm"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "teal",
+          "label": "KEX INIT",
+          "payload": [
+            "sntrup761 + X25519",
+            "public keys"
+          ],
+          "row": {
+            "time": "0.060s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.22",
+            "proto": "SSH",
+            "info": "Client: KEX_ECDH_INIT (sntrup761x25519 public keys)",
+            "len": "1262 B",
+            "wire": {
+              "tcp": {
+                "sport": 53210,
+                "dport": 22,
+                "flags": "PA",
+                "data": {
+                  "ssh": {
+                    "msg": "ecdh_init",
+                    "q": 1190
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "teal",
+          "label": "KEX REPLY",
+          "payload": [
+            "its half, its host key",
+            "and a signature"
+          ],
+          "row": {
+            "time": "0.075s",
+            "src": "203.0.113.22",
+            "dst": "192.168.1.10",
+            "proto": "SSH",
+            "info": "Server: KEX_ECDH_REPLY (host key, its half, signature)",
+            "len": "1286 B",
+            "wire": {
+              "tcp": {
+                "sport": 22,
+                "dport": 53210,
+                "flags": "PA",
+                "data": {
+                  "ssh": {
+                    "msg": "ecdh_reply",
+                    "ks": 51,
+                    "q": 1071,
+                    "sig": 83
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "teal",
+          "label": "NEWKEYS",
+          "payload": [],
+          "row": {
+            "time": "0.075s",
+            "src": "203.0.113.22",
+            "dst": "192.168.1.10",
+            "proto": "SSH",
+            "info": "Server: New Keys",
+            "len": "70 B",
+            "wire": {
+              "tcp": {
+                "sport": 22,
+                "dport": 53210,
+                "flags": "PA",
+                "data": {
+                  "ssh": {
+                    "msg": "newkeys"
+                  }
+                }
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "note",
+          "at": "client",
+          "text": "HOST KEY MATCHES KNOWN_HOSTS",
+          "tone": "green"
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "teal",
+          "label": "NEWKEYS",
+          "payload": [],
+          "row": {
+            "time": "0.090s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.22",
+            "proto": "SSH",
+            "info": "Client: New Keys",
+            "len": "70 B",
+            "wire": {
+              "tcp": {
+                "sport": 53210,
+                "dport": 22,
+                "flags": "PA",
+                "data": {
+                  "ssh": {
+                    "msg": "newkeys"
+                  }
+                }
+              }
+            }
+          },
+          "quick": true
+        }
+      ]
+    },
+    {
+      "title": "Log In with a Key",
+      "desc": "Sign, don’t send a secret",
+      "detail": "The server lists the login methods it accepts. The laptop offers Alice’s public key, and the server says it would accept it. The laptop then signs this session with the private key, which never leaves the laptop. The server checks the signature against authorized_keys.",
+      "facts": [
+        [
+          "Methods",
+          "publickey, password"
+        ],
+        [
+          "Key",
+          "Ed25519, private stays here"
+        ],
+        [
+          "Checked with",
+          "~/.ssh/authorized_keys"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "amber",
+          "label": "SERVICE REQUEST",
+          "payload": [],
+          "row": {
+            "time": "0.090s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.22",
+            "proto": "SSH",
+            "info": "Encrypted (len=44): service request, ssh-userauth",
+            "len": "98 B",
+            "wire": {
+              "tcp": {
+                "sport": 53210,
+                "dport": 22,
+                "flags": "PA",
+                "data": {
+                  "ssh": {
+                    "sealed": 44,
+                    "inside": "SSH_MSG_SERVICE_REQUEST (5): “ssh-userauth”"
+                  }
+                }
+              }
+            }
+          },
+          "locked": true,
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "violet",
+          "label": "SERVICE ACCEPT",
+          "payload": [],
+          "row": {
+            "time": "0.105s",
+            "src": "203.0.113.22",
+            "dst": "192.168.1.10",
+            "proto": "SSH",
+            "info": "Encrypted (len=44): service accept",
+            "len": "98 B",
+            "wire": {
+              "tcp": {
+                "sport": 22,
+                "dport": 53210,
+                "flags": "PA",
+                "data": {
+                  "ssh": {
+                    "sealed": 44,
+                    "inside": "SSH_MSG_SERVICE_ACCEPT (6): “ssh-userauth”"
+                  }
+                }
+              }
+            }
+          },
+          "locked": true,
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "amber",
+          "label": "AUTH: NONE",
+          "payload": [],
+          "row": {
+            "time": "0.120s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.22",
+            "proto": "SSH",
+            "info": "Encrypted (len=68): login with method none",
+            "len": "122 B",
+            "wire": {
+              "tcp": {
+                "sport": 53210,
+                "dport": 22,
+                "flags": "PA",
+                "data": {
+                  "ssh": {
+                    "sealed": 68,
+                    "inside": "SSH_MSG_USERAUTH_REQUEST (50): user “alice”, service “ssh-connection”, method “none”"
+                  }
+                }
+              }
+            }
+          },
+          "locked": true,
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "violet",
+          "label": "AUTH FAILURE",
+          "payload": [],
+          "row": {
+            "time": "0.135s",
+            "src": "203.0.113.22",
+            "dst": "192.168.1.10",
+            "proto": "SSH",
+            "info": "Encrypted (len=52): try publickey,password",
+            "len": "106 B",
+            "wire": {
+              "tcp": {
+                "sport": 22,
+                "dport": 53210,
+                "flags": "PA",
+                "data": {
+                  "ssh": {
+                    "sealed": 52,
+                    "inside": "SSH_MSG_USERAUTH_FAILURE (51): methods that can continue: “publickey,password”"
+                  }
+                }
+              }
+            }
+          },
+          "locked": true,
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "amber",
+          "label": "OFFER KEY",
+          "payload": [
+            "alice’s public key",
+            "would you accept it?"
+          ],
+          "row": {
+            "time": "0.150s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.22",
+            "proto": "SSH",
+            "info": "Encrypted (len=140): offer public key",
+            "len": "194 B",
+            "wire": {
+              "tcp": {
+                "sport": 53210,
+                "dport": 22,
+                "flags": "PA",
+                "data": {
+                  "ssh": {
+                    "sealed": 140,
+                    "inside": "SSH_MSG_USERAUTH_REQUEST (50): method “publickey”, no signature, the ssh-ed25519 public key"
+                  }
+                }
+              }
+            }
+          },
+          "locked": true
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "violet",
+          "label": "PK OK",
+          "payload": [
+            "yes, that key",
+            "is in authorized_keys"
+          ],
+          "row": {
+            "time": "0.165s",
+            "src": "203.0.113.22",
+            "dst": "192.168.1.10",
+            "proto": "SSH",
+            "info": "Encrypted (len=100): public key OK",
+            "len": "154 B",
+            "wire": {
+              "tcp": {
+                "sport": 22,
+                "dport": 53210,
+                "flags": "PA",
+                "data": {
+                  "ssh": {
+                    "sealed": 100,
+                    "inside": "SSH_MSG_USERAUTH_PK_OK (60): the same ssh-ed25519 key"
+                  }
+                }
+              }
+            }
+          },
+          "locked": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "amber",
+          "label": "SIGNED",
+          "payload": [
+            "same key, plus a signature",
+            "made with the private key"
+          ],
+          "row": {
+            "time": "0.180s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.22",
+            "proto": "SSH",
+            "info": "Encrypted (len=308): public key + signature",
+            "len": "362 B",
+            "wire": {
+              "tcp": {
+                "sport": 53210,
+                "dport": 22,
+                "flags": "PA",
+                "data": {
+                  "ssh": {
+                    "sealed": 308,
+                    "inside": "SSH_MSG_USERAUTH_REQUEST (50): method “publickey-hostbound-v00@openssh.com”, the key, the server’s host key and a signature"
+                  }
+                }
+              }
+            }
+          },
+          "locked": true
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "violet",
+          "label": "SUCCESS",
+          "payload": [
+            "logged in"
+          ],
+          "row": {
+            "time": "0.195s",
+            "src": "203.0.113.22",
+            "dst": "192.168.1.10",
+            "proto": "SSH",
+            "info": "Encrypted (len=28): login success",
+            "len": "82 B",
+            "wire": {
+              "tcp": {
+                "sport": 22,
+                "dport": 53210,
+                "flags": "PA",
+                "data": {
+                  "ssh": {
+                    "sealed": 28,
+                    "inside": "SSH_MSG_USERAUTH_SUCCESS (52)"
+                  }
+                }
+              }
+            }
+          },
+          "locked": true
+        }
+      ]
+    },
+    {
+      "title": "Open a Session",
+      "desc": "Channels inside one connection",
+      "detail": "One SSH connection can carry many channels: a shell, file transfers, forwarded ports. The laptop opens a session channel, then asks for a terminal and a shell (not shown), and the server sends its welcome text and a prompt.",
+      "facts": [
+        [
+          "Channel",
+          "session"
+        ],
+        [
+          "Then asks for",
+          "A terminal and a shell"
+        ],
+        [
+          "Also possible",
+          "SFTP, port forwarding"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "amber",
+          "label": "CHANNEL OPEN",
+          "payload": [
+            "open a channel:",
+            "session"
+          ],
+          "row": {
+            "time": "0.210s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.22",
+            "proto": "SSH",
+            "info": "Encrypted (len=52): channel open: session",
+            "len": "106 B",
+            "wire": {
+              "tcp": {
+                "sport": 53210,
+                "dport": 22,
+                "flags": "PA",
+                "data": {
+                  "ssh": {
+                    "sealed": 52,
+                    "inside": "SSH_MSG_CHANNEL_OPEN (90): “session”, channel 0, window 2 MB, packets up to 32 KB"
+                  }
+                }
+              }
+            }
+          },
+          "locked": true
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "violet",
+          "label": "CONFIRMED",
+          "payload": [
+            "channel open"
+          ],
+          "row": {
+            "time": "0.225s",
+            "src": "203.0.113.22",
+            "dst": "192.168.1.10",
+            "proto": "SSH",
+            "info": "Encrypted (len=44): channel open confirmed",
+            "len": "98 B",
+            "wire": {
+              "tcp": {
+                "sport": 22,
+                "dport": 53210,
+                "flags": "PA",
+                "data": {
+                  "ssh": {
+                    "sealed": 44,
+                    "inside": "SSH_MSG_CHANNEL_OPEN_CONFIRMATION (91): channel 0 is open"
+                  }
+                }
+              }
+            }
+          },
+          "locked": true
+        }
+      ]
+    },
+    {
+      "title": "Type a Command",
+      "desc": "Every key is a packet",
+      "detail": "Alice types pwd. Each key goes out at once in its own encrypted packet, and the server sends the character back to be shown (the echo). Since 9.5, OpenSSH sends keys on a 20 ms beat and adds decoy packets, so typing rhythm is harder to read from the timing.",
+      "facts": [
+        [
+          "Per key",
+          "1 packet, 90 bytes"
+        ],
+        [
+          "Echo",
+          "Sent back by the server"
+        ],
+        [
+          "Timing",
+          "20 ms beat plus decoys"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "amber",
+          "label": "“p”",
+          "payload": [],
+          "row": {
+            "time": "2.000s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.22",
+            "proto": "SSH",
+            "info": "Encrypted (len=36): keystroke",
+            "len": "90 B",
+            "wire": {
+              "tcp": {
+                "sport": 53210,
+                "dport": 22,
+                "flags": "PA",
+                "data": {
+                  "ssh": {
+                    "sealed": 36,
+                    "inside": "SSH_MSG_CHANNEL_DATA (94), channel 0: 1 byte, “p”"
+                  }
+                }
+              }
+            }
+          },
+          "locked": true,
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "violet",
+          "label": "ECHO",
+          "payload": [],
+          "row": {
+            "time": "2.015s",
+            "src": "203.0.113.22",
+            "dst": "192.168.1.10",
+            "proto": "SSH",
+            "info": "Encrypted (len=36): echo",
+            "len": "90 B",
+            "wire": {
+              "tcp": {
+                "sport": 22,
+                "dport": 53210,
+                "flags": "PA",
+                "data": {
+                  "ssh": {
+                    "sealed": 36,
+                    "inside": "SSH_MSG_CHANNEL_DATA (94), channel 0: 1 byte, “p”, sent back to be shown"
+                  }
+                }
+              }
+            }
+          },
+          "locked": true,
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "amber",
+          "label": "“w”",
+          "payload": [],
+          "row": {
+            "time": "2.140s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.22",
+            "proto": "SSH",
+            "info": "Encrypted (len=36): keystroke",
+            "len": "90 B",
+            "wire": {
+              "tcp": {
+                "sport": 53210,
+                "dport": 22,
+                "flags": "PA",
+                "data": {
+                  "ssh": {
+                    "sealed": 36,
+                    "inside": "SSH_MSG_CHANNEL_DATA (94), channel 0: 1 byte, “w”"
+                  }
+                }
+              }
+            }
+          },
+          "locked": true,
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "violet",
+          "label": "ECHO",
+          "payload": [],
+          "row": {
+            "time": "2.155s",
+            "src": "203.0.113.22",
+            "dst": "192.168.1.10",
+            "proto": "SSH",
+            "info": "Encrypted (len=36): echo",
+            "len": "90 B",
+            "wire": {
+              "tcp": {
+                "sport": 22,
+                "dport": 53210,
+                "flags": "PA",
+                "data": {
+                  "ssh": {
+                    "sealed": 36,
+                    "inside": "SSH_MSG_CHANNEL_DATA (94), channel 0: 1 byte, “w”, sent back to be shown"
+                  }
+                }
+              }
+            }
+          },
+          "locked": true,
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "amber",
+          "label": "“d”",
+          "payload": [],
+          "row": {
+            "time": "2.260s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.22",
+            "proto": "SSH",
+            "info": "Encrypted (len=36): keystroke",
+            "len": "90 B",
+            "wire": {
+              "tcp": {
+                "sport": 53210,
+                "dport": 22,
+                "flags": "PA",
+                "data": {
+                  "ssh": {
+                    "sealed": 36,
+                    "inside": "SSH_MSG_CHANNEL_DATA (94), channel 0: 1 byte, “d”"
+                  }
+                }
+              }
+            }
+          },
+          "locked": true,
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "violet",
+          "label": "ECHO",
+          "payload": [],
+          "row": {
+            "time": "2.275s",
+            "src": "203.0.113.22",
+            "dst": "192.168.1.10",
+            "proto": "SSH",
+            "info": "Encrypted (len=36): echo",
+            "len": "90 B",
+            "wire": {
+              "tcp": {
+                "sport": 22,
+                "dport": 53210,
+                "flags": "PA",
+                "data": {
+                  "ssh": {
+                    "sealed": 36,
+                    "inside": "SSH_MSG_CHANNEL_DATA (94), channel 0: 1 byte, “d”, sent back to be shown"
+                  }
+                }
+              }
+            }
+          },
+          "locked": true,
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "amber",
+          "label": "ENTER",
+          "payload": [
+            "Enter key"
+          ],
+          "row": {
+            "time": "2.420s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.22",
+            "proto": "SSH",
+            "info": "Encrypted (len=36): keystroke (Enter)",
+            "len": "90 B",
+            "wire": {
+              "tcp": {
+                "sport": 53210,
+                "dport": 22,
+                "flags": "PA",
+                "data": {
+                  "ssh": {
+                    "sealed": 36,
+                    "inside": "SSH_MSG_CHANNEL_DATA (94), channel 0: 1 byte, a carriage return (Enter)"
+                  }
+                }
+              }
+            }
+          },
+          "locked": true
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "violet",
+          "label": "OUTPUT",
+          "payload": [
+            "/home/alice",
+            "alice@server:~$"
+          ],
+          "row": {
+            "time": "2.435s",
+            "src": "203.0.113.22",
+            "dst": "192.168.1.10",
+            "proto": "SSH",
+            "info": "Encrypted (len=132): output and a new prompt",
+            "len": "186 B",
+            "wire": {
+              "tcp": {
+                "sport": 22,
+                "dport": 53210,
+                "flags": "PA",
+                "data": {
+                  "ssh": {
+                    "sealed": 132,
+                    "inside": "SSH_MSG_CHANNEL_DATA (94), channel 0: 94 bytes: a new line, the shell’s terminal codes, “/home/alice”, and the coloured prompt"
+                  }
+                }
+              }
+            }
+          },
+          "locked": true
+        },
+        {
+          "type": "note",
+          "at": "client",
+          "text": "EACH KEY IS ITS OWN PACKET",
+          "tone": "navy"
+        }
+      ]
+    }
+  ]
+}

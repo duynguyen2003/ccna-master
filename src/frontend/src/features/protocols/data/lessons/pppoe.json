@@ -1,0 +1,1010 @@
+{
+  "id": "pppoe",
+  "name": "PPPoE",
+  "title": "Broadband Logins",
+  "layer": 2,
+  "nodes": [
+    "client",
+    "router",
+    "bng"
+  ],
+  "latency": {
+    "client-router": 0.001,
+    "router-bng": 0.004
+  },
+  "labels": {
+    "router": [
+      "Home Router",
+      "No IP address"
+    ]
+  },
+  "legend": [
+    [
+      "slate",
+      "Discovery"
+    ],
+    [
+      "violet",
+      "PPP setup"
+    ],
+    [
+      "amber",
+      "Data"
+    ]
+  ],
+  "overview": {
+    "full": "Point-to-Point Protocol over Ethernet",
+    "description": "Many DSL and fibre providers make the home router log in before it gets online. PPPoE is how: the router finds the provider’s access server and opens a session with it, then runs PPP inside, agreeing on the link’s settings, logging in with the username and password from the provider and receiving its public IP address. Every packet then carries an 8-byte PPPoE header.",
+    "facts": [
+      [
+        "Layer",
+        "Data Link (Layer 2)"
+      ],
+      [
+        "Discovery",
+        "PADI, PADO, PADR, PADS"
+      ],
+      [
+        "Login",
+        "CHAP or PAP"
+      ],
+      [
+        "Address",
+        "From IPCP"
+      ],
+      [
+        "Overhead",
+        "8 bytes (MTU 1,492)"
+      ],
+      [
+        "Defined In",
+        "RFC 2516, RFC 1661"
+      ]
+    ]
+  },
+  "outro": {
+    "title": "Logged in",
+    "desc": "Found, agreed, checked, addressed",
+    "text": "The router found the provider’s access server, got a session, agreed on the link’s settings, proved its password without sending it and was given its public address. Every packet now travels inside that session, until a PADT ends it. Press REPLAY to watch it again.",
+    "facts": [
+      [
+        "Messages",
+        "17 to get online"
+      ],
+      [
+        "Password",
+        "Never sent"
+      ],
+      [
+        "Public IP",
+        "198.51.100.7"
+      ],
+      [
+        "Overhead",
+        "8 bytes per packet"
+      ]
+    ]
+  },
+  "start": {
+    "nodes": [
+      "client",
+      "router"
+    ],
+    "frame": "local"
+  },
+  "steps": [
+    {
+      "title": "Anyone There?",
+      "desc": "The router looks for an access server",
+      "detail": "The home router is plugged into the provider’s fibre or DSL line. Before it can log in, it has to find the provider’s access server, so it broadcasts a PADI: “PPPoE Active Discovery Initiation”. An access server answers with a PADO, an offer that names it: bng-1.example.net.",
+      "facts": [
+        [
+          "Asks",
+          "PADI, to everyone"
+        ],
+        [
+          "Answer",
+          "PADO, from the server"
+        ],
+        [
+          "Ethernet type",
+          "0x8863 (discovery)"
+        ]
+      ],
+      "events": [
+        {
+          "type": "show",
+          "nodes": [
+            "bng"
+          ],
+          "frame": "line"
+        },
+        {
+          "type": "packet",
+          "from": "router",
+          "to": "bng",
+          "color": "slate",
+          "label": "PADI",
+          "payload": [
+            "is there an access server?",
+            "to ff:ff:ff:ff:ff:ff"
+          ],
+          "row": {
+            "time": "0.000s",
+            "src": "00:00:5e:00:53:02",
+            "dst": "Broadcast",
+            "proto": "PPPoED",
+            "info": "Active Discovery Initiation (PADI)",
+            "len": "60 B",
+            "wire": {
+              "pppoe": {
+                "code": 9,
+                "session": 0,
+                "tags": [
+                  [
+                    "service",
+                    ""
+                  ],
+                  [
+                    "host"
+                  ]
+                ]
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "bng",
+          "to": "router",
+          "color": "slate",
+          "label": "PADO",
+          "payload": [
+            "AC-Name: bng-1.example.net",
+            "and a cookie"
+          ],
+          "row": {
+            "time": "0.006s",
+            "src": "00:00:5e:00:53:fe",
+            "dst": "00:00:5e:00:53:02",
+            "proto": "PPPoED",
+            "info": "Active Discovery Offer (PADO) AC-Name='bng-1.example.net'",
+            "len": "73 B",
+            "wire": {
+              "pppoe": {
+                "code": 7,
+                "session": 0,
+                "tags": [
+                  [
+                    "ac",
+                    "bng-1.example.net"
+                  ],
+                  [
+                    "service",
+                    ""
+                  ],
+                  [
+                    "cookie"
+                  ],
+                  [
+                    "host"
+                  ]
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Pick a Server",
+      "desc": "A session number for the line",
+      "detail": "If several servers answered, the router picks one and asks it directly with a PADR, sending back the cookie it was given. The server replies with a PADS carrying a session ID, 0x2f1c. From now on every frame between the two of them carries that number.",
+      "facts": [
+        [
+          "Request",
+          "PADR"
+        ],
+        [
+          "Confirmed",
+          "PADS"
+        ],
+        [
+          "Session ID",
+          "0x2f1c"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "router",
+          "to": "bng",
+          "color": "slate",
+          "label": "PADR",
+          "payload": [
+            "this server, please",
+            "with its cookie"
+          ],
+          "row": {
+            "time": "0.011s",
+            "src": "00:00:5e:00:53:02",
+            "dst": "00:00:5e:00:53:fe",
+            "proto": "PPPoED",
+            "info": "Active Discovery Request (PADR)",
+            "len": "60 B",
+            "wire": {
+              "pppoe": {
+                "code": 25,
+                "session": 0,
+                "tags": [
+                  [
+                    "service",
+                    ""
+                  ],
+                  [
+                    "host"
+                  ],
+                  [
+                    "cookie"
+                  ]
+                ]
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "bng",
+          "to": "router",
+          "color": "slate",
+          "label": "PADS",
+          "payload": [
+            "session ID 0x2f1c"
+          ],
+          "row": {
+            "time": "0.017s",
+            "src": "00:00:5e:00:53:fe",
+            "dst": "00:00:5e:00:53:02",
+            "proto": "PPPoED",
+            "info": "Active Discovery Session-confirmation (PADS)",
+            "len": "60 B",
+            "wire": {
+              "pppoe": {
+                "code": 101,
+                "session": 12060,
+                "tags": [
+                  [
+                    "service",
+                    ""
+                  ],
+                  [
+                    "host"
+                  ]
+                ]
+              }
+            }
+          }
+        },
+        {
+          "type": "note",
+          "at": "router",
+          "text": "SESSION 0x2F1C",
+          "tone": "navy"
+        }
+      ]
+    },
+    {
+      "title": "Link Settings",
+      "desc": "LCP agrees on size and login",
+      "detail": "Now PPP runs inside the session, starting with LCP. Each side asks for its settings: packets of at most 1,492 bytes, since PPPoE’s 8 bytes have to fit in Ethernet’s 1,500, and a random magic number to spot loops. The server also asks for a CHAP login. Both agree.",
+      "facts": [
+        [
+          "Largest packet",
+          "1,492 bytes (MRU)"
+        ],
+        [
+          "Login",
+          "CHAP with MD5"
+        ],
+        [
+          "Ethernet type",
+          "0x8864 (session)"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "router",
+          "to": "bng",
+          "color": "violet",
+          "label": "LCP REQUEST",
+          "payload": [
+            "MRU 1492",
+            "magic number"
+          ],
+          "row": {
+            "time": "0.022s",
+            "src": "00:00:5e:00:53:02",
+            "dst": "00:00:5e:00:53:fe",
+            "proto": "PPP LCP",
+            "info": "Configuration Request",
+            "len": "60 B",
+            "wire": {
+              "pppoe": {
+                "code": 0,
+                "session": 12060,
+                "lcp": {
+                  "code": 1,
+                  "id": 1,
+                  "opts": [
+                    [
+                      "mru",
+                      1492
+                    ],
+                    [
+                      "magic",
+                      1513918951
+                    ]
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "bng",
+          "to": "router",
+          "color": "violet",
+          "label": "LCP ACK",
+          "payload": [],
+          "row": {
+            "time": "0.026s",
+            "src": "00:00:5e:00:53:fe",
+            "dst": "00:00:5e:00:53:02",
+            "proto": "PPP LCP",
+            "info": "Configuration Ack",
+            "len": "60 B",
+            "wire": {
+              "pppoe": {
+                "code": 0,
+                "session": 12060,
+                "lcp": {
+                  "code": 2,
+                  "id": 1,
+                  "opts": [
+                    [
+                      "mru",
+                      1492
+                    ],
+                    [
+                      "magic",
+                      1513918951
+                    ]
+                  ]
+                }
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "bng",
+          "to": "router",
+          "color": "violet",
+          "label": "LCP REQUEST",
+          "payload": [
+            "MRU 1492, log in with CHAP",
+            "magic number"
+          ],
+          "row": {
+            "time": "0.027s",
+            "src": "00:00:5e:00:53:fe",
+            "dst": "00:00:5e:00:53:02",
+            "proto": "PPP LCP",
+            "info": "Configuration Request",
+            "len": "60 B",
+            "wire": {
+              "pppoe": {
+                "code": 0,
+                "session": 12060,
+                "lcp": {
+                  "code": 1,
+                  "id": 1,
+                  "opts": [
+                    [
+                      "mru",
+                      1492
+                    ],
+                    [
+                      "auth",
+                      "chap"
+                    ],
+                    [
+                      "magic",
+                      495235116
+                    ]
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "router",
+          "to": "bng",
+          "color": "violet",
+          "label": "LCP ACK",
+          "payload": [],
+          "row": {
+            "time": "0.032s",
+            "src": "00:00:5e:00:53:02",
+            "dst": "00:00:5e:00:53:fe",
+            "proto": "PPP LCP",
+            "info": "Configuration Ack",
+            "len": "60 B",
+            "wire": {
+              "pppoe": {
+                "code": 0,
+                "session": 12060,
+                "lcp": {
+                  "code": 2,
+                  "id": 1,
+                  "opts": [
+                    [
+                      "mru",
+                      1492
+                    ],
+                    [
+                      "auth",
+                      "chap"
+                    ],
+                    [
+                      "magic",
+                      495235116
+                    ]
+                  ]
+                }
+              }
+            }
+          },
+          "quick": true
+        }
+      ]
+    },
+    {
+      "title": "Log In",
+      "desc": "A password check without the password",
+      "detail": "The server sends a random challenge. The router answers with its username, alex@fibre.example, and an MD5 hash of the challenge and its password, so the password itself never crosses the line. The server checks the answer with the provider’s RADIUS server, then says Success.",
+      "facts": [
+        [
+          "Username",
+          "alex@fibre.example"
+        ],
+        [
+          "Sent",
+          "A hash, not the password"
+        ],
+        [
+          "Checked by",
+          "The provider’s RADIUS"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "bng",
+          "to": "router",
+          "color": "violet",
+          "label": "CHALLENGE",
+          "payload": [
+            "16 random bytes"
+          ],
+          "row": {
+            "time": "0.037s",
+            "src": "00:00:5e:00:53:fe",
+            "dst": "00:00:5e:00:53:02",
+            "proto": "PPP CHAP",
+            "info": "Challenge (NAME='bng-1.example.net')",
+            "len": "60 B",
+            "wire": {
+              "pppoe": {
+                "code": 0,
+                "session": 12060,
+                "chap": {
+                  "code": 1,
+                  "id": 1,
+                  "name": "bng-1.example.net"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "router",
+          "to": "bng",
+          "color": "violet",
+          "label": "RESPONSE",
+          "payload": [
+            "alex@fibre.example",
+            "MD5(id, password, challenge)"
+          ],
+          "row": {
+            "time": "0.042s",
+            "src": "00:00:5e:00:53:02",
+            "dst": "00:00:5e:00:53:fe",
+            "proto": "PPP CHAP",
+            "info": "Response (NAME='alex@fibre.example')",
+            "len": "61 B",
+            "wire": {
+              "pppoe": {
+                "code": 0,
+                "session": 12060,
+                "chap": {
+                  "code": 2,
+                  "id": 1,
+                  "name": "alex@fibre.example"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "note",
+          "at": "bng",
+          "text": "CHECKED WITH RADIUS",
+          "tone": "navy"
+        },
+        {
+          "type": "packet",
+          "from": "bng",
+          "to": "router",
+          "color": "violet",
+          "label": "SUCCESS",
+          "payload": [
+            "logged in"
+          ],
+          "row": {
+            "time": "0.061s",
+            "src": "00:00:5e:00:53:fe",
+            "dst": "00:00:5e:00:53:02",
+            "proto": "PPP CHAP",
+            "info": "Success (MESSAGE='Welcome')",
+            "len": "60 B",
+            "wire": {
+              "pppoe": {
+                "code": 0,
+                "session": 12060,
+                "chap": {
+                  "code": 3,
+                  "id": 1,
+                  "message": "Welcome"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Get an Address",
+      "desc": "IPCP hands out the public IP",
+      "detail": "The server first tells the router its own end, 198.51.100.1. The router asks for an address and DNS servers, offering 0.0.0.0: “anything”. The server says no and suggests 198.51.100.7 and two DNS servers. The router asks again with those, and the server agrees.",
+      "facts": [
+        [
+          "Public IP",
+          "198.51.100.7"
+        ],
+        [
+          "DNS",
+          "192.0.2.53, 192.0.2.54"
+        ],
+        [
+          "Other end",
+          "198.51.100.1"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "bng",
+          "to": "router",
+          "color": "violet",
+          "label": "IPCP REQUEST",
+          "payload": [
+            "my end: 198.51.100.1"
+          ],
+          "row": {
+            "time": "0.061s",
+            "src": "00:00:5e:00:53:fe",
+            "dst": "00:00:5e:00:53:02",
+            "proto": "PPP IPCP",
+            "info": "Configuration Request (IP 198.51.100.1)",
+            "len": "60 B",
+            "wire": {
+              "pppoe": {
+                "code": 0,
+                "session": 12060,
+                "ipcp": {
+                  "code": 1,
+                  "id": 1,
+                  "own": true,
+                  "opts": [
+                    [
+                      "ip",
+                      "198.51.100.1"
+                    ]
+                  ]
+                }
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "router",
+          "to": "bng",
+          "color": "violet",
+          "label": "IPCP ACK",
+          "payload": [],
+          "row": {
+            "time": "0.065s",
+            "src": "00:00:5e:00:53:02",
+            "dst": "00:00:5e:00:53:fe",
+            "proto": "PPP IPCP",
+            "info": "Configuration Ack (IP 198.51.100.1)",
+            "len": "60 B",
+            "wire": {
+              "pppoe": {
+                "code": 0,
+                "session": 12060,
+                "ipcp": {
+                  "code": 2,
+                  "id": 1,
+                  "own": true,
+                  "opts": [
+                    [
+                      "ip",
+                      "198.51.100.1"
+                    ]
+                  ]
+                }
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "router",
+          "to": "bng",
+          "color": "violet",
+          "label": "IPCP REQUEST",
+          "payload": [
+            "address? 0.0.0.0",
+            "DNS? 0.0.0.0"
+          ],
+          "row": {
+            "time": "0.066s",
+            "src": "00:00:5e:00:53:02",
+            "dst": "00:00:5e:00:53:fe",
+            "proto": "PPP IPCP",
+            "info": "Configuration Request (IP 0.0.0.0)",
+            "len": "60 B",
+            "wire": {
+              "pppoe": {
+                "code": 0,
+                "session": 12060,
+                "ipcp": {
+                  "code": 1,
+                  "id": 1,
+                  "opts": [
+                    [
+                      "ip",
+                      "0.0.0.0"
+                    ],
+                    [
+                      "dns1",
+                      "0.0.0.0"
+                    ],
+                    [
+                      "dns2",
+                      "0.0.0.0"
+                    ]
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "bng",
+          "to": "router",
+          "color": "violet",
+          "label": "IPCP NAK",
+          "payload": [
+            "use 198.51.100.7",
+            "DNS 192.0.2.53, .54"
+          ],
+          "row": {
+            "time": "0.071s",
+            "src": "00:00:5e:00:53:fe",
+            "dst": "00:00:5e:00:53:02",
+            "proto": "PPP IPCP",
+            "info": "Configuration Nak (IP 198.51.100.7)",
+            "len": "60 B",
+            "wire": {
+              "pppoe": {
+                "code": 0,
+                "session": 12060,
+                "ipcp": {
+                  "code": 3,
+                  "id": 1,
+                  "opts": [
+                    [
+                      "ip",
+                      "198.51.100.7"
+                    ],
+                    [
+                      "dns1",
+                      "192.0.2.53"
+                    ],
+                    [
+                      "dns2",
+                      "192.0.2.54"
+                    ]
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "router",
+          "to": "bng",
+          "color": "violet",
+          "label": "IPCP REQUEST",
+          "payload": [
+            "198.51.100.7, please"
+          ],
+          "row": {
+            "time": "0.076s",
+            "src": "00:00:5e:00:53:02",
+            "dst": "00:00:5e:00:53:fe",
+            "proto": "PPP IPCP",
+            "info": "Configuration Request (IP 198.51.100.7)",
+            "len": "60 B",
+            "wire": {
+              "pppoe": {
+                "code": 0,
+                "session": 12060,
+                "ipcp": {
+                  "code": 1,
+                  "id": 2,
+                  "opts": [
+                    [
+                      "ip",
+                      "198.51.100.7"
+                    ],
+                    [
+                      "dns1",
+                      "192.0.2.53"
+                    ],
+                    [
+                      "dns2",
+                      "192.0.2.54"
+                    ]
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "bng",
+          "to": "router",
+          "color": "violet",
+          "label": "IPCP ACK",
+          "payload": [
+            "agreed"
+          ],
+          "row": {
+            "time": "0.081s",
+            "src": "00:00:5e:00:53:fe",
+            "dst": "00:00:5e:00:53:02",
+            "proto": "PPP IPCP",
+            "info": "Configuration Ack (IP 198.51.100.7)",
+            "len": "60 B",
+            "wire": {
+              "pppoe": {
+                "code": 0,
+                "session": 12060,
+                "ipcp": {
+                  "code": 2,
+                  "id": 2,
+                  "opts": [
+                    [
+                      "ip",
+                      "198.51.100.7"
+                    ],
+                    [
+                      "dns1",
+                      "192.0.2.53"
+                    ],
+                    [
+                      "dns2",
+                      "192.0.2.54"
+                    ]
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "label",
+          "at": "router",
+          "label": [
+            "Home Router",
+            "198.51.100.7"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Online",
+      "desc": "Every packet in an 8-byte wrapper",
+      "detail": "The laptop opens a website. The router swaps in its public address (NAT) and sends the packet inside the session: a 6-byte PPPoE header, then 2 bytes saying “IPv4”. It also lowers the MSS the laptop offered from 1460 to 1452, so the replies fit in 1,492 bytes.",
+      "facts": [
+        [
+          "Wrapper",
+          "6 + 2 bytes"
+        ],
+        [
+          "Largest packet",
+          "1,492 bytes"
+        ],
+        [
+          "MSS",
+          "1460 → 1452 (clamped)"
+        ]
+      ],
+      "events": [
+        {
+          "type": "camera",
+          "frame": "access"
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "router",
+          "color": "amber",
+          "label": "SYN",
+          "payload": [
+            "to 203.0.113.10:443",
+            "MSS 1460"
+          ],
+          "row": {
+            "time": "1.204s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.10",
+            "proto": "TCP",
+            "info": "52344 → 443 [SYN] MSS=1460",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 52344,
+                "dport": 443,
+                "flags": "S"
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "router",
+          "to": "bng",
+          "color": "amber",
+          "label": "SYN",
+          "payload": [
+            "in session 0x2f1c",
+            "MSS now 1452"
+          ],
+          "row": {
+            "time": "1.205s",
+            "src": "198.51.100.7",
+            "dst": "203.0.113.10",
+            "proto": "TCP",
+            "info": "PPPoE 0x2f1c · 40112 → 443 [SYN] MSS=1452",
+            "len": "74 B",
+            "wire": {
+              "tcp": {
+                "sport": 40112,
+                "dport": 443,
+                "flags": "S",
+                "seq": 0,
+                "mss": 1452,
+                "mssNote": "Lowered from 1460 by the router, so packets back fit in the 1,492 bytes PPPoE leaves."
+              },
+              "ttl": 127,
+              "ttlNote": "The laptop sent it with 128; the router took 1 when it passed it on.",
+              "natOf": -1,
+              "alias": [
+                "198.51.100.7:40112",
+                "192.168.1.10:52344"
+              ],
+              "pppoe": {
+                "code": 0,
+                "session": 12060,
+                "ip": true
+              }
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "teaching": {
+    "steps": [
+      [
+        "Có ai không?",
+        "Router gia đình được cắm vào đường cáp quang hoặc DSL của nhà mạng. Trước khi đăng nhập, nó phải tìm máy chủ truy cập của nhà mạng, nên nó quảng bá một PADI: “PPPoE Active Discovery Initiation”. Một máy chủ truy cập trả lời bằng PADO, một lời đề nghị có tên của nó: bng-1.example.net."
+      ],
+      [
+        "Chọn máy chủ",
+        "Nếu nhiều máy chủ trả lời, router chọn một và hỏi thẳng nó bằng PADR, gửi lại cookie đã nhận. Máy chủ đáp bằng PADS mang ID phiên 0x2f1c. Từ giờ mỗi khung giữa hai bên đều mang số đó."
+      ],
+      [
+        "Thiết lập liên kết",
+        "Giờ PPP chạy bên trong phiên, bắt đầu bằng LCP. Mỗi bên yêu cầu thiết lập của mình: gói tin tối đa 1.492 byte, vì 8 byte của PPPoE phải nằm vừa trong 1.500 byte của Ethernet, và một magic number ngẫu nhiên để phát hiện vòng lặp. Máy chủ còn yêu cầu đăng nhập bằng CHAP. Cả hai đồng ý."
+      ],
+      [
+        "Đăng nhập",
+        "Máy chủ gửi một thử thách ngẫu nhiên. Router trả lời bằng tên người dùng alex@fibre.example và một hash MD5 của thử thách và mật khẩu, nên bản thân mật khẩu không bao giờ đi qua đường truyền. Máy chủ kiểm tra câu trả lời với máy chủ RADIUS của nhà mạng, rồi đáp Success."
+      ],
+      [
+        "Nhận địa chỉ",
+        "Máy chủ trước tiên cho router biết đầu bên kia của nó, 198.51.100.1. Router xin địa chỉ và máy chủ DNS, đưa ra 0.0.0.0: “gì cũng được”. Máy chủ từ chối và gợi ý 198.51.100.7 cùng hai máy chủ DNS. Router xin lại với các giá trị đó, và máy chủ đồng ý."
+      ],
+      [
+        "Đã lên mạng",
+        "Laptop mở một trang web. Router thay địa chỉ công khai của nó vào (NAT) và gửi gói tin bên trong phiên: một tiêu đề PPPoE 6 byte, rồi 2 byte cho biết “IPv4”. Nó cũng hạ MSS mà laptop đề nghị từ 1460 xuống 1452, để các câu trả lời vừa trong 1.492 byte."
+      ]
+    ],
+    "notes": {
+      "SESSION 0x2F1C": "PHIÊN 0x2F1C",
+      "CHECKED WITH RADIUS": "ĐÃ KIỂM TRA VỚI RADIUS"
+    },
+    "labels": {
+      "Internet": "Internet",
+      "Client": "Máy khách",
+      "Router": "Router",
+      "DNS Resolver": "Bộ phân giải DNS",
+      "Web Server": "Máy chủ web",
+      "Root Server": "Máy chủ gốc",
+      ".com TLD Server": "Máy chủ TLD .com",
+      "Authoritative Server": "Máy chủ có thẩm quyền",
+      "Mail Server": "Máy chủ thư",
+      "Proxy": "Proxy",
+      "App Server": "Máy chủ ứng dụng",
+      "File Server": "Máy chủ tệp",
+      "ISP Router": "Router của ISP",
+      "Transit Router": "Router trung chuyển",
+      "Hosting Router": "Router của nhà lưu trữ",
+      "Their Router": "Router bên kia",
+      "Their Laptop": "Laptop bên kia",
+      "Switch": "Switch",
+      "Access Server": "Máy chủ truy cập",
+      "IP Camera": "Camera IP",
+      "TV Box": "TV box",
+      "Home Router": "Router gia đình"
+    }
+  }
+}

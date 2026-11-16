@@ -1,0 +1,451 @@
+{
+  "recordedAt": "2026-11-15",
+  "scope": "Compact Home banner and public AI introduction",
+  "site": "http://localhost:3000",
+  "environment": {
+    "browser": "Playwright Chromium isolated QA contexts",
+    "api": "All /api/** requests fulfilled with fixtures, no AI provider or database called",
+    "auth": "Synthetic browser-only USER fixture"
+  },
+  "before": {
+    "viewport": [
+      1366,
+      768
+    ],
+    "heroHeight": 606,
+    "source": "../home-simulation-ai/checks.json",
+    "titleFontRule": "clamp(28px, 2.5vw, 38px)"
+  },
+  "after": {
+    "route": "/ai-assistant",
+    "titleFontRule": "clamp(24px, 2vw, 30px); 22px on mobile",
+    "guest": {
+      "errors": [],
+      "calls": [
+        {
+          "path": "/api/learning/courses/summary",
+          "method": "GET"
+        },
+        {
+          "path": "/api/learning/courses/summary",
+          "method": "GET"
+        },
+        {
+          "path": "/api/learning/labs",
+          "method": "GET"
+        },
+        {
+          "path": "/api/learning/labs",
+          "method": "GET"
+        },
+        {
+          "path": "/api/learning/courses/summary",
+          "method": "GET"
+        },
+        {
+          "path": "/api/learning/courses/summary",
+          "method": "GET"
+        },
+        {
+          "path": "/api/learning/courses/summary",
+          "method": "GET"
+        },
+        {
+          "path": "/api/learning/courses/summary",
+          "method": "GET"
+        },
+        {
+          "path": "/api/learning/courses/summary",
+          "method": "GET"
+        },
+        {
+          "path": "/api/learning/courses/summary",
+          "method": "GET"
+        }
+      ],
+      "checks": {
+        "home": {
+          "height": 560,
+          "fontSize": "27.328px",
+          "reserveSize": "27.328px",
+          "width": 1308
+        },
+        "intro": {
+          "url": "http://localhost:3000/ai-assistant",
+          "title": "Trợ lý AI | NetMaster",
+          "avatar": "true",
+          "aiInputs": 0
+        },
+        "keyboard": {
+          "greetingFocused": true,
+          "outline": "solid"
+        },
+        "labEntry": {
+          "url": "http://localhost:3000/labs"
+        },
+        "learningEntry": {
+          "url": "http://localhost:3000/roadmap"
+        },
+        "backHome": true,
+        "layouts": [
+          {
+            "viewport": [
+              1920,
+              900
+            ],
+            "pageWidth": 1910,
+            "contentWidth": 1000,
+            "buttons": [
+              {
+                "text": "Về trang chủ",
+                "height": 44,
+                "left": 499.8000183105469,
+                "right": 604.400016784668
+              },
+              {
+                "text": "Đọc lời chào của Trợ lý AI",
+                "height": 152,
+                "left": 513.7999877929688,
+                "right": 665.7999877929688
+              },
+              {
+                "text": "Chọn bài lab",
+                "height": 44,
+                "left": 744.6000366210938,
+                "right": 880.8125457763672
+              },
+              {
+                "text": "Xem lộ trình học",
+                "height": 44,
+                "left": 892.8125,
+                "right": 1052.3000030517578
+              }
+            ],
+            "avatarPaused": "true"
+          },
+          {
+            "viewport": [
+              1366,
+              768
+            ],
+            "pageWidth": 1356,
+            "contentWidth": 1000,
+            "buttons": [
+              {
+                "text": "Về trang chủ",
+                "height": 44,
+                "left": 223,
+                "right": 327.5999984741211
+              },
+              {
+                "text": "Đọc lời chào của Trợ lý AI",
+                "height": 152,
+                "left": 237,
+                "right": 389
+              },
+              {
+                "text": "Chọn bài lab",
+                "height": 44,
+                "left": 467.8000183105469,
+                "right": 604.0125274658203
+              },
+              {
+                "text": "Xem lộ trình học",
+                "height": 44,
+                "left": 616.0125122070312,
+                "right": 775.5000152587891
+              }
+            ],
+            "avatarPaused": "true"
+          },
+          {
+            "viewport": [
+              768,
+              1024
+            ],
+            "pageWidth": 758,
+            "contentWidth": 709.6000366210938,
+            "buttons": [
+              {
+                "text": "Về trang chủ",
+                "height": 44,
+                "left": 24,
+                "right": 128.5999984741211
+              },
+              {
+                "text": "Đọc lời chào của Trợ lý AI",
+                "height": 152,
+                "left": 38,
+                "right": 190
+              },
+              {
+                "text": "Chọn bài lab",
+                "height": 44,
+                "left": 259.8374938964844,
+                "right": 396.0500030517578
+              },
+              {
+                "text": "Xem lộ trình học",
+                "height": 44,
+                "left": 408.0500183105469,
+                "right": 567.5375213623047
+              }
+            ],
+            "avatarPaused": "true"
+          },
+          {
+            "viewport": [
+              390,
+              844
+            ],
+            "pageWidth": 380,
+            "contentWidth": 352,
+            "buttons": [
+              {
+                "text": "Về trang chủ",
+                "height": 44,
+                "left": 14,
+                "right": 118.5999984741211
+              },
+              {
+                "text": "Đọc lời chào của Trợ lý AI",
+                "height": 124,
+                "left": 49.67499923706055,
+                "right": 173.67499923706055
+              },
+              {
+                "text": "Chọn bài lab",
+                "height": 44,
+                "left": 32.79999923706055,
+                "right": 347.1999931335449
+              },
+              {
+                "text": "Xem lộ trình học",
+                "height": 44,
+                "left": 32.79999923706055,
+                "right": 347.1999931335449
+              }
+            ],
+            "avatarPaused": "true",
+            "characterDirection": "row"
+          },
+          {
+            "viewport": [
+              320,
+              740
+            ],
+            "pageWidth": 310,
+            "contentWidth": 281.6000061035156,
+            "buttons": [
+              {
+                "text": "Về trang chủ",
+                "height": 44,
+                "left": 14,
+                "right": 118.5999984741211
+              },
+              {
+                "text": "Đọc lời chào của Trợ lý AI",
+                "height": 124,
+                "left": 14.475000381469727,
+                "right": 138.47500038146973
+              },
+              {
+                "text": "Chọn bài lab",
+                "height": 44,
+                "left": 32.79999923706055,
+                "right": 276.79999923706055
+              },
+              {
+                "text": "Xem lộ trình học",
+                "height": 44,
+                "left": 32.79999923706055,
+                "right": 276.79999923706055
+              }
+            ],
+            "avatarPaused": "true",
+            "characterDirection": "row"
+          }
+        ],
+        "avatar": {
+          "idleChangedSamples": 3,
+          "totalSamples": 3,
+          "stateAfterActivation": "default",
+          "reducedUniqueSamples": 1
+        },
+        "cli": {
+          "demoHeight": 560,
+          "cliHeight": 558.4000244140625,
+          "draft": "show version"
+        },
+        "homeLayouts": [
+          {
+            "viewport": [
+              1366,
+              768
+            ],
+            "pageWidth": 1356,
+            "heroHeight": 560,
+            "fontSize": "27.328px",
+            "nodes": [
+              {
+                "node": "client",
+                "inside": true
+              },
+              {
+                "node": "router",
+                "inside": true
+              },
+              {
+                "node": "dns",
+                "inside": true
+              },
+              {
+                "node": "internet",
+                "inside": true
+              },
+              {
+                "node": "web",
+                "inside": true
+              }
+            ]
+          },
+          {
+            "viewport": [
+              390,
+              844
+            ],
+            "pageWidth": 380,
+            "heroHeight": 1015.25,
+            "fontSize": "22px",
+            "nodes": [
+              {
+                "node": "client",
+                "inside": true
+              },
+              {
+                "node": "router",
+                "inside": true
+              },
+              {
+                "node": "dns",
+                "inside": true
+              },
+              {
+                "node": "internet",
+                "inside": true
+              },
+              {
+                "node": "web",
+                "inside": true
+              }
+            ]
+          },
+          {
+            "viewport": [
+              320,
+              740
+            ],
+            "pageWidth": 311,
+            "heroHeight": 1059.25,
+            "fontSize": "22px",
+            "nodes": [
+              {
+                "node": "client",
+                "inside": true
+              },
+              {
+                "node": "router",
+                "inside": true
+              },
+              {
+                "node": "dns",
+                "inside": true
+              },
+              {
+                "node": "internet",
+                "inside": true
+              },
+              {
+                "node": "web",
+                "inside": true
+              }
+            ]
+          }
+        ],
+        "dark": {
+          "background": "rgb(17, 29, 48)",
+          "foreground": "rgb(229, 237, 248)",
+          "bodyColor": "rgb(177, 191, 209)"
+        },
+        "mobileFinal": {
+          "viewport": [
+            390,
+            844
+          ],
+          "overflow": false,
+          "characterDirection": "row",
+          "links": [
+            {
+              "text": "Chọn bài lab",
+              "top": 665.2000122070312,
+              "bottom": 709.2000122070312
+            },
+            {
+              "text": "Xem lộ trình học",
+              "top": 719.2000122070312,
+              "bottom": 763.2000122070312
+            }
+          ]
+        },
+        "mobile320Final": {
+          "overflow": false,
+          "characterDirection": "row"
+        }
+      }
+    },
+    "authenticated": {
+      "errors": [],
+      "calls": [],
+      "checks": {
+        "url": "http://localhost:3000/ai-assistant",
+        "title": "Trợ lý AI | NetMaster",
+        "loginLinks": 0,
+        "avatarState": "default"
+      }
+    }
+  },
+  "validation": {
+    "testSuites": 6,
+    "passed": 31,
+    "failed": 0,
+    "tests": [
+      "App.test.jsx",
+      "Home.test.jsx",
+      "HomeProtocolDemo.test.jsx",
+      "HeroNetworkShowcase.test.jsx",
+      "HeroTerminal.test.jsx",
+      "DroidAvatar.test.jsx"
+    ],
+    "eslint": "passed",
+    "prettier": "passed",
+    "diffCheck": "passed",
+    "boundaries": {
+      "importsAndAssets": 2271,
+      "sourceFiles": 535,
+      "passed": true
+    },
+    "productionBuild": "CI=true pnpm build; compiled successfully; exit 0"
+  },
+  "screenshots": [
+    "home-compact.png",
+    "ai-intro-desktop.png",
+    "ai-intro-dark.png",
+    "ai-intro-mobile.png"
+  ],
+  "limits": [
+    "AI introduction is public guidance, not a standalone chat or provider/cohort activation.",
+    "API/auth use QA fixtures; live lab AI/provider availability was not revalidated.",
+    "Browser extension action API failed; UI verification used an independent Playwright session.",
+    "No physical touch device or screen reader validation."
+  ]
+}

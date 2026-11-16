@@ -1,0 +1,80 @@
+{
+  "date": "2026-11-15",
+  "environment": "Isolated local Chromium, actual bot-avatars canvas; auth/API fixtures only, no provider/database calls",
+  "interaction": {
+    "left": {
+      "x": 23.530398322851152,
+      "y": 28.38574423480084,
+      "eyeX": 22,
+      "n": 477,
+      "eyes": 20
+    },
+    "right": {
+      "x": 23.553684210526317,
+      "y": 28.568421052631578,
+      "eyeX": 25.363636363636363,
+      "n": 475,
+      "eyes": 22
+    },
+    "pointerEyeShift": 3.3636363636363633,
+    "hop": {
+      "frames": 151,
+      "minY": 24.167355371900825,
+      "maxY": 33.270833333333336,
+      "travel": 9.10347796143251
+    },
+    "focus": true,
+    "idleState": "idle",
+    "closed": true,
+    "enterOpened": true,
+    "spaceClosed": true,
+    "requestsBefore": 0,
+    "requestsAfter": 0
+  },
+  "safety": {
+    "reduced": {
+      "frozen": true,
+      "interactive": "false",
+      "focused": true
+    },
+    "workingClick": "working",
+    "requestCount": 1,
+    "hidden": {
+      "frozen": true,
+      "interactive": "false"
+    },
+    "completed": {
+      "state": "default",
+      "requests": 1
+    },
+    "nestedButtons": 0
+  },
+  "mobile": {
+    "focused": true,
+    "goalOpened": true,
+    "preserved": "Giữ bản nháp khi đổi tab.",
+    "button": {
+      "x": 10,
+      "y": 167.60000610351562,
+      "width": 44,
+      "height": 44
+    },
+    "overflow": false,
+    "nestedButtons": 0,
+    "state": "idle",
+    "narrow": {
+      "width": 320,
+      "overflow": false,
+      "headerButtonsCut": 0
+    }
+  },
+  "errors": [],
+  "verification": {
+    "suites": 3,
+    "tests": 62,
+    "eslint": "pass",
+    "prettier": "pass",
+    "boundaries": "pass",
+    "productionBuild": "CI=true compiled successfully"
+  }
+}

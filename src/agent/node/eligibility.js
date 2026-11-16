@@ -5,10 +5,10 @@ function inAiCohort(policy, user, labId) {
   return Boolean(
     (rules?.adminAccess === true && user?.role === 'ADMIN') ||
     (user &&
-      Array.isArray(rules?.userIds) &&
-      rules.userIds.includes(user.id) &&
       Array.isArray(rules?.labIds) &&
-      rules.labIds.includes(labId))
+      rules.labIds.includes(labId) &&
+      ((rules?.studentAccess === true && user.role === 'STUDENT') ||
+        (Array.isArray(rules?.userIds) && rules.userIds.includes(user.id))))
   );
 }
 

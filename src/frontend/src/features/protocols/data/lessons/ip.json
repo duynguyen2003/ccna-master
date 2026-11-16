@@ -1,0 +1,407 @@
+{
+  "id": "ip",
+  "name": "IP",
+  "title": "Addressing & Routing",
+  "layer": 3,
+  "nodes": [
+    "client",
+    "router",
+    "internet",
+    "web"
+  ],
+  "latency": {
+    "client-router": 0.001,
+    "router-web": 0.016
+  },
+  "legend": [
+    [
+      "slate",
+      "ARP"
+    ],
+    [
+      "amber",
+      "Outgoing packet"
+    ],
+    [
+      "violet",
+      "Reply"
+    ]
+  ],
+  "overview": {
+    "full": "Internet Protocol",
+    "description": "IP gives every device an address and moves packets from network to network. Each router looks only at the destination address to choose the next hop. IP is best effort: it doesn’t promise delivery or order. TCP adds those on top.",
+    "facts": [
+      [
+        "Layer",
+        "Network (Layer 3)"
+      ],
+      [
+        "Address",
+        "32 bits (IPv4), 128 (IPv6)"
+      ],
+      [
+        "Header",
+        "20–60 bytes (IPv4)"
+      ],
+      [
+        "TTL",
+        "Lowered by 1 at each router"
+      ],
+      [
+        "Delivery",
+        "Best effort"
+      ],
+      [
+        "Defined In",
+        "RFC 791, RFC 8200 (IPv6)"
+      ]
+    ]
+  },
+  "outro": {
+    "title": "There and back",
+    "desc": "Twelve routers each way",
+    "text": "The laptop sent the packet to its router, which swapped in its public address. Twelve routers in all passed it along by destination address alone, and the reply found its way back the same way. Press REPLAY to watch it again.",
+    "facts": [
+      [
+        "Routers",
+        "12 each way (1 home + 11)"
+      ],
+      [
+        "TTL at server",
+        "116 (sent with 128)"
+      ],
+      [
+        "Rewritten by NAT",
+        "Source out, destination back"
+      ],
+      [
+        "Version",
+        "IPv4 (IPv6 works alike)"
+      ]
+    ]
+  },
+  "start": {
+    "nodes": [
+      "client"
+    ],
+    "frame": "client"
+  },
+  "steps": [
+    {
+      "title": "Local or Not?",
+      "desc": "Compare the address with the subnet",
+      "detail": "The laptop is 192.168.1.10 with a /24 mask, so its own network is 192.168.1.0 to 192.168.1.255. The server, 203.0.113.10, is outside that range, so the packet has to go to the default gateway: the home router.",
+      "facts": [
+        [
+          "Laptop",
+          "192.168.1.10/24"
+        ],
+        [
+          "Local range",
+          "192.168.1.0 – .255"
+        ],
+        [
+          "Gateway",
+          "192.168.1.1"
+        ]
+      ],
+      "events": [
+        {
+          "type": "note",
+          "at": "client",
+          "text": "203.0.113.10 IS NOT LOCAL",
+          "tone": "amber"
+        },
+        {
+          "type": "show",
+          "nodes": [
+            "router"
+          ],
+          "frame": "local"
+        }
+      ]
+    },
+    {
+      "title": "Find the Router",
+      "desc": "ARP turns an IP into a MAC",
+      "detail": "On the local network, frames are delivered by MAC address. If the router’s MAC isn’t in the laptop’s ARP cache, it broadcasts “who has 192.168.1.1?” and the router answers with its MAC address.",
+      "facts": [
+        [
+          "Asks",
+          "Who has 192.168.1.1?"
+        ],
+        [
+          "Sent to",
+          "Everyone (broadcast)"
+        ],
+        [
+          "Learns",
+          "Router’s MAC address"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "router",
+          "color": "slate",
+          "label": "ARP REQUEST",
+          "payload": [
+            "who has 192.168.1.1?",
+            "tell 192.168.1.10"
+          ],
+          "row": {
+            "time": "0.000s",
+            "src": "00:00:5e:00:53:10",
+            "dst": "Broadcast",
+            "proto": "ARP",
+            "info": "Who has 192.168.1.1? Tell 192.168.1.10",
+            "len": "60 B",
+            "wire": {
+              "arp": {
+                "op": 1,
+                "sender": [
+                  "00:00:5e:00:53:10",
+                  "192.168.1.10"
+                ],
+                "target": [
+                  "00:00:00:00:00:00",
+                  "192.168.1.1"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "router",
+          "to": "client",
+          "color": "slate",
+          "label": "ARP REPLY",
+          "payload": [
+            "192.168.1.1 is at",
+            "00:00:5e:00:53:01"
+          ],
+          "row": {
+            "time": "0.001s",
+            "src": "00:00:5e:00:53:01",
+            "dst": "00:00:5e:00:53:10",
+            "proto": "ARP",
+            "info": "192.168.1.1 is at 00:00:5e:00:53:01",
+            "len": "60 B",
+            "wire": {
+              "arp": {
+                "op": 2,
+                "sender": [
+                  "00:00:5e:00:53:01",
+                  "192.168.1.1"
+                ],
+                "target": [
+                  "00:00:5e:00:53:10",
+                  "192.168.1.10"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Send the Packet",
+      "desc": "Addresses, TTL and protocol",
+      "detail": "The IP header carries the source and destination addresses, a TTL and the protocol inside. Here it holds a TCP SYN to port 443. Windows starts the TTL at 128 (Linux and macOS use 64).",
+      "facts": [
+        [
+          "From → to",
+          "192.168.1.10 → 203.0.113.10"
+        ],
+        [
+          "TTL",
+          "128"
+        ],
+        [
+          "Protocol",
+          "6 (TCP)"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "router",
+          "color": "amber",
+          "label": "IP PACKET",
+          "payload": [
+            "192.168.1.10 → 203.0.113.10",
+            "TTL 128 · protocol TCP"
+          ],
+          "row": {
+            "time": "0.002s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.10",
+            "proto": "TCP",
+            "info": "TTL 128 · 52344 → 443 [SYN]",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 52344,
+                "dport": 443,
+                "flags": "S"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "NAT, Then Hop by Hop",
+      "desc": "The router rewrites and forwards",
+      "detail": "The router swaps the private source for its public address 198.51.100.7 (and here port 52344 for 40112), notes the mapping, and lowers the TTL to 127. Then 11 routers on the internet each choose the next hop by destination and lower the TTL again.",
+      "facts": [
+        [
+          "New source",
+          "198.51.100.7:40112"
+        ],
+        [
+          "Leaves home",
+          "TTL 127"
+        ],
+        [
+          "At the server",
+          "TTL 116 (11 more hops)"
+        ]
+      ],
+      "events": [
+        {
+          "type": "show",
+          "nodes": [
+            "internet",
+            "web"
+          ],
+          "frame": "full"
+        },
+        {
+          "type": "packet",
+          "from": "router",
+          "to": "web",
+          "color": "amber",
+          "label": "IP PACKET",
+          "payload": [
+            "198.51.100.7 → 203.0.113.10",
+            "TTL 127 · after NAT"
+          ],
+          "row": {
+            "time": "0.003s",
+            "src": "198.51.100.7",
+            "dst": "203.0.113.10",
+            "proto": "TCP",
+            "info": "TTL 127 · 40112 → 443 [SYN] (after NAT)",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 40112,
+                "dport": 443,
+                "flags": "S",
+                "seq": 0
+              },
+              "ttl": 127,
+              "ttlNote": "The laptop sent it with 128; the router took 1 when it passed it on.",
+              "natOf": -1,
+              "alias": [
+                "198.51.100.7:40112",
+                "192.168.1.10:52344"
+              ]
+            }
+          }
+        },
+        {
+          "type": "note",
+          "at": "web",
+          "text": "ARRIVED WITH TTL 116",
+          "tone": "green"
+        }
+      ]
+    },
+    {
+      "title": "The Reply Comes Back",
+      "desc": "NAT translates it for the laptop",
+      "detail": "The server answers the address it saw, 198.51.100.7:40112. The router looks that up in its NAT table, rewrites the destination back to 192.168.1.10:52344 and passes it on. The reply started at TTL 64 and arrives with 52.",
+      "facts": [
+        [
+          "Sent to",
+          "198.51.100.7:40112"
+        ],
+        [
+          "Delivered to",
+          "192.168.1.10:52344"
+        ],
+        [
+          "TTL",
+          "64 → 52 (12 routers)"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "router",
+          "color": "violet",
+          "label": "REPLY",
+          "payload": [
+            "203.0.113.10 → 198.51.100.7",
+            "TTL 64 · SYN-ACK"
+          ],
+          "row": {
+            "time": "0.019s",
+            "src": "203.0.113.10",
+            "dst": "198.51.100.7",
+            "proto": "TCP",
+            "info": "TTL 64 · 443 → 40112 [SYN, ACK]",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 443,
+                "dport": 40112,
+                "flags": "SA"
+              }
+            }
+          }
+        },
+        {
+          "type": "note",
+          "at": "router",
+          "text": "NAT: 40112 → 192.168.1.10",
+          "tone": "navy"
+        },
+        {
+          "type": "packet",
+          "from": "router",
+          "to": "client",
+          "color": "violet",
+          "label": "REPLY",
+          "payload": [
+            "203.0.113.10 → 192.168.1.10",
+            "TTL 52 · after NAT"
+          ],
+          "row": {
+            "time": "0.035s",
+            "src": "203.0.113.10",
+            "dst": "192.168.1.10",
+            "proto": "TCP",
+            "info": "TTL 52 · 443 → 52344 [SYN, ACK] (after NAT)",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 443,
+                "dport": 52344,
+                "flags": "SA",
+                "seq": 0
+              },
+              "natOf": -1
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

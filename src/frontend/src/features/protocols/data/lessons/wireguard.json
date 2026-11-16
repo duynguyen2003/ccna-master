@@ -1,0 +1,538 @@
+{
+  "id": "wireguard",
+  "name": "WireGuard",
+  "title": "A Modern VPN",
+  "layer": 3,
+  "nodes": [
+    "client",
+    "router",
+    "internet",
+    "relay",
+    "web"
+  ],
+  "latency": {
+    "client-relay": 0.015,
+    "relay-web": 0.01
+  },
+  "labels": {
+    "relay": [
+      "VPN Server",
+      "192.0.2.51"
+    ],
+    "web": [
+      "www.example.com",
+      "203.0.113.10"
+    ]
+  },
+  "legend": [
+    [
+      "teal",
+      "WireGuard (encrypted)"
+    ],
+    [
+      "green",
+      "TCP beyond the VPN"
+    ],
+    [
+      "slate",
+      "Keepalive"
+    ]
+  ],
+  "overview": {
+    "full": "A modern VPN",
+    "description": "A VPN carries your traffic inside an encrypted tunnel to a VPN server, which sends it on to the internet. On a café’s Wi-Fi, others see only encrypted packets going to the VPN server; websites see the VPN server’s address instead of yours. WireGuard is a modern VPN: a small amount of code, one fixed set of modern algorithms and a handshake of two messages.",
+    "facts": [
+      [
+        "Layer",
+        "Network (Layer 3)"
+      ],
+      [
+        "Transport",
+        "UDP (51820 by default)"
+      ],
+      [
+        "Handshake",
+        "2 messages, 1 round trip"
+      ],
+      [
+        "Crypto",
+        "Curve25519, ChaCha20-Poly1305"
+      ],
+      [
+        "Identity",
+        "Public keys, like SSH"
+      ],
+      [
+        "Defined In",
+        "The WireGuard whitepaper"
+      ]
+    ]
+  },
+  "outro": {
+    "title": "Tunnel up",
+    "desc": "Encrypted to the VPN, plain beyond it",
+    "text": "Two handshake messages made the keys. After that every packet the laptop sent was sealed whole inside a UDP packet to the VPN server, and the website saw only the VPN server’s address. Beyond the VPN server traffic is no better protected than without one, so HTTPS still matters. Press REPLAY to watch it again.",
+    "facts": [
+      [
+        "Others nearby see",
+        "UDP to 192.0.2.51"
+      ],
+      [
+        "Websites see",
+        "The VPN server"
+      ],
+      [
+        "Beyond the VPN",
+        "Only HTTPS protects"
+      ],
+      [
+        "Overhead",
+        "60 bytes + padding"
+      ]
+    ]
+  },
+  "start": {
+    "nodes": [
+      "client"
+    ],
+    "frame": "client"
+  },
+  "steps": [
+    {
+      "title": "Set Up Once",
+      "desc": "Keys, not passwords",
+      "detail": "The laptop runs the WireGuard app with a short configuration: its own private key, the server’s public key and address (192.0.2.51, UDP port 51820), and AllowedIPs = 0.0.0.0/0, which means everything goes through the tunnel. Inside the tunnel the laptop’s address is 10.8.0.2.",
+      "facts": [
+        [
+          "Server",
+          "192.0.2.51:51820"
+        ],
+        [
+          "Inside address",
+          "10.8.0.2"
+        ],
+        [
+          "Through the tunnel",
+          "Everything (0.0.0.0/0)"
+        ]
+      ],
+      "events": [
+        {
+          "type": "show",
+          "nodes": [
+            "router",
+            "internet",
+            "relay"
+          ],
+          "frame": "relay"
+        },
+        {
+          "type": "note",
+          "at": "client",
+          "text": "TUNNEL ADDRESS 10.8.0.2",
+          "tone": "navy"
+        }
+      ]
+    },
+    {
+      "title": "Handshake",
+      "desc": "Two messages, one round trip",
+      "detail": "When the laptop first has something to send, it starts a handshake: 148 bytes with a fresh public key, its own long-term key (encrypted, so only the server learns who is calling) and the time (encrypted, so a recording can’t be replayed). The server answers only keys it knows, here with 92 bytes. One round trip, and both sides have new session keys.",
+      "facts": [
+        [
+          "Initiation",
+          "148 bytes"
+        ],
+        [
+          "Response",
+          "92 bytes"
+        ],
+        [
+          "Server answers",
+          "Only keys it knows"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "relay",
+          "color": "teal",
+          "label": "INITIATION",
+          "payload": [
+            "148 bytes",
+            "fresh key + identity"
+          ],
+          "row": {
+            "time": "0.000s",
+            "src": "192.168.1.10",
+            "dst": "192.0.2.51",
+            "proto": "WireGuard",
+            "info": "Handshake Initiation, sender=0x9d3c58e1",
+            "len": "190 B",
+            "wire": {
+              "udp": {
+                "sport": 54016,
+                "dport": 51820,
+                "data": {
+                  "wg": {
+                    "type": 1,
+                    "sender": 2637977825
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "relay",
+          "to": "client",
+          "color": "teal",
+          "label": "RESPONSE",
+          "payload": [
+            "92 bytes",
+            "keys agreed"
+          ],
+          "row": {
+            "time": "0.016s",
+            "src": "192.0.2.51",
+            "dst": "192.168.1.10",
+            "proto": "WireGuard",
+            "info": "Handshake Response, sender=0x4f2a7c13, receiver=0x9d3c58e1",
+            "len": "134 B",
+            "wire": {
+              "udp": {
+                "sport": 51820,
+                "dport": 54016,
+                "data": {
+                  "wg": {
+                    "type": 2,
+                    "sender": 1328184339,
+                    "receiver": 2637977825
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Into the Tunnel",
+      "desc": "A packet inside a packet",
+      "detail": "You open https://www.example.com; its address was looked up through the tunnel too (not shown). The first packet of the connection, a TCP SYN from 10.8.0.2 to the web server, is encrypted whole and sent inside a UDP packet to the VPN server. On the café’s Wi-Fi only the outer packet shows: from the laptop to 192.0.2.51, port 51820.",
+      "facts": [
+        [
+          "Inside",
+          "10.8.0.2 → 203.0.113.10:443"
+        ],
+        [
+          "Outside",
+          "UDP to 192.0.2.51:51820"
+        ],
+        [
+          "Overhead",
+          "60 bytes + padding"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "relay",
+          "color": "teal",
+          "label": "DATA",
+          "payload": [
+            "inside: TCP SYN to :443"
+          ],
+          "row": {
+            "time": "0.031s",
+            "src": "192.168.1.10",
+            "dst": "192.0.2.51",
+            "proto": "WireGuard",
+            "info": "Transport Data, receiver=0x4f2a7c13, counter=0",
+            "len": "138 B",
+            "wire": {
+              "udp": {
+                "sport": 54016,
+                "dport": 51820,
+                "data": {
+                  "wg": {
+                    "type": 4,
+                    "receiver": 1328184339,
+                    "counter": 0,
+                    "sealed": 80,
+                    "inner": [
+                      "IPv4 10.8.0.2 → 203.0.113.10",
+                      "TCP 52344 → 443 [SYN]",
+                      "then 12 bytes of padding, and the tag"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "locked": true
+        }
+      ]
+    },
+    {
+      "title": "Out to the Web",
+      "desc": "Decrypted, then sent on",
+      "detail": "The VPN server decrypts the packet, swaps 10.8.0.2 for its own public address (NAT) and sends the SYN on, one hop older (TTL 127). The SYN offers a maximum segment of 1380 bytes, not 1460: the tunnel adds 60 bytes to every packet. The web server sees a visitor at 192.0.2.51 and answers there.",
+      "facts": [
+        [
+          "Website sees",
+          "192.0.2.51 (the VPN)"
+        ],
+        [
+          "Your address",
+          "Hidden from the site"
+        ],
+        [
+          "TTL",
+          "127 (one hop, the VPN)"
+        ]
+      ],
+      "events": [
+        {
+          "type": "show",
+          "nodes": [
+            "web"
+          ],
+          "frame": "full"
+        },
+        {
+          "type": "packet",
+          "from": "relay",
+          "to": "web",
+          "color": "green",
+          "label": "SYN",
+          "payload": [
+            "from 192.0.2.51"
+          ],
+          "row": {
+            "time": "0.046s",
+            "src": "192.0.2.51",
+            "dst": "203.0.113.10",
+            "proto": "TCP",
+            "info": "52344 → 443 [SYN] Seq=0",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 52344,
+                "dport": 443,
+                "flags": "S",
+                "mss": 1380
+              },
+              "alias": [
+                "192.0.2.51:52344",
+                "10.8.0.2:52344"
+              ],
+              "ttl": 127,
+              "ttlNote": "The laptop sent it with 128; the VPN server took 1 when it passed it on."
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "relay",
+          "color": "green",
+          "label": "SYN-ACK",
+          "payload": [
+            "to 192.0.2.51"
+          ],
+          "row": {
+            "time": "0.056s",
+            "src": "203.0.113.10",
+            "dst": "192.0.2.51",
+            "proto": "TCP",
+            "info": "443 → 52344 [SYN, ACK] Seq=0 Ack=1",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 443,
+                "dport": 52344,
+                "flags": "SA"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "The Way Back",
+      "desc": "Sealed again, for the laptop",
+      "detail": "The answer goes back the same way. The VPN server seals the SYN-ACK in a WireGuard packet for the laptop, which opens it and hands it to Windows as if it had come straight from the web server.",
+      "facts": [
+        [
+          "Inside",
+          "203.0.113.10 → 10.8.0.2"
+        ],
+        [
+          "Counter",
+          "Each side counts its own"
+        ],
+        [
+          "Replays",
+          "Thrown away"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "relay",
+          "to": "client",
+          "color": "teal",
+          "label": "DATA",
+          "payload": [
+            "inside: TCP SYN-ACK"
+          ],
+          "row": {
+            "time": "0.066s",
+            "src": "192.0.2.51",
+            "dst": "192.168.1.10",
+            "proto": "WireGuard",
+            "info": "Transport Data, receiver=0x9d3c58e1, counter=0",
+            "len": "138 B",
+            "wire": {
+              "udp": {
+                "sport": 51820,
+                "dport": 54016,
+                "data": {
+                  "wg": {
+                    "type": 4,
+                    "receiver": 2637977825,
+                    "counter": 0,
+                    "sealed": 80,
+                    "inner": [
+                      "IPv4 203.0.113.10 → 10.8.0.2",
+                      "TCP 443 → 52344 [SYN, ACK]",
+                      "then 12 bytes of padding, and the tag"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "locked": true
+        }
+      ]
+    },
+    {
+      "title": "Keeping It Open",
+      "desc": "A keepalive, and new keys",
+      "detail": "With nothing to send, a WireGuard tunnel goes quiet. Because the laptop is behind NAT, it is set to send an empty packet every 25 seconds (PersistentKeepalive), a keepalive of 32 bytes, so the router doesn’t forget the connection. Every two minutes a new handshake makes fresh keys, and if the laptop moves to another network, the tunnel simply carries on from its new address.",
+      "facts": [
+        [
+          "Keepalive",
+          "Every 25 s, 32 bytes"
+        ],
+        [
+          "New keys",
+          "Every 2 minutes"
+        ],
+        [
+          "New network",
+          "The tunnel carries on"
+        ]
+      ],
+      "events": [
+        {
+          "type": "camera",
+          "frame": "relay"
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "relay",
+          "color": "slate",
+          "label": "KEEPALIVE",
+          "payload": [
+            "empty, 32 bytes"
+          ],
+          "row": {
+            "time": "25.031s",
+            "src": "192.168.1.10",
+            "dst": "192.0.2.51",
+            "proto": "WireGuard",
+            "info": "Keepalive, receiver=0x4f2a7c13, counter=1",
+            "len": "74 B",
+            "wire": {
+              "udp": {
+                "sport": 54016,
+                "dport": 51820,
+                "data": {
+                  "wg": {
+                    "type": 4,
+                    "receiver": 1328184339,
+                    "counter": 1,
+                    "sealed": 16
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "teaching": {
+    "steps": [
+      [
+        "Cài đặt một lần",
+        "Laptop chạy ứng dụng WireGuard với một cấu hình ngắn: khóa riêng của nó, khóa công khai và địa chỉ của máy chủ (192.0.2.51, cổng UDP 51820), và AllowedIPs = 0.0.0.0/0, nghĩa là mọi thứ đều đi qua đường hầm. Trong đường hầm, địa chỉ của laptop là 10.8.0.2."
+      ],
+      [
+        "Bắt tay",
+        "Khi laptop lần đầu có gì để gửi, nó bắt đầu bắt tay: 148 byte với một khóa công khai mới, khóa dài hạn của nó (đã mã hóa, để chỉ máy chủ biết ai đang gọi) và thời gian (đã mã hóa, để bản ghi không phát lại được). Máy chủ chỉ trả lời những khóa nó biết, ở đây bằng 92 byte. Một lượt khứ hồi, và cả hai bên có khóa phiên mới."
+      ],
+      [
+        "Vào đường hầm",
+        "Bạn mở https://www.example.com; địa chỉ của nó cũng được tra qua đường hầm (không hiện). Gói đầu tiên của kết nối, một TCP SYN từ 10.8.0.2 tới máy chủ web, được mã hóa nguyên vẹn và gửi bên trong một gói UDP tới máy chủ VPN. Trên Wi-Fi quán cà phê chỉ thấy gói bên ngoài: từ laptop tới 192.0.2.51, cổng 51820."
+      ],
+      [
+        "Ra web",
+        "Máy chủ VPN giải mã gói, thay 10.8.0.2 bằng địa chỉ công khai của nó (NAT) và gửi SYN đi tiếp, già thêm một chặng (TTL 127). SYN đề xuất đoạn tối đa 1380 byte, không phải 1460: đường hầm thêm 60 byte vào mỗi gói. Máy chủ web thấy một khách ở 192.0.2.51 và trả lời về đó."
+      ],
+      [
+        "Đường về",
+        "Câu trả lời quay về theo cùng đường. Máy chủ VPN niêm phong SYN-ACK trong một gói WireGuard cho laptop, laptop mở ra và giao cho Windows như thể nó đến thẳng từ máy chủ web."
+      ],
+      [
+        "Giữ mở",
+        "Khi không có gì để gửi, đường hầm WireGuard im lặng. Vì laptop nằm sau NAT, nó được đặt gửi một gói rỗng mỗi 25 giây (PersistentKeepalive), một keepalive 32 byte, để router không quên kết nối. Cứ hai phút một bắt tay mới tạo khóa mới, và nếu laptop chuyển sang mạng khác, đường hầm cứ thế tiếp tục từ địa chỉ mới."
+      ]
+    ],
+    "notes": {
+      "TUNNEL ADDRESS 10.8.0.2": "ĐỊA CHỈ ĐƯỜNG HẦM 10.8.0.2"
+    },
+    "labels": {
+      "Internet": "Internet",
+      "Client": "Máy khách",
+      "Router": "Router",
+      "DNS Resolver": "Bộ phân giải DNS",
+      "Web Server": "Máy chủ web",
+      "Root Server": "Máy chủ gốc",
+      ".com TLD Server": "Máy chủ TLD .com",
+      "Authoritative Server": "Máy chủ có thẩm quyền",
+      "Mail Server": "Máy chủ thư",
+      "Proxy": "Proxy",
+      "App Server": "Máy chủ ứng dụng",
+      "File Server": "Máy chủ tệp",
+      "ISP Router": "Router của ISP",
+      "Transit Router": "Router trung chuyển",
+      "Hosting Router": "Router của nhà lưu trữ",
+      "Their Router": "Router bên kia",
+      "Their Laptop": "Laptop bên kia",
+      "Switch": "Switch",
+      "Access Server": "Máy chủ truy cập",
+      "IP Camera": "Camera IP",
+      "TV Box": "TV box",
+      "VPN Server": "Máy chủ VPN",
+      "www.example.com": "www.example.com"
+    }
+  }
+}

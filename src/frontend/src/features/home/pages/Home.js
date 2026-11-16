@@ -2,6 +2,9 @@ import AppIcon from '../../../components/ui/AppIcon';
 import LearningResumeBanner from '../../../components/learning/LearningResumeBanner';
 import HeroTopology from '../components/HeroTopology';
 import HeroTerminalPreview from '../components/HeroTerminalPreview';
+import HeroNetworkShowcase from '../components/HeroNetworkShowcase';
+import HomeAiSpotlight from '../components/HomeAiSpotlight';
+import { protocolCatalog, scenarioCatalog } from '../../protocols/data/lessonCatalog';
 import useReducedMotion from '../../../hooks/useReducedMotion';
 import React, { lazy, Suspense, useState, useEffect, useRef } from 'react';
 import '../styles/Home.css';
@@ -14,6 +17,7 @@ import {
   Network,
   Router,
   Shield,
+  Sparkles,
   TerminalSquare,
 } from 'lucide-react';
 import course1 from '../../../assets/images/course1.jpg';
@@ -56,6 +60,12 @@ const FALLBACK_ICON = TerminalSquare;
 const COURSE_SKELETON_COUNT = 3;
 
 const features = [
+  {
+    materialIcon: 'account_tree',
+    title: 'Mô phỏng giao thức',
+    desc: `Theo dõi từng gói tin qua ${protocolCatalog.length} giao thức, từ DNS và TCP đến TLS.`,
+    to: '/protocols',
+  },
   {
     materialIcon: 'calculate',
     title: 'Trình tính toán Subnet',
@@ -422,9 +432,9 @@ export const Home = () => {
   }, [loading]);
   return (
     <div className="home-wrapper" ref={containerRef}>
-      <section className="landing-hero" aria-labelledby="landing-title">
+      <section className="landing-hero landing-hero--showcase" aria-labelledby="landing-title">
         <div className="landing-hero__content">
-          <p className="landing-eyebrow">NETMASTER · HỌC VÀ LUYỆN THI CCNA</p>
+          <p className="landing-eyebrow">NETMASTER · HỌC MẠNG BẰNG THỰC HÀNH</p>
           <div className="hero-title-slot">
             {HERO_HIGHLIGHT_PHRASES.map((phrase) => (
               <span className="hero-title-reserve" aria-hidden="true" key={phrase}>
@@ -453,24 +463,36 @@ export const Home = () => {
             </h1>
           </div>
           <p className="landing-hero__description">
-            Từ bài học nền tảng đến lab cấu hình và bài thi thử. Phù hợp cho người mới bắt đầu học
-            mạng.
+            Quan sát gói tin DNS, TCP và HTTP đi qua từng thiết bị. Tự cấu hình mạng và hỏi Trợ lý
+            AI ngay trong bài lab.
           </p>
           <div className="landing-hero__actions">
-            <Link to="/roadmap" className="landing-button landing-button--primary">
-              Xem lộ trình học <ArrowRight size={18} aria-hidden="true" />
+            <Link to="/protocols" className="landing-button landing-button--primary">
+              Khám phá mô phỏng <ArrowRight size={18} aria-hidden="true" />
             </Link>
-            <button
-              type="button"
-              className="landing-button landing-button--secondary"
-              onClick={() => scrollToSection('home-how-it-works')}
-            >
-              Xem cách học
-            </button>
+            <Link to="/roadmap" className="landing-button landing-button--secondary">
+              Xem lộ trình học
+            </Link>
           </div>
+          <p className="landing-hero__catalog">
+            <Network size={16} aria-hidden="true" />
+            <strong>{scenarioCatalog.length} kịch bản mô phỏng</strong>
+          </p>
+          <a
+            className="landing-hero__ai-link"
+            href="#home-ai"
+            onClick={(event) => {
+              event.preventDefault();
+              scrollToSection('home-ai');
+            }}
+          >
+            <Sparkles size={16} aria-hidden="true" />
+            Trợ lý AI đồng hành khi làm lab
+            <ArrowRight size={14} aria-hidden="true" />
+          </a>
         </div>
 
-        <div className="landing-hero__visual">
+        <HeroNetworkShowcase onCliOpen={() => setDemoOpen(true)}>
           <HeroTopology />
           <div className="landing-hero__journey hero-terminal-card" aria-label="Terminal minh họa">
             <div className="hero-terminal-heading">
@@ -507,13 +529,14 @@ export const Home = () => {
               Luyện thi CCNA
             </Link>
           </div>
-        </div>
+        </HeroNetworkShowcase>
       </section>
       {isAuthenticated && (
         <div className="home-learning-resume">
           <LearningResumeBanner />
         </div>
       )}
+      <HomeAiSpotlight />
 
       <section
         id="home-how-it-works"

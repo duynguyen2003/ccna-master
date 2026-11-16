@@ -41,6 +41,8 @@ const SubnetCalculator = lazy(() => import('./features/tools/pages/SubnetCalcula
 const VLSMCalculator = lazy(() => import('./features/tools/pages/VLSM_Calculator'));
 const PortLookup = lazy(() => import('./features/tools/pages/PortLookup'));
 const CiscoCliLookup = lazy(() => import('./features/tools/pages/CiscoCliLookup'));
+const ProtocolLibrary = lazy(() => import('./features/protocols/pages/ProtocolLibrary'));
+const AiAssistant = lazy(() => import('./features/home/pages/AiAssistant'));
 
 function GlobalToastRenderer() {
   const { pendingToast, setPendingToast } = useAuth();
@@ -125,6 +127,7 @@ function App() {
                 <RouteContent>
                   <Routes>
                     <Route path="/" element={<Home />} />
+                    <Route path="/ai-assistant" element={<AiAssistant />} />
 
                     {/* AUTH AS MODALS */}
                     <Route
@@ -220,7 +223,20 @@ function App() {
                       }
                     />
 
+                    <Route
+                      path="/protocols"
+                      element={
+                        <ProtectedRoute>
+                          <ProtocolLibrary />
+                        </ProtectedRoute>
+                      }
+                    />
+
                     {/* Fallback */}
+                    <Route
+                      path="/tools/protocol-explorer"
+                      element={<Navigate to="/protocols" replace />}
+                    />
                     <Route path="*" element={<Navigate to="/" replace />} />
                   </Routes>
                 </RouteContent>

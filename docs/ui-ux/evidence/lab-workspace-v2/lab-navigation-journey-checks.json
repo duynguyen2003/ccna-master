@@ -1,0 +1,546 @@
+{
+  "checkedAt": "2026-11-15T15:34:21.678Z",
+  "environment": {
+    "browser": "Chromium, localhost:3000",
+    "auth": "isolated synthetic session",
+    "data": "EIGRP01 engine 3.0.0, in-memory fixture",
+    "multiEvents": 38,
+    "localEvents": 2,
+    "progress": "UI fixture 0/17, not a grading result",
+    "backendOrProviderWrites": false
+  },
+  "checks": {
+    "collapsedControls": 0,
+    "quick": {
+      "position": "5/38",
+      "events": [
+        "Sự kiện 4: Trả lời ARP, R2",
+        "Sự kiện 5: Chuyển frame, R1 → R2"
+      ],
+      "arrows": [
+        {
+          "from": "54",
+          "to": "236.66666666666666"
+        }
+      ],
+      "terminal": 228,
+      "stage": 190.1999969482422,
+      "scroll": [
+        638,
+        638
+      ]
+    },
+    "hidden": {
+      "trace": 0,
+      "focus": true
+    },
+    "reopened": "5/38",
+    "compact": {
+      "height": 42,
+      "controls": 0
+    },
+    "navigation": {
+      "headerDuplicates": 0,
+      "innerHeader": 0,
+      "goalHeading": 0,
+      "aiLabelCount": 1,
+      "composerFocus": true
+    },
+    "optionsBounds": {
+      "x": 849.9249877929688,
+      "y": 627.6000366210938,
+      "width": 260,
+      "height": 89.5999984741211,
+      "top": 627.6000366210938,
+      "right": 1109.9249877929688,
+      "bottom": 717.2000350952148,
+      "left": 849.9249877929688
+    },
+    "optionsEscape": true,
+    "aiCollapsed": true,
+    "aiDraft": "Vì sao R1 chưa học được đường đi đến R4?",
+    "refocus": true,
+    "probe": {
+      "header": 1,
+      "goalsTab": 0,
+      "close": 1,
+      "source": "Gửi từ R1\nIP đích\nPing\nTùy chọn TCP/UDP",
+      "event": "5/38"
+    },
+    "probeRetained": "4.4.4.4",
+    "terminalDraft": true,
+    "aiWorking": {
+      "state": "working",
+      "disabled": true
+    },
+    "aiHiddenWorking": "working",
+    "aiCompletion": {
+      "status": "default",
+      "messages": 2,
+      "posts": 1
+    },
+    "detail": {
+      "view": "true",
+      "events": 38,
+      "event": "5/38",
+      "width": [
+        531,
+        531
+      ]
+    },
+    "detailListIndex": "Sự kiện 6: Kiểm tra ACL vào",
+    "detailWide": [
+      604,
+      604
+    ],
+    "quickReturnIndex": "6/38",
+    "afterDeviceSwitch": {
+      "event": "6/38",
+      "terminalDraft": true
+    },
+    "layouts": [
+      {
+        "viewport": [
+          1920,
+          900
+        ],
+        "pageWidth": 1920,
+        "trace": {
+          "w": 1558.4000244140625,
+          "h": 206.60000610351562,
+          "top": 369.70001220703125,
+          "bottom": 576.3000183105469,
+          "sw": 1558,
+          "cw": 1558
+        },
+        "stage": {
+          "w": 1558.4000244140625,
+          "h": 268.1000061035156,
+          "top": 101.5999984741211,
+          "bottom": 369.7000045776367,
+          "sw": 1558,
+          "cw": 1558
+        },
+        "terminal": {
+          "w": 1558.4000244140625,
+          "h": 278.1000061035156,
+          "top": 621.1000366210938,
+          "bottom": 899.2000427246094,
+          "sw": 1558,
+          "cw": 1558
+        },
+        "sequence": {
+          "w": 959.0125122070312,
+          "h": 129.1999969482422,
+          "top": 446.3000183105469,
+          "bottom": 575.5000152587891,
+          "sw": 959,
+          "cw": 959
+        },
+        "sidebar": {
+          "w": 360,
+          "h": 841.6000366210938,
+          "top": 57.60000228881836,
+          "bottom": 899.2000389099121,
+          "sw": 359,
+          "cw": 359
+        },
+        "event": "5/38"
+      },
+      {
+        "viewport": [
+          1366,
+          768
+        ],
+        "pageWidth": 1366,
+        "trace": {
+          "w": 1036.875,
+          "h": 208.60000610351562,
+          "top": 285.8000183105469,
+          "bottom": 494.4000244140625,
+          "sw": 1037,
+          "cw": 1037
+        },
+        "stage": {
+          "w": 1036.875,
+          "h": 190.1999969482422,
+          "top": 95.5999984741211,
+          "bottom": 285.7999954223633,
+          "sw": 1037,
+          "cw": 1037
+        },
+        "terminal": {
+          "w": 1036.875,
+          "h": 228,
+          "top": 539.2000122070312,
+          "bottom": 767.2000122070312,
+          "sw": 1037,
+          "cw": 1037
+        },
+        "sequence": {
+          "w": 638.0750122070312,
+          "h": 129.1999969482422,
+          "top": 364.3999938964844,
+          "bottom": 493.59999084472656,
+          "sw": 638,
+          "cw": 638
+        },
+        "sidebar": {
+          "w": 327.9250183105469,
+          "h": 715.6000366210938,
+          "top": 51.60000228881836,
+          "bottom": 767.2000389099121,
+          "sw": 327,
+          "cw": 327
+        },
+        "event": "5/38"
+      },
+      {
+        "viewport": [
+          1024,
+          768
+        ],
+        "pageWidth": 1024,
+        "trace": {
+          "w": 712.4000244140625,
+          "h": 208.60000610351562,
+          "top": 285.8000183105469,
+          "bottom": 494.4000244140625,
+          "sw": 712,
+          "cw": 712
+        },
+        "stage": {
+          "w": 712.4000244140625,
+          "h": 191,
+          "top": 94.80000305175781,
+          "bottom": 285.8000030517578,
+          "sw": 712,
+          "cw": 712
+        },
+        "terminal": {
+          "w": 712.4000244140625,
+          "h": 228,
+          "top": 539.2000122070312,
+          "bottom": 767.2000122070312,
+          "sw": 712,
+          "cw": 712
+        },
+        "sequence": {
+          "w": 438.3999938964844,
+          "h": 129.1999969482422,
+          "top": 364.3999938964844,
+          "bottom": 493.59999084472656,
+          "sw": 438,
+          "cw": 438
+        },
+        "sidebar": {
+          "w": 310,
+          "h": 716.4000244140625,
+          "top": 50.79999923706055,
+          "bottom": 767.200023651123,
+          "sw": 309,
+          "cw": 309
+        },
+        "event": "5/38"
+      }
+    ],
+    "topology": [
+      "R1",
+      "R2"
+    ],
+    "playback": {
+      "end": "38/38",
+      "visibleRows": 2,
+      "scroll": {
+        "x": 0,
+        "y": 0,
+        "sw": 959,
+        "cw": 959
+      },
+      "restart": "1/38"
+    },
+    "dark": {
+      "mode": "cli-workspace-overlay cli-lab-workspace-v2 cli-lab-theme cli-lab-stitch cli-lab-stitch--dark cli-lab-page ",
+      "sequence": {
+        "fg": "rgb(241, 245, 249)",
+        "bg": "rgba(0, 0, 0, 0)"
+      }
+    },
+    "mobile": [
+      {
+        "ai": {
+          "header": false,
+          "innerHeader": 0,
+          "input": {
+            "x": 20.80000114440918,
+            "y": 708.7999877929688,
+            "width": 348.8000183105469,
+            "height": 26,
+            "top": 708.7999877929688,
+            "right": 369.60001945495605,
+            "bottom": 734.7999877929688,
+            "left": 20.80000114440918
+          },
+          "paused": "true"
+        },
+        "viewport": [
+          390,
+          844
+        ],
+        "sw": 390,
+        "header": {
+          "x": 0,
+          "y": 104.80000305175781,
+          "width": 390.3999938964844,
+          "height": 74.30000305175781,
+          "top": 104.80000305175781,
+          "right": 390.3999938964844,
+          "bottom": 179.10000610351562,
+          "left": 0
+        },
+        "buttons": [
+          {
+            "name": "Hành trình",
+            "x": 71.73750305175781,
+            "y": 141.3000030517578,
+            "width": 103.4375,
+            "height": 32,
+            "top": 141.3000030517578,
+            "right": 175.1750030517578,
+            "bottom": 173.3000030517578,
+            "left": 71.73750305175781
+          },
+          {
+            "name": "Ping thử",
+            "x": 183.1750030517578,
+            "y": 141.3000030517578,
+            "width": 90.25,
+            "height": 32,
+            "top": 141.3000030517578,
+            "right": 273.4250030517578,
+            "bottom": 173.3000030517578,
+            "left": 183.1750030517578
+          },
+          {
+            "name": "Ngắt dây",
+            "x": 281.4250183105469,
+            "y": 141.3000030517578,
+            "width": 96.9749984741211,
+            "height": 32,
+            "top": 141.3000030517578,
+            "right": 378.40001678466797,
+            "bottom": 173.3000030517578,
+            "left": 281.4250183105469
+          }
+        ],
+        "sequence": [
+          390,
+          390
+        ]
+      },
+      {
+        "ai": {
+          "header": false,
+          "innerHeader": 0,
+          "input": {
+            "x": 20.80000114440918,
+            "y": 604.7999877929688,
+            "width": 278.3999938964844,
+            "height": 26,
+            "top": 604.7999877929688,
+            "right": 299.19999504089355,
+            "bottom": 630.7999877929688,
+            "left": 20.80000114440918
+          },
+          "paused": "true"
+        },
+        "viewport": [
+          320,
+          740
+        ],
+        "sw": 320,
+        "header": {
+          "x": 0,
+          "y": 104.80000305175781,
+          "width": 304.8000183105469,
+          "height": 114.30000305175781,
+          "top": 104.80000305175781,
+          "right": 304.8000183105469,
+          "bottom": 219.10000610351562,
+          "left": 0
+        },
+        "buttons": [
+          {
+            "name": "Hành trình",
+            "x": 12,
+            "y": 141.3000030517578,
+            "width": 103.4375,
+            "height": 32,
+            "top": 141.3000030517578,
+            "right": 115.4375,
+            "bottom": 173.3000030517578,
+            "left": 12
+          },
+          {
+            "name": "Ping thử",
+            "x": 123.4375,
+            "y": 141.3000030517578,
+            "width": 90.25,
+            "height": 32,
+            "top": 141.3000030517578,
+            "right": 213.6875,
+            "bottom": 173.3000030517578,
+            "left": 123.4375
+          },
+          {
+            "name": "Ngắt dây",
+            "x": 12,
+            "y": 181.3000030517578,
+            "width": 96.9749984741211,
+            "height": 32,
+            "top": 181.3000030517578,
+            "right": 108.9749984741211,
+            "bottom": 213.3000030517578,
+            "left": 12
+          }
+        ],
+        "sequence": [
+          305,
+          305
+        ]
+      }
+    ],
+    "mobileProbe": {
+      "title": 1,
+      "input": {
+        "x": 22.80000114440918,
+        "y": 230.40000915527344,
+        "width": 274.3999938964844,
+        "height": 38,
+        "top": 230.40000915527344,
+        "right": 297.19999504089355,
+        "bottom": 268.40000915527344,
+        "left": 22.80000114440918
+      },
+      "close": 1
+    },
+    "aiError": {
+      "text": "Trợ lý đang bận. Bạn vẫn có thể thực hành.",
+      "state": "default"
+    },
+    "avatarIdle": {
+      "unique": 8,
+      "samples": 8
+    },
+    "avatarReduced": true,
+    "local": {
+      "summary": "R1 (192.1.12.1) → 192.1.12.1\nICMP\nThành công\n2 sự kiện",
+      "explanation": "Đã nhận phản hồi\n\nPing nội bộ R1: IP 192.1.12.1 thuộc chính thiết bị này. Gói được xử lý tại R1, không đi qua liên kết mạng.",
+      "sequence": 0,
+      "actors": [
+        "R1"
+      ],
+      "links": 0,
+      "event": "2/2"
+    },
+    "localAfterDeviceSwitch": [
+      "R1"
+    ],
+    "keyboardCollapse": {
+      "focus": true,
+      "controls": 0,
+      "event": "5/38"
+    },
+    "mobileNodes": [
+      {
+        "viewport": [
+          390,
+          844
+        ],
+        "stage": {
+          "top": 179.10000610351562,
+          "bottom": 434.40000915527344
+        },
+        "nodes": [
+          {
+            "id": "R1",
+            "inside": true
+          },
+          {
+            "id": "R2",
+            "inside": true
+          },
+          {
+            "id": "R3",
+            "inside": true
+          },
+          {
+            "id": "R4",
+            "inside": true
+          }
+        ],
+        "pageWidth": 390
+      },
+      {
+        "viewport": [
+          320,
+          740
+        ],
+        "stage": {
+          "top": 219.10000610351562,
+          "bottom": 419.1000061035156
+        },
+        "nodes": [
+          {
+            "id": "R1",
+            "inside": true
+          },
+          {
+            "id": "R2",
+            "inside": true
+          },
+          {
+            "id": "R3",
+            "inside": true
+          },
+          {
+            "id": "R4",
+            "inside": true
+          }
+        ],
+        "pageWidth": 320
+      }
+    ]
+  },
+  "freshContext": {
+    "errors": [],
+    "checks": {
+      "detailEscapeQuick": true,
+      "reopen": "5/38"
+    }
+  },
+  "qaHarness": {
+    "note": "One localStorage access-denied event was seen during reload in the earlier unguarded init-script context; fresh context guards the origin before accessing storage and reproduces hide/reopen/detail/Escape with zero page errors.",
+    "priorStorageEvents": 1,
+    "otherPriorPageErrors": []
+  },
+  "limitations": [
+    "No real account, database, provider or physical touch-device acceptance test.",
+    "Very short mobile viewports can scroll vertically; full traces with many actors can scroll in detail.",
+    "Browser QA did not submit a real probe; existing mocked API contract tests cover submission."
+  ],
+  "validation": {
+    "tests": {
+      "success": true,
+      "numTotalTests": 98,
+      "numPassedTests": 98,
+      "numFailedTests": 0,
+      "numTotalTestSuites": 11
+    },
+    "eslint": "pass",
+    "prettier": "pass",
+    "boundaries": "2222 imports/assets across 525 files",
+    "icons": "129 exports",
+    "productionBuild": "CI=true, exit 0"
+  }
+}

@@ -1,0 +1,828 @@
+{
+  "id": "dns",
+  "name": "DNS",
+  "title": "Name Resolution",
+  "layer": 7,
+  "nodes": [
+    "client",
+    "router",
+    "internet",
+    "dns",
+    "root",
+    "tld",
+    "auth"
+  ],
+  "latency": {
+    "client-dns": 0.012,
+    "dns-root": 0.005,
+    "dns-tld": 0.01,
+    "dns-auth": 0.02
+  },
+  "legend": [
+    [
+      "blue",
+      "Query"
+    ],
+    [
+      "amber",
+      "Referral"
+    ],
+    [
+      "green",
+      "Answer"
+    ],
+    [
+      null,
+      "DNSSEC not requested here"
+    ]
+  ],
+  "overview": {
+    "full": "Domain Name System",
+    "description": "DNS turns names like www.example.com into the IP addresses computers use to reach each other. No single server knows every name: the system is a hierarchy of servers, and answers are cached along the way so most lookups never have to go far.",
+    "facts": [
+      [
+        "Layer",
+        "Application (Layer 7)"
+      ],
+      [
+        "Port",
+        "53, UDP (TCP if large)"
+      ],
+      [
+        "Turns",
+        "Names into IP addresses"
+      ],
+      [
+        "Hierarchy",
+        "Root → TLD → authoritative"
+      ],
+      [
+        "Caching",
+        "For each record’s TTL"
+      ],
+      [
+        "Defined In",
+        "RFC 1034, RFC 1035"
+      ]
+    ]
+  },
+  "outro": {
+    "title": "Name resolved",
+    "desc": "And remembered for an hour",
+    "text": "Starting from an empty cache, the resolver walked from the root to .com to example.com’s own server, then answered the laptop. Until the TTL runs out, the next lookup for this name is answered straight from a cache. Press REPLAY to watch it again.",
+    "facts": [
+      [
+        "Queries",
+        "4 (laptop 1, resolver 3)"
+      ],
+      [
+        "Total time",
+        "0.094 s"
+      ],
+      [
+        "Transport",
+        "UDP, port 53"
+      ],
+      [
+        "Cached for",
+        "3600 s (TTL)"
+      ]
+    ]
+  },
+  "start": {
+    "nodes": [
+      "client"
+    ],
+    "frame": "client"
+  },
+  "steps": [
+    {
+      "title": "Ask the Resolver",
+      "desc": "The laptop hands the question off",
+      "detail": "The browser needs the IP address of www.example.com and neither it nor Windows has one cached. The laptop sends one question to the recursive resolver it was given, 8.8.8.8, and asks it to do the whole lookup (recursion desired).",
+      "facts": [
+        [
+          "Question",
+          "www.example.com, type A"
+        ],
+        [
+          "Asked",
+          "8.8.8.8 (recursive)"
+        ],
+        [
+          "Flags",
+          "RD (recursion desired)"
+        ]
+      ],
+      "events": [
+        {
+          "type": "type-url",
+          "text": "www.example.com"
+        },
+        {
+          "type": "show",
+          "nodes": [
+            "router",
+            "internet",
+            "dns"
+          ],
+          "frame": "lookup"
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "dns",
+          "color": "blue",
+          "label": "DNS QUERY",
+          "payload": [
+            "A? www.example.com",
+            "flags: RD"
+          ],
+          "row": {
+            "time": "0.000s",
+            "src": "192.168.1.10",
+            "dst": "8.8.8.8",
+            "proto": "DNS",
+            "info": "Standard query A www.example.com",
+            "len": "75 B",
+            "wire": {
+              "udp": {
+                "sport": 54871,
+                "dport": 53,
+                "data": {
+                  "dns": {
+                    "id": 39486,
+                    "rd": true,
+                    "q": [
+                      "www.example.com",
+                      "A"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Root Server",
+      "desc": "Points the way to .com",
+      "detail": "The resolver’s cache is empty (it has just started), so it begins at the top. A root server doesn’t know the address, but it knows which servers handle .com and replies with a referral. Many resolvers send it only “com”, not the full name.",
+      "facts": [
+        [
+          "Server",
+          "a.root-servers.net"
+        ],
+        [
+          "Root servers",
+          "13 names, 1,000+ anycast sites"
+        ],
+        [
+          "Reply",
+          "Referral (13 .com servers)"
+        ]
+      ],
+      "events": [
+        {
+          "type": "note",
+          "at": "dns",
+          "text": "NOT IN CACHE",
+          "tone": "amber"
+        },
+        {
+          "type": "show",
+          "nodes": [
+            "root"
+          ],
+          "frame": "root"
+        },
+        {
+          "type": "packet",
+          "from": "dns",
+          "to": "root",
+          "color": "blue",
+          "label": "DNS QUERY",
+          "payload": [
+            "A? www.example.com"
+          ],
+          "row": {
+            "time": "0.012s",
+            "src": "8.8.8.8",
+            "dst": "198.41.0.4",
+            "proto": "DNS",
+            "info": "Standard query A www.example.com",
+            "len": "86 B",
+            "wire": {
+              "udp": {
+                "sport": 38143,
+                "dport": 53,
+                "data": {
+                  "dns": {
+                    "id": 20935,
+                    "q": [
+                      "www.example.com",
+                      "A"
+                    ],
+                    "edns": {
+                      "size": 1232
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "root",
+          "to": "dns",
+          "color": "amber",
+          "label": "REFERRAL",
+          "payload": [
+            "no answer: ask .com",
+            "com. NS a.gtld-servers.net …"
+          ],
+          "row": {
+            "time": "0.017s",
+            "src": "198.41.0.4",
+            "dst": "8.8.8.8",
+            "proto": "DNS",
+            "info": "Referral: com. NS ×13 (with glue)",
+            "len": "882 B",
+            "wire": {
+              "udp": {
+                "sport": 53,
+                "dport": 38143,
+                "data": {
+                  "dns": {
+                    "id": 20935,
+                    "response": true,
+                    "q": [
+                      "www.example.com",
+                      "A"
+                    ],
+                    "edns": {
+                      "size": 1232
+                    },
+                    "ns": [
+                      [
+                        "com",
+                        "NS",
+                        172800,
+                        "a.gtld-servers.net"
+                      ],
+                      [
+                        "com",
+                        "NS",
+                        172800,
+                        "b.gtld-servers.net"
+                      ],
+                      [
+                        "com",
+                        "NS",
+                        172800,
+                        "c.gtld-servers.net"
+                      ],
+                      [
+                        "com",
+                        "NS",
+                        172800,
+                        "d.gtld-servers.net"
+                      ],
+                      [
+                        "com",
+                        "NS",
+                        172800,
+                        "e.gtld-servers.net"
+                      ],
+                      [
+                        "com",
+                        "NS",
+                        172800,
+                        "f.gtld-servers.net"
+                      ],
+                      [
+                        "com",
+                        "NS",
+                        172800,
+                        "g.gtld-servers.net"
+                      ],
+                      [
+                        "com",
+                        "NS",
+                        172800,
+                        "h.gtld-servers.net"
+                      ],
+                      [
+                        "com",
+                        "NS",
+                        172800,
+                        "i.gtld-servers.net"
+                      ],
+                      [
+                        "com",
+                        "NS",
+                        172800,
+                        "j.gtld-servers.net"
+                      ],
+                      [
+                        "com",
+                        "NS",
+                        172800,
+                        "k.gtld-servers.net"
+                      ],
+                      [
+                        "com",
+                        "NS",
+                        172800,
+                        "l.gtld-servers.net"
+                      ],
+                      [
+                        "com",
+                        "NS",
+                        172800,
+                        "m.gtld-servers.net"
+                      ]
+                    ],
+                    "ar": [
+                      [
+                        "a.gtld-servers.net",
+                        "A",
+                        172800,
+                        "192.5.6.30"
+                      ],
+                      [
+                        "b.gtld-servers.net",
+                        "A",
+                        172800,
+                        "192.33.14.30"
+                      ],
+                      [
+                        "c.gtld-servers.net",
+                        "A",
+                        172800,
+                        "192.26.92.30"
+                      ],
+                      [
+                        "d.gtld-servers.net",
+                        "A",
+                        172800,
+                        "192.31.80.30"
+                      ],
+                      [
+                        "e.gtld-servers.net",
+                        "A",
+                        172800,
+                        "192.12.94.30"
+                      ],
+                      [
+                        "f.gtld-servers.net",
+                        "A",
+                        172800,
+                        "192.35.51.30"
+                      ],
+                      [
+                        "g.gtld-servers.net",
+                        "A",
+                        172800,
+                        "192.42.93.30"
+                      ],
+                      [
+                        "h.gtld-servers.net",
+                        "A",
+                        172800,
+                        "192.54.112.30"
+                      ],
+                      [
+                        "i.gtld-servers.net",
+                        "A",
+                        172800,
+                        "192.43.172.30"
+                      ],
+                      [
+                        "j.gtld-servers.net",
+                        "A",
+                        172800,
+                        "192.48.79.30"
+                      ],
+                      [
+                        "k.gtld-servers.net",
+                        "A",
+                        172800,
+                        "192.52.178.30"
+                      ],
+                      [
+                        "l.gtld-servers.net",
+                        "A",
+                        172800,
+                        "192.41.162.30"
+                      ],
+                      [
+                        "m.gtld-servers.net",
+                        "A",
+                        172800,
+                        "192.55.83.30"
+                      ],
+                      [
+                        "a.gtld-servers.net",
+                        "AAAA",
+                        172800,
+                        "2001:503:a83e::2:30"
+                      ],
+                      [
+                        "b.gtld-servers.net",
+                        "AAAA",
+                        172800,
+                        "2001:503:231d::2:30"
+                      ],
+                      [
+                        "c.gtld-servers.net",
+                        "AAAA",
+                        172800,
+                        "2001:503:83eb::30"
+                      ],
+                      [
+                        "d.gtld-servers.net",
+                        "AAAA",
+                        172800,
+                        "2001:500:856e::30"
+                      ],
+                      [
+                        "e.gtld-servers.net",
+                        "AAAA",
+                        172800,
+                        "2001:502:1ca1::30"
+                      ],
+                      [
+                        "f.gtld-servers.net",
+                        "AAAA",
+                        172800,
+                        "2001:503:d414::30"
+                      ],
+                      [
+                        "g.gtld-servers.net",
+                        "AAAA",
+                        172800,
+                        "2001:503:eea3::30"
+                      ],
+                      [
+                        "h.gtld-servers.net",
+                        "AAAA",
+                        172800,
+                        "2001:502:8cc::30"
+                      ],
+                      [
+                        "i.gtld-servers.net",
+                        "AAAA",
+                        172800,
+                        "2001:503:39c1::30"
+                      ],
+                      [
+                        "j.gtld-servers.net",
+                        "AAAA",
+                        172800,
+                        "2001:502:7094::30"
+                      ],
+                      [
+                        "k.gtld-servers.net",
+                        "AAAA",
+                        172800,
+                        "2001:503:d2d::30"
+                      ],
+                      [
+                        "l.gtld-servers.net",
+                        "AAAA",
+                        172800,
+                        "2001:500:d937::30"
+                      ],
+                      [
+                        "m.gtld-servers.net",
+                        "AAAA",
+                        172800,
+                        "2001:501:b1f9::30"
+                      ]
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": ".com TLD Server",
+      "desc": "Points the way to example.com",
+      "detail": "The resolver asks one of the .com servers. They don’t store addresses for every site either, but they know which name servers each .com domain uses, so this reply is another referral, with those servers’ addresses (glue) attached.",
+      "facts": [
+        [
+          "Server",
+          "a.gtld-servers.net"
+        ],
+        [
+          "Knows",
+          "Name servers of .com domains"
+        ],
+        [
+          "Reply",
+          "Referral + glue addresses"
+        ]
+      ],
+      "events": [
+        {
+          "type": "show",
+          "nodes": [
+            "tld"
+          ],
+          "frame": "tld"
+        },
+        {
+          "type": "packet",
+          "from": "dns",
+          "to": "tld",
+          "color": "blue",
+          "label": "DNS QUERY",
+          "payload": [
+            "A? www.example.com"
+          ],
+          "row": {
+            "time": "0.022s",
+            "src": "8.8.8.8",
+            "dst": "192.5.6.30",
+            "proto": "DNS",
+            "info": "Standard query A www.example.com",
+            "len": "86 B",
+            "wire": {
+              "udp": {
+                "sport": 41766,
+                "dport": 53,
+                "data": {
+                  "dns": {
+                    "id": 11152,
+                    "q": [
+                      "www.example.com",
+                      "A"
+                    ],
+                    "edns": {
+                      "size": 1232
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "tld",
+          "to": "dns",
+          "color": "amber",
+          "label": "REFERRAL",
+          "payload": [
+            "no answer: ask example.com",
+            "example.com. NS ns1.example.com"
+          ],
+          "row": {
+            "time": "0.032s",
+            "src": "192.5.6.30",
+            "dst": "8.8.8.8",
+            "proto": "DNS",
+            "info": "Referral: example.com. NS ×2 (with glue)",
+            "len": "154 B",
+            "wire": {
+              "udp": {
+                "sport": 53,
+                "dport": 41766,
+                "data": {
+                  "dns": {
+                    "id": 11152,
+                    "response": true,
+                    "q": [
+                      "www.example.com",
+                      "A"
+                    ],
+                    "edns": {
+                      "size": 1232
+                    },
+                    "ns": [
+                      [
+                        "example.com",
+                        "NS",
+                        172800,
+                        "ns1.example.com"
+                      ],
+                      [
+                        "example.com",
+                        "NS",
+                        172800,
+                        "ns2.example.com"
+                      ]
+                    ],
+                    "ar": [
+                      [
+                        "ns1.example.com",
+                        "A",
+                        172800,
+                        "198.51.100.53"
+                      ],
+                      [
+                        "ns2.example.com",
+                        "A",
+                        172800,
+                        "198.51.100.54"
+                      ]
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Authoritative Server",
+      "desc": "Gives the actual answer",
+      "detail": "Finally the resolver asks example.com’s own name server, which holds the domain’s records. It answers with the A record and marks the reply authoritative. The domain owner sets how long it may be cached: here, 3600 seconds.",
+      "facts": [
+        [
+          "Server",
+          "ns1.example.com"
+        ],
+        [
+          "Answer",
+          "A 203.0.113.10"
+        ],
+        [
+          "Flags",
+          "AA (authoritative), TTL 3600"
+        ]
+      ],
+      "events": [
+        {
+          "type": "show",
+          "nodes": [
+            "auth"
+          ],
+          "frame": "full"
+        },
+        {
+          "type": "packet",
+          "from": "dns",
+          "to": "auth",
+          "color": "blue",
+          "label": "DNS QUERY",
+          "payload": [
+            "A? www.example.com"
+          ],
+          "row": {
+            "time": "0.042s",
+            "src": "8.8.8.8",
+            "dst": "198.51.100.53",
+            "proto": "DNS",
+            "info": "Standard query A www.example.com",
+            "len": "86 B",
+            "wire": {
+              "udp": {
+                "sport": 50911,
+                "dport": 53,
+                "data": {
+                  "dns": {
+                    "id": 58884,
+                    "q": [
+                      "www.example.com",
+                      "A"
+                    ],
+                    "edns": {
+                      "size": 1232
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "auth",
+          "to": "dns",
+          "color": "green",
+          "label": "ANSWER",
+          "payload": [
+            "www.example.com A 203.0.113.10",
+            "TTL 3600 · flag AA"
+          ],
+          "row": {
+            "time": "0.062s",
+            "src": "198.51.100.53",
+            "dst": "8.8.8.8",
+            "proto": "DNS",
+            "info": "Response A 203.0.113.10 (authoritative)",
+            "len": "102 B",
+            "wire": {
+              "udp": {
+                "sport": 53,
+                "dport": 50911,
+                "data": {
+                  "dns": {
+                    "id": 58884,
+                    "response": true,
+                    "aa": true,
+                    "q": [
+                      "www.example.com",
+                      "A"
+                    ],
+                    "edns": {
+                      "size": 1232
+                    },
+                    "an": [
+                      [
+                        "www.example.com",
+                        "A",
+                        3600,
+                        "203.0.113.10"
+                      ]
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Answer & Cache",
+      "desc": "The laptop gets its address",
+      "detail": "The resolver sends the answer back to the laptop and keeps a copy. For the next hour it can answer this name straight away, which is why the lookup in the HTTP lesson took only 24 ms. The laptop caches it too.",
+      "facts": [
+        [
+          "Answer",
+          "A 203.0.113.10"
+        ],
+        [
+          "Flags",
+          "RD, RA (recursion available)"
+        ],
+        [
+          "Cached by",
+          "Resolver and laptop"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "dns",
+          "to": "client",
+          "color": "green",
+          "label": "ANSWER",
+          "payload": [
+            "A 203.0.113.10 · TTL 3600",
+            "flags: RD RA"
+          ],
+          "row": {
+            "time": "0.082s",
+            "src": "8.8.8.8",
+            "dst": "192.168.1.10",
+            "proto": "DNS",
+            "info": "Standard query response A 203.0.113.10",
+            "len": "91 B",
+            "wire": {
+              "udp": {
+                "sport": 53,
+                "dport": 54871,
+                "data": {
+                  "dns": {
+                    "id": 39486,
+                    "response": true,
+                    "rd": true,
+                    "ra": true,
+                    "q": [
+                      "www.example.com",
+                      "A"
+                    ],
+                    "an": [
+                      [
+                        "www.example.com",
+                        "A",
+                        3600,
+                        "203.0.113.10"
+                      ]
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "note",
+          "at": "dns",
+          "text": "CACHED · TTL 3600 S",
+          "tone": "green"
+        }
+      ]
+    }
+  ]
+}

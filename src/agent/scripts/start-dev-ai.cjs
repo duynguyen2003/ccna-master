@@ -96,15 +96,19 @@ function createDevRuntime(settings, adapters = {}) {
     return stopping;
   }
 
-  function startChild(name, script) {
+  function startChild(name, script, processSpec) {
     controller.signal.throwIfAborted();
-    const child = launch(process.execPath, [script], {
-      cwd: settings.root,
-      env: process.env,
-      stdio: 'inherit',
-      windowsHide: true,
-      detached: process.platform !== 'win32',
-    });
+    const child = launch(
+      processSpec?.executable || process.execPath,
+      processSpec?.args || [script],
+      {
+        cwd: processSpec?.cwd || settings.root,
+        env: processSpec?.env || settings.env || process.env,
+        stdio: 'inherit',
+        windowsHide: true,
+        detached: process.platform !== 'win32',
+      }
+    );
     children.push(child);
     child.once('error', () => {
       void stop(new Error(`Không khởi động được ${name}.`));
@@ -112,7 +116,7 @@ function createDevRuntime(settings, adapters = {}) {
     child.once('exit', (code) => {
       if (!stopping) void stop(new Error(`${name} đã dừng (mã ${code ?? 'signal'}).`));
     });
-    log(`[dev:ai] Đã khởi động ${name}.`);
+    log(`[${settings.label || 'dev:ai'}] Đã khởi động ${name}.`);
   }
 
   async function ready(url, expected) {
@@ -147,7 +151,7 @@ function createDevRuntime(settings, adapters = {}) {
           startChild('backend', 'src/backend/src/Server.js');
         }
         await ready(backendUrl, (body) => body.status === 'ok');
-        startChild('Python AI', 'src/agent/scripts/start-python.cjs');
+        startChild('Python AI', 'src/agent/scripts/start-python.cjs', settings.pythonProcess);
         await ready(
           pythonUrl,
           (body) =>
@@ -155,7 +159,10 @@ function createDevRuntime(settings, adapters = {}) {
         );
         startChild('worker AI', 'src/agent/workers/aiWorker.js');
         if (settings.sweeper) startChild('sweeper AI', 'src/agent/workers/aiSweeper.js');
-        log('[dev:ai] Backend và AI đã chạy. Mở frontend bằng pnpm start. Ctrl+C để dừng.');
+        log(
+          settings.readyMessage ||
+            '[dev:ai] Backend và AI đã chạy. Mở frontend bằng pnpm start. Ctrl+C để dừng.'
+        );
       } catch (error) {
         await stop(failure || (controller.signal.aborted && !failure ? undefined : error));
         if (failure) throw failure;

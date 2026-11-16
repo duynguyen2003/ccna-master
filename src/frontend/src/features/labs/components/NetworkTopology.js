@@ -1,46 +1,17 @@
-import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { gsap, prefersReducedMotion } from '../utils/labMotion';
-import { labelLines, layoutTopology, shortPort } from '../utils/topologyLayout';
-import { layoutLinks, packetMotionPath } from '../utils/topologyGeometry';
+import { labelLines, layoutTopology, nodeBounds, shortPort } from '../utils/topologyLayout';
+import { layoutLinks } from '../utils/topologyGeometry';
 import NetworkDeviceGlyph from '../../../components/ui/NetworkDeviceGlyph';
+import PacketGlyph, { fitPacketGlyphTag } from '../../protocols/components/PacketGlyph';
+import IsometricGrid from '../../protocols/components/IsometricGrid';
+import useTopologyPacketMotion from '../hooks/useTopologyPacketMotion';
+import useObservedPacketMotion from '../../protocols/hooks/useObservedPacketMotion';
+import { observationWire } from '../../protocols/model/observation';
+import { packetTone } from '../../protocols/model/packetPresentation';
 import '../styles/NetworkTopology.css';
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
-
-const packetKey = (packet) =>
-  packet?.animationKey ||
-  (packet?.events || [])
-    .map((event) =>
-      [
-        event.type,
-        event.deviceId,
-        event.from?.deviceId,
-        event.to?.deviceId,
-        event.from?.interface,
-        event.to?.interface,
-        event.packet?.ttl,
-      ].join(':')
-    )
-    .join('|');
-
-const hopList = (packet, byId) => {
-  const frames = (packet?.events || []).filter(
-    (event) => event.type === 'FRAME' && event.from?.deviceId && event.to?.deviceId
-  );
-  const hops = frames.map((event) => ({
-    from: event.from.deviceId,
-    to: event.to.deviceId,
-    fromInterface: event.from.interface,
-    toInterface: event.to.interface,
-  }));
-  if (hops.length) return hops;
-  const seen = [];
-  (packet?.events || []).forEach((event) => {
-    if (event.deviceId && byId[event.deviceId] && seen.at(-1) !== event.deviceId)
-      seen.push(event.deviceId);
-  });
-  return seen.slice(0, -1).map((from, index) => ({ from, to: seen[index + 1] }));
-};
 
 export default function NetworkTopology({
   devices,
@@ -51,15 +22,23 @@ export default function NetworkTopology({
   onLinkSelect,
   selectedLink,
   packet,
+  observation,
   stp = {},
   disabled = false,
   fit = false,
+  fluid = false,
 }) {
   const svgRef = useRef(null);
   const markerRef = useRef(null);
-  const animationTimeline = useRef(null);
+  const layerRef = useRef(null);
+  const pathRef = useRef(null);
+  const pulseRef = useRef(null);
+  const crossRef = useRef(null);
   const drag = useRef(null);
-  const animatedKey = useRef('');
+  const fitCard = useCallback(() => {
+    const tag = markerRef.current?.querySelector('[data-packet-card-scale]');
+    if (tag) fitPacketGlyphTag(tag);
+  }, []);
   const [viewport, setViewport] = useState({ width: 1000, height: 210 });
   // The editor keeps its authored coordinates. Practice diagrams fit positions
   // to the available pixels, keeping labels readable when the AI pane opens.
@@ -67,21 +46,24 @@ export default function NetworkTopology({
   useLayoutEffect(() => {
     const svg = svgRef.current;
     if (!fitted || !svg || typeof ResizeObserver === 'undefined') return undefined;
-    const update = (width) => {
+    const update = (width, height) => {
       const pixels = Math.floor(width);
       if (pixels > 0)
         setViewport((previous) =>
-          previous.width === pixels ? previous : { width: pixels, height: 210 }
+          previous.width === pixels && previous.height === height
+            ? previous
+            : { width: pixels, height: height || 210 }
         );
+      fitCard();
     };
     // Fit before the first paint, rather than briefly shrinking a 1000px viewBox.
-    update((svg.parentElement || svg).clientWidth);
+    update((svg.parentElement || svg).clientWidth, (svg.parentElement || svg).clientHeight);
     const observer = new ResizeObserver(([entry]) => {
-      update(entry.contentRect.width);
+      update(entry.contentRect.width, entry.contentRect.height);
     });
     observer.observe(svg.parentElement || svg);
     return () => observer.disconnect();
-  }, [fitted]);
+  }, [fitted, fitCard]);
   const list = useMemo(
     () =>
       Array.isArray(devices)
@@ -89,15 +71,51 @@ export default function NetworkTopology({
         : Object.entries(devices || {}).map(([id, d]) => ({ ...d, id })),
     [devices]
   );
-  const byId = useMemo(() => Object.fromEntries(list.map((device) => [device.id, device])), [list]);
   const layout = useMemo(
-    () => layoutTopology(list, links, viewport, fitted),
-    [list, links, viewport, fitted]
+    () => layoutTopology(list, links, viewport, fitted, { compact: fluid }),
+    [list, links, viewport, fitted, fluid]
   );
   const { positions } = layout;
   const wires = useMemo(() => layoutLinks(list, links, layout, stp), [list, links, layout, stp]);
   const position = (id) => positions[id] || { x: 100, y: 100 };
-  const animationId = packetKey(packet);
+  useTopologyPacketMotion({
+    svgRef,
+    layerRef,
+    markerRef,
+    pathRef,
+    pulseRef,
+    crossRef,
+    packet: observation ? null : packet,
+    enabled: !observation,
+    layout,
+    wires,
+  });
+  useObservedPacketMotion({
+    observation,
+    layout,
+    wires,
+    layerRef,
+    markerRef,
+    pathRef,
+    pulseRef,
+    crossRef,
+    fitCard,
+  });
+  const observedEvent = observation?.model.events[observation.index];
+  const observedLink = observationWire(wires, observedEvent)?.link.id;
+  // Keep a permanent caption lane in CLI diagrams, including before the first probe.
+  const captionSpace = fitted && observation ? 56 : 0;
+  const sceneBottom = Math.max(
+    140,
+    ...list.map((device) => {
+      const box = nodeBounds(device, position(device.id));
+      return box.y + box.height + 12;
+    }),
+    ...wires.map(({ box }) => box.y + box.height + 12)
+  );
+  const viewBox = captionSpace
+    ? `0 -${captionSpace} ${layout.width} ${(fluid ? sceneBottom : layout.height) + captionSpace}`
+    : layout.viewBox;
 
   useEffect(() => {
     if (!selected || prefersReducedMotion()) return undefined;
@@ -114,55 +132,6 @@ export default function NetworkTopology({
     }, svgRef);
     return () => context.revert();
   }, [selected]);
-
-  useEffect(() => {
-    const marker = markerRef.current;
-    if (!marker) return undefined;
-    if (!animationId) {
-      animationTimeline.current?.kill();
-      animationTimeline.current = null;
-      animatedKey.current = '';
-      marker.setAttribute('visibility', 'hidden');
-      return undefined;
-    }
-    if (animatedKey.current === animationId) return undefined;
-    animatedKey.current = animationId;
-    const hops = hopList(packet, byId)
-      .filter((hop) => byId[hop.from] && byId[hop.to])
-      .filter(
-        (hop, index, all) =>
-          index === 0 || hop.from !== all[index - 1].from || hop.to !== all[index - 1].to
-      );
-    if (!hops.length || prefersReducedMotion()) {
-      marker.setAttribute('visibility', 'hidden');
-      return undefined;
-    }
-    const timeline = gsap.timeline({
-      onComplete: () => marker.setAttribute('visibility', 'hidden'),
-    });
-    animationTimeline.current = timeline;
-    gsap.set(marker, { x: 0, y: 0, clearProps: 'transform', attr: { cx: 0, cy: 0 } });
-    marker.setAttribute('visibility', 'visible');
-    hops.forEach((hop) => {
-      timeline.to(marker, {
-        duration: 0.48,
-        ease: 'power1.inOut',
-        motionPath: { path: packetMotionPath(wires, positions, hop), autoRotate: false },
-      });
-    });
-    return () => {
-      timeline.kill();
-      if (animationTimeline.current === timeline) animationTimeline.current = null;
-      marker.setAttribute('visibility', 'hidden');
-      // StrictMode mounts effects twice. Clearing the key lets the second
-      // mount replay the packet instead of leaving a hidden marker behind.
-      if (animatedKey.current === animationId) animatedKey.current = '';
-    };
-    // The animation is keyed by the packet signature. Polling replaces the
-    // state object, so depending on the whole packet would tear down an active
-    // route animation when the server returns the same event again.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [animationId, layout.viewBox]);
 
   const move = (event) => {
     if (!drag.current || !onMove || disabled) return;
@@ -197,15 +166,23 @@ export default function NetworkTopology({
   return (
     <svg
       ref={svgRef}
-      viewBox={layout.viewBox}
-      className={`network-topology network-diagram${fitted ? ' network-diagram--fit' : ''}${layout.linear ? ' network-diagram--linear' : ''}`}
-      style={fitted ? { minWidth: layout.minWidth, height: layout.height } : undefined}
+      viewBox={viewBox}
+      className={`network-topology network-diagram${fitted ? ' network-diagram--fit' : ''}${fluid ? ' network-diagram--fluid' : ''}${layout.linear ? ' network-diagram--linear' : ''}${observation ? ' packet-tone--' + packetTone(observedEvent) : ''}`}
+      style={
+        fitted
+          ? {
+              minWidth: fluid ? 0 : layout.minWidth,
+              height: fluid ? '100%' : layout.height + captionSpace,
+            }
+          : undefined
+      }
       role="group"
       aria-label="Sơ đồ mạng"
       onPointerMove={move}
       onPointerUp={finishDrag}
       onPointerCancel={finishDrag}
     >
+      <IsometricGrid y={-captionSpace} width={layout.width} height={layout.height + captionSpace} />
       {wires.map(
         ({
           link,
@@ -227,7 +204,7 @@ export default function NetworkTopology({
           return (
             <g
               key={link.id}
-              className={`network-link ${stateClass} ${selectedLink === link.id ? 'selected' : ''}`}
+              className={`network-link ${stateClass} ${selectedLink === link.id ? 'selected' : ''} ${observedLink === link.id ? 'is-observed' : ''}`}
               role={onLinkSelect ? 'button' : undefined}
               tabIndex={onLinkSelect && !disabled ? 0 : undefined}
               aria-label={
@@ -308,15 +285,6 @@ export default function NetworkTopology({
           Chưa có thiết bị
         </text>
       )}
-      <circle
-        ref={markerRef}
-        r="5"
-        className="network-packet network-packet-gsap"
-        visibility="hidden"
-        pointerEvents="none"
-      >
-        <title>Gói tin đang di chuyển</title>
-      </circle>
       {list.map((device) => {
         const p = position(device.id);
         return (
@@ -328,7 +296,7 @@ export default function NetworkTopology({
             aria-label={`Chọn ${device.id}`}
             aria-pressed={selected === device.id}
             transform={`translate(${p.x},${p.y})`}
-            className={`network-node ${selected === device.id ? 'selected' : ''}`}
+            className={`network-node ${selected === device.id ? 'selected' : ''} ${observedEvent?.actors.includes(device.id) ? 'is-observed' : ''}`}
             onClick={() => onSelect?.(device.id)}
             onKeyDown={(event) => {
               if (['Enter', ' '].includes(event.key)) {
@@ -370,9 +338,62 @@ export default function NetworkTopology({
               )}
             </g>
             <title>{`${device.id} · ${device.deviceType === 'ROUTER' ? 'Router' : device.deviceType === 'SWITCH' ? 'Switch' : 'Máy tính'}${device.hostname && device.hostname !== device.id ? ' · ' + device.hostname : ''}`}</title>
+            {observedEvent?.actors.includes(device.id) && (
+              <text className="network-device-activity" y="-47" textAnchor="middle">
+                {observedEvent.kind === 'frame'
+                  ? observedEvent.from?.deviceId === device.id
+                    ? 'Gửi'
+                    : 'Nhận'
+                  : observedEvent.failure
+                    ? 'Dừng'
+                    : 'Xử lý'}
+              </text>
+            )}
           </g>
         );
       })}
+      <g
+        ref={layerRef}
+        className="network-traffic-layer"
+        data-phase={observedEvent?.failure ? 'drop' : observedEvent?.phase || 'request'}
+        data-observation={observation ? 'true' : undefined}
+        visibility="hidden"
+        pointerEvents="none"
+        aria-hidden="true"
+      >
+        <path ref={pathRef} className="network-packet-route" pathLength="1" strokeDasharray="1" />
+        <circle ref={pulseRef} className="network-packet-arrival" r="10" />
+        {[3.2, 2.6, 2].map((r) => (
+          <circle key={r} className="network-packet-trail" r={r} />
+        ))}
+        <g ref={markerRef} className="network-packet network-packet-gsap">
+          {observedEvent ? (
+            <PacketGlyph event={observedEvent} scale={1.2} clearance={72} />
+          ) : (
+            <>
+              <circle className="network-packet-halo" r="12" />
+              <circle className="network-packet-core" r="5" />
+              <g className="network-packet-caption" transform="translate(0 -26)">
+                <rect x="-78" y="-29" width="156" height="39" rx="6" />
+                <text className="network-packet-title" textAnchor="middle" y="-13">
+                  {observedEvent?.label}
+                </text>
+                <text className="network-packet-detail" textAnchor="middle" y="1">
+                  {observedEvent?.phase === 'reply'
+                    ? 'Chiều phản hồi'
+                    : observation
+                      ? 'Chiều yêu cầu'
+                      : ''}
+                </text>
+              </g>
+            </>
+          )}
+        </g>
+        <g ref={crossRef} className="network-packet-cross">
+          <circle r="12" />
+          <path d="m-4-4 8 8m-8 0 8-8" />
+        </g>
+      </g>
     </svg>
   );
 }

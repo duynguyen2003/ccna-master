@@ -29,6 +29,7 @@ export default function AssistantLoader({
   timeoutMs = 12000,
   Dialog,
   theme = 'dark',
+  embedded = false,
 }) {
   const mobile = useMobile();
   const [attempt, setAttempt] = useState(0);
@@ -60,17 +61,19 @@ export default function AssistantLoader({
   }, [load, attempt, timeoutMs]);
   const fallback = (failed) => (
     <aside className="cli-ai-loading" aria-label="Trợ lý AI">
-      <header>
-        <h3>Trợ lý AI</h3>
-        <button
-          type="button"
-          className="cli-lab-button cli-lab-button--tertiary"
-          onClick={onClose}
-          aria-label="Đóng trợ lý AI"
-        >
-          Đóng
-        </button>
-      </header>
+      {!embedded && (
+        <header>
+          <h3>Trợ lý AI</h3>
+          <button
+            type="button"
+            className="cli-lab-button cli-lab-button--tertiary"
+            onClick={onClose}
+            aria-label="Đóng trợ lý AI"
+          >
+            Đóng
+          </button>
+        </header>
+      )}
       <div
         role={failed ? 'alert' : 'status'}
         className={failed ? undefined : 'ai-assistant-loading-status'}
@@ -97,7 +100,7 @@ export default function AssistantLoader({
   );
   const errorFallback = fallback(true);
   const wrap = (content) =>
-    mobile && Dialog ? (
+    mobile && !embedded && Dialog ? (
       <Dialog
         title="Trợ lý AI"
         className={`ai-assistant-loading-dialog cli-lab-editor cli-lab-stitch cli-lab-stitch--${theme}${theme === 'dark' ? ' is-dark' : ''}`}

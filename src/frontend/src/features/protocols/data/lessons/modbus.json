@@ -1,0 +1,665 @@
+{
+  "id": "modbus",
+  "name": "Modbus",
+  "title": "Talking to a PLC",
+  "layer": 7,
+  "nodes": [
+    "client",
+    "router",
+    "lan"
+  ],
+  "seenOn": "Seen on the plant network",
+  "latency": {
+    "client-lan": 0.001
+  },
+  "labels": {
+    "router": [
+      "Switch",
+      "Plant network"
+    ],
+    "lan": [
+      "PLC",
+      "192.168.1.20"
+    ]
+  },
+  "legend": [
+    [
+      "green",
+      "TCP"
+    ],
+    [
+      "amber",
+      "Requests"
+    ],
+    [
+      "violet",
+      "Answers"
+    ]
+  ],
+  "overview": {
+    "full": "Modbus/TCP, for industrial control",
+    "description": "Modbus is one of the oldest and most widely used protocols in industrial control (OT, operational technology): PLCs, sensors, motor drives and meters in factories, water works and buildings speak it. A client reads and writes numbered registers and coils on a device. Modbus/TCP carries the same small messages over TCP port 502, with no login and no encryption.",
+    "facts": [
+      [
+        "Layer",
+        "Application (Layer 7)"
+      ],
+      [
+        "Port",
+        "TCP 502"
+      ],
+      [
+        "Since",
+        "1979, by Modicon"
+      ],
+      [
+        "Data",
+        "16-bit registers, on/off coils"
+      ],
+      [
+        "Security",
+        "None built in"
+      ],
+      [
+        "Defined In",
+        "Modbus.org specifications"
+      ]
+    ]
+  },
+  "outro": {
+    "title": "Pump running",
+    "desc": "Simple, and wide open",
+    "text": "The laptop read four registers, changed a setpoint and started a pump, each with a 12-byte request and a short answer. No message carried a password and none was encrypted: Modbus trusts whoever can reach it, so the network around it has to do the protecting. Press REPLAY to watch it again.",
+    "facts": [
+      [
+        "Messages",
+        "4 requests, 4 answers"
+      ],
+      [
+        "Biggest",
+        "17 bytes (the read answer)"
+      ],
+      [
+        "Login",
+        "None"
+      ],
+      [
+        "Protect with",
+        "Separate networks"
+      ]
+    ]
+  },
+  "start": {
+    "nodes": [
+      "client"
+    ],
+    "frame": "client"
+  },
+  "steps": [
+    {
+      "title": "Port 502",
+      "desc": "A TCP connection to the PLC",
+      "detail": "A PLC (programmable logic controller) runs a small pumping station: it reads the sensors and switches the pumps. An engineer’s laptop on the plant network talks to it in Modbus/TCP, so it opens a TCP connection to port 502. In Modbus terms the laptop is the client and the PLC the server.",
+      "facts": [
+        [
+          "PLC",
+          "192.168.1.20"
+        ],
+        [
+          "Port",
+          "TCP 502"
+        ],
+        [
+          "Roles",
+          "Client asks, server answers"
+        ]
+      ],
+      "events": [
+        {
+          "type": "show",
+          "nodes": [
+            "router",
+            "lan"
+          ],
+          "frame": "office"
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "lan",
+          "color": "green",
+          "label": "SYN",
+          "payload": [],
+          "row": {
+            "time": "0.000s",
+            "src": "192.168.1.10",
+            "dst": "192.168.1.20",
+            "proto": "TCP",
+            "info": "51874 → 502 [SYN] Seq=0",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 51874,
+                "dport": 502,
+                "flags": "S"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "lan",
+          "to": "client",
+          "color": "green",
+          "label": "SYN-ACK",
+          "payload": [],
+          "row": {
+            "time": "0.001s",
+            "src": "192.168.1.20",
+            "dst": "192.168.1.10",
+            "proto": "TCP",
+            "info": "502 → 51874 [SYN, ACK] Seq=0 Ack=1",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 502,
+                "dport": 51874,
+                "flags": "SA"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "lan",
+          "color": "green",
+          "label": "ACK",
+          "payload": [],
+          "row": {
+            "time": "0.002s",
+            "src": "192.168.1.10",
+            "dst": "192.168.1.20",
+            "proto": "TCP",
+            "info": "51874 → 502 [ACK] Seq=1 Ack=1",
+            "len": "60 B",
+            "wire": {
+              "tcp": {
+                "sport": 51874,
+                "dport": 502,
+                "flags": "A"
+              }
+            }
+          },
+          "quick": true
+        }
+      ]
+    },
+    {
+      "title": "Read Registers",
+      "desc": "Function 3: four numbers",
+      "detail": "The laptop asks for 4 holding registers starting at address 0, with function code 3. The PLC answers with 8 bytes: four 16-bit numbers. What they mean (the tank level in centimetres, the temperature in tenths of a degree) is written only in the PLC’s documentation; the message carries no names and no units. An HMI screen sends reads like this every second or so.",
+      "facts": [
+        [
+          "Function",
+          "3, Read Holding Registers"
+        ],
+        [
+          "Asks for",
+          "4 registers from 0"
+        ],
+        [
+          "Answer",
+          "412, 183, 1450, 450"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "lan",
+          "color": "amber",
+          "label": "READ",
+          "payload": [
+            "function 3",
+            "registers 0–3"
+          ],
+          "row": {
+            "time": "0.002s",
+            "src": "192.168.1.10",
+            "dst": "192.168.1.20",
+            "proto": "Modbus/TCP",
+            "info": "Query: Trans: 1; Unit: 1, Func: 3: Read Holding Registers",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 51874,
+                "dport": 502,
+                "flags": "PA",
+                "data": {
+                  "modbus": {
+                    "tid": 1,
+                    "fn": 3,
+                    "address": 0,
+                    "count": 4
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "lan",
+          "to": "client",
+          "color": "violet",
+          "label": "VALUES",
+          "payload": [
+            "412, 183, 1450, 450"
+          ],
+          "row": {
+            "time": "0.005s",
+            "src": "192.168.1.20",
+            "dst": "192.168.1.10",
+            "proto": "Modbus/TCP",
+            "info": "Response: Trans: 1; Unit: 1, Func: 3: Read Holding Registers",
+            "len": "71 B",
+            "wire": {
+              "tcp": {
+                "sport": 502,
+                "dport": 51874,
+                "flags": "PA",
+                "data": {
+                  "modbus": {
+                    "tid": 1,
+                    "fn": 3,
+                    "resp": true,
+                    "address": 0,
+                    "registers": [
+                      [
+                        412,
+                        "tank level, 4.12 m"
+                      ],
+                      [
+                        183,
+                        "temperature, 18.3 °C"
+                      ],
+                      [
+                        1450,
+                        "pump speed, 1,450 rpm"
+                      ],
+                      [
+                        450,
+                        "level setpoint, 4.50 m"
+                      ]
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Write a Setpoint",
+      "desc": "Function 6: one register",
+      "detail": "The engineer raises the tank’s level setpoint from 4.50 m to 5.00 m: function 6, write single register, register 3, value 500. The PLC answers by repeating the request, which means done. From now on its program keeps the tank fuller.",
+      "facts": [
+        [
+          "Function",
+          "6, Write Single Register"
+        ],
+        [
+          "Register 3",
+          "450 → 500"
+        ],
+        [
+          "Answer",
+          "The request, repeated"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "lan",
+          "color": "amber",
+          "label": "WRITE",
+          "payload": [
+            "register 3 = 500"
+          ],
+          "row": {
+            "time": "3.000s",
+            "src": "192.168.1.10",
+            "dst": "192.168.1.20",
+            "proto": "Modbus/TCP",
+            "info": "Query: Trans: 2; Unit: 1, Func: 6: Write Single Register",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 51874,
+                "dport": 502,
+                "flags": "PA",
+                "data": {
+                  "modbus": {
+                    "tid": 2,
+                    "fn": 6,
+                    "address": 3,
+                    "value": 500,
+                    "what": "level setpoint",
+                    "meaning": "5.00 m"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "lan",
+          "to": "client",
+          "color": "violet",
+          "label": "DONE",
+          "payload": [
+            "register 3 = 500"
+          ],
+          "row": {
+            "time": "3.002s",
+            "src": "192.168.1.20",
+            "dst": "192.168.1.10",
+            "proto": "Modbus/TCP",
+            "info": "Response: Trans: 2; Unit: 1, Func: 6: Write Single Register",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 502,
+                "dport": 51874,
+                "flags": "PA",
+                "data": {
+                  "modbus": {
+                    "tid": 2,
+                    "fn": 6,
+                    "resp": true,
+                    "address": 3,
+                    "value": 500,
+                    "what": "level setpoint",
+                    "meaning": "5.00 m"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Start a Pump",
+      "desc": "Function 5: a coil",
+      "detail": "Coils are single on/off outputs. Function 5 writes one: coil 0, pump 2, value 0xFF00, which means on. The PLC switches the pump on and echoes the request. In a real plant the PLC’s own program usually decides this, with safety interlocks.",
+      "facts": [
+        [
+          "Function",
+          "5, Write Single Coil"
+        ],
+        [
+          "Coil 0",
+          "Pump 2: on"
+        ],
+        [
+          "On",
+          "0xFF00 (off: 0x0000)"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "lan",
+          "color": "amber",
+          "label": "COIL ON",
+          "payload": [
+            "coil 0: pump 2"
+          ],
+          "row": {
+            "time": "5.000s",
+            "src": "192.168.1.10",
+            "dst": "192.168.1.20",
+            "proto": "Modbus/TCP",
+            "info": "Query: Trans: 3; Unit: 1, Func: 5: Write Single Coil",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 51874,
+                "dport": 502,
+                "flags": "PA",
+                "data": {
+                  "modbus": {
+                    "tid": 3,
+                    "fn": 5,
+                    "address": 0,
+                    "value": 1,
+                    "what": "pump 2"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "lan",
+          "to": "client",
+          "color": "violet",
+          "label": "DONE",
+          "payload": [
+            "pump 2 on"
+          ],
+          "row": {
+            "time": "5.002s",
+            "src": "192.168.1.20",
+            "dst": "192.168.1.10",
+            "proto": "Modbus/TCP",
+            "info": "Response: Trans: 3; Unit: 1, Func: 5: Write Single Coil",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 502,
+                "dport": 51874,
+                "flags": "PA",
+                "data": {
+                  "modbus": {
+                    "tid": 3,
+                    "fn": 5,
+                    "resp": true,
+                    "address": 0,
+                    "value": 1,
+                    "what": "pump 2"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "note",
+          "at": "lan",
+          "text": "PUMP 2 RUNNING",
+          "tone": "green"
+        }
+      ]
+    },
+    {
+      "title": "An Exception",
+      "desc": "No such register",
+      "detail": "A request for registers that don’t exist, here 100 and 101, gets an exception: the function code with its top bit set (3 + 128 = 131) and exception code 2, illegal data address. Other codes say the function isn’t supported or the device is busy.",
+      "facts": [
+        [
+          "Function",
+          "131 (3 + 128)"
+        ],
+        [
+          "Exception",
+          "2, Illegal Data Address"
+        ],
+        [
+          "Means",
+          "No register there"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "lan",
+          "color": "amber",
+          "label": "READ",
+          "payload": [
+            "registers 100–101"
+          ],
+          "row": {
+            "time": "7.000s",
+            "src": "192.168.1.10",
+            "dst": "192.168.1.20",
+            "proto": "Modbus/TCP",
+            "info": "Query: Trans: 4; Unit: 1, Func: 3: Read Holding Registers",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 51874,
+                "dport": 502,
+                "flags": "PA",
+                "data": {
+                  "modbus": {
+                    "tid": 4,
+                    "fn": 3,
+                    "address": 100,
+                    "count": 2
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "lan",
+          "to": "client",
+          "color": "violet",
+          "label": "EXCEPTION",
+          "payload": [
+            "code 2: no such register"
+          ],
+          "row": {
+            "time": "7.002s",
+            "src": "192.168.1.20",
+            "dst": "192.168.1.10",
+            "proto": "Modbus/TCP",
+            "info": "Response: Trans: 4; Unit: 1, Func: 131: Exception: Illegal data address",
+            "len": "63 B",
+            "wire": {
+              "tcp": {
+                "sport": 502,
+                "dport": 51874,
+                "flags": "PA",
+                "data": {
+                  "modbus": {
+                    "tid": 4,
+                    "fn": 3,
+                    "resp": true,
+                    "exception": 2
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "No Security",
+      "desc": "Anyone who can reach it",
+      "detail": "Nothing in these messages says who sent them: Modbus, from 1979, has no login and no encryption, so any device that can reach port 502 can read the values and start the pump. Plants protect it with separate networks, firewalls between office and plant, lists of who may talk to each PLC, and monitoring. Modbus/TCP Security wraps the same messages in TLS, on port 802.",
+      "facts": [
+        [
+          "Login",
+          "None"
+        ],
+        [
+          "Encryption",
+          "None"
+        ],
+        [
+          "Protect with",
+          "Separate networks, TLS"
+        ]
+      ],
+      "events": [
+        {
+          "type": "note",
+          "at": "lan",
+          "text": "NO LOGIN, NO ENCRYPTION",
+          "tone": "amber"
+        }
+      ]
+    }
+  ],
+  "teaching": {
+    "steps": [
+      [
+        "Cổng 502",
+        "Một PLC (bộ điều khiển logic lập trình được) vận hành một trạm bơm nhỏ: nó đọc cảm biến và bật tắt máy bơm. Laptop của một kỹ sư trên mạng nhà máy nói chuyện với nó bằng Modbus/TCP, nên mở kết nối TCP tới cổng 502. Theo cách gọi của Modbus, laptop là máy khách còn PLC là máy chủ."
+      ],
+      [
+        "Đọc thanh ghi",
+        "Laptop xin 4 holding register bắt đầu từ địa chỉ 0, với mã hàm 3. PLC trả lời bằng 8 byte: bốn số 16 bit. Ý nghĩa của chúng (mực nước bồn tính bằng xăng-ti-mét, nhiệt độ tính bằng phần mười độ) chỉ được ghi trong tài liệu của PLC; thông điệp không mang tên hay đơn vị. Một màn hình HMI gửi các lệnh đọc như vậy khoảng mỗi giây."
+      ],
+      [
+        "Ghi giá trị đặt",
+        "Kỹ sư nâng giá trị đặt mực nước bồn từ 4.50 m lên 5.00 m: hàm 6, ghi một thanh ghi, thanh ghi 3, giá trị 500. PLC trả lời bằng cách lặp lại yêu cầu, nghĩa là đã xong. Từ giờ chương trình của nó giữ bồn đầy hơn."
+      ],
+      [
+        "Khởi động bơm",
+        "Coil là các đầu ra bật/tắt đơn lẻ. Hàm 5 ghi một coil: coil 0, bơm 2, giá trị 0xFF00, nghĩa là bật. PLC bật bơm và lặp lại yêu cầu. Trong nhà máy thật, thường chính chương trình của PLC quyết định việc này, kèm các khóa liên động an toàn."
+      ],
+      [
+        "Một ngoại lệ",
+        "Một yêu cầu đọc thanh ghi không tồn tại, ở đây là 100 và 101, nhận về một ngoại lệ: mã hàm với bit cao nhất bật (3 + 128 = 131) và mã ngoại lệ 2, địa chỉ dữ liệu không hợp lệ. Các mã khác báo hàm không được hỗ trợ hoặc thiết bị đang bận."
+      ],
+      [
+        "Không bảo mật",
+        "Không gì trong các thông điệp này cho biết ai gửi chúng: Modbus, ra đời năm 1979, không có đăng nhập và không mã hóa, nên mọi thiết bị tới được cổng 502 đều đọc được giá trị và khởi động được bơm. Nhà máy bảo vệ nó bằng mạng tách riêng, tường lửa giữa văn phòng và nhà máy, danh sách ai được nói chuyện với từng PLC, và giám sát. Modbus/TCP Security bọc cùng các thông điệp đó trong TLS, trên cổng 802."
+      ]
+    ],
+    "notes": {
+      "PUMP 2 RUNNING": "BƠM 2 ĐANG CHẠY",
+      "NO LOGIN, NO ENCRYPTION": "KHÔNG ĐĂNG NHẬP, KHÔNG MÃ HÓA"
+    },
+    "labels": {
+      "Internet": "Internet",
+      "Client": "Máy khách",
+      "Router": "Router",
+      "DNS Resolver": "Bộ phân giải DNS",
+      "Web Server": "Máy chủ web",
+      "Root Server": "Máy chủ gốc",
+      ".com TLD Server": "Máy chủ TLD .com",
+      "Authoritative Server": "Máy chủ có thẩm quyền",
+      "Mail Server": "Máy chủ thư",
+      "Proxy": "Proxy",
+      "App Server": "Máy chủ ứng dụng",
+      "File Server": "Máy chủ tệp",
+      "ISP Router": "Router của ISP",
+      "Transit Router": "Router trung chuyển",
+      "Hosting Router": "Router của nhà lưu trữ",
+      "Their Router": "Router bên kia",
+      "Their Laptop": "Laptop bên kia",
+      "Switch": "Switch",
+      "Access Server": "Máy chủ truy cập",
+      "IP Camera": "Camera IP",
+      "TV Box": "TV box",
+      "PLC": "PLC"
+    }
+  }
+}

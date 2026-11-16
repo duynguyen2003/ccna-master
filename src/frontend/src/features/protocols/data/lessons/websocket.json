@@ -1,0 +1,645 @@
+{
+  "id": "websocket",
+  "name": "WebSocket",
+  "title": "Live Updates",
+  "layer": 7,
+  "nodes": [
+    "client",
+    "router",
+    "internet",
+    "web"
+  ],
+  "latency": {
+    "client-web": 0.017
+  },
+  "labels": {
+    "web": [
+      "www.example.com",
+      "203.0.113.10"
+    ]
+  },
+  "legend": [
+    [
+      "green",
+      "TCP"
+    ],
+    [
+      "amber",
+      "From the browser"
+    ],
+    [
+      "violet",
+      "From the server"
+    ]
+  ],
+  "overview": {
+    "full": "The WebSocket Protocol",
+    "description": "A WebSocket keeps one connection open between a web page and a server, so either side can send a message at any moment: chat, live scores, games, shared documents. It starts as an ordinary HTTP request asking to upgrade; after that, messages travel in small frames with a header of just a few bytes.",
+    "facts": [
+      [
+        "Layer",
+        "Application (Layer 7)"
+      ],
+      [
+        "Ports",
+        "80 (ws://), 443 (wss://)"
+      ],
+      [
+        "Starts as",
+        "An HTTP request (Upgrade)"
+      ],
+      [
+        "Then",
+        "Frames both ways, any time"
+      ],
+      [
+        "Frame header",
+        "2–14 bytes"
+      ],
+      [
+        "Defined In",
+        "RFC 6455"
+      ]
+    ]
+  },
+  "outro": {
+    "title": "Connection closed",
+    "desc": "One request, then messages",
+    "text": "One HTTP request turned an ordinary TCP connection into a two-way channel. After that every message cost a few bytes of header, and the server could send whenever it had something to say. Press REPLAY to watch it again.",
+    "facts": [
+      [
+        "Handshake",
+        "GET with Upgrade, then 101"
+      ],
+      [
+        "Smallest frame",
+        "2 bytes (a ping)"
+      ],
+      [
+        "Server push",
+        "Any time, unasked"
+      ],
+      [
+        "Real sites",
+        "wss:// (inside TLS)"
+      ]
+    ]
+  },
+  "start": {
+    "nodes": [
+      "client"
+    ],
+    "frame": "client"
+  },
+  "steps": [
+    {
+      "title": "TCP Connection",
+      "desc": "TCP to the server, as for HTTP",
+      "detail": "The chat page is already open, loaded from www.example.com. Its script calls new WebSocket(\"ws://www.example.com/chat\"), and the browser starts with an ordinary TCP connection to port 80. (Real sites use wss://, the same thing inside TLS; plain ws:// lets you read every byte.)",
+      "facts": [
+        [
+          "URL",
+          "ws://www.example.com/chat"
+        ],
+        [
+          "Port",
+          "80"
+        ],
+        [
+          "Transport",
+          "TCP"
+        ]
+      ],
+      "events": [
+        {
+          "type": "show",
+          "nodes": [
+            "router",
+            "internet",
+            "web"
+          ],
+          "frame": "path"
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "green",
+          "label": "SYN",
+          "payload": [],
+          "row": {
+            "time": "0.000s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.10",
+            "proto": "TCP",
+            "info": "52360 → 80 [SYN] Seq=0",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 52360,
+                "dport": 80,
+                "flags": "S"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "green",
+          "label": "SYN-ACK",
+          "payload": [],
+          "row": {
+            "time": "0.017s",
+            "src": "203.0.113.10",
+            "dst": "192.168.1.10",
+            "proto": "TCP",
+            "info": "80 → 52360 [SYN, ACK] Seq=0 Ack=1",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 80,
+                "dport": 52360,
+                "flags": "SA"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "green",
+          "label": "ACK",
+          "payload": [],
+          "row": {
+            "time": "0.034s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.10",
+            "proto": "TCP",
+            "info": "52360 → 80 [ACK] Seq=1 Ack=1",
+            "len": "60 B",
+            "wire": {
+              "tcp": {
+                "sport": 52360,
+                "dport": 80,
+                "flags": "A"
+              }
+            }
+          },
+          "quick": true
+        }
+      ]
+    },
+    {
+      "title": "Ask to Upgrade",
+      "desc": "An HTTP request with Upgrade: websocket",
+      "detail": "The browser sends an HTTP GET with Upgrade: websocket and Connection: Upgrade. Sec-WebSocket-Key is 16 random bytes written in base64, which the server has to answer correctly. The browser also offers to compress messages (permessage-deflate).",
+      "facts": [
+        [
+          "Request",
+          "GET /chat"
+        ],
+        [
+          "Asks for",
+          "Upgrade: websocket"
+        ],
+        [
+          "Key",
+          "16 random bytes, base64"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "amber",
+          "label": "UPGRADE",
+          "payload": [
+            "GET /chat HTTP/1.1",
+            "Upgrade: websocket"
+          ],
+          "row": {
+            "time": "0.034s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.10",
+            "proto": "HTTP",
+            "info": "GET /chat HTTP/1.1",
+            "len": "547 B",
+            "wire": {
+              "tcp": {
+                "sport": 52360,
+                "dport": 80,
+                "flags": "PA",
+                "data": {
+                  "text": [
+                    "GET /chat HTTP/1.1",
+                    "Host: www.example.com",
+                    "Connection: Upgrade",
+                    "Pragma: no-cache",
+                    "Cache-Control: no-cache",
+                    "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+                    "Upgrade: websocket",
+                    "Origin: http://www.example.com",
+                    "Sec-WebSocket-Version: 13",
+                    "Accept-Encoding: gzip, deflate",
+                    "Accept-Language: en-US,en;q=0.9",
+                    "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==",
+                    "Sec-WebSocket-Extensions: permessage-deflate; client_max_window_bits",
+                    ""
+                  ],
+                  "name": "HTTP"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Switch Protocols",
+      "desc": "101: from now on, WebSocket",
+      "detail": "The server answers 101 Switching Protocols. Its Sec-WebSocket-Accept is the key with a fixed string added, hashed with SHA-1 and written in base64: proof that it understood the request. It didn’t take up compression, so messages go as plain text. HTTP is finished on this connection; from now on both sides send WebSocket frames.",
+      "facts": [
+        [
+          "Status",
+          "101 Switching Protocols"
+        ],
+        [
+          "Accept",
+          "SHA-1 of the key + a fixed string"
+        ],
+        [
+          "Compression",
+          "Offered, not taken"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "violet",
+          "label": "101",
+          "payload": [
+            "101 Switching Protocols",
+            "Upgrade: websocket"
+          ],
+          "row": {
+            "time": "0.052s",
+            "src": "203.0.113.10",
+            "dst": "192.168.1.10",
+            "proto": "HTTP",
+            "info": "HTTP/1.1 101 Switching Protocols",
+            "len": "183 B",
+            "wire": {
+              "tcp": {
+                "sport": 80,
+                "dport": 52360,
+                "flags": "PA",
+                "data": {
+                  "text": [
+                    "HTTP/1.1 101 Switching Protocols",
+                    "Upgrade: websocket",
+                    "Connection: Upgrade",
+                    "Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=",
+                    ""
+                  ],
+                  "name": "HTTP"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "note",
+          "at": "client",
+          "text": "NOW A WEBSOCKET",
+          "tone": "green"
+        }
+      ]
+    },
+    {
+      "title": "Live Updates",
+      "desc": "Small frames, from either side",
+      "detail": "You send \"Hello\": a 2-byte header, a 4-byte masking key and the 5 masked bytes, 11 bytes in all instead of a whole HTTP request. Seconds later the server pushes Bob’s message without being asked: the connection is still open, so it can. Frames from the browser are always masked; frames from the server never are.",
+      "facts": [
+        [
+          "You send",
+          "\"Hello\" (11 bytes)"
+        ],
+        [
+          "Server pushes",
+          "\"bob: hi there\""
+        ],
+        [
+          "Masked",
+          "From the browser only"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "amber",
+          "label": "TEXT",
+          "payload": [
+            "\"Hello\"",
+            "masked"
+          ],
+          "row": {
+            "time": "2.400s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.10",
+            "proto": "WebSocket",
+            "info": "WebSocket Text [FIN] [MASKED]",
+            "len": "65 B",
+            "wire": {
+              "tcp": {
+                "sport": 52360,
+                "dport": 80,
+                "flags": "PA",
+                "data": {
+                  "ws": {
+                    "op": 1,
+                    "text": "Hello",
+                    "mask": [
+                      55,
+                      250,
+                      33,
+                      61
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "violet",
+          "label": "TEXT",
+          "payload": [
+            "\"bob: hi there\"",
+            "unasked"
+          ],
+          "row": {
+            "time": "6.810s",
+            "src": "203.0.113.10",
+            "dst": "192.168.1.10",
+            "proto": "WebSocket",
+            "info": "WebSocket Text [FIN]",
+            "len": "69 B",
+            "wire": {
+              "tcp": {
+                "sport": 80,
+                "dport": 52360,
+                "flags": "PA",
+                "data": {
+                  "ws": {
+                    "op": 1,
+                    "text": "bob: hi there"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Keeping It Alive",
+      "desc": "Ping and pong",
+      "detail": "After half a minute with nothing to say, the server sends a ping, so routers and firewalls on the way don’t forget the quiet connection. The browser answers with a pong on its own; the page’s script never sees either.",
+      "facts": [
+        [
+          "Ping",
+          "Opcode 9, from either side"
+        ],
+        [
+          "Pong",
+          "Opcode 10, by itself"
+        ],
+        [
+          "How often",
+          "Up to the server (30 s)"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "violet",
+          "label": "PING",
+          "payload": [],
+          "row": {
+            "time": "36.810s",
+            "src": "203.0.113.10",
+            "dst": "192.168.1.10",
+            "proto": "WebSocket",
+            "info": "WebSocket Ping [FIN]",
+            "len": "60 B",
+            "wire": {
+              "tcp": {
+                "sport": 80,
+                "dport": 52360,
+                "flags": "PA",
+                "data": {
+                  "ws": {
+                    "op": 9
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "amber",
+          "label": "PONG",
+          "payload": [],
+          "row": {
+            "time": "36.827s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.10",
+            "proto": "WebSocket",
+            "info": "WebSocket Pong [FIN] [MASKED]",
+            "len": "60 B",
+            "wire": {
+              "tcp": {
+                "sport": 52360,
+                "dport": 80,
+                "flags": "PA",
+                "data": {
+                  "ws": {
+                    "op": 10,
+                    "mask": [
+                      92,
+                      30,
+                      144,
+                      114
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Closing",
+      "desc": "A close frame each way",
+      "detail": "When you leave the chat, the page’s script closes the WebSocket with status 1000 (normal closure): the browser sends a close frame and the server answers with its own. Then the server closes the TCP connection. (Simply closing the tab would send 1001, going away.)",
+      "facts": [
+        [
+          "Opcode",
+          "8 (close)"
+        ],
+        [
+          "Status",
+          "1000 (normal closure)"
+        ],
+        [
+          "Then",
+          "TCP closes"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "amber",
+          "label": "CLOSE",
+          "payload": [
+            "1000 normal closure"
+          ],
+          "row": {
+            "time": "40.000s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.10",
+            "proto": "WebSocket",
+            "info": "WebSocket Connection Close [FIN] [MASKED]",
+            "len": "62 B",
+            "wire": {
+              "tcp": {
+                "sport": 52360,
+                "dport": 80,
+                "flags": "PA",
+                "data": {
+                  "ws": {
+                    "op": 8,
+                    "code": 1000,
+                    "mask": [
+                      163,
+                      75,
+                      7,
+                      217
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "violet",
+          "label": "CLOSE",
+          "payload": [
+            "1000 normal closure"
+          ],
+          "row": {
+            "time": "40.018s",
+            "src": "203.0.113.10",
+            "dst": "192.168.1.10",
+            "proto": "WebSocket",
+            "info": "WebSocket Connection Close [FIN]",
+            "len": "60 B",
+            "wire": {
+              "tcp": {
+                "sport": 80,
+                "dport": 52360,
+                "flags": "PA",
+                "data": {
+                  "ws": {
+                    "op": 8,
+                    "code": 1000
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "teaching": {
+    "steps": [
+      [
+        "Kết nối TCP",
+        "Trang chat đã mở, tải từ www.example.com. Script của nó gọi new WebSocket(\"ws://www.example.com/chat\"), và trình duyệt bắt đầu bằng một kết nối TCP bình thường tới cổng 80. (Trang thật dùng wss://, tức cùng thứ đó bên trong TLS; ws:// thường cho bạn đọc được mọi byte.)"
+      ],
+      [
+        "Xin nâng cấp",
+        "Trình duyệt gửi HTTP GET với Upgrade: websocket và Connection: Upgrade. Sec-WebSocket-Key là 16 byte ngẫu nhiên viết bằng base64, mà máy chủ phải trả lời đúng. Trình duyệt cũng đề nghị nén tin nhắn (permessage-deflate)."
+      ],
+      [
+        "Chuyển giao thức",
+        "Máy chủ trả lời 101 Switching Protocols. Sec-WebSocket-Accept của nó là khóa cộng một chuỗi cố định, băm bằng SHA-1 và viết bằng base64: bằng chứng nó hiểu yêu cầu. Nó không nhận nén, nên tin nhắn đi dạng văn bản thường. HTTP đã xong trên kết nối này; từ giờ cả hai bên gửi khung WebSocket."
+      ],
+      [
+        "Cập nhật trực tiếp",
+        "Bạn gửi \"Hello\": tiêu đề 2 byte, khóa che 4 byte và 5 byte đã che, tổng cộng 11 byte thay vì cả một yêu cầu HTTP. Vài giây sau máy chủ đẩy tin của Bob mà không ai hỏi: kết nối vẫn mở, nên nó làm được. Khung từ trình duyệt luôn được che; khung từ máy chủ thì không bao giờ."
+      ],
+      [
+        "Giữ kết nối sống",
+        "Sau nửa phút không có gì để nói, máy chủ gửi một ping, để router và tường lửa trên đường không quên kết nối đang im lặng. Trình duyệt tự trả lời bằng pong; script của trang không thấy cả hai."
+      ],
+      [
+        "Đóng",
+        "Khi bạn rời chat, script của trang đóng WebSocket với mã 1000 (đóng bình thường): trình duyệt gửi khung đóng và máy chủ trả lời bằng khung của nó. Rồi máy chủ đóng kết nối TCP. (Chỉ đóng tab sẽ gửi 1001, rời đi.)"
+      ]
+    ],
+    "notes": {
+      "NOW A WEBSOCKET": "GIỜ LÀ WEBSOCKET"
+    },
+    "labels": {
+      "Internet": "Internet",
+      "Client": "Máy khách",
+      "Router": "Router",
+      "DNS Resolver": "Bộ phân giải DNS",
+      "Web Server": "Máy chủ web",
+      "Root Server": "Máy chủ gốc",
+      ".com TLD Server": "Máy chủ TLD .com",
+      "Authoritative Server": "Máy chủ có thẩm quyền",
+      "Mail Server": "Máy chủ thư",
+      "Proxy": "Proxy",
+      "App Server": "Máy chủ ứng dụng",
+      "File Server": "Máy chủ tệp",
+      "ISP Router": "Router của ISP",
+      "Transit Router": "Router trung chuyển",
+      "Hosting Router": "Router của nhà lưu trữ",
+      "Their Router": "Router bên kia",
+      "Their Laptop": "Laptop bên kia",
+      "Switch": "Switch",
+      "Access Server": "Máy chủ truy cập",
+      "IP Camera": "Camera IP",
+      "TV Box": "TV box",
+      "www.example.com": "www.example.com"
+    }
+  }
+}

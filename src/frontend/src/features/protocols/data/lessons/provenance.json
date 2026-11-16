@@ -1,0 +1,532 @@
+{
+  "source": "https://protocol-explorer-alpha.vercel.app/",
+  "author": "Dilum Sanjaya",
+  "entryUrl": "https://protocol-explorer-alpha.vercel.app/assets/index-CNPseYOQ.js",
+  "entrySha256": "19e285d11f5fa0b1411ec94aaea6cd04531872e8322bb8a46c80e4f92e262834",
+  "languageUrl": "https://protocol-explorer-alpha.vercel.app/assets/vi-BtObyLa_.js",
+  "languageSha256": "2c1292ff0fd48bb0ad7fac121a250e415bcc74c2a6b28a0d884bcf9d5fe4cfb8",
+  "version": "2026-11-15",
+  "hashEncoding": "SHA-256 of UTF-8 JSON.stringify(parsed JSON), preserving key order",
+  "extraction": "Pinned protocol-data factories only; sourceSha256 covers original values. Native additions contain a teaching field extracted from the public Vietnamese dictionary. Source UI/runtime is not shipped.",
+  "catalog": [
+    {
+      "id": "http",
+      "name": "HTTP",
+      "full": "Hypertext Transfer Protocol",
+      "group": "application"
+    },
+    {
+      "id": "https",
+      "name": "HTTPS",
+      "full": "HTTP Secure",
+      "group": "security"
+    },
+    {
+      "id": "websocket",
+      "name": "WebSocket",
+      "full": "Two-way web messaging",
+      "group": "application"
+    },
+    {
+      "id": "webrtc",
+      "name": "WebRTC",
+      "full": "Browser video calls",
+      "group": "application"
+    },
+    {
+      "id": "sip",
+      "name": "SIP",
+      "full": "Internet phone calls",
+      "group": "application"
+    },
+    {
+      "id": "rtsp",
+      "name": "RTSP",
+      "full": "IP camera streams",
+      "group": "application"
+    },
+    {
+      "id": "rtmp",
+      "name": "RTMP",
+      "full": "Live streaming upload",
+      "group": "application"
+    },
+    {
+      "id": "quic",
+      "name": "QUIC",
+      "full": "HTTP/3 over UDP",
+      "group": "core"
+    },
+    {
+      "id": "tcp",
+      "name": "TCP",
+      "full": "Transmission Control Protocol",
+      "group": "core"
+    },
+    {
+      "id": "udp",
+      "name": "UDP",
+      "full": "User Datagram Protocol",
+      "group": "core"
+    },
+    {
+      "id": "ip",
+      "name": "IP",
+      "full": "Internet Protocol",
+      "group": "core"
+    },
+    {
+      "id": "bgp",
+      "name": "BGP",
+      "full": "Routing between networks",
+      "group": "core"
+    },
+    {
+      "id": "ipv6",
+      "name": "IPv6",
+      "full": "Address setup, neighbour discovery",
+      "group": "core"
+    },
+    {
+      "id": "dns",
+      "name": "DNS",
+      "full": "Domain Name System",
+      "group": "application"
+    },
+    {
+      "id": "doh",
+      "name": "DNS over HTTPS",
+      "full": "Private DNS lookups",
+      "group": "security"
+    },
+    {
+      "id": "dnssec",
+      "name": "DNSSEC",
+      "full": "Signed DNS answers",
+      "group": "security"
+    },
+    {
+      "id": "dhcp",
+      "name": "DHCP",
+      "full": "Dynamic Host Configuration",
+      "group": "application"
+    },
+    {
+      "id": "icmp",
+      "name": "ICMP",
+      "full": "Internet Control Message",
+      "group": "core"
+    },
+    {
+      "id": "igmp",
+      "name": "IGMP",
+      "full": "Multicast and TV channels",
+      "group": "core"
+    },
+    {
+      "id": "ntp",
+      "name": "NTP",
+      "full": "Network Time Protocol",
+      "group": "application"
+    },
+    {
+      "id": "ethernet",
+      "name": "Ethernet",
+      "full": "Frames and switches",
+      "group": "core"
+    },
+    {
+      "id": "pppoe",
+      "name": "PPPoE",
+      "full": "Broadband logins",
+      "group": "core"
+    },
+    {
+      "id": "wifi",
+      "name": "Wi-Fi",
+      "full": "Joining a network (WPA2)",
+      "group": "core"
+    },
+    {
+      "id": "wpa3",
+      "name": "WPA3",
+      "full": "Wi-Fi Protected Access 3",
+      "group": "security"
+    },
+    {
+      "id": "radius",
+      "name": "RADIUS",
+      "full": "802.1X Enterprise Wi-Fi",
+      "group": "security"
+    },
+    {
+      "id": "portal",
+      "name": "Captive Portal",
+      "full": "Hotel and café Wi-Fi logins",
+      "group": "application"
+    },
+    {
+      "id": "smtp",
+      "name": "SMTP",
+      "full": "Simple Mail Transfer Protocol",
+      "group": "application"
+    },
+    {
+      "id": "pop3",
+      "name": "POP3",
+      "full": "Post Office Protocol v3",
+      "group": "application"
+    },
+    {
+      "id": "imap",
+      "name": "IMAP",
+      "full": "Internet Message Access",
+      "group": "application"
+    },
+    {
+      "id": "ftp",
+      "name": "FTP",
+      "full": "File Transfer Protocol",
+      "group": "application"
+    },
+    {
+      "id": "smb",
+      "name": "SMB",
+      "full": "Windows file sharing",
+      "group": "application"
+    },
+    {
+      "id": "ssh",
+      "name": "SSH",
+      "full": "Secure Shell",
+      "group": "security"
+    },
+    {
+      "id": "tls",
+      "name": "TLS/SSL",
+      "full": "Transport Layer Security",
+      "group": "security"
+    },
+    {
+      "id": "proxy",
+      "name": "HTTP Proxy",
+      "full": "Forward proxy and CONNECT",
+      "group": "application"
+    },
+    {
+      "id": "socks",
+      "name": "SOCKS5",
+      "full": "Socket Secure proxy",
+      "group": "application"
+    },
+    {
+      "id": "reverse",
+      "name": "Reverse Proxy",
+      "full": "TLS offloading",
+      "group": "application"
+    },
+    {
+      "id": "wireguard",
+      "name": "WireGuard",
+      "full": "A modern VPN",
+      "group": "security"
+    },
+    {
+      "id": "ipsec",
+      "name": "IPsec",
+      "full": "IKEv2 and ESP",
+      "group": "security"
+    },
+    {
+      "id": "modbus",
+      "name": "Modbus",
+      "full": "Industrial control (OT)",
+      "group": "application"
+    }
+  ],
+  "counts": {
+    "lessons": 39,
+    "steps": 231,
+    "playbackEvents": 694
+  },
+  "files": {
+    "scene.json": {
+      "sha256": "c8487308f74443934285ffc81922ba8dd310b78bda13888358c5c1005ab4db29",
+      "steps": 0,
+      "events": 0
+    },
+    "http.json": {
+      "sha256": "5af68beb58ac48ca1c62c508bee48f8f36b6499a58a88119e6b459587bb15f53",
+      "sourceSha256": "5af68beb58ac48ca1c62c508bee48f8f36b6499a58a88119e6b459587bb15f53",
+      "steps": 5,
+      "events": 13,
+      "playbackEvents": 13
+    },
+    "https.json": {
+      "sha256": "ffa2731a7bd293f50b10fa552eca16d7d80b482285db9099d1ab388695541b4f",
+      "sourceSha256": "ffa2731a7bd293f50b10fa552eca16d7d80b482285db9099d1ab388695541b4f",
+      "steps": 6,
+      "events": 18,
+      "playbackEvents": 18
+    },
+    "websocket.json": {
+      "sha256": "143f5259ba41c27bf021b16e00a50cd9eb4cd558a2c6296e827161d9ae6dfdf4",
+      "sourceSha256": "b3bad8dfc76e7559176e2c37a86d4602ea9111ca7ff513f5150575e263df25a5",
+      "steps": 6,
+      "events": 13,
+      "playbackEvents": 13
+    },
+    "webrtc.json": {
+      "sha256": "2e0648d8820cef9f66dbe7cb739c61fc2d9959eb2db3bd57ce924e68e5809f19",
+      "sourceSha256": "3c06be776a32b0595f34249ba512cd0b727c202b499975b5b65767f0f0ce244f",
+      "steps": 8,
+      "events": 19,
+      "playbackEvents": 23
+    },
+    "sip.json": {
+      "sha256": "9168c19a617ba997b755baa6f45b4d859440408dbfcfb6fd3ae239606d92e8de",
+      "sourceSha256": "a34eb3da6418ef3e23518a8c165eb851ffcdd635391b4f66a7be89dadfae44ef",
+      "steps": 6,
+      "events": 23,
+      "playbackEvents": 23
+    },
+    "rtsp.json": {
+      "sha256": "ff575acb3a810080ef6e36f9cf2615ab999d8e69987ff42c051f8c4bf76a0c37",
+      "sourceSha256": "841916cd2c6feb93e1f53d8836e275719744e67b0d1fdcec8f09aff1eacc6950",
+      "steps": 6,
+      "events": 17,
+      "playbackEvents": 19
+    },
+    "rtmp.json": {
+      "sha256": "d813ee51688456e96ffb524f6e1d2d33d1d15669e32b997ece66ca3aac3130a4",
+      "sourceSha256": "fb4bef4c2b3f79ef3723ede0ae7c5c57b8b8206ece7d5a34a52360c141a3501a",
+      "steps": 6,
+      "events": 17,
+      "playbackEvents": 17
+    },
+    "quic.json": {
+      "sha256": "1c03d8a989bbac0367c53c7eb8feb380150e27dfc1ffca0c91da0d0e06a64a98",
+      "sourceSha256": "5b56b5fdf82c4afb36005a08c7033a2db5bd938482d9ea5eac4beddfb75bd559",
+      "steps": 6,
+      "events": 12,
+      "playbackEvents": 14
+    },
+    "tcp.json": {
+      "sha256": "90d9ca748ed059be06e9e510435ed397e575cc50aed68d7bbd46be642694d270",
+      "sourceSha256": "90d9ca748ed059be06e9e510435ed397e575cc50aed68d7bbd46be642694d270",
+      "steps": 6,
+      "events": 15,
+      "playbackEvents": 16
+    },
+    "udp.json": {
+      "sha256": "9dfeccab14675d71526954a7a1e4f68896c213a732a118aca244a89b835c9443",
+      "sourceSha256": "9dfeccab14675d71526954a7a1e4f68896c213a732a118aca244a89b835c9443",
+      "steps": 5,
+      "events": 7,
+      "playbackEvents": 14
+    },
+    "ip.json": {
+      "sha256": "1fd831ea52d5841641653519ffd2c38847f15be8fe7ddaef39de0ec3b33fe79b",
+      "sourceSha256": "1fd831ea52d5841641653519ffd2c38847f15be8fe7ddaef39de0ec3b33fe79b",
+      "steps": 5,
+      "events": 11,
+      "playbackEvents": 11
+    },
+    "bgp.json": {
+      "sha256": "5a5aa3a26c8e075a265a79c8addd48ba1ad25f0ef7b5a7162d052f71a470b9a8",
+      "sourceSha256": "001e317226478b89286e3a80aee1ca44fa0d5489df9cd4531dab38d79a149f88",
+      "steps": 8,
+      "events": 19,
+      "playbackEvents": 19
+    },
+    "ipv6.json": {
+      "sha256": "3abafd95667e451043db4b65dffd06de93911b16d03ab9a1e07e88e6d358913f",
+      "sourceSha256": "ccc56acd6163e4cc9b43716b6dc41b33562eff099c523d196c33bc2e1884b73b",
+      "steps": 6,
+      "events": 12,
+      "playbackEvents": 12
+    },
+    "dns.json": {
+      "sha256": "be50c041f5d5e09ba0574eb52c94b3035e4daee9596184424ea8b7de50ad2cfd",
+      "sourceSha256": "be50c041f5d5e09ba0574eb52c94b3035e4daee9596184424ea8b7de50ad2cfd",
+      "steps": 5,
+      "events": 15,
+      "playbackEvents": 15
+    },
+    "doh.json": {
+      "sha256": "d6a656b3e01fdaa1797bdae5fedb950970ed42ffd2b35ec0dc1c5d60157d4e32",
+      "sourceSha256": "a9501bf2d1f42c0ac6b3b12c42e04ed25c3f69c1286b5f3707f1de524de847ef",
+      "steps": 5,
+      "events": 13,
+      "playbackEvents": 13
+    },
+    "dnssec.json": {
+      "sha256": "c4e159a21ab281ce4af21929310380032e57114d4c8e59d329b48d4e1e8df4cf",
+      "sourceSha256": "d31ed8ceba53e236be355dac756ed6f10359e15398490bd2e96de3e644b1d150",
+      "steps": 6,
+      "events": 12,
+      "playbackEvents": 12
+    },
+    "dhcp.json": {
+      "sha256": "7116b2b316d31849ef577c009ac57eb8da9f5807d63307c9f52b624ac0c7b02e",
+      "sourceSha256": "7116b2b316d31849ef577c009ac57eb8da9f5807d63307c9f52b624ac0c7b02e",
+      "steps": 6,
+      "events": 10,
+      "playbackEvents": 10
+    },
+    "icmp.json": {
+      "sha256": "7033994a9922bd0ab470739644dbc93a273d56d034fc21b87fb33dbc55f56ed5",
+      "sourceSha256": "7033994a9922bd0ab470739644dbc93a273d56d034fc21b87fb33dbc55f56ed5",
+      "steps": 6,
+      "events": 13,
+      "playbackEvents": 13
+    },
+    "igmp.json": {
+      "sha256": "3be19ece35011a806264de6ea09e9cdb27a6310bcb8742ba322de64b8e85c711",
+      "sourceSha256": "71df62ed8d3d1725cea5a2c0e0f964e99b07ff011065f6477b6ca10fb2725df6",
+      "steps": 6,
+      "events": 24,
+      "playbackEvents": 27
+    },
+    "ntp.json": {
+      "sha256": "80888bb8638024e81e662b5bf2a05184710ece43b03b28f37fb2b9f3976d17b7",
+      "sourceSha256": "fbc3ce4a9677efc3bb0d13e4b0460e62b11accf9161a5521d7742e3758c956aa",
+      "steps": 5,
+      "events": 6,
+      "playbackEvents": 6
+    },
+    "ethernet.json": {
+      "sha256": "5e0b783ebdb6d5f44e3c5404cee692c521dec6a91a9ab0aad61ebbf2bd39cd53",
+      "sourceSha256": "1a986ddc060a4c72eff10045245f8973622c23fde669af91335719072c1d2535",
+      "steps": 6,
+      "events": 15,
+      "playbackEvents": 16
+    },
+    "pppoe.json": {
+      "sha256": "39f9d8ed48a5dd1e7fd8eec93e8faf9558fdda3b40059f53875331a8c7298b50",
+      "sourceSha256": "f9e0ceff7e7bb90283ecfcdd2be9c779ab9ab8e616b98c249264dc25d65ee021",
+      "steps": 6,
+      "events": 24,
+      "playbackEvents": 24
+    },
+    "wifi.json": {
+      "sha256": "5f9c16c5e3529928b9cb5f390089be60b5ecab8c28c4d93b744c6717abd9c609",
+      "sourceSha256": "87ac0ec87f475d6929b252897d4f0c654526d199e2d431bbc23907952aa1fcd1",
+      "steps": 5,
+      "events": 14,
+      "playbackEvents": 14
+    },
+    "wpa3.json": {
+      "sha256": "a3c44d80d34c97d42eb0b7a83156595beda3322e4ca2a4b2cb9e4159e8cf8f74",
+      "sourceSha256": "1dd888644a5f9131a1c441b55456df5d6a5191fad77b3b019687b8eb1b886f72",
+      "steps": 5,
+      "events": 13,
+      "playbackEvents": 13
+    },
+    "radius.json": {
+      "sha256": "aa9438aa94f15cc515408082f81987eef5eb8ee0dd0d056f1cd3d807179ea1a9",
+      "sourceSha256": "9e0dcab28f071c097e7cb181306ce93a5dfdde69db785257d4c382cb003162b9",
+      "steps": 8,
+      "events": 23,
+      "playbackEvents": 23
+    },
+    "portal.json": {
+      "sha256": "f73429dee4ed903541ef34d8daafe3a9440d3a102367218bbd436f78daa1c9f5",
+      "sourceSha256": "3bd8bc6e1eeff14c08f7a686ec9f89a3fc2523951cd1b1c73c4eed71c9b41154",
+      "steps": 6,
+      "events": 25,
+      "playbackEvents": 25
+    },
+    "smtp.json": {
+      "sha256": "9cfb4da8bb6da5c65be897e9eb2f1115801a7692085c6adcad3f791329bed4e3",
+      "sourceSha256": "9cfb4da8bb6da5c65be897e9eb2f1115801a7692085c6adcad3f791329bed4e3",
+      "steps": 6,
+      "events": 40,
+      "playbackEvents": 40
+    },
+    "pop3.json": {
+      "sha256": "de051ec77dbd2ef48d9c8d6d93ba41a93ff9566a455cf7df234846f2be036c16",
+      "sourceSha256": "de051ec77dbd2ef48d9c8d6d93ba41a93ff9566a455cf7df234846f2be036c16",
+      "steps": 5,
+      "events": 23,
+      "playbackEvents": 23
+    },
+    "imap.json": {
+      "sha256": "8f5a80e4712f56dd426cb9c63a8bc9fec46774abe7b3d353c0407b778a90686b",
+      "sourceSha256": "8f5a80e4712f56dd426cb9c63a8bc9fec46774abe7b3d353c0407b778a90686b",
+      "steps": 5,
+      "events": 21,
+      "playbackEvents": 21
+    },
+    "ftp.json": {
+      "sha256": "dddd93b2f8846fc71f53853df77025a9463c7142ec860bde12ef3784cae7b139",
+      "sourceSha256": "dddd93b2f8846fc71f53853df77025a9463c7142ec860bde12ef3784cae7b139",
+      "steps": 6,
+      "events": 24,
+      "playbackEvents": 26
+    },
+    "smb.json": {
+      "sha256": "40724e39e83944d00f65cedbea6e5d01b34954ed0012a3d7074166c1c241cb44",
+      "sourceSha256": "6db2d46a99880a2e6ffbaecd48d14d74ae8fc2e7c2a9d8e4859543f01ebdff63",
+      "steps": 8,
+      "events": 19,
+      "playbackEvents": 19
+    },
+    "ssh.json": {
+      "sha256": "11fceac1956ceabbb93c3bfedc9160383429816cfcd6ed698ac1f418bb8bbc9a",
+      "sourceSha256": "11fceac1956ceabbb93c3bfedc9160383429816cfcd6ed698ac1f418bb8bbc9a",
+      "steps": 6,
+      "events": 32,
+      "playbackEvents": 32
+    },
+    "tls.json": {
+      "sha256": "dbfdf2af55a3c2f7f66e3cb8fbcd64e05c26d7cf4e23dcb5a48502643cf31df8",
+      "sourceSha256": "dbfdf2af55a3c2f7f66e3cb8fbcd64e05c26d7cf4e23dcb5a48502643cf31df8",
+      "steps": 6,
+      "events": 16,
+      "playbackEvents": 17
+    },
+    "proxy.json": {
+      "sha256": "3af441522f2c828e89f4ee36a3e2d0a0282482155b1d886d64df2a0e72ade97b",
+      "sourceSha256": "56583907b40838040b3cbeb68c6ab646373bce70e4a38bae62add6c3e3651ea1",
+      "steps": 7,
+      "events": 22,
+      "playbackEvents": 22
+    },
+    "socks.json": {
+      "sha256": "6c80524ddfc3539ee012c0fb99b8974a76af81b192eaf033e4e2ba147eca082c",
+      "sourceSha256": "aba5ebcca349f92ffed0dfe523a54677f5040de21476357dbad92a85633b0f54",
+      "steps": 4,
+      "events": 16,
+      "playbackEvents": 16
+    },
+    "reverse.json": {
+      "sha256": "67ba96b604b796dbc67a472453683590f558e366f82f44e96894c71e489de28c",
+      "sourceSha256": "932279f282b5bece76f3197b9cc96c6d85c131ac323a91a3e801b3bf21a59d45",
+      "steps": 6,
+      "events": 18,
+      "playbackEvents": 18
+    },
+    "wireguard.json": {
+      "sha256": "85672919b5dfeea7757735e7b83a2b0289f29c140880b08ece3511fd9d75232a",
+      "sourceSha256": "5055e463b6946dc53b2568df65ae607639e458d6c13913fdf1bf572e7601d821",
+      "steps": 6,
+      "events": 11,
+      "playbackEvents": 11
+    },
+    "ipsec.json": {
+      "sha256": "94af1ecaba87afbcb386e8ecbc29b75df02ec3cd9010799d3cb79170bdcf5eff",
+      "sourceSha256": "43144d8feb0825c9f238dea20cb2a8ac5fc175a97663ed3ad8e432a4e75bc340",
+      "steps": 6,
+      "events": 12,
+      "playbackEvents": 12
+    },
+    "modbus.json": {
+      "sha256": "529938ec2557886460c9472d9ba9a5fb5f73f102b7583f6db1f6b1d962666452",
+      "sourceSha256": "0a0b30a555e958a70d55c9797a80350fa2b2c352a132e3de494a7402c2d01d11",
+      "steps": 6,
+      "events": 14,
+      "playbackEvents": 14
+    }
+  }
+}

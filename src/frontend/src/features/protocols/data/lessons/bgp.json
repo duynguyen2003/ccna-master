@@ -1,0 +1,785 @@
+{
+  "id": "bgp",
+  "name": "BGP",
+  "title": "Internet Routes",
+  "layer": 7,
+  "nodes": [
+    "client",
+    "router",
+    "isp",
+    "transit",
+    "hosting",
+    "app"
+  ],
+  "latency": {
+    "isp-transit": 0.004,
+    "transit-hosting": 0.006,
+    "client-app": 0.017
+  },
+  "labels": {
+    "app": [
+      "www.example.com",
+      "203.0.113.10"
+    ]
+  },
+  "legend": [
+    [
+      "green",
+      "TCP"
+    ],
+    [
+      "blue",
+      "Session"
+    ],
+    [
+      "violet",
+      "Routes"
+    ],
+    [
+      "amber",
+      "The laptop’s packets"
+    ]
+  ],
+  "overview": {
+    "full": "Border Gateway Protocol",
+    "description": "The internet is a network of networks: tens of thousands of them, run by internet providers, clouds, universities and companies, each with its own AS number. BGP is how their border routers tell each other which addresses they can reach. Every router passes on what it learns with its own number added, so each network builds its own map of the paths to every address on the internet.",
+    "facts": [
+      [
+        "Layer",
+        "Application (Layer 7)"
+      ],
+      [
+        "Port",
+        "TCP 179"
+      ],
+      [
+        "Between",
+        "Networks (ASes)"
+      ],
+      [
+        "Table",
+        "About a million IPv4 routes"
+      ],
+      [
+        "Path choice",
+        "Policy, then shortest"
+      ],
+      [
+        "Defined In",
+        "RFC 4271"
+      ]
+    ]
+  },
+  "outro": {
+    "title": "Route learned",
+    "desc": "Announced, passed on, used",
+    "text": "The hosting network announced its addresses, the transit network passed them on with its own number added, and the ISP’s router used that path for the laptop’s packets. When the route was withdrawn, the news spread the same way. There is no central map: every network builds its own from what its neighbours say. Press REPLAY to watch it again.",
+    "facts": [
+      [
+        "Messages",
+        "OPEN, KEEPALIVE, UPDATE"
+      ],
+      [
+        "Path",
+        "64510 64511"
+      ],
+      [
+        "Map",
+        "Each network makes its own"
+      ],
+      [
+        "Protect with",
+        "RPKI and filters"
+      ]
+    ]
+  },
+  "start": {
+    "nodes": [
+      "isp"
+    ],
+    "frame": "bgp"
+  },
+  "steps": [
+    {
+      "title": "Many Networks",
+      "desc": "Each with its own number",
+      "detail": "The internet is more than 75,000 separate networks, called autonomous systems (ASes): internet providers, clouds, universities, big companies, each with a number. Here are three: the laptop’s ISP (AS 64500), a transit network that carries others’ traffic (AS 64510), and the hosting network of www.example.com (AS 64511). BGP is how their routers tell each other where every address can be reached.",
+      "facts": [
+        [
+          "Networks",
+          "More than 75,000 ASes"
+        ],
+        [
+          "Here",
+          "3 ASes, a router each"
+        ],
+        [
+          "Numbers",
+          "64500, 64510, 64511"
+        ]
+      ],
+      "events": [
+        {
+          "type": "show",
+          "nodes": [
+            "transit",
+            "hosting",
+            "app"
+          ],
+          "frame": "bgp"
+        }
+      ]
+    },
+    {
+      "title": "Open a Session",
+      "desc": "TCP to port 179",
+      "detail": "BGP routers don’t discover each other: engineers at both ends set each other up as neighbours. The ISP’s router opens a TCP connection to the transit router on port 179. They are directly connected, so their packets go out with a TTL of 1: they can’t cross even one more router, so the session only works between direct neighbours.",
+      "facts": [
+        [
+          "Port",
+          "TCP 179"
+        ],
+        [
+          "Neighbours",
+          "Set up by hand"
+        ],
+        [
+          "TTL",
+          "1: the next router only"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "isp",
+          "to": "transit",
+          "color": "green",
+          "label": "SYN",
+          "payload": [],
+          "row": {
+            "time": "0.000s",
+            "src": "192.0.2.5",
+            "dst": "192.0.2.4",
+            "proto": "TCP",
+            "info": "50311 → 179 [SYN] Seq=0",
+            "len": "74 B",
+            "wire": {
+              "tcp": {
+                "sport": 50311,
+                "dport": 179,
+                "flags": "S"
+              },
+              "ttl": 1
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "transit",
+          "to": "isp",
+          "color": "green",
+          "label": "SYN-ACK",
+          "payload": [],
+          "row": {
+            "time": "0.004s",
+            "src": "192.0.2.4",
+            "dst": "192.0.2.5",
+            "proto": "TCP",
+            "info": "179 → 50311 [SYN, ACK] Seq=0 Ack=1",
+            "len": "74 B",
+            "wire": {
+              "tcp": {
+                "sport": 179,
+                "dport": 50311,
+                "flags": "SA"
+              },
+              "ttl": 1
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "isp",
+          "to": "transit",
+          "color": "green",
+          "label": "ACK",
+          "payload": [],
+          "row": {
+            "time": "0.008s",
+            "src": "192.0.2.5",
+            "dst": "192.0.2.4",
+            "proto": "TCP",
+            "info": "50311 → 179 [ACK] Seq=1 Ack=1",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 50311,
+                "dport": 179,
+                "flags": "A"
+              },
+              "ttl": 1
+            }
+          },
+          "quick": true
+        }
+      ]
+    },
+    {
+      "title": "Say Hello",
+      "desc": "OPEN, then KEEPALIVE",
+      "detail": "Each router sends an OPEN: its AS number, a hold time of 180 seconds, its router ID and what it supports, such as 4-byte AS numbers. Each answers with a KEEPALIVE, and the session is established. From now on a KEEPALIVE goes every 60 seconds when there’s nothing else to send; after 180 silent seconds the session would be dropped.",
+      "facts": [
+        [
+          "OPEN",
+          "AS, hold time, ID"
+        ],
+        [
+          "Then",
+          "KEEPALIVE: established"
+        ],
+        [
+          "Hold time",
+          "180 s"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "isp",
+          "to": "transit",
+          "color": "blue",
+          "label": "OPEN",
+          "payload": [
+            "AS 64500",
+            "hold 180 s"
+          ],
+          "row": {
+            "time": "0.008s",
+            "src": "192.0.2.5",
+            "dst": "192.0.2.4",
+            "proto": "BGP",
+            "info": "OPEN Message",
+            "len": "111 B",
+            "wire": {
+              "tcp": {
+                "sport": 50311,
+                "dport": 179,
+                "flags": "PA",
+                "data": {
+                  "bgp": {
+                    "type": 1,
+                    "as": 64500,
+                    "hold": 180,
+                    "id": "192.0.2.5"
+                  }
+                }
+              },
+              "ttl": 1
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "transit",
+          "to": "isp",
+          "color": "blue",
+          "label": "OPEN",
+          "payload": [
+            "AS 64510",
+            "hold 180 s"
+          ],
+          "row": {
+            "time": "0.012s",
+            "src": "192.0.2.4",
+            "dst": "192.0.2.5",
+            "proto": "BGP",
+            "info": "OPEN Message",
+            "len": "111 B",
+            "wire": {
+              "tcp": {
+                "sport": 179,
+                "dport": 50311,
+                "flags": "PA",
+                "data": {
+                  "bgp": {
+                    "type": 1,
+                    "as": 64510,
+                    "hold": 180,
+                    "id": "192.0.2.4"
+                  }
+                }
+              },
+              "ttl": 1
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "transit",
+          "to": "isp",
+          "color": "blue",
+          "label": "KEEPALIVE",
+          "payload": [],
+          "row": {
+            "time": "0.012s",
+            "src": "192.0.2.4",
+            "dst": "192.0.2.5",
+            "proto": "BGP",
+            "info": "KEEPALIVE Message",
+            "len": "85 B",
+            "wire": {
+              "tcp": {
+                "sport": 179,
+                "dport": 50311,
+                "flags": "PA",
+                "data": {
+                  "bgp": {
+                    "type": 4
+                  }
+                }
+              },
+              "ttl": 1
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "isp",
+          "to": "transit",
+          "color": "blue",
+          "label": "KEEPALIVE",
+          "payload": [],
+          "row": {
+            "time": "0.016s",
+            "src": "192.0.2.5",
+            "dst": "192.0.2.4",
+            "proto": "BGP",
+            "info": "KEEPALIVE Message",
+            "len": "85 B",
+            "wire": {
+              "tcp": {
+                "sport": 50311,
+                "dport": 179,
+                "flags": "PA",
+                "data": {
+                  "bgp": {
+                    "type": 4
+                  }
+                }
+              },
+              "ttl": 1
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "note",
+          "at": "isp",
+          "text": "SESSION ESTABLISHED",
+          "tone": "green"
+        }
+      ]
+    },
+    {
+      "title": "Announce a Route",
+      "desc": "The hosting network: “I have these”",
+      "detail": "The hosting network’s router announces 203.0.113.0/24, the 256 addresses that include www.example.com, to the transit network, which it pays to carry its traffic. The UPDATE says how to get there: AS_PATH 64511, only its own network so far, and NEXT_HOP, its own address on the link between them.",
+      "facts": [
+        [
+          "Prefix",
+          "203.0.113.0/24"
+        ],
+        [
+          "AS_PATH",
+          "64511"
+        ],
+        [
+          "Next hop",
+          "192.0.2.9"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "hosting",
+          "to": "transit",
+          "color": "violet",
+          "label": "UPDATE",
+          "payload": [
+            "203.0.113.0/24",
+            "path 64511"
+          ],
+          "row": {
+            "time": "0.030s",
+            "src": "192.0.2.9",
+            "dst": "192.0.2.8",
+            "proto": "BGP",
+            "info": "UPDATE Message: 203.0.113.0/24",
+            "len": "113 B",
+            "wire": {
+              "tcp": {
+                "sport": 179,
+                "dport": 41622,
+                "flags": "PA",
+                "data": {
+                  "bgp": {
+                    "type": 2,
+                    "path": [
+                      64511
+                    ],
+                    "next": "192.0.2.9",
+                    "nlri": [
+                      "203.0.113.0/24"
+                    ]
+                  }
+                },
+                "opened": {
+                  "bytes": [
+                    1240,
+                    1186
+                  ],
+                  "ts": true
+                }
+              },
+              "ttl": 1
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Passed On",
+      "desc": "Each network adds its number",
+      "detail": "The transit router accepts the route and passes it to its other neighbours, the ISP among them, with its own number added to the front: AS_PATH 64510 64511, and itself as the next hop. The ISP’s router may hear of the same prefix from several neighbours. It picks one by its own policy first (routes through paying customers before others, say), then by the shortest AS path.",
+      "facts": [
+        [
+          "AS_PATH",
+          "64510 64511"
+        ],
+        [
+          "Next hop",
+          "192.0.2.4"
+        ],
+        [
+          "Best path",
+          "Policy, then shortest"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "transit",
+          "to": "isp",
+          "color": "violet",
+          "label": "UPDATE",
+          "payload": [
+            "203.0.113.0/24",
+            "path 64510 64511"
+          ],
+          "row": {
+            "time": "0.037s",
+            "src": "192.0.2.4",
+            "dst": "192.0.2.5",
+            "proto": "BGP",
+            "info": "UPDATE Message: 203.0.113.0/24",
+            "len": "117 B",
+            "wire": {
+              "tcp": {
+                "sport": 179,
+                "dport": 50311,
+                "flags": "PA",
+                "data": {
+                  "bgp": {
+                    "type": 2,
+                    "path": [
+                      64510,
+                      64511
+                    ],
+                    "next": "192.0.2.4",
+                    "nlri": [
+                      "203.0.113.0/24"
+                    ]
+                  }
+                }
+              },
+              "ttl": 1
+            }
+          }
+        },
+        {
+          "type": "note",
+          "at": "isp",
+          "text": "ROUTE TO 203.0.113.0/24",
+          "tone": "navy"
+        }
+      ]
+    },
+    {
+      "title": "Follow the Route",
+      "desc": "Packets go where BGP said",
+      "detail": "When the laptop connects to www.example.com (its address found by DNS as usual), its packets reach the ISP, whose router now sends anything for 203.0.113.0/24 to the transit router, and the transit router sends it on to the hosting network. The answer comes back by whatever route the hosting network chose towards the laptop’s ISP: on the internet the way back is often different from the way there.",
+      "facts": [
+        [
+          "To",
+          "203.0.113.10"
+        ],
+        [
+          "Path",
+          "AS 64500 → 64510 → 64511"
+        ],
+        [
+          "Way back",
+          "Chosen separately"
+        ]
+      ],
+      "events": [
+        {
+          "type": "show",
+          "nodes": [
+            "client",
+            "router"
+          ],
+          "frame": "route"
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "app",
+          "color": "amber",
+          "label": "SYN",
+          "payload": [
+            "to 203.0.113.10"
+          ],
+          "row": {
+            "time": "1.000s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.10",
+            "proto": "TCP",
+            "info": "52800 → 443 [SYN] Seq=0",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 52800,
+                "dport": 443,
+                "flags": "S"
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "app",
+          "to": "client",
+          "color": "amber",
+          "label": "SYN-ACK",
+          "payload": [
+            "the way back"
+          ],
+          "row": {
+            "time": "1.017s",
+            "src": "203.0.113.10",
+            "dst": "192.168.1.10",
+            "proto": "TCP",
+            "info": "443 → 52800 [SYN, ACK] Seq=0 Ack=1",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 443,
+                "dport": 52800,
+                "flags": "SA"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Withdrawn",
+      "desc": "Routes can be taken back",
+      "detail": "Later the hosting network takes the prefix back, as it would if a link failed: an UPDATE listing it under withdrawn routes. The transit router passes it on, and within seconds to minutes networks everywhere forget the path. A session that goes quiet past its hold time loses all its routes at once. In 2021 Facebook withdrew the routes to its own DNS servers and vanished from the internet for six hours.",
+      "facts": [
+        [
+          "Withdrawn",
+          "203.0.113.0/24"
+        ],
+        [
+          "Spreads in",
+          "Seconds to minutes"
+        ],
+        [
+          "Session lost",
+          "All its routes go"
+        ]
+      ],
+      "events": [
+        {
+          "type": "camera",
+          "frame": "bgp"
+        },
+        {
+          "type": "packet",
+          "from": "hosting",
+          "to": "transit",
+          "color": "violet",
+          "label": "WITHDRAW",
+          "payload": [
+            "203.0.113.0/24"
+          ],
+          "row": {
+            "time": "5.000s",
+            "src": "192.0.2.9",
+            "dst": "192.0.2.8",
+            "proto": "BGP",
+            "info": "UPDATE Message: withdrawn 203.0.113.0/24",
+            "len": "93 B",
+            "wire": {
+              "tcp": {
+                "sport": 179,
+                "dport": 41622,
+                "flags": "PA",
+                "data": {
+                  "bgp": {
+                    "type": 2,
+                    "withdraw": [
+                      "203.0.113.0/24"
+                    ]
+                  }
+                }
+              },
+              "ttl": 1
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "transit",
+          "to": "isp",
+          "color": "violet",
+          "label": "WITHDRAW",
+          "payload": [
+            "203.0.113.0/24"
+          ],
+          "row": {
+            "time": "5.007s",
+            "src": "192.0.2.4",
+            "dst": "192.0.2.5",
+            "proto": "BGP",
+            "info": "UPDATE Message: withdrawn 203.0.113.0/24",
+            "len": "93 B",
+            "wire": {
+              "tcp": {
+                "sport": 179,
+                "dport": 50311,
+                "flags": "PA",
+                "data": {
+                  "bgp": {
+                    "type": 2,
+                    "withdraw": [
+                      "203.0.113.0/24"
+                    ]
+                  }
+                }
+              },
+              "ttl": 1
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Trust Problems",
+      "desc": "BGP believes its neighbours",
+      "detail": "A router accepts what its neighbours announce. A network that announces addresses that aren’t its own, by mistake or on purpose, pulls their traffic towards it: in 2008 a Pakistani ISP took YouTube offline worldwide this way. With RPKI the holder of a prefix signs which AS may announce it, and routers that check drop any other. Filters on what each neighbour may announce do the rest.",
+      "facts": [
+        [
+          "Risk",
+          "Hijacks and leaks"
+        ],
+        [
+          "RPKI",
+          "Signed: who may announce"
+        ],
+        [
+          "Also",
+          "Filters per neighbour"
+        ]
+      ],
+      "events": [
+        {
+          "type": "note",
+          "at": "transit",
+          "text": "CHECK WHO MAY ANNOUNCE",
+          "tone": "amber"
+        }
+      ]
+    }
+  ],
+  "teaching": {
+    "steps": [
+      [
+        "Nhiều mạng",
+        "Internet gồm hơn 75,000 mạng riêng biệt, gọi là hệ tự trị (AS): nhà mạng, đám mây, trường đại học, công ty lớn, mỗi mạng có một số. Đây là ba mạng: nhà mạng của laptop (AS 64500), một mạng trung chuyển mang lưu lượng của người khác (AS 64510) và mạng hosting của www.example.com (AS 64511). BGP là cách router của chúng báo cho nhau biết mỗi địa chỉ tới được ở đâu."
+      ],
+      [
+        "Mở một phiên",
+        "Router BGP không tự tìm nhau: kỹ sư ở cả hai đầu cấu hình chúng làm láng giềng. Router của nhà mạng mở kết nối TCP tới router trung chuyển trên cổng 179. Chúng nối trực tiếp, nên gói của chúng đi với TTL bằng 1: không thể vượt qua thêm dù chỉ một router, nên phiên chỉ chạy giữa các láng giềng trực tiếp."
+      ],
+      [
+        "Chào hỏi",
+        "Mỗi router gửi một OPEN: số AS, hold time 180 giây, ID router và những gì nó hỗ trợ, chẳng hạn số AS 4 byte. Mỗi bên trả lời bằng KEEPALIVE, và phiên được thiết lập. Từ giờ cứ 60 giây có một KEEPALIVE khi không có gì khác để gửi; sau 180 giây im lặng, phiên sẽ bị ngắt."
+      ],
+      [
+        "Quảng bá tuyến",
+        "Router của mạng hosting quảng bá 203.0.113.0/24, 256 địa chỉ bao gồm www.example.com, tới mạng trung chuyển mà nó trả tiền để mang lưu lượng. UPDATE cho biết cách tới đó: AS_PATH 64511, đến giờ chỉ có mạng của nó, và NEXT_HOP, địa chỉ của nó trên liên kết giữa hai bên."
+      ],
+      [
+        "Chuyển tiếp",
+        "Router trung chuyển chấp nhận tuyến và chuyển cho các láng giềng khác, trong đó có nhà mạng, với số của nó thêm vào phía trước: AS_PATH 64510 64511, và chính nó là chặng kế tiếp. Router của nhà mạng có thể nghe về cùng tiền tố từ nhiều láng giềng. Nó chọn một tuyến trước hết theo chính sách riêng (ví dụ tuyến qua khách hàng trả tiền được ưu tiên), rồi theo đường AS ngắn nhất."
+      ],
+      [
+        "Đi theo tuyến",
+        "Khi laptop kết nối tới www.example.com (địa chỉ tìm qua DNS như thường), gói của nó tới nhà mạng, router của nhà mạng giờ gửi mọi thứ cho 203.0.113.0/24 tới router trung chuyển, và router trung chuyển chuyển tiếp tới mạng hosting. Câu trả lời quay về theo tuyến mà mạng hosting chọn hướng về nhà mạng của laptop: trên Internet, đường về thường khác đường đi."
+      ],
+      [
+        "Đã rút",
+        "Sau đó mạng hosting rút tiền tố lại, như khi một liên kết hỏng: một UPDATE liệt kê nó trong mục tuyến đã rút. Router trung chuyển chuyển tiếp, và trong vài giây đến vài phút các mạng khắp nơi quên đường đó. Phiên nào im lặng quá hold time sẽ mất toàn bộ tuyến cùng lúc. Năm 2021 Facebook rút các tuyến tới máy chủ DNS của chính mình và biến mất khỏi Internet trong sáu giờ."
+      ],
+      [
+        "Vấn đề lòng tin",
+        "Router chấp nhận những gì láng giềng quảng bá. Một mạng quảng bá địa chỉ không phải của mình, do nhầm hay cố ý, sẽ kéo lưu lượng của chúng về phía nó: năm 2008 một nhà mạng Pakistan đã làm YouTube ngừng hoạt động toàn cầu theo cách này. Với RPKI, chủ của tiền tố ký xác nhận AS nào được quảng bá nó, và router có kiểm tra sẽ bỏ mọi AS khác. Bộ lọc những gì từng láng giềng được quảng bá lo phần còn lại."
+      ]
+    ],
+    "notes": {
+      "SESSION ESTABLISHED": "ĐÃ THIẾT LẬP PHIÊN",
+      "ROUTE TO 203.0.113.0/24": "TUYẾN TỚI 203.0.113.0/24",
+      "CHECK WHO MAY ANNOUNCE": "KIỂM TRA AI ĐƯỢC QUẢNG BÁ"
+    },
+    "labels": {
+      "Internet": "Internet",
+      "Client": "Máy khách",
+      "Router": "Router",
+      "DNS Resolver": "Bộ phân giải DNS",
+      "Web Server": "Máy chủ web",
+      "Root Server": "Máy chủ gốc",
+      ".com TLD Server": "Máy chủ TLD .com",
+      "Authoritative Server": "Máy chủ có thẩm quyền",
+      "Mail Server": "Máy chủ thư",
+      "Proxy": "Proxy",
+      "App Server": "Máy chủ ứng dụng",
+      "File Server": "Máy chủ tệp",
+      "ISP Router": "Router của ISP",
+      "Transit Router": "Router trung chuyển",
+      "Hosting Router": "Router của nhà lưu trữ",
+      "Their Router": "Router bên kia",
+      "Their Laptop": "Laptop bên kia",
+      "Switch": "Switch",
+      "Access Server": "Máy chủ truy cập",
+      "IP Camera": "Camera IP",
+      "TV Box": "TV box",
+      "www.example.com": "www.example.com"
+    }
+  }
+}

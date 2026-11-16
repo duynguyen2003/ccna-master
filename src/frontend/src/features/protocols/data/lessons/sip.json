@@ -1,0 +1,1157 @@
+{
+  "id": "sip",
+  "name": "SIP",
+  "title": "Internet Phone Calls",
+  "layer": 7,
+  "nodes": [
+    "client",
+    "router",
+    "internet",
+    "relay",
+    "remote",
+    "peer"
+  ],
+  "lifelines": [
+    "client",
+    "relay",
+    "peer"
+  ],
+  "latency": {
+    "client-relay": 0.02,
+    "relay-peer": 0.025
+  },
+  "labels": {
+    "client": [
+      "Alice",
+      "192.168.1.10"
+    ],
+    "relay": [
+      "SIP Server",
+      "203.0.113.50"
+    ],
+    "remote": [
+      "Bob’s Router",
+      "198.51.100.200"
+    ],
+    "peer": [
+      "Bob",
+      "192.168.0.23"
+    ]
+  },
+  "legend": [
+    [
+      "amber",
+      "Requests"
+    ],
+    [
+      "violet",
+      "Responses"
+    ],
+    [
+      "green",
+      "Voice (RTP)"
+    ]
+  ],
+  "overview": {
+    "full": "Session Initiation Protocol",
+    "description": "SIP sets up phone calls over the internet: office desk phones, phone apps and the providers behind them. A phone signs in with its provider’s SIP server. To call someone it sends an INVITE; the other phone rings and answers, and the two agree on how to send the voice, which then flows as RTP. The messages are plain text, a lot like HTTP.",
+    "facts": [
+      [
+        "Layer",
+        "Application (Layer 7)"
+      ],
+      [
+        "Port",
+        "UDP or TCP 5060"
+      ],
+      [
+        "Call setup",
+        "INVITE, 180, 200, ACK"
+      ],
+      [
+        "Voice",
+        "RTP, described by SDP"
+      ],
+      [
+        "Codec here",
+        "G.711, 64 kbit/s"
+      ],
+      [
+        "Defined In",
+        "RFC 3261"
+      ]
+    ]
+  },
+  "outro": {
+    "title": "Call ended",
+    "desc": "Signed in, rang, talked, hung up",
+    "text": "Alice’s phone signed in with a password it never sent, invited Bob’s phone through the SIP server, heard it ring, and talked over RTP until Bob hung up with a BYE. SIP only set the call up and took it down; the voice travelled as packets of its own. Press REPLAY to watch it again.",
+    "facts": [
+      [
+        "Requests",
+        "REGISTER, INVITE, ACK, BYE"
+      ],
+      [
+        "Voice",
+        "50 packets a second each way"
+      ],
+      [
+        "Through",
+        "The provider’s server"
+      ],
+      [
+        "Encrypted",
+        "No (SIPS and SRTP add it)"
+      ]
+    ]
+  },
+  "start": {
+    "nodes": [
+      "client"
+    ],
+    "frame": "client"
+  },
+  "steps": [
+    {
+      "title": "Sign In",
+      "desc": "The phone tells the server where it is",
+      "detail": "Alice’s phone, an app on her laptop, registers with her provider’s SIP server: alice@example.net can be reached here. The server answers 401 with a challenge, so the phone asks again with a hash made from the challenge and its password. 200 OK: registered for an hour.",
+      "facts": [
+        [
+          "Port",
+          "UDP 5060"
+        ],
+        [
+          "Login",
+          "A hash, not the password"
+        ],
+        [
+          "Good for",
+          "3600 s, then again"
+        ]
+      ],
+      "events": [
+        {
+          "type": "show",
+          "nodes": [
+            "router",
+            "internet",
+            "relay"
+          ],
+          "frame": "sipserver"
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "relay",
+          "color": "amber",
+          "label": "REGISTER",
+          "payload": [
+            "alice@example.net",
+            "is here"
+          ],
+          "row": {
+            "time": "0.000s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.50",
+            "proto": "SIP",
+            "info": "Request: REGISTER sip:example.net",
+            "len": "349 B",
+            "wire": {
+              "udp": {
+                "sport": 5060,
+                "dport": 5060,
+                "data": {
+                  "text": [
+                    "REGISTER sip:example.net SIP/2.0",
+                    "Via: SIP/2.0/UDP 192.168.1.10:5060;rport;branch=z9hG4bK-r1",
+                    "Max-Forwards: 70",
+                    "From: <sip:alice@example.net>;tag=a73k",
+                    "To: <sip:alice@example.net>",
+                    "Call-ID: reg-5e1f@192.168.1.10",
+                    "CSeq: 1 REGISTER",
+                    "Contact: <sip:alice@192.168.1.10:5060>",
+                    "Expires: 3600",
+                    "Content-Length: 0",
+                    ""
+                  ],
+                  "name": "SIP"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "relay",
+          "to": "client",
+          "color": "violet",
+          "label": "401",
+          "payload": [
+            "Unauthorized",
+            "with a challenge"
+          ],
+          "row": {
+            "time": "0.021s",
+            "src": "203.0.113.50",
+            "dst": "192.168.1.10",
+            "proto": "SIP",
+            "info": "Status: 401 Unauthorized",
+            "len": "395 B",
+            "wire": {
+              "udp": {
+                "sport": 5060,
+                "dport": 5060,
+                "data": {
+                  "text": [
+                    "SIP/2.0 401 Unauthorized",
+                    "Via: SIP/2.0/UDP 192.168.1.10:5060;rport=5060;received=198.51.100.7;branch=z9hG4bK-r1",
+                    "From: <sip:alice@example.net>;tag=a73k",
+                    "To: <sip:alice@example.net>;tag=s91d",
+                    "Call-ID: reg-5e1f@192.168.1.10",
+                    "CSeq: 1 REGISTER",
+                    "WWW-Authenticate: Digest realm=\"example.net\", nonce=\"7b2e91c4\", qop=\"auth\", algorithm=MD5",
+                    "Content-Length: 0",
+                    ""
+                  ],
+                  "name": "SIP"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "relay",
+          "color": "amber",
+          "label": "REGISTER",
+          "payload": [
+            "again, with a hash"
+          ],
+          "row": {
+            "time": "0.042s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.50",
+            "proto": "SIP",
+            "info": "Request: REGISTER sip:example.net",
+            "len": "534 B",
+            "wire": {
+              "udp": {
+                "sport": 5060,
+                "dport": 5060,
+                "data": {
+                  "text": [
+                    "REGISTER sip:example.net SIP/2.0",
+                    "Via: SIP/2.0/UDP 192.168.1.10:5060;rport;branch=z9hG4bK-r2",
+                    "Max-Forwards: 70",
+                    "From: <sip:alice@example.net>;tag=a73k",
+                    "To: <sip:alice@example.net>",
+                    "Call-ID: reg-5e1f@192.168.1.10",
+                    "CSeq: 2 REGISTER",
+                    "Contact: <sip:alice@192.168.1.10:5060>",
+                    "Authorization: Digest username=\"alice\", realm=\"example.net\", nonce=\"7b2e91c4\", uri=\"sip:example.net\", response=\"4c1e7a9d02b35f68e1a9c47d0b2f6e13\", qop=auth, nc=00000001, cnonce=\"d3f0\"",
+                    "Expires: 3600",
+                    "Content-Length: 0",
+                    ""
+                  ],
+                  "name": "SIP"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "relay",
+          "to": "client",
+          "color": "violet",
+          "label": "200 OK",
+          "payload": [
+            "registered"
+          ],
+          "row": {
+            "time": "0.063s",
+            "src": "203.0.113.50",
+            "dst": "192.168.1.10",
+            "proto": "SIP",
+            "info": "Status: 200 OK (REGISTER)",
+            "len": "347 B",
+            "wire": {
+              "udp": {
+                "sport": 5060,
+                "dport": 5060,
+                "data": {
+                  "text": [
+                    "SIP/2.0 200 OK",
+                    "Via: SIP/2.0/UDP 192.168.1.10:5060;rport=5060;received=198.51.100.7;branch=z9hG4bK-r2",
+                    "From: <sip:alice@example.net>;tag=a73k",
+                    "To: <sip:alice@example.net>;tag=s91d",
+                    "Call-ID: reg-5e1f@192.168.1.10",
+                    "CSeq: 2 REGISTER",
+                    "Contact: <sip:alice@192.168.1.10:5060>;expires=3600",
+                    "Content-Length: 0",
+                    ""
+                  ],
+                  "name": "SIP"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Call Bob",
+      "desc": "An INVITE, passed on by the server",
+      "detail": "Alice calls bob@example.net. Her INVITE carries SDP: G.711 audio, sent to her phone. The server answers 100 Trying, finds where Bob’s phone registered and passes the INVITE on, with its own Via and Record-Route and its own address in the SDP: the voice will go through it.",
+      "facts": [
+        [
+          "To",
+          "sip:bob@example.net"
+        ],
+        [
+          "Offer (SDP)",
+          "G.711, port 49170"
+        ],
+        [
+          "100 Trying",
+          "Stops Alice resending"
+        ]
+      ],
+      "events": [
+        {
+          "type": "show",
+          "nodes": [
+            "remote",
+            "peer"
+          ],
+          "frame": "sip"
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "relay",
+          "color": "amber",
+          "label": "INVITE",
+          "payload": [
+            "call bob@example.net",
+            "SDP: G.711 audio"
+          ],
+          "row": {
+            "time": "2.500s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.50",
+            "proto": "SIP/SDP",
+            "info": "Request: INVITE sip:bob@example.net",
+            "len": "539 B",
+            "wire": {
+              "udp": {
+                "sport": 5060,
+                "dport": 5060,
+                "data": {
+                  "text": [
+                    "INVITE sip:bob@example.net SIP/2.0",
+                    "Via: SIP/2.0/UDP 192.168.1.10:5060;rport;branch=z9hG4bK-i1",
+                    "Max-Forwards: 70",
+                    "From: \"Alice\" <sip:alice@example.net>;tag=f1c2",
+                    "To: <sip:bob@example.net>",
+                    "Call-ID: call-7c2e@192.168.1.10",
+                    "CSeq: 1 INVITE",
+                    "Contact: <sip:alice@192.168.1.10:5060>",
+                    "Content-Type: application/sdp",
+                    "Content-Length: 165",
+                    "",
+                    "v=0",
+                    "o=alice 2890 2890 IN IP4 192.168.1.10",
+                    "s=-",
+                    "c=IN IP4 192.168.1.10",
+                    "t=0 0",
+                    "m=audio 49170 RTP/AVP 0 101",
+                    "a=rtpmap:0 PCMU/8000",
+                    "a=rtpmap:101 telephone-event/8000"
+                  ],
+                  "name": "SIP"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "relay",
+          "to": "client",
+          "color": "violet",
+          "label": "100 TRYING",
+          "payload": [],
+          "row": {
+            "time": "2.521s",
+            "src": "203.0.113.50",
+            "dst": "192.168.1.10",
+            "proto": "SIP",
+            "info": "Status: 100 Trying",
+            "len": "294 B",
+            "wire": {
+              "udp": {
+                "sport": 5060,
+                "dport": 5060,
+                "data": {
+                  "text": [
+                    "SIP/2.0 100 Trying",
+                    "Via: SIP/2.0/UDP 192.168.1.10:5060;rport=5060;received=198.51.100.7;branch=z9hG4bK-i1",
+                    "From: \"Alice\" <sip:alice@example.net>;tag=f1c2",
+                    "To: <sip:bob@example.net>",
+                    "Call-ID: call-7c2e@192.168.1.10",
+                    "CSeq: 1 INVITE",
+                    "Content-Length: 0",
+                    ""
+                  ],
+                  "name": "SIP"
+                }
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "relay",
+          "to": "peer",
+          "color": "amber",
+          "label": "INVITE",
+          "payload": [
+            "passed on to Bob",
+            "voice via the server"
+          ],
+          "row": {
+            "time": "2.521s",
+            "src": "203.0.113.50",
+            "dst": "198.51.100.200",
+            "proto": "SIP/SDP",
+            "info": "Request: INVITE sip:bob@192.168.0.23:5060",
+            "len": "658 B",
+            "wire": {
+              "udp": {
+                "sport": 5060,
+                "dport": 5060,
+                "data": {
+                  "text": [
+                    "INVITE sip:bob@192.168.0.23:5060 SIP/2.0",
+                    "Record-Route: <sip:203.0.113.50;lr>",
+                    "Via: SIP/2.0/UDP 203.0.113.50;branch=z9hG4bK-p1",
+                    "Via: SIP/2.0/UDP 192.168.1.10:5060;rport=5060;received=198.51.100.7;branch=z9hG4bK-i1",
+                    "Max-Forwards: 69",
+                    "From: \"Alice\" <sip:alice@example.net>;tag=f1c2",
+                    "To: <sip:bob@example.net>",
+                    "Call-ID: call-7c2e@192.168.1.10",
+                    "CSeq: 1 INVITE",
+                    "Contact: <sip:alice@192.168.1.10:5060>",
+                    "Content-Type: application/sdp",
+                    "Content-Length: 165",
+                    "",
+                    "v=0",
+                    "o=alice 2890 2890 IN IP4 203.0.113.50",
+                    "s=-",
+                    "c=IN IP4 203.0.113.50",
+                    "t=0 0",
+                    "m=audio 40002 RTP/AVP 0 101",
+                    "a=rtpmap:0 PCMU/8000",
+                    "a=rtpmap:101 telephone-event/8000"
+                  ],
+                  "name": "SIP"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Ringing",
+      "desc": "The answer retraces the route",
+      "detail": "Bob’s phone starts ringing and says so: 180 Ringing. Responses follow the Via headers back the way the request came, so it goes to the server, which removes its own Via and passes it on to Alice. Her phone plays the ringing tone.",
+      "facts": [
+        [
+          "Response",
+          "180 Ringing"
+        ],
+        [
+          "Route back",
+          "The Via headers, in reverse"
+        ],
+        [
+          "Alice hears",
+          "The ringing tone"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "peer",
+          "to": "relay",
+          "color": "violet",
+          "label": "180 RINGING",
+          "payload": [
+            "Bob’s phone rings"
+          ],
+          "row": {
+            "time": "2.560s",
+            "src": "198.51.100.200",
+            "dst": "203.0.113.50",
+            "proto": "SIP",
+            "info": "Status: 180 Ringing",
+            "len": "428 B",
+            "wire": {
+              "udp": {
+                "sport": 5060,
+                "dport": 5060,
+                "data": {
+                  "text": [
+                    "SIP/2.0 180 Ringing",
+                    "Via: SIP/2.0/UDP 203.0.113.50;branch=z9hG4bK-p1",
+                    "Via: SIP/2.0/UDP 192.168.1.10:5060;rport=5060;received=198.51.100.7;branch=z9hG4bK-i1",
+                    "Record-Route: <sip:203.0.113.50;lr>",
+                    "From: \"Alice\" <sip:alice@example.net>;tag=f1c2",
+                    "To: <sip:bob@example.net>;tag=b8e4",
+                    "Call-ID: call-7c2e@192.168.1.10",
+                    "CSeq: 1 INVITE",
+                    "Contact: <sip:bob@192.168.0.23:5060>",
+                    "Content-Length: 0",
+                    ""
+                  ],
+                  "name": "SIP"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "relay",
+          "to": "client",
+          "color": "violet",
+          "label": "180 RINGING",
+          "payload": [
+            "to Alice"
+          ],
+          "row": {
+            "time": "2.586s",
+            "src": "203.0.113.50",
+            "dst": "192.168.1.10",
+            "proto": "SIP",
+            "info": "Status: 180 Ringing",
+            "len": "379 B",
+            "wire": {
+              "udp": {
+                "sport": 5060,
+                "dport": 5060,
+                "data": {
+                  "text": [
+                    "SIP/2.0 180 Ringing",
+                    "Via: SIP/2.0/UDP 192.168.1.10:5060;rport=5060;received=198.51.100.7;branch=z9hG4bK-i1",
+                    "Record-Route: <sip:203.0.113.50;lr>",
+                    "From: \"Alice\" <sip:alice@example.net>;tag=f1c2",
+                    "To: <sip:bob@example.net>;tag=b8e4",
+                    "Call-ID: call-7c2e@192.168.1.10",
+                    "CSeq: 1 INVITE",
+                    "Contact: <sip:bob@192.168.0.23:5060>",
+                    "Content-Length: 0",
+                    ""
+                  ],
+                  "name": "SIP"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Answered",
+      "desc": "200 OK, then ACK",
+      "detail": "Bob picks up. His 200 OK carries his SDP answer: G.711, sent to his phone. The server swaps in its own address again before passing it to Alice. Her phone confirms with an ACK, which the server passes to Bob. The call is set up.",
+      "facts": [
+        [
+          "Answer (SDP)",
+          "G.711, port 49172"
+        ],
+        [
+          "Confirmed by",
+          "ACK"
+        ],
+        [
+          "Voice goes to",
+          "The server, ports 40000, 40002"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "peer",
+          "to": "relay",
+          "color": "violet",
+          "label": "200 OK",
+          "payload": [
+            "Bob answers",
+            "SDP: G.711 audio"
+          ],
+          "row": {
+            "time": "6.320s",
+            "src": "198.51.100.200",
+            "dst": "203.0.113.50",
+            "proto": "SIP/SDP",
+            "info": "Status: 200 OK (INVITE)",
+            "len": "619 B",
+            "wire": {
+              "udp": {
+                "sport": 5060,
+                "dport": 5060,
+                "data": {
+                  "text": [
+                    "SIP/2.0 200 OK",
+                    "Via: SIP/2.0/UDP 203.0.113.50;branch=z9hG4bK-p1",
+                    "Via: SIP/2.0/UDP 192.168.1.10:5060;rport=5060;received=198.51.100.7;branch=z9hG4bK-i1",
+                    "Record-Route: <sip:203.0.113.50;lr>",
+                    "From: \"Alice\" <sip:alice@example.net>;tag=f1c2",
+                    "To: <sip:bob@example.net>;tag=b8e4",
+                    "Call-ID: call-7c2e@192.168.1.10",
+                    "CSeq: 1 INVITE",
+                    "Contact: <sip:bob@192.168.0.23:5060>",
+                    "Content-Type: application/sdp",
+                    "Content-Length: 163",
+                    "",
+                    "v=0",
+                    "o=bob 4410 4410 IN IP4 192.168.0.23",
+                    "s=-",
+                    "c=IN IP4 192.168.0.23",
+                    "t=0 0",
+                    "m=audio 49172 RTP/AVP 0 101",
+                    "a=rtpmap:0 PCMU/8000",
+                    "a=rtpmap:101 telephone-event/8000"
+                  ],
+                  "name": "SIP"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "relay",
+          "to": "client",
+          "color": "violet",
+          "label": "200 OK",
+          "payload": [
+            "answered",
+            "voice via the server"
+          ],
+          "row": {
+            "time": "6.346s",
+            "src": "203.0.113.50",
+            "dst": "192.168.1.10",
+            "proto": "SIP/SDP",
+            "info": "Status: 200 OK (INVITE)",
+            "len": "570 B",
+            "wire": {
+              "udp": {
+                "sport": 5060,
+                "dport": 5060,
+                "data": {
+                  "text": [
+                    "SIP/2.0 200 OK",
+                    "Via: SIP/2.0/UDP 192.168.1.10:5060;rport=5060;received=198.51.100.7;branch=z9hG4bK-i1",
+                    "Record-Route: <sip:203.0.113.50;lr>",
+                    "From: \"Alice\" <sip:alice@example.net>;tag=f1c2",
+                    "To: <sip:bob@example.net>;tag=b8e4",
+                    "Call-ID: call-7c2e@192.168.1.10",
+                    "CSeq: 1 INVITE",
+                    "Contact: <sip:bob@192.168.0.23:5060>",
+                    "Content-Type: application/sdp",
+                    "Content-Length: 163",
+                    "",
+                    "v=0",
+                    "o=bob 4410 4410 IN IP4 203.0.113.50",
+                    "s=-",
+                    "c=IN IP4 203.0.113.50",
+                    "t=0 0",
+                    "m=audio 40000 RTP/AVP 0 101",
+                    "a=rtpmap:0 PCMU/8000",
+                    "a=rtpmap:101 telephone-event/8000"
+                  ],
+                  "name": "SIP"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "relay",
+          "color": "amber",
+          "label": "ACK",
+          "payload": [],
+          "row": {
+            "time": "6.367s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.50",
+            "proto": "SIP",
+            "info": "Request: ACK sip:bob@192.168.0.23:5060",
+            "len": "340 B",
+            "wire": {
+              "udp": {
+                "sport": 5060,
+                "dport": 5060,
+                "data": {
+                  "text": [
+                    "ACK sip:bob@192.168.0.23:5060 SIP/2.0",
+                    "Via: SIP/2.0/UDP 192.168.1.10:5060;rport;branch=z9hG4bK-a1",
+                    "Route: <sip:203.0.113.50;lr>",
+                    "Max-Forwards: 70",
+                    "From: \"Alice\" <sip:alice@example.net>;tag=f1c2",
+                    "To: <sip:bob@example.net>;tag=b8e4",
+                    "Call-ID: call-7c2e@192.168.1.10",
+                    "CSeq: 1 ACK",
+                    "Content-Length: 0",
+                    ""
+                  ],
+                  "name": "SIP"
+                }
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "relay",
+          "to": "peer",
+          "color": "amber",
+          "label": "ACK",
+          "payload": [],
+          "row": {
+            "time": "6.388s",
+            "src": "203.0.113.50",
+            "dst": "198.51.100.200",
+            "proto": "SIP",
+            "info": "Request: ACK sip:bob@192.168.0.23:5060",
+            "len": "386 B",
+            "wire": {
+              "udp": {
+                "sport": 5060,
+                "dport": 5060,
+                "data": {
+                  "text": [
+                    "ACK sip:bob@192.168.0.23:5060 SIP/2.0",
+                    "Via: SIP/2.0/UDP 203.0.113.50;branch=z9hG4bK-p2",
+                    "Via: SIP/2.0/UDP 192.168.1.10:5060;rport=5060;received=198.51.100.7;branch=z9hG4bK-a1",
+                    "Max-Forwards: 69",
+                    "From: \"Alice\" <sip:alice@example.net>;tag=f1c2",
+                    "To: <sip:bob@example.net>;tag=b8e4",
+                    "Call-ID: call-7c2e@192.168.1.10",
+                    "CSeq: 1 ACK",
+                    "Content-Length: 0",
+                    ""
+                  ],
+                  "name": "SIP"
+                }
+              }
+            }
+          },
+          "quick": true
+        }
+      ]
+    },
+    {
+      "title": "Talking",
+      "desc": "Voice flows as RTP",
+      "detail": "Now the voice: every 20 ms each phone sends an RTP packet with 160 bytes of G.711 sound, a sequence number and a timestamp, over UDP. They go to the server, which passes them on to the other phone. SIP stays quiet while they talk.",
+      "facts": [
+        [
+          "Every",
+          "20 ms, 160 bytes of sound"
+        ],
+        [
+          "Carried by",
+          "RTP over UDP"
+        ],
+        [
+          "SIP meanwhile",
+          "Nothing to say"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "relay",
+          "color": "green",
+          "label": "VOICE",
+          "payload": [
+            "20 ms of Alice"
+          ],
+          "row": {
+            "time": "6.420s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.50",
+            "proto": "RTP",
+            "info": "PT=ITU-T G.711 PCMU, SSRC=0x3A9F12C4, Seq=11203, Time=54720",
+            "len": "214 B",
+            "wire": {
+              "udp": {
+                "sport": 49170,
+                "dport": 40000,
+                "data": {
+                  "rtp": {
+                    "codec": "pcmu",
+                    "pt": 0,
+                    "seq": 11203,
+                    "ts": 54720,
+                    "ssrc": 983503556,
+                    "marker": true,
+                    "audio": 160
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "relay",
+          "to": "peer",
+          "color": "green",
+          "label": "VOICE",
+          "payload": [
+            "20 ms of Alice"
+          ],
+          "row": {
+            "time": "6.441s",
+            "src": "203.0.113.50",
+            "dst": "198.51.100.200",
+            "proto": "RTP",
+            "info": "PT=ITU-T G.711 PCMU, SSRC=0x3A9F12C4, Seq=11203, Time=54720",
+            "len": "214 B",
+            "wire": {
+              "udp": {
+                "sport": 40002,
+                "dport": 49172,
+                "data": {
+                  "rtp": {
+                    "codec": "pcmu",
+                    "pt": 0,
+                    "seq": 11203,
+                    "ts": 54720,
+                    "ssrc": 983503556,
+                    "marker": true,
+                    "audio": 160
+                  }
+                }
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "peer",
+          "to": "relay",
+          "color": "green",
+          "label": "VOICE",
+          "payload": [
+            "20 ms of Bob"
+          ],
+          "row": {
+            "time": "6.470s",
+            "src": "198.51.100.200",
+            "dst": "203.0.113.50",
+            "proto": "RTP",
+            "info": "PT=ITU-T G.711 PCMU, SSRC=0x77D0E95B, Seq=30871, Time=913600",
+            "len": "214 B",
+            "wire": {
+              "udp": {
+                "sport": 49172,
+                "dport": 40002,
+                "data": {
+                  "rtp": {
+                    "codec": "pcmu",
+                    "pt": 0,
+                    "seq": 30871,
+                    "ts": 913600,
+                    "ssrc": 2010179931,
+                    "marker": true,
+                    "audio": 160
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "relay",
+          "to": "client",
+          "color": "green",
+          "label": "VOICE",
+          "payload": [
+            "20 ms of Bob"
+          ],
+          "row": {
+            "time": "6.496s",
+            "src": "203.0.113.50",
+            "dst": "192.168.1.10",
+            "proto": "RTP",
+            "info": "PT=ITU-T G.711 PCMU, SSRC=0x77D0E95B, Seq=30871, Time=913600",
+            "len": "214 B",
+            "wire": {
+              "udp": {
+                "sport": 40000,
+                "dport": 49170,
+                "data": {
+                  "rtp": {
+                    "codec": "pcmu",
+                    "pt": 0,
+                    "seq": 30871,
+                    "ts": 913600,
+                    "ssrc": 2010179931,
+                    "marker": true,
+                    "audio": 160
+                  }
+                }
+              }
+            }
+          },
+          "quick": true
+        }
+      ]
+    },
+    {
+      "title": "Hang Up",
+      "desc": "BYE, and 200 OK",
+      "detail": "Bob hangs up: his phone sends BYE, routed through the server as the Record-Route asked, and Alice’s phone answers 200 OK. Both stop sending voice. The call took four kinds of request; the voice itself was never part of SIP.",
+      "facts": [
+        [
+          "Request",
+          "BYE"
+        ],
+        [
+          "Answer",
+          "200 OK"
+        ],
+        [
+          "Then",
+          "No more RTP"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "peer",
+          "to": "relay",
+          "color": "amber",
+          "label": "BYE",
+          "payload": [
+            "Bob hangs up"
+          ],
+          "row": {
+            "time": "9.800s",
+            "src": "198.51.100.200",
+            "dst": "203.0.113.50",
+            "proto": "SIP",
+            "info": "Request: BYE sip:alice@192.168.1.10:5060",
+            "len": "342 B",
+            "wire": {
+              "udp": {
+                "sport": 5060,
+                "dport": 5060,
+                "data": {
+                  "text": [
+                    "BYE sip:alice@192.168.1.10:5060 SIP/2.0",
+                    "Via: SIP/2.0/UDP 192.168.0.23:5060;rport;branch=z9hG4bK-b1",
+                    "Route: <sip:203.0.113.50;lr>",
+                    "Max-Forwards: 70",
+                    "From: <sip:bob@example.net>;tag=b8e4",
+                    "To: \"Alice\" <sip:alice@example.net>;tag=f1c2",
+                    "Call-ID: call-7c2e@192.168.1.10",
+                    "CSeq: 1 BYE",
+                    "Content-Length: 0",
+                    ""
+                  ],
+                  "name": "SIP"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "relay",
+          "to": "client",
+          "color": "amber",
+          "label": "BYE",
+          "payload": [
+            "to Alice"
+          ],
+          "row": {
+            "time": "9.826s",
+            "src": "203.0.113.50",
+            "dst": "192.168.1.10",
+            "proto": "SIP",
+            "info": "Request: BYE sip:alice@192.168.1.10:5060",
+            "len": "390 B",
+            "wire": {
+              "udp": {
+                "sport": 5060,
+                "dport": 5060,
+                "data": {
+                  "text": [
+                    "BYE sip:alice@192.168.1.10:5060 SIP/2.0",
+                    "Via: SIP/2.0/UDP 203.0.113.50;branch=z9hG4bK-p3",
+                    "Via: SIP/2.0/UDP 192.168.0.23:5060;rport=5060;received=198.51.100.200;branch=z9hG4bK-b1",
+                    "Max-Forwards: 69",
+                    "From: <sip:bob@example.net>;tag=b8e4",
+                    "To: \"Alice\" <sip:alice@example.net>;tag=f1c2",
+                    "Call-ID: call-7c2e@192.168.1.10",
+                    "CSeq: 1 BYE",
+                    "Content-Length: 0",
+                    ""
+                  ],
+                  "name": "SIP"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "relay",
+          "color": "violet",
+          "label": "200 OK",
+          "payload": [],
+          "row": {
+            "time": "9.847s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.50",
+            "proto": "SIP",
+            "info": "Status: 200 OK (BYE)",
+            "len": "347 B",
+            "wire": {
+              "udp": {
+                "sport": 5060,
+                "dport": 5060,
+                "data": {
+                  "text": [
+                    "SIP/2.0 200 OK",
+                    "Via: SIP/2.0/UDP 203.0.113.50;branch=z9hG4bK-p3",
+                    "Via: SIP/2.0/UDP 192.168.0.23:5060;rport=5060;received=198.51.100.200;branch=z9hG4bK-b1",
+                    "From: <sip:bob@example.net>;tag=b8e4",
+                    "To: \"Alice\" <sip:alice@example.net>;tag=f1c2",
+                    "Call-ID: call-7c2e@192.168.1.10",
+                    "CSeq: 1 BYE",
+                    "Content-Length: 0",
+                    ""
+                  ],
+                  "name": "SIP"
+                }
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "relay",
+          "to": "peer",
+          "color": "violet",
+          "label": "200 OK",
+          "payload": [],
+          "row": {
+            "time": "9.868s",
+            "src": "203.0.113.50",
+            "dst": "198.51.100.200",
+            "proto": "SIP",
+            "info": "Status: 200 OK (BYE)",
+            "len": "298 B",
+            "wire": {
+              "udp": {
+                "sport": 5060,
+                "dport": 5060,
+                "data": {
+                  "text": [
+                    "SIP/2.0 200 OK",
+                    "Via: SIP/2.0/UDP 192.168.0.23:5060;rport=5060;received=198.51.100.200;branch=z9hG4bK-b1",
+                    "From: <sip:bob@example.net>;tag=b8e4",
+                    "To: \"Alice\" <sip:alice@example.net>;tag=f1c2",
+                    "Call-ID: call-7c2e@192.168.1.10",
+                    "CSeq: 1 BYE",
+                    "Content-Length: 0",
+                    ""
+                  ],
+                  "name": "SIP"
+                }
+              }
+            }
+          },
+          "quick": true
+        }
+      ]
+    }
+  ],
+  "teaching": {
+    "steps": [
+      [
+        "Đăng nhập",
+        "Điện thoại của Alice, một ứng dụng trên laptop của cô, đăng ký với máy chủ SIP của nhà cung cấp: có thể liên lạc alice@example.net ở đây. Máy chủ trả lời 401 kèm một thử thách, nên điện thoại hỏi lại với một hash tạo từ thử thách và mật khẩu. 200 OK: đã đăng ký trong một giờ."
+      ],
+      [
+        "Gọi Bob",
+        "Alice gọi bob@example.net. INVITE của cô mang SDP: âm thanh G.711, gửi về điện thoại của cô. Máy chủ trả lời 100 Trying, tìm nơi điện thoại của Bob đã đăng ký rồi chuyển tiếp INVITE với Via và Record-Route của riêng nó và địa chỉ của nó trong SDP: giọng nói sẽ đi qua nó."
+      ],
+      [
+        "Đổ chuông",
+        "Điện thoại của Bob bắt đầu đổ chuông và báo lại: 180 Ringing. Phản hồi đi theo các header Via ngược về đường yêu cầu đã đến, nên nó tới máy chủ, máy chủ gỡ Via của mình rồi chuyển cho Alice. Điện thoại của cô phát tiếng chuông chờ."
+      ],
+      [
+        "Đã nhấc máy",
+        "Bob nhấc máy. 200 OK của anh mang câu trả lời SDP: G.711, gửi về điện thoại của anh. Máy chủ lại thay bằng địa chỉ của mình trước khi chuyển cho Alice. Điện thoại của cô xác nhận bằng ACK, máy chủ chuyển nó cho Bob. Cuộc gọi đã thiết lập."
+      ],
+      [
+        "Đang nói chuyện",
+        "Giờ là giọng nói: cứ 20 ms mỗi điện thoại gửi một gói RTP chứa 160 byte âm thanh G.711, một số thứ tự và một dấu thời gian, qua UDP. Chúng tới máy chủ, máy chủ chuyển sang điện thoại kia. SIP im lặng trong lúc họ nói chuyện."
+      ],
+      [
+        "Gác máy",
+        "Bob gác máy: điện thoại của anh gửi BYE, đi qua máy chủ như Record-Route yêu cầu, và điện thoại của Alice trả lời 200 OK. Cả hai ngừng gửi giọng nói. Cuộc gọi cần bốn loại yêu cầu; bản thân giọng nói chưa bao giờ là một phần của SIP."
+      ]
+    ],
+    "notes": {},
+    "labels": {
+      "Internet": "Internet",
+      "Client": "Máy khách",
+      "Router": "Router",
+      "DNS Resolver": "Bộ phân giải DNS",
+      "Web Server": "Máy chủ web",
+      "Root Server": "Máy chủ gốc",
+      ".com TLD Server": "Máy chủ TLD .com",
+      "Authoritative Server": "Máy chủ có thẩm quyền",
+      "Mail Server": "Máy chủ thư",
+      "Proxy": "Proxy",
+      "App Server": "Máy chủ ứng dụng",
+      "File Server": "Máy chủ tệp",
+      "ISP Router": "Router của ISP",
+      "Transit Router": "Router trung chuyển",
+      "Hosting Router": "Router của nhà lưu trữ",
+      "Their Router": "Router bên kia",
+      "Their Laptop": "Laptop bên kia",
+      "Switch": "Switch",
+      "Access Server": "Máy chủ truy cập",
+      "IP Camera": "Camera IP",
+      "TV Box": "TV box",
+      "Alice": "Alice",
+      "SIP Server": "Máy chủ SIP",
+      "Bob’s Router": "Router của Bob",
+      "Bob": "Bob"
+    }
+  }
+}

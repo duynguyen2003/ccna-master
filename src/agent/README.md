@@ -1,5 +1,11 @@
 # Agent — AI Lab Assistant
 
+AI Lab cho học viên production: xem [hướng dẫn rollout](../../docs/ai-lab-assistant/ops/production-student-rollout.md).
+Đã có mode `production-gemini`, policy theo lab/cohort và image `backend-ai`.
+Kiểm bằng `pnpm ai:production:policy --status`; status/dry-run không bật feature.
+Runtime production chạy với `pnpm start:ai:production`, chỉ sau khi cấu hình đủ secrets,
+release SHA và cờ opt-in. Không dùng launcher admin-test để mở cho học viên.
+
 Đây là nơi triển khai các task agent, cùng cấp với `src/backend` và `src/frontend`.
 Phần đã làm của BE-01…BE-05, SIM-01 và các task chuẩn bị đã được chuyển về đây.
 

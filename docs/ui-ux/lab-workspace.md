@@ -1,4 +1,421 @@
-# Phòng thực hành và trợ lý AI — 01/11/2026
+# Phòng thực hành và trợ lý AI — 15/11/2026
+
+## Bỏ điều hướng lặp, ẩn hành trình và đọc trình tự — 15/11/2026
+
+Desktop chỉ có một dải Mục tiêu/AI trong sidebar. Header chính chỉ hiện một nút
+mở lại khi sidebar đóng; checklist không lặp tiêu đề và bộ đếm Mục tiêu. Mobile
+dùng thanh Sơ đồ/Terminal/Mục tiêu/AI, ẩn dải tab thứ hai. AI embedded bỏ header
+tên/avatar/đóng ở cả trạng thái tải, lỗi và hội thoại; Tùy chọn chuyển xuống cạnh
+composer. Bấm tab/avatar AI focus ô hỏi, giữ controller, bản nháp và hội thoại.
+Khung chat vẫn rộng380–480px theo quyết định trước đó.
+
+Ping thử nay mở pane **Kiểm tra kết nối**, ghi rõ thiết bị gửi, có một nút đóng và
+nút về mục tiêu. Nó không còn nằm dưới nhãn Mục tiêu. IP/protocol/port giữ nguyên
+khi đổi pane; trace và lịch sử dùng tiêu đề đúng ngữ cảnh.
+
+Hành trình thay dãy thẻ cuộn ngang bằng cách đọc sau:
+
+- **Thu gọn**: chỉ còn tóm tắt nguồn → đích, giao thức, kết quả, số sự kiện; không
+  giữ thanh phát chiếm chỗ. Chiều cao đo được42px ở laptop.
+- **Ẩn** bằng nút X: bỏ toàn bộ khung; nút Hành trình trên thanh sơ đồ mở lại đúng
+  sự kiện, không reset playback.
+- **Xem nhanh**: trao đổi nhiều thiết bị dùng lifeline và mũi tên như trang mô
+  phỏng. Hai sự kiện liền kề tự theo index; tiến/lùi hoặc dropdown chọn trực tiếp
+  bất kỳ sự kiện nào, không phải kéo qua dãy thẻ. Ping nội bộ vẫn dùng timeline
+  hai dòng và giải thích không đi qua liên kết.
+- **Chi tiết**: mặc định trình tự đầy đủ với hành trình nhiều thiết bị, có thể
+  chuyển sang danh sách sự kiện. Cột tự vừa sidebar của lab bốn router; sự kiện
+  đang chọn tự vào vùng nhìn thấy. Trở về bản xem nhanh giữ index/tốc độ.
+
+Mũi tên chỉ được vẽ cho FRAME có from/to thật. Quyết định ROUTE/ACL/ARP được đặt
+tại thiết bị xử lý; không biến chúng thành hop mạng. Quick và detail dùng lại
+PacketSequenceView, observation và clock hiện hữu; không thay engine/API/chấm lab.
+Escape trong quick thu gọn, trong detail về quick, trả focus đúng nút. Đã sửa
+capture Escape của workspace vốn chặn handler trong trace; menu dropdown đang
+mở vẫn được quyền xử lý Escape trước.
+
+### Kiểm chứng đợt này
+
+11 suite/98 test đạt; ESLint, Prettier, boundary2222 imports/assets,129 icon exports
+và production build `CI=true` đạt. Kiểm browser Chromium với auth/API fixture cô
+lập; trace do engine EIGRP01 phiên bản3.0.0 tạo trong bộ nhớ:38 sự kiện multi-hop,
+2 sự kiện self-ping. Bộ đếm0/17 là fixture kiểm bố cục, không phải kết quả chấm.
+
+| Viewport, quick mở |  Sơ đồ | Terminal | Hành trình |
+| ------------------ | -----: | -------: | ---------: |
+| 1920×900           | ~268px |   ~278px |     ~207px |
+| 1366×768           | ~190px |   ~228px |     ~209px |
+| 1024×768           | ~191px |   ~228px |     ~209px |
+
+- Phát38/38 ở2×, phát lại1/38; quick luôn hai dòng, scrollLeft/scrollTop bằng0.
+  Bản đầy đủ vừa531px/604px sidebar trên laptop/desktop, không cuộn ngang.
+- Ẩn/mở lại giữ5/38; Escape/Enter và chuyển detail/list/quick giữ index. Đổi
+  thiết bị giữ lệnh đang soạn; mở AI/probe giữ sự kiện và các bản nháp.
+- Ping R1→192.1.12.1 chỉ tô R1 và0 liên kết, kể cả khi terminal đang chọn R3.
+- Một nhãn AI ở dải chọn,0 header bên trong,0 heading Mục tiêu lặp. Probe có
+  đúng tiêu đề/nguồn/một nút đóng, không hiển thị tab Mục tiêu cho form này.
+- AI RUNNING→COMPLETED và HTTP503 dùng trạng thái thật của controller qua API
+  fixture. Thu gọn khi đang xử lý vẫn cập nhật avatar header; lỗi đưa về default.
+  Idle có8 ảnh canvas khác nhau/8 mẫu; reduced motion đóng băng canvas.
+- Mobile390×844 và320×740: không tràn ngang/cắt bốn thiết bị; AI chỉ dùng nav
+  mobile và ô hỏi nằm trong viewport. Kiểm cả light/dark và menu Tùy chọn mở lên
+  trên composer. Context QA mới có guard origin:0 page errors; chi tiết một lỗi
+  storage từ harness cũ được giữ trong JSON để phân biệt với lỗi sản phẩm.
+
+Ảnh: [xem nhanh desktop](evidence/lab-workspace-v2/lab-journey-quick.png),
+[trình tự đầy đủ](evidence/lab-workspace-v2/lab-journey-detail.png),
+[mobile](evidence/lab-workspace-v2/lab-journey-mobile.png),
+[chat AI](evidence/lab-workspace-v2/lab-navigation-ai.png),
+[kiểm tra kết nối](evidence/lab-workspace-v2/lab-navigation-probe.png).
+[Số đo và phạm vi QA](evidence/lab-workspace-v2/lab-navigation-journey-checks.json).
+
+File sửa: `CliLabWorkspace.js`, `PacketTracePanel.jsx`, `PacketTracePanel.css`,
+`LabWorkspaceLayout.css`, `PacketSequenceView.jsx`; agent/browser gồm
+`AiLabPanel.jsx`, `AssistantLoader.jsx`, `AiLab.css`; năm file test tương ứng,
+báo cáo, todo và lessons. Không sửa Footer, dependency, engine hoặc API.
+
+Giới hạn: chưa nghiệm thu tài khoản/DB/provider hoặc thiết bị cảm ứng thật.
+Probe submit được kiểm bằng API mock trong unit test, không gửi thật từ browser.
+Mobile rất thấp vẫn có thể cuộn dọc để giữ kích thước đọc; trace rất nhiều actor
+có thể cuộn ở chế độ chi tiết, nút tiến/lùi vẫn tự đưa sự kiện vào vùng nhìn.
+Phần này thay các mô tả timeline ngang/ba tab phụ/header AI embedded trong lịch sử
+bên dưới.
+
+Đã dọn artifact15/11/2026: giữ ảnh được liên kết trực tiếp, JSON kết quả/receipt,
+trạng thái dịch vụ và backup cần thiết; xóa fixture/build cũ, log lặp và ảnh thử.
+Các đường dẫn `.tmp` trong phần lịch sử ghi vị trí tại thời điểm kiểm.
+Danh mục file local còn giữ nằm trong `.tmp/README.md`, không publish cùng source.
+
+## Căn tab và nới chat AI — 15/11/2026
+
+Đã bỏ phần nền dư của dải Mục tiêu/AI. Trước sửa, bar flex1 kéo nền dài hơn nút
+cuối khoảng55px; hai nút cao30/38px và header sidebar cao hơn header sơ đồ12px.
+CSS chung của SlidingTabs cũng ghi đè token của selector sidebar yếu hơn.
+
+Sidebar nay dùng selector đúng phạm vi: nền bar trong suốt, bề rộng theo nút,
+button desktop cùng32px và hai header cùng44px. Giữ pill trượt của component
+chung; nút đóng nằm riêng bên phải. Khi có tab thứ ba Lịch sử/Gói tin, bộ đếm
+Mục tiêu được giấu thị giác nhưng giữ cho screen reader, tránh scrollbar ngang
+làm header cao lên. Tab lịch sử dùng aria-pressed boolean để pill nhận đúng.
+
+Chat AI có cột riêng theo data-side-view: clamp380px/32vw/480px. Ở1366×768,
+vùng chat tăng từ327 lên436px; desktop1920 sidebar480px. Mục tiêu vẫn310–360px,
+trace giữ quy tắc riêng; collapse dùng toàn vùng làm lab. Mobile dùng đủ bề rộng
+màn hình, tab44px và không áp min380px thành overflow.
+
+3 suite/59 test đạt (workspace, AI panel và SlidingTabs), ESLint/Prettier và CI
+production build đạt. Browser1366/1920/1024/~901/390/320px: hai header ngang nhau,
+không tràn tab/trang hay cắt thiết bị, terminal desktop vẫn từ200px khi quick mở.
+Giữ event9, terminal draft và AI draft qua đổi tab/resize; animation có16 frame
+trung gian, pill khớp nút dưới1px. Light/dark/reduced-motion và bàn phím đã kiểm;
+không POST AI trong QA. Dùng auth/API fixture, không ghi DB/provider thật.
+
+Ảnh [desktop](evidence/lab-workspace-v2/sidebar-chat-width.png),
+[mobile](evidence/lab-workspace-v2/sidebar-chat-mobile.png),
+[số đo trước/sau](evidence/lab-workspace-v2/sidebar-chat-checks.json).
+Source sửa: `CliLabWorkspace.js`, `LabWorkspaceLayout.css`; không sửa Footer,
+component tab chung hoặc engine/controller/API.
+
+## Tương tác avatar AI — 15/11/2026
+
+Avatar nay nhìn theo con trỏ, nhảy nhẹ khi click/tap và phản hồi Enter/Space từ
+nút AI. Bấm avatar ở header panel đưa focus vào ô hỏi; vùng bấm44px, không thêm
+button lồng button. Giữ canvas overscan đúng tỷ lệ, không cắt cú nhảy; phần canvas
+trong suốt không chặn nút/tab lân cận. Các thao tác này không gửi câu hỏi hoặc
+giả trạng thái working. Avatar cũ trong tin nhắn vẫn tĩnh; hidden/reduced-motion
+dừng cả animation lẫn phản ứng, còn hành động của nút vẫn dùng được.
+
+3 suite/62 test liên quan, lint/format/boundaries và CI build đạt. Browser thật
+đã kiểm đầu/mắt nhìn theo, click-hop, đóng/mở đúng một lần bằng chuột/bàn phím,
+focus composer, reduced motion, hidden, RUNNING→COMPLETED và mobile touch320/390px.
+Ảnh [desktop](evidence/lab-workspace-v2/avatar-interaction.png),
+[mobile](evidence/lab-workspace-v2/avatar-interaction-mobile.png),
+[kết quả](evidence/lab-workspace-v2/avatar-interaction-checks.json).
+Chi tiết và file sửa: [báo cáo AI browser](../ai-lab-assistant/baseline/FE-01-02-browser.md).
+
+## Workspace lab, hành trình và avatar AI — 15/11/2026
+
+Trang thực hành dùng một vùng sơ đồ/terminal rộng và một sidebar chung. Mục tiêu,
+Trợ lý AI, chi tiết hành trình và lịch sử mở theo tab; không còn hai cột lớn cho
+mục tiêu và AI cùng lúc. Sidebar đóng/mở giữ controller AI, hội thoại, bản nháp,
+thiết bị, CLI và vị trí playback. Đây là hành vi hiện tại, thay phần guard mobile
+và drawer phủ nhiệm vụ trong các mục lịch sử bên dưới.
+
+Đã đọc workspace, hook chiều cao terminal, layout/link geometry, trace engine,
+observation/playback và controller AI trước khi sửa. Hai nguyên nhân chính là
+panel phụ cùng tranh chiều cao/cột, và SVG có con absolute nên thiếu flex basis.
+SVG nay có diện tích ưu tiên theo viewport, fit cả node lẫn nhãn subnet; topology
+và cấu hình nguồn không bị sửa. Checklist dùng lại component cũ, hướng dẫn dài
+mặc định thu gọn; chọn nhiệm vụ vẫn chọn đúng thiết bị và giữ tiến độ.
+
+Hành trình có ba mức:
+
+- Đóng: nguồn/thiết bị → đích, giao thức, kết quả và số sự kiện từ dữ liệu.
+- Xem nhanh: khoảng180px trên laptop,202px ở desktop900px; timeline ngang và
+  giải thích ngắn có vùng cuộn khi cần. Terminal vẫn nhập lệnh được.
+- Chi tiết: mở trong sidebar rộng hơn, có nút về bản xem nhanh và trả focus.
+  Các góc nhìn dùng cùng clock/index/tốc độ. Sequence chỉ xuất hiện khi có trao
+  đổi FRAME giữa hơn hai thiết bị; hành trình ngắn dùng thẻ sự kiện.
+
+Ping thử và lịch sử thao tác cũng mở trong sidebar. Trước khi sửa, mở các phần
+này ở1366×768 làm form/nút xem lại vượt đáy. Hiện tại chúng không lấy thêm chiều
+cao của terminal. Form ghi rõ thiết bị gửi, focus IP đích và giữ nguyên API probe.
+Lịch sử giữ slider/replay/read-only cũ, có nút về terminal và hỗ trợ Escape.
+
+R1 ping192.1.12.1 là ping IP thuộc chính interface của R1 trong EIGRP01. Engine
+trả hai sự kiện giao/nhận nội bộ, không có FRAME. UI giải thích điều đó và chỉ
+tô R1, kể cả khi người học đang chọn terminal R3. Ping4.4.4.4 dùng sáu FRAME thật
+R1→R2→R3→R4 rồi chiều về. Không thêm hop, RTT, port ICMP hay payload giả.
+Thông báo giao/nhận có nhãn tiếng Việt; có thể mở thông báo kỹ thuật gốc.
+
+Avatar droid dùng [bot-avatars0.2.2](https://libraries.dev/bots), MIT, peerReact>=18,
+tương thích React18.3.1 hiện tại. Wrapper đặt trong `@ccna/agent-ui/avatar`:
+28–32px ở header/tab và26px ở tin nhắn. Idle nhẹ; `working` chỉ theo trạng thái
+gửi/pending QUEUED/RUNNING thật của controller. COMPLETED/lỗi/offline đưa avatar
+về thường. Reduced motion, document hidden, ngoài viewport hoặc panel ẩn đều
+dừng canvas; avatar trong tin nhắn cũ là hình tĩnh để tránh nhiều vòng RAF.
+Chi tiết ownership và lifecycle: [cập nhật AI browser](../ai-lab-assistant/baseline/FE-01-02-browser.md).
+
+Mobile dùng tab Sơ đồ/Terminal/Mục tiêu/AI, giữ các component đã mở để không mất
+nội dung. Chuỗi bốn router xếp hai hàng. Form AI luôn có ô nhập trong vùng nhìn
+thấy. Trên màn rất thấp, vùng sơ đồ được cuộn khi chạm kích thước tối thiểu; bản
+xem nhanh giới hạn theo chiều cao viewport. Lab CLI cũ không có topology mở
+thẳng terminal, không rơi vào tab sơ đồ trống.
+
+### Kiểm chứng và ảnh
+
+Browser Chromium local dùng auth/API fixture cô lập và trace do engine EIGRP01
+thật tạo; không ghi DB hoặc gọi provider AI thật. Đo sau layout ổn định:
+
+| Viewport/trạng thái |  Sơ đồ | Terminal | Xem nhanh |
+| ------------------- | -----: | -------: | --------: |
+| 1920×900, quick     | ~255px |   ~264px |    ~202px |
+| 1366×768, đóng      | ~236px |   ~281px |         — |
+| 1366×768, quick     | ~190px |   ~226px |    ~180px |
+| 1366×768, chi tiết  | ~255px |   ~300px |   sidebar |
+
+- 14 suite/110 test frontend đạt, gồm giữ state khi đổi panel, single-device cũ,
+  probe contract, bounds resize, trace local/multi-hop và callback AI hoàn tất/lỗi.
+- ESLint/Prettier, boundaries,129 icon exports,16 SVG artwork và catalog39 bài đạt.
+  Production build với `CI=true` thành công.
+- Ping32/32 sự kiện chạy hết ở2×,894 frame không cắt thẻ; replay về1/32. Đổi
+  Sequence/detail/quick giữ sự kiện9 và tiếp tục phát; chọn từng event tô đúng actor.
+- Kiểm terminal Enter bằng `show ip route` lấy output engine; giữ draft `show ip `
+  khi đổi thiết bị/view; probe và lịch sử không đẩy terminal ra khỏi khung.
+- Canvas idle/working có thay đổi hình thật; đóng panel và reduced motion đóng
+  băng hình. AI hoàn tất khi panel đang đóng vẫn cập nhật trạng thái header;
+  response503 có lỗi rõ ràng và avatar trở về thường. Có avatar cạnh câu trả lời.
+- 1920×900,1366×768,1024×768,390×844,320×740 và390×667 không tràn ngang/cắt nhãn.
+  390×600 cho cuộn để đọc hết thông tin, không giấu đáy. Light/dark và focus
+  khi về nhanh/đóng lịch sử/slider bàn phím đã kiểm.
+
+Ảnh sau sửa: [desktop1920](evidence/lab-workspace-v2/desktop-workspace.png),
+[laptop chi tiết](evidence/lab-workspace-v2/laptop-detail.png),
+[laptop AI đang xử lý](evidence/lab-workspace-v2/laptop-ai-working.png),
+[mobile ping nội bộ](evidence/lab-workspace-v2/mobile-local-ping.png),
+[mobile terminal](evidence/lab-workspace-v2/mobile-terminal.png),
+[mobile AI](evidence/lab-workspace-v2/mobile-ai.png).
+Số đo/kết quả browser: [checks.json](evidence/lab-workspace-v2/checks.json).
+
+Giới hạn: chưa nghiệm thu tài khoản/DB/provider thật hoặc thiết bị cảm ứng thật.
+Trên mobile, sơ đồ và terminal chuyển qua tab để giữ kích thước đọc được; không
+hiển thị đồng thời hai vùng. Hiệu ứng đổi theme vẫn theo quyết định trước đó;
+quy tắc giảm chuyển động ở trên áp dụng cho gói tin và avatar.
+
+### File thay đổi trong lượt này
+
+Các đường dẫn `features/...` bên dưới thuộc `src/frontend/src/`.
+
+| Nhóm                      | File                                                                                                                                           |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| Workspace và panel        | `features/labs/components/CliLabWorkspace.js`, `PacketTracePanel.jsx`                                                                          |
+| Layout                    | `features/labs/styles/LabWorkspaceLayout.css`, `PacketTracePanel.css`                                                                          |
+| Resize                    | `features/labs/hooks/useTerminalHeight.js`, `useTerminalHeight.test.js`                                                                        |
+| Sơ đồ                     | `features/labs/components/NetworkTopology.js`, `features/labs/styles/NetworkTopology.css`, `features/labs/utils/topologyLayout.js`             |
+| Dữ liệu hiển thị          | `features/protocols/model/traceSummary.js`, `traceSummary.test.js`, `observation.js`, `features/protocols/components/PacketEventInspector.jsx` |
+| Regression UI             | `features/labs/components/NetworkLab.test.js`, `AiLabAssistant.test.jsx`, `DroidAvatar.test.jsx`                                               |
+| Avatar package            | `src/agent/browser/avatar.js`, `components/DroidAvatar.jsx`, `styles/DroidAvatar.css`                                                          |
+| AI embedded               | `src/agent/browser/components/AiLabPanel.jsx`, `AiMessage.jsx`, `AssistantLoader.jsx`, `styles/AiLab.css`                                      |
+| Dependency và biên import | `src/agent/browser/package.json`, `pnpm-lock.yaml`, `src/scripts/check-boundaries.cjs`                                                         |
+| Báo cáo                   | file này, `docs/ai-lab-assistant/baseline/FE-01-02-browser.md`, `todo.md`, `lessons.md`,6 ảnh và JSON kết quả                                  |
+
+Giữ nguyên simulation engine, chấm lab và HTTP API. Lockfile chỉ thêm dependency
+bot-avatars và peerReact, không nâng cả bộ package. Không sửa các thay đổi admin/
+protocol khác đang có sẵn, không commit/push. Scratch sinh trong lượt này được
+dọn sau kiểm, giữ ảnh/bằng chứng có liên kết.
+
+## Animation áp dụng trực tiếp vào CLI Lab — 15/11/2026
+
+Renderer chung dùng thẻ/asset của trang mô phỏng cho trace thật của engine:
+IP hai chiều, ARP tại node, đổi IP sau NAT, trail/pulse nhận và drop tại thiết bị.
+Giữ một clock cho sơ đồ, bảng sự kiện và Sequence; polling không khởi động lại,
+seek/reset/resize không làm mất vị trí. Dữ liệu thẻ11–12px, tự fit mép; thêm56
+đơn vị caption (canvas tuyến4 node266px), stage không co khi mở inspector.
+Giảm chuyển động vẫn có thẻ/đường/dấu lỗi tĩnh. Không phóng cả packet marker,
+tránh làm điểm neo lệch đường truyền khi SVG tính tâm theo bbox của caption.
+
+265 lượt chọn desktop/light và tablet/dark,38 sự kiện reduced motion,
+ping38/38 ở2× và HTTP native/view switch đạt.10 suite/60 test frontend,
+5 test engine, lint/format/catalog/boundaries/artwork và CI build đạt.
+Browser dùng API/auth fixture với trace do engine thật tạo, không ghi DB.
+Điện thoại giữ guard yêu cầu dùng máy tính, đã kiểm390×844 không tràn trang.
+Phạm vi tích hợp và kiểm chứng: [bản rà soát PR](../maintenance/network-workspace-review.md).
+
+## Catalog đầy đủ — 15/11/2026
+
+Thư viện native đã có39 mô phỏng/231 giai đoạn/694 sự kiện, chia11 nền tảng,
+19 ứng dụng và9 bảo mật. Dữ liệu từng bài tải theo lựa chọn; Sequence/clock/
+tiến độ vẫn dùng cơ chế hiện có. Scene có21 node, physical links cho Ethernet/IGMP,
+snapshot nhãn cho IPv6/PPPoE/DHCP và thêm hình switch/camera/TV light-dark.
+Nguồn và hash: [manifest catalog](../../src/frontend/src/features/protocols/data/lessons/provenance.json).
+
+## Workspace Mô phỏng giao thức — 15/11/2026
+
+Trang `/protocols` có bộ chọn tìm/lọc theo nhóm và hai cấp giao thức/kịch bản,
+toolbar thống nhất, điều hướng giai đoạn và giải thích theo sự kiện. Desktop
+dùng danh sách giai đoạn, mobile dùng dropdown; SVG fit đủ thiết bị và sắp lại
+tọa độ hiển thị trên màn hình hẹp. Giữ clock, dữ liệu thật và tiến độ xem riêng.
+Chi tiết và ảnh: [bản rà soát mô phỏng](../maintenance/network-workspace-review.md).
+Mục camera/fade trong lịch sử bên dưới đã được thay bằng fit trực tiếp để chọn
+sự kiện khi tạm dừng vẫn thấy đủ thiết bị. Animation gói tin vẫn chạy theo clock.
+
+## Network isometric và Sequence — 15/11/2026
+
+Đã dùng REA kiểm lại Protocol Explorer và nâng cách biểu diễn: nền lưới phối cảnh,
+packet tag/payload/halo/trail, camera và loss trong bài học; topology lab dùng cùng
+PacketGlyph nhưng giữ đường đi và sự kiện từ engine. Sequence có mũi tên nghiêng,
+màu theo giao thức/chiều, header tên/IP, timestamp có nguồn và nhóm bước.
+Stream bài học giữ spacing gối nhau trong clock GSAP chung; pause/seek/speed/view
+không tạo renderer phát độc lập. Reduced motion giữ đường và packet tĩnh.
+Chi tiết, bằng chứng và giới hạn: [bản tích hợp trong PR](../maintenance/network-workspace-review.md).
+
+## Hoàn tất G2–G4 — 11/11/2026
+
+Lab có Sequence với header thiết bị giữ khi cuộn, annotation nội bộ và FRAME arrow;
+bảng/Sequence/topology/inspector cùng selection. So sánh TTL/NAT chỉ từ snapshot
+đã xác minh cùng actor và chiều, loại ARP/DROP. Quan sát không gửi action, đổi draft
+hoặc chấm điểm. Link mở runtime tạm trong toolbar đã bỏ.
+
+Bài học có player React 14 giao thức/78 bước, thư viện /protocols và selector trong
+admin editor. View Network/Sequence giữ clock, tốc độ và vị trí. Tiến độ xem tách
+riêng theo user/lesson/version trên trình duyệt; không tự hoàn thành bài/lab.
+Source/scene có manifest hash; page iframe/runtime/vendor script cũ đã gỡ.
+
+UI native dùng token học viên (admin preview light), khung SVG có chiều cao giới hạn,
+Sequence cuộn nội bộ với focus/selection, các control44px ở mobile. Packet motion
+tuân thủ reduced motion; radial theme giữ yêu cầu luôn animation. Browser kiểm375–1440px,
+light/dark,268 sự kiện, bàn phím và TTL32→31 trong fixture. Chi tiết/bằng chứng tại
+docs/rea/protocol-explorer.md và .tmp/g2-g4-review. Không gọi DB/model hoặc push.
+
+Các mục cập nhật dưới đây là lịch sử triển khai, không thay trạng thái hiện tại.
+
+## Observer trace native và radial theme — 07/11/2026
+
+G0–G1 đã được đưa vào workspace. Asset gốc dùng chung tại public/network-devices
+và được kiểm bằng pnpm check:network-devices; bỏ dependency icon của lab/editor/hero
+vào thư mục runtime tạm. Các bộ server/DNS được giữ trong inventory cho scene bài học.
+
+Hành trình gói tin nằm dưới topology, mặc định gọn với controls; mở chi tiết để
+đọc bảng sự kiện và inspector. Chọn hàng pause, highlight đúng node/link/interface
+và cuộn danh sách nội bộ đến hàng đang xem, không đổi thiết bị terminal. Có tiến/lùi,
+về đầu, tốc độ0.5/1/1.5/2 và tới nguyên nhân lỗi. Một timeline GSAP điều khiển con trỏ
+và visual track; không có timer quan sát chạy song song với một animation tự phát.
+Polling tương đương giữ vị trí; đổi nguồn/attempt/replay dọn timeline cũ. Lịch sử
+không tự phát; người dùng có thể chủ động quan sát lại mà không thay snapshot.
+
+Inspector chỉ hiển thị trường engine ghi nhận. ARP tách MAC với IP probe liên quan;
+DROP không bị hiểu thành header sau NAT. Port chỉ xuất hiện với TCP/UDP, không lấy
+srcPort/dstPort chung của probe để dạy thành port ICMP. Không dựng hex, checksum,
+RTT hoặc so sánh snapshot không có bằng chứng. Nội dung/draft CLI, grading và journal
+không bị thao tác quan sát ghi lại.
+
+ThemeToggle của web và nút theme lab dùng chung radial reveal trích từ hàm uo của
+nguồn: vòng tròn từ tâm nút tới góc viewport xa nhất,650ms, easing0.16/1/0.3/1.
+Theme web giữ mặc định light/lựa chọn đã lưu; theme lab vẫn có phạm vi riêng như cũ.
+Theo chỉ dẫn mới của người dùng, hiệu ứng theme luôn chạy, kể cả reduced motion.
+Trình duyệt thiếu API/pseudo-element animation dùng overlay clip-path650ms rồi
+fade150ms. Click liên tiếp commit đúng thứ tự; unmount dọn lớp phủ/timer/transition.
+Chính sách reduced motion của animation gói tin vẫn giữ nguyên.
+
+58 suites/444 test đạt, gồm lifecycle/polling, interface song song, dữ liệu thiếu,
+ICMP không có port, history readonly, không gọi action khi quan sát, theme rapid-click,
+blocked storage và animated fallback. Lint/format/boundaries/icons/hash/build đạt;
+đã sửa thứ tự CSS ở workspace để build CI không còn conflict, không tắt cảnh báo.
+REA kiểm component/engine trong fixture và full workspace, main theme, mobile390,
+ACL và mất đường về;8 scenario/PNG ở .tmp/protocol-native-ui. QA không gọi DB/model;
+chưa đo Web Vitals hoặc thiết bị cảm ứng thật. G2 Sequence/G3 lesson player/G4 gỡ
+runtime tạm còn theo kế hoạch docs/rea/protocol-explorer.md.
+
+## Dùng nguyên Protocol Explorer — 05/11/2026
+
+Yêu cầu mới “copy y nguyên” thay quyết định tự vẽ/clean-room ở mục cập nhật
+04/11 bên dưới. `NetworkDeviceGlyph` hiện dùng hình học SVG laptop, router và
+cloud gốc của Protocol Explorer, trong lab, editor và hero. Giữ nguyên các shape,
+gradient và bảng màu light/dark; chỉ thêm wrapper/crop cho SVG độc lập. Switch
+giữ hình cũ vì tham chiếu không có switch. Các node vẫn giữ tọa độ, nhãn, cổng,
+selected/focus và thao tác bàn phím của NetMaster.
+
+Trang `/tools/protocol-explorer` mở nguyên runtime gốc trong iframe tại
+`public/protocol-explorer/index.html`. Điểm vào: mục Công cụ trên trang chủ,
+footer và liên kết “Mô phỏng giao thức” cạnh Ping thử trong lab. Liên kết từ lab
+mở tab mới để giữ terminal/attempt; trang công cụ có lối mở toàn màn hình.
+Iframe giữ CSS, animation và state lesson riêng; tiến độ xem bài dùng storage
+gốc, không ghi thành tích/chấm điểm hay cấu hình lab. Ping thử của CLI lab tiếp
+tục lấy đường đi từ FRAME/DELIVERED/DROP thật như phần dưới.
+
+Giữ đủ14 giao thức/78 bước, Network/Sequence, packet inspector/hex, Play/Step,
+tốc độ, bản dịch và theme của bản gốc. 38 tài nguyên được chép từ archive công
+khai;34 file nguyên byte,4 file chỉ đổi path HTML/CSS/Vite-preload/manifest để
+chạy trong subdirectory. Giữ credit Dilum Sanjaya. Script vendor và
+`check-protocol-explorer.cjs`, README/provenance ghi hash nguồn, hash tích hợp và
+hash hình học10 SVG variants. Đây là production frontend tải về, không phải
+repository phát triển nguyên bản.
+
+Kiểm chứng:55 suites/430 test frontend;2 suites/4 test route/topology chạy lại
+sau chỉnh fallback glyph; lint, Prettier, boundaries, icons và production build
+đạt. REA mở đủ14 bài, đếm78 bước; TLS chuyển bước/Sequence/tốc độ/theme tối và
+Spanish chunk; ICMP Play v? inspector Ethernet/IPv4/ICMP; iframe desktop1440/mobile390;
+lab hiển thị router gốc. Sáu capture thành công không có lỗi page/HTTP. Một
+capture kết hợp autoplay, pause, Sequence và DOM từng bước bị treo; đã hủy và
+đóng riêng browser REA sở hữu, rồi kiểm inspector bằng capture tách thành công.
+Chưa chạy hết mọi animation của78 bước hay kiểm cảm ứng vật lý. QA dùng auth/API
+tổng hợp, component và simulator thật, không thay DB hoặc gọi model. Artifact:
+`.tmp/protocol-original-ui/`.
+
+## Icon thiết bị và chuyển động ping — cập nhật 04/11/2026
+
+Theo yêu cầu thay icon/animation sau khi khảo sát Protocol Explorer, dùng bộ SVG
+tự viết `NetworkDeviceGlyph`: laptop, switch nhiều cổng, router và cloud có mặt
+trên/hông, đường nét kỹ thuật và bóng nhẹ. Dùng chung trong lab, admin topology
+editor và minh họa hero; giữ kích thước bố trí/cổng/nhãn, font và palette hiện có.
+Không chép icon, font hoặc code của website tham chiếu. Quyết định mới thay thẻ
+vuông glyph phẳng ở phần mô tả Stitch cũ bên dưới.
+
+Ping chạy theo FRAME và đúng interface/link, có đuôi gói, đường truyền sáng và
+nhịp nhận tại thiết bị. Caption chiều yêu cầu/phản hồi lấy từ trace; TTL chỉ hiện
+khi engine có giá trị. ARP_REQUEST tạo nhịp tại nguồn, không dựng đường broadcast
+giả; DROP tạo dấu chặn ở đúng thiết bị. Không có FRAME thì không nối thiết bị từ
+metadata ROUTE. Trạng thái đọc bằng chữ trong trace hiện có vẫn được giữ.
+
+Một timeline GSAP sở hữu phần trình bày: polling/chọn router không phát lại;
+probe mới có key mới thì chạy lại. Hủy timeline khi đổi trace/unmount và khi bật
+reduced motion; SVG hỗ trợ CSS reduced motion ngay lập tức. Replay lịch sử của
+workspace vẫn theo guard hiện có. Không thêm API/action/tick, sửa engine/grader
+hay remount terminal để chạy hiệu ứng.
+
+Kiểm chứng: **55 suite/429 test frontend đạt**, gồm trace request/reply từ engine
+thật, lỗi đường về, không dựng hop từ ARP/ROUTE, signature polling/probe và cleanup
+khi đổi reduced motion. ESLint, Prettier, boundaries/icons và CI production build
+đạt. REA kiểm trực quan light1440×900, dark1280×900, reply1024×768,
+mobile390×844/reduced motion, và workspace thật1440×1000 (bỏ onboarding,
+chọn/Enter router, đổi theme, mở Ping thử); không có page error trong các capture.
+
+Harness dùng component/engine thật, cấu hình và API/auth tổng hợp. Đã xác nhận
+request xanh cyan, reply xanh lá, ACL deny ở R2 đỏ và reduced motion không hiển
+thị layer chuyển động. Chưa kiểm cảm ứng vật lý hoặc gọi backend/DB/model thật.
+Ảnh và metadata: `.tmp/protocol-topology-ui/{light-request,dark-drop,reply,
+mobile-reduced,lab-dark}.png`, `browser-results.json`; test log tại
+`frontend-tests.log`. Không cài dependency hoặc commit/push.
 
 ## Mặc định khi vào trang — cập nhật 02/11/2026
 
@@ -24,7 +441,7 @@ Theo yêu cầu mới, palette lab/AI dùng mẫu
 [Minimal AI Learning Workspace](https://stitch.withgoogle.com/projects/6440388810983970626),
 thay quyết định giữ màu chủ đạo trong các phần lịch sử bên dưới. Đã kết nối MCP,
 đọc hai screen và tải HTML/screenshot bằng download_file. Báo cáo và đối chiếu
-tính năng tại [REA Stitch](../rea/stitch-lab-workspace.md).
+tính năng trong báo cáo local `docs/rea/stitch-lab-workspace.md`.
 
 - Mặc định light: slate/trắng, cyan cho mạng, indigo cho AI, emerald cho Chấm bài.
   Có dark đối ứng. Palette nằm trong LabStitch.css và class scoped của workspace/

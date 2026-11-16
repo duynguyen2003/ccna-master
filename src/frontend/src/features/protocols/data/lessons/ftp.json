@@ -1,0 +1,953 @@
+{
+  "id": "ftp",
+  "name": "FTP",
+  "title": "Transferring Files",
+  "layer": 7,
+  "nodes": [
+    "client",
+    "router",
+    "internet",
+    "web"
+  ],
+  "latency": {
+    "client-web": 0.015
+  },
+  "labels": {
+    "web": [
+      "ftp.example.com",
+      "203.0.113.21"
+    ]
+  },
+  "legend": [
+    [
+      "green",
+      "TCP"
+    ],
+    [
+      "amber",
+      "FTP command"
+    ],
+    [
+      "violet",
+      "FTP reply"
+    ],
+    [
+      "blue",
+      "File data"
+    ],
+    [
+      null,
+      "Data ACKs not shown"
+    ]
+  ],
+  "overview": {
+    "full": "File Transfer Protocol",
+    "description": "FTP moves files between a client and a server. It is unusual in using two TCP connections: one for commands and replies, and a fresh one for each file or listing. It dates from the early 1970s and sends everything, passwords included, as plain text.",
+    "facts": [
+      [
+        "Layer",
+        "Application (Layer 7)"
+      ],
+      [
+        "Ports",
+        "21 control, data varies"
+      ],
+      [
+        "Connections",
+        "Control + one per transfer"
+      ],
+      [
+        "Encryption",
+        "None (plain text)"
+      ],
+      [
+        "Safer options",
+        "SFTP, or FTPS (FTP + TLS)"
+      ],
+      [
+        "Defined In",
+        "RFC 959"
+      ]
+    ]
+  },
+  "outro": {
+    "title": "File downloaded",
+    "desc": "Two connections, no encryption",
+    "text": "Commands went over the control connection, the file over its own data connection, and closing that connection marked the end of the file. Anyone on the path could have read the password and the file, which is why SFTP or FTPS is used today.",
+    "facts": [
+      [
+        "Connections",
+        "2 (control + data)"
+      ],
+      [
+        "File",
+        "4,000 bytes, 3 segments"
+      ],
+      [
+        "Password",
+        "Sent in plain text"
+      ],
+      [
+        "Use instead",
+        "SFTP or FTPS"
+      ]
+    ]
+  },
+  "start": {
+    "nodes": [
+      "client"
+    ],
+    "frame": "client"
+  },
+  "steps": [
+    {
+      "title": "Control Connection",
+      "desc": "Port 21, plain text",
+      "detail": "The FTP app opens a TCP connection to ftp.example.com on port 21. This control connection carries commands and replies for the whole session. The server greets with 220. Like SMTP, every reply starts with a three-digit code.",
+      "facts": [
+        [
+          "Server",
+          "ftp.example.com:21"
+        ],
+        [
+          "Greeting",
+          "220 (vsFTPd 3.0.5)"
+        ],
+        [
+          "Encrypted",
+          "No"
+        ]
+      ],
+      "events": [
+        {
+          "type": "show",
+          "nodes": [
+            "router",
+            "internet",
+            "web"
+          ],
+          "frame": "path"
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "green",
+          "label": "SYN",
+          "payload": [],
+          "row": {
+            "time": "0.000s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.21",
+            "proto": "TCP",
+            "info": "52800 → 21 [SYN] Seq=0",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 52800,
+                "dport": 21,
+                "flags": "S"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "green",
+          "label": "SYN-ACK",
+          "payload": [],
+          "row": {
+            "time": "0.015s",
+            "src": "203.0.113.21",
+            "dst": "192.168.1.10",
+            "proto": "TCP",
+            "info": "21 → 52800 [SYN, ACK] Seq=0 Ack=1",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 21,
+                "dport": 52800,
+                "flags": "SA"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "green",
+          "label": "ACK",
+          "payload": [],
+          "row": {
+            "time": "0.030s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.21",
+            "proto": "TCP",
+            "info": "52800 → 21 [ACK] Seq=1 Ack=1",
+            "len": "60 B",
+            "wire": {
+              "tcp": {
+                "sport": 52800,
+                "dport": 21,
+                "flags": "A"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "violet",
+          "label": "220",
+          "payload": [
+            "220 (vsFTPd 3.0.5)"
+          ],
+          "row": {
+            "time": "0.045s",
+            "src": "203.0.113.21",
+            "dst": "192.168.1.10",
+            "proto": "FTP",
+            "info": "220 (vsFTPd 3.0.5)",
+            "len": "74 B",
+            "wire": {
+              "tcp": {
+                "sport": 21,
+                "dport": 52800,
+                "flags": "PA",
+                "data": {
+                  "text": [
+                    "220 (vsFTPd 3.0.5)"
+                  ],
+                  "name": "FTP"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Log In",
+      "desc": "USER and PASS, readable by anyone",
+      "detail": "The app sends USER, the server asks for the password with 331, and PASS sends it. Nothing is encrypted, so the user name and password cross every network on the way as readable text.",
+      "facts": [
+        [
+          "Commands",
+          "USER alice, PASS secret"
+        ],
+        [
+          "Result",
+          "230 Login successful."
+        ],
+        [
+          "Visible to",
+          "Anyone on the path"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "amber",
+          "label": "USER",
+          "payload": [
+            "USER alice"
+          ],
+          "row": {
+            "time": "0.060s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.21",
+            "proto": "FTP",
+            "info": "USER alice",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 52800,
+                "dport": 21,
+                "flags": "PA",
+                "data": {
+                  "text": [
+                    "USER alice"
+                  ],
+                  "name": "FTP"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "violet",
+          "label": "331",
+          "payload": [
+            "331 Please specify",
+            "the password."
+          ],
+          "row": {
+            "time": "0.075s",
+            "src": "203.0.113.21",
+            "dst": "192.168.1.10",
+            "proto": "FTP",
+            "info": "331 Please specify the password.",
+            "len": "88 B",
+            "wire": {
+              "tcp": {
+                "sport": 21,
+                "dport": 52800,
+                "flags": "PA",
+                "data": {
+                  "text": [
+                    "331 Please specify the password."
+                  ],
+                  "name": "FTP"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "amber",
+          "label": "PASS",
+          "payload": [
+            "PASS secret"
+          ],
+          "row": {
+            "time": "0.090s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.21",
+            "proto": "FTP",
+            "info": "PASS secret",
+            "len": "67 B",
+            "wire": {
+              "tcp": {
+                "sport": 52800,
+                "dport": 21,
+                "flags": "PA",
+                "data": {
+                  "text": [
+                    "PASS secret"
+                  ],
+                  "name": "FTP"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "note",
+          "at": "router",
+          "text": "PASSWORD IN PLAIN TEXT",
+          "tone": "amber"
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "violet",
+          "label": "230",
+          "payload": [
+            "230 Login successful."
+          ],
+          "row": {
+            "time": "0.105s",
+            "src": "203.0.113.21",
+            "dst": "192.168.1.10",
+            "proto": "FTP",
+            "info": "230 Login successful.",
+            "len": "77 B",
+            "wire": {
+              "tcp": {
+                "sport": 21,
+                "dport": 52800,
+                "flags": "PA",
+                "data": {
+                  "text": [
+                    "230 Login successful."
+                  ],
+                  "name": "FTP"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Passive Mode",
+      "desc": "The server names a data port",
+      "detail": "TYPE I asks for a byte-for-byte binary copy. PASV asks the server to open a port for the data connection. The reply encodes the address and port as six numbers: 195 × 256 + 149 = port 50069. The laptop connects out, which works through NAT.",
+      "facts": [
+        [
+          "Reply",
+          "227 (203,0,113,21,195,149)"
+        ],
+        [
+          "Data port",
+          "195 × 256 + 149 = 50069"
+        ],
+        [
+          "Active mode",
+          "Server dials in: NAT blocks"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "amber",
+          "label": "TYPE",
+          "payload": [
+            "TYPE I"
+          ],
+          "row": {
+            "time": "0.120s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.21",
+            "proto": "FTP",
+            "info": "TYPE I",
+            "len": "62 B",
+            "wire": {
+              "tcp": {
+                "sport": 52800,
+                "dport": 21,
+                "flags": "PA",
+                "data": {
+                  "text": [
+                    "TYPE I"
+                  ],
+                  "name": "FTP"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "violet",
+          "label": "200",
+          "payload": [
+            "200 Switching to",
+            "Binary mode."
+          ],
+          "row": {
+            "time": "0.135s",
+            "src": "203.0.113.21",
+            "dst": "192.168.1.10",
+            "proto": "FTP",
+            "info": "200 Switching to Binary mode.",
+            "len": "85 B",
+            "wire": {
+              "tcp": {
+                "sport": 21,
+                "dport": 52800,
+                "flags": "PA",
+                "data": {
+                  "text": [
+                    "200 Switching to Binary mode."
+                  ],
+                  "name": "FTP"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "amber",
+          "label": "PASV",
+          "payload": [
+            "PASV"
+          ],
+          "row": {
+            "time": "0.150s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.21",
+            "proto": "FTP",
+            "info": "PASV",
+            "len": "60 B",
+            "wire": {
+              "tcp": {
+                "sport": 52800,
+                "dport": 21,
+                "flags": "PA",
+                "data": {
+                  "text": [
+                    "PASV"
+                  ],
+                  "name": "FTP"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "violet",
+          "label": "227",
+          "payload": [
+            "227 Entering Passive Mode",
+            "(203,0,113,21,195,149)."
+          ],
+          "row": {
+            "time": "0.165s",
+            "src": "203.0.113.21",
+            "dst": "192.168.1.10",
+            "proto": "FTP",
+            "info": "227 Entering Passive Mode (203,0,113,21,195,149).",
+            "len": "105 B",
+            "wire": {
+              "tcp": {
+                "sport": 21,
+                "dport": 52800,
+                "flags": "PA",
+                "data": {
+                  "text": [
+                    "227 Entering Passive Mode (203,0,113,21,195,149)."
+                  ],
+                  "name": "FTP"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Data Connection",
+      "desc": "A second TCP connection",
+      "detail": "The app opens a second TCP connection, to port 50069, and asks for the file on the control connection with RETR. The server answers 150 there and starts sending the file over the new connection.",
+      "facts": [
+        [
+          "Data to",
+          "ftp.example.com:50069"
+        ],
+        [
+          "Command",
+          "RETR report.pdf"
+        ],
+        [
+          "Reply",
+          "150 Opening BINARY …"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "green",
+          "label": "SYN",
+          "payload": [],
+          "row": {
+            "time": "0.180s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.21",
+            "proto": "TCP",
+            "info": "52801 → 50069 [SYN] Seq=0",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 52801,
+                "dport": 50069,
+                "flags": "S"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "green",
+          "label": "SYN-ACK",
+          "payload": [],
+          "row": {
+            "time": "0.195s",
+            "src": "203.0.113.21",
+            "dst": "192.168.1.10",
+            "proto": "TCP",
+            "info": "50069 → 52801 [SYN, ACK] Seq=0 Ack=1",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 50069,
+                "dport": 52801,
+                "flags": "SA"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "green",
+          "label": "ACK",
+          "payload": [],
+          "row": {
+            "time": "0.210s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.21",
+            "proto": "TCP",
+            "info": "52801 → 50069 [ACK] Seq=1 Ack=1",
+            "len": "60 B",
+            "wire": {
+              "tcp": {
+                "sport": 52801,
+                "dport": 50069,
+                "flags": "A"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "amber",
+          "label": "RETR",
+          "payload": [
+            "RETR report.pdf"
+          ],
+          "row": {
+            "time": "0.210s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.21",
+            "proto": "FTP",
+            "info": "RETR report.pdf",
+            "len": "71 B",
+            "wire": {
+              "tcp": {
+                "sport": 52800,
+                "dport": 21,
+                "flags": "PA",
+                "data": {
+                  "text": [
+                    "RETR report.pdf"
+                  ],
+                  "name": "FTP"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "violet",
+          "label": "150",
+          "payload": [
+            "150 Opening BINARY mode",
+            "data connection …"
+          ],
+          "row": {
+            "time": "0.225s",
+            "src": "203.0.113.21",
+            "dst": "192.168.1.10",
+            "proto": "FTP",
+            "info": "150 Opening BINARY mode data connection …",
+            "len": "124 B",
+            "wire": {
+              "tcp": {
+                "sport": 21,
+                "dport": 52800,
+                "flags": "PA",
+                "data": {
+                  "text": [
+                    "150 Opening BINARY mode data connection for report.pdf (4000 bytes)."
+                  ],
+                  "name": "FTP"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "The File Arrives",
+      "desc": "Closing the connection ends it",
+      "detail": "The 4,000 bytes arrive in 3 TCP segments. FTP sends no length marker in the data itself: the server closes the data connection to mark the end of the file. Once the laptop has acknowledged everything, the server confirms with 226 on the control connection.",
+      "facts": [
+        [
+          "File",
+          "report.pdf, 4,000 bytes"
+        ],
+        [
+          "Segments",
+          "1460 + 1460 + 1080"
+        ],
+        [
+          "End of file",
+          "Data connection closed"
+        ]
+      ],
+      "events": [
+        {
+          "type": "stream",
+          "from": "web",
+          "to": "client",
+          "color": "blue",
+          "label": "3 SEGMENTS",
+          "payload": [
+            "report.pdf",
+            "4,000 bytes, readable by anyone"
+          ],
+          "packets": [
+            {
+              "type": "packet",
+              "from": "web",
+              "to": "client",
+              "color": "blue",
+              "label": "DATA",
+              "payload": [],
+              "row": {
+                "time": "0.225s",
+                "src": "203.0.113.21",
+                "dst": "192.168.1.10",
+                "proto": "FTP-DATA",
+                "info": "FTP Data: 1460 bytes (Seq=1)",
+                "len": "1514 B",
+                "wire": {
+                  "tcp": {
+                    "sport": 50069,
+                    "dport": 52801,
+                    "flags": "A",
+                    "data": {
+                      "opaque": 1460,
+                      "what": "report.pdf, bytes 1–1460",
+                      "name": "FTP data",
+                      "note": "The file itself, unencrypted: anyone on the path could read it."
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "type": "packet",
+              "from": "web",
+              "to": "client",
+              "color": "blue",
+              "label": "DATA",
+              "payload": [],
+              "row": {
+                "time": "0.225s",
+                "src": "203.0.113.21",
+                "dst": "192.168.1.10",
+                "proto": "FTP-DATA",
+                "info": "FTP Data: 1460 bytes (Seq=1461)",
+                "len": "1514 B",
+                "wire": {
+                  "tcp": {
+                    "sport": 50069,
+                    "dport": 52801,
+                    "flags": "A",
+                    "data": {
+                      "opaque": 1460,
+                      "what": "report.pdf, bytes 1461–2920",
+                      "name": "FTP data",
+                      "note": "The file itself, unencrypted: anyone on the path could read it."
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "type": "packet",
+              "from": "web",
+              "to": "client",
+              "color": "blue",
+              "label": "DATA",
+              "payload": [],
+              "row": {
+                "time": "0.225s",
+                "src": "203.0.113.21",
+                "dst": "192.168.1.10",
+                "proto": "FTP-DATA",
+                "info": "FTP Data: 1080 bytes (Seq=2921)",
+                "len": "1134 B",
+                "wire": {
+                  "tcp": {
+                    "sport": 50069,
+                    "dport": 52801,
+                    "flags": "PA",
+                    "data": {
+                      "opaque": 1080,
+                      "what": "report.pdf, bytes 2921–4000",
+                      "name": "FTP data",
+                      "note": "The file itself, unencrypted: anyone on the path could read it."
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "green",
+          "label": "FIN",
+          "payload": [
+            "end of file:",
+            "data connection closed"
+          ],
+          "row": {
+            "time": "0.225s",
+            "src": "203.0.113.21",
+            "dst": "192.168.1.10",
+            "proto": "TCP",
+            "info": "50069 → 52801 [FIN, ACK] Seq=4001 Ack=1",
+            "len": "60 B",
+            "wire": {
+              "tcp": {
+                "sport": 50069,
+                "dport": 52801,
+                "flags": "FA"
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "violet",
+          "label": "226",
+          "payload": [
+            "226 Transfer complete."
+          ],
+          "row": {
+            "time": "0.255s",
+            "src": "203.0.113.21",
+            "dst": "192.168.1.10",
+            "proto": "FTP",
+            "info": "226 Transfer complete.",
+            "len": "78 B",
+            "wire": {
+              "tcp": {
+                "sport": 21,
+                "dport": 52800,
+                "flags": "PA",
+                "data": {
+                  "text": [
+                    "226 Transfer complete."
+                  ],
+                  "name": "FTP"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Quit",
+      "desc": "Close the control connection",
+      "detail": "QUIT ends the session and the server says goodbye with 221. For anything sensitive, SFTP (a different protocol, run over SSH) or FTPS (FTP inside TLS) gives the same job encryption.",
+      "facts": [
+        [
+          "Command",
+          "QUIT"
+        ],
+        [
+          "Reply",
+          "221 Goodbye."
+        ],
+        [
+          "Encrypted cousins",
+          "SFTP, FTPS"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "amber",
+          "label": "QUIT",
+          "payload": [
+            "QUIT"
+          ],
+          "row": {
+            "time": "0.270s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.21",
+            "proto": "FTP",
+            "info": "QUIT",
+            "len": "60 B",
+            "wire": {
+              "tcp": {
+                "sport": 52800,
+                "dport": 21,
+                "flags": "PA",
+                "data": {
+                  "text": [
+                    "QUIT"
+                  ],
+                  "name": "FTP"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "violet",
+          "label": "221",
+          "payload": [
+            "221 Goodbye."
+          ],
+          "row": {
+            "time": "0.285s",
+            "src": "203.0.113.21",
+            "dst": "192.168.1.10",
+            "proto": "FTP",
+            "info": "221 Goodbye.",
+            "len": "68 B",
+            "wire": {
+              "tcp": {
+                "sport": 21,
+                "dport": 52800,
+                "flags": "PA",
+                "data": {
+                  "text": [
+                    "221 Goodbye."
+                  ],
+                  "name": "FTP"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -105,6 +105,7 @@ export default function CliLabConfigEditor({
   const [advancedInitial, setAdvancedInitial] = useState(false);
   const [advancedGrading, setAdvancedGrading] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
+  const [section, setSection] = useState('initial');
   const [localIssue, setLocalIssue] = useState('');
 
   const initialResult = useMemo(
@@ -131,6 +132,11 @@ export default function CliLabConfigEditor({
   useEffect(() => {
     if (gradingSchemaInvalid) setAdvancedGrading(true);
   }, [gradingSchemaInvalid]);
+
+  useEffect(() => {
+    if (initialSchemaInvalid) setSection('initial');
+    else if (gradingSchemaInvalid) setSection('grading');
+  }, [initialSchemaInvalid, gradingSchemaInvalid]);
 
   useEffect(() => {
     onValidityChange?.(validation);
@@ -176,7 +182,7 @@ export default function CliLabConfigEditor({
       <div className="cli-editor-toolbar">
         <div className="cli-editor-profile">
           <label className="cli-editor-field">
-            <span>Command profile</span>
+            <span>Bộ lệnh mô phỏng</span>
             <DropdownSelect
               aria-label="Command profile"
               className="acm-input cli-editor-native-select"
@@ -193,12 +199,13 @@ export default function CliLabConfigEditor({
             </DropdownSelect>
           </label>
           <p className="cli-editor-profile-description">
-            {profile?.description || 'Chọn profile được backend hỗ trợ.'}
+            {profile?.description || 'Chọn bộ lệnh cho bài thực hành.'}
           </p>
           {topology && initialResult.ok && (
-            <label>
-              Phiên bản mô phỏng
-              <select
+            <label className="cli-editor-field">
+              <span>Phiên bản mô phỏng</span>
+              <DropdownSelect
+                disabled={disabled}
                 aria-label="Phiên bản mô phỏng"
                 className="acm-input"
                 value={initialResult.value.simulatorVersion || '2.1.0'}
@@ -213,7 +220,7 @@ export default function CliLabConfigEditor({
               >
                 <option value="2.1.0">2.1.0 — tương thích lab cũ</option>
                 <option value="3.0.0">3.0.0 — metric classic và chấm quá trình</option>
-              </select>
+              </DropdownSelect>
             </label>
           )}
           {profile ? (
@@ -265,127 +272,129 @@ export default function CliLabConfigEditor({
         </div>
       ) : null}
 
-      <div className="cli-editor-mode-row">
-        <div>
-          <strong>Trình dựng biểu mẫu</strong>
-          <span>Chế độ mặc định, phù hợp khi không cần sửa JSON.</span>
-        </div>
-        <span className="cli-editor-mode-badge">
-          {showAdvancedInitial || showAdvancedGrading ? 'Có JSON nâng cao' : 'Đang dùng form'}
-        </span>
+      <div className="cli-editor-sections" role="group" aria-label="Nhóm cấu hình CLI">
+        <button
+          type="button"
+          aria-pressed={section === 'initial'}
+          onClick={() => setSection('initial')}
+        >
+          Thiết bị & kết nối
+        </button>
+        <button
+          type="button"
+          aria-pressed={section === 'grading'}
+          onClick={() => setSection('grading')}
+        >
+          Chấm điểm
+        </button>
       </div>
-
-      {showAdvancedInitial ? (
-        <section className="cli-editor-section cli-editor-advanced-section">
-          <div className="cli-editor-section-heading">
-            <div>
-              <span className="cli-editor-eyebrow">ADVANCED JSON</span>
-              <h3>Initial State JSON</h3>
-              <p>Sửa nhanh cho người đã quen schema. Văn bản sai được giữ nguyên để sửa tiếp.</p>
+      <div className="cli-editor-panel" hidden={section !== 'initial'}>
+        {showAdvancedInitial ? (
+          <section className="cli-editor-section cli-editor-advanced-section">
+            <div className="cli-editor-section-heading">
+              <div>
+                <span className="cli-editor-eyebrow">ADVANCED JSON</span>
+                <h3>Initial State JSON</h3>
+                <p>Sửa nhanh cho người đã quen schema. Văn bản sai được giữ nguyên để sửa tiếp.</p>
+              </div>
+              <button
+                type="button"
+                className="acm-secondary-btn"
+                onClick={() => disableAdvanced('initial')}
+              >
+                Quay lại form
+              </button>
             </div>
-            <button
-              type="button"
-              className="acm-secondary-btn"
-              onClick={() => disableAdvanced('initial')}
-            >
-              Quay lại form
-            </button>
-          </div>
-          <JsonEditor
-            label="Initial State JSON"
-            value={initialStateText || ''}
-            onChange={(value) => update({ initialStateText: value })}
-            parseResult={initialResult}
-            disabled={disabled}
-          />
-        </section>
-      ) : (
-        <>
-          <InitialStateBuilder
-            value={initialResult.value}
-            gradingSpec={gradingResult.value}
-            onChange={(value) => update({ initialStateText: stringifyJson(value) })}
-            onApplyTemplate={(template) =>
-              update({
-                initialStateText: stringifyJson(template.initialState),
-                gradingSpecText: stringifyJson(template.gradingSpec),
-                commandProfile: template.commandProfile,
-              })
-            }
-            onIssue={(issue) => setLocalIssue(issue.display || issue.message)}
-            disabled={disabled || !initialResult.ok}
-          />
-          <div className="cli-editor-advanced-toggle">
-            <label>
-              <AnimatedCheckbox
-                checked={showAdvancedInitial}
-                onChange={(event) =>
-                  event.target.checked ? setAdvancedInitial(true) : disableAdvanced('initial')
-                }
-                disabled={disabled}
-              />{' '}
-              <span>Chỉnh sửa Initial State JSON nâng cao</span>
-            </label>
-            <small>
-              Validate cú pháp tức thì, có dòng/cột khi trình phân tích cung cấp vị trí.
-            </small>
-          </div>
-        </>
-      )}
-
-      {showAdvancedGrading ? (
-        <section className="cli-editor-section cli-editor-advanced-section">
-          <div className="cli-editor-section-heading">
-            <div>
-              <span className="cli-editor-eyebrow">ADVANCED JSON</span>
-              <h3>Grading Spec JSON</h3>
-              <p>
-                Giữ nguyên id, điểm, message, successMessage, hint và mọi field được backend hỗ trợ.
-              </p>
+            <JsonEditor
+              label="Initial State JSON"
+              value={initialStateText || ''}
+              onChange={(value) => update({ initialStateText: value })}
+              parseResult={initialResult}
+              disabled={disabled}
+            />
+          </section>
+        ) : (
+          <>
+            <InitialStateBuilder
+              value={initialResult.value}
+              gradingSpec={gradingResult.value}
+              onChange={(value) => update({ initialStateText: stringifyJson(value) })}
+              onApplyTemplate={(template) =>
+                update({
+                  initialStateText: stringifyJson(template.initialState),
+                  gradingSpecText: stringifyJson(template.gradingSpec),
+                  commandProfile: template.commandProfile,
+                })
+              }
+              onIssue={(issue) => setLocalIssue(issue.display || issue.message)}
+              disabled={disabled || !initialResult.ok}
+            />
+            <div className="cli-editor-advanced-toggle">
+              <label>
+                <AnimatedCheckbox
+                  checked={showAdvancedInitial}
+                  onChange={(event) =>
+                    event.target.checked ? setAdvancedInitial(true) : disableAdvanced('initial')
+                  }
+                  disabled={disabled}
+                />{' '}
+                <span>Chỉnh sửa Initial State JSON nâng cao</span>
+              </label>
             </div>
-            <button
-              type="button"
-              className="acm-secondary-btn"
-              onClick={() => disableAdvanced('grading')}
-            >
-              Quay lại form
-            </button>
-          </div>
-          <JsonEditor
-            label="Grading Spec JSON"
-            value={gradingSpecText || ''}
-            onChange={(value) => update({ gradingSpecText: value })}
-            parseResult={gradingResult}
-            disabled={disabled}
-          />
-        </section>
-      ) : (
-        <>
-          <GradingSpecBuilder
-            value={gradingResult.value}
-            initialState={initialResult.value}
-            onChange={(value) => update({ gradingSpecText: stringifyJson(value) })}
-            disabled={disabled || !gradingResult.ok}
-          />
-          <div className="cli-editor-advanced-toggle">
-            <label>
-              <AnimatedCheckbox
-                checked={showAdvancedGrading}
-                onChange={(event) =>
-                  event.target.checked ? setAdvancedGrading(true) : disableAdvanced('grading')
-                }
-                disabled={disabled}
-              />{' '}
-              <span>Chỉnh sửa Grading Spec JSON nâng cao</span>
-            </label>
-            <small>
-              Validate cú pháp và schema path ngay khi nhập; không thể lưu hoặc xem trước khi còn
-              lỗi.
-            </small>
-          </div>
-        </>
-      )}
-
+          </>
+        )}
+      </div>
+      <div className="cli-editor-panel" hidden={section !== 'grading'}>
+        {showAdvancedGrading ? (
+          <section className="cli-editor-section cli-editor-advanced-section">
+            <div className="cli-editor-section-heading">
+              <div>
+                <span className="cli-editor-eyebrow">ADVANCED JSON</span>
+                <h3>Grading Spec JSON</h3>
+                <p>
+                  Giữ nguyên id, điểm, message, successMessage, hint và mọi field được backend hỗ
+                  trợ.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="acm-secondary-btn"
+                onClick={() => disableAdvanced('grading')}
+              >
+                Quay lại form
+              </button>
+            </div>
+            <JsonEditor
+              label="Grading Spec JSON"
+              value={gradingSpecText || ''}
+              onChange={(value) => update({ gradingSpecText: value })}
+              parseResult={gradingResult}
+              disabled={disabled}
+            />
+          </section>
+        ) : (
+          <>
+            <GradingSpecBuilder
+              value={gradingResult.value}
+              initialState={initialResult.value}
+              onChange={(value) => update({ gradingSpecText: stringifyJson(value) })}
+              disabled={disabled || !gradingResult.ok}
+            />
+            <div className="cli-editor-advanced-toggle">
+              <label>
+                <AnimatedCheckbox
+                  checked={showAdvancedGrading}
+                  onChange={(event) =>
+                    event.target.checked ? setAdvancedGrading(true) : disableAdvanced('grading')
+                  }
+                  disabled={disabled}
+                />{' '}
+                <span>Chỉnh sửa Grading Spec JSON nâng cao</span>
+              </label>
+            </div>
+          </>
+        )}
+      </div>
       <div className="cli-editor-integrity-note">
         <Code2 size={15} />
         <span>

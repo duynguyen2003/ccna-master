@@ -1,0 +1,1311 @@
+{
+  "id": "radius",
+  "name": "RADIUS",
+  "title": "Wi-Fi Logins",
+  "layer": 2,
+  "nodes": [
+    "client",
+    "router",
+    "lan"
+  ],
+  "seenOn": "Seen on the office network",
+  "latency": {
+    "client-router": 0.001,
+    "router-lan": 0.0005
+  },
+  "labels": {
+    "client": [
+      "Client",
+      "MAC …:53:10"
+    ],
+    "router": [
+      "Access Point",
+      "192.168.1.2"
+    ],
+    "lan": [
+      "RADIUS Server",
+      "192.168.1.20"
+    ]
+  },
+  "legend": [
+    [
+      "amber",
+      "EAP over Wi-Fi"
+    ],
+    [
+      "violet",
+      "RADIUS"
+    ],
+    [
+      "teal",
+      "4-way handshake"
+    ]
+  ],
+  "overview": {
+    "full": "RADIUS and 802.1X (Enterprise Wi-Fi)",
+    "description": "At home everyone shares one Wi-Fi password. Offices, universities and eduroam use WPA2- or WPA3-Enterprise instead: each person or device logs in with its own account or certificate, checked by a RADIUS server. The access point knows no passwords. It passes the login, a series of EAP messages, between the laptop and the server, and lets the laptop in only when the server says yes.",
+    "facts": [
+      [
+        "Layer",
+        "Data Link (Layer 2)"
+      ],
+      [
+        "Standard",
+        "IEEE 802.1X"
+      ],
+      [
+        "Login",
+        "EAP (here EAP-TLS)"
+      ],
+      [
+        "Checked by",
+        "RADIUS, UDP 1812"
+      ],
+      [
+        "Keys",
+        "Different for every login"
+      ],
+      [
+        "Defined In",
+        "RFC 2865, 3579, 5216"
+      ]
+    ]
+  },
+  "outro": {
+    "title": "Let in",
+    "desc": "Its own login, its own keys",
+    "text": "The laptop proved who it was with its certificate. The RADIUS server checked it and told the access point to let it in, on VLAN 20, with a key for this login alone. The access point never saw a password: it only passed the messages on. Press REPLAY to watch it again.",
+    "facts": [
+      [
+        "Login",
+        "EAP-TLS (certificates)"
+      ],
+      [
+        "Messages",
+        "17, then the 4-way handshake"
+      ],
+      [
+        "VLAN",
+        "20 (staff)"
+      ],
+      [
+        "A user leaves",
+        "Disable one account"
+      ]
+    ]
+  },
+  "start": {
+    "nodes": [
+      "client"
+    ],
+    "frame": "client"
+  },
+  "steps": [
+    {
+      "title": "Who Are You?",
+      "desc": "The access point asks for an identity",
+      "detail": "The laptop has joined “Office”, a WPA2-Enterprise network, but until it has logged in the access point passes on nothing except login messages. It asks who the laptop is with an EAP Identity request, and the laptop answers alex@example.org. The access point knows no accounts: it will pass the answer on to the RADIUS server.",
+      "facts": [
+        [
+          "Network",
+          "“Office”, WPA2-Enterprise"
+        ],
+        [
+          "Identity",
+          "alex@example.org"
+        ],
+        [
+          "Before login",
+          "Only EAP gets through"
+        ]
+      ],
+      "events": [
+        {
+          "type": "show",
+          "nodes": [
+            "router",
+            "lan"
+          ],
+          "frame": "office"
+        },
+        {
+          "type": "packet",
+          "from": "router",
+          "to": "client",
+          "color": "amber",
+          "label": "IDENTITY?",
+          "payload": [
+            "EAP Identity request"
+          ],
+          "row": {
+            "time": "0.000s",
+            "src": "00:00:5e:00:53:01",
+            "dst": "00:00:5e:00:53:10",
+            "proto": "EAP",
+            "info": "Request, Identity",
+            "len": "43 B",
+            "wire": {
+              "wifi": {
+                "from": "ap",
+                "kind": "eapol",
+                "duration": 44,
+                "seq": 1520,
+                "eap": {
+                  "code": 1,
+                  "id": 1,
+                  "type": 1
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "router",
+          "color": "amber",
+          "label": "IDENTITY",
+          "payload": [
+            "alex@example.org"
+          ],
+          "row": {
+            "time": "0.004s",
+            "src": "00:00:5e:00:53:10",
+            "dst": "00:00:5e:00:53:01",
+            "proto": "EAP",
+            "info": "Response, Identity",
+            "len": "59 B",
+            "wire": {
+              "wifi": {
+                "from": "sta",
+                "kind": "eapol",
+                "duration": 44,
+                "seq": 210,
+                "eap": {
+                  "code": 2,
+                  "id": 1,
+                  "type": 1,
+                  "identity": "alex@example.org"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Ask RADIUS",
+      "desc": "The login goes to the server",
+      "detail": "The access point copies the EAP message into a RADIUS Access-Request and sends it to the RADIUS server on UDP port 1812, with the laptop’s MAC address and the network’s name. A secret that only the two of them share protects every packet. The server answers with an Access-Challenge: the next message for the laptop, which is “start EAP-TLS”.",
+      "facts": [
+        [
+          "To",
+          "RADIUS server, UDP 1812"
+        ],
+        [
+          "Protected by",
+          "A shared secret"
+        ],
+        [
+          "Answer",
+          "Access-Challenge"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "router",
+          "to": "lan",
+          "color": "violet",
+          "label": "ACCESS-REQUEST",
+          "payload": [
+            "EAP: alex@example.org",
+            "from the access point"
+          ],
+          "row": {
+            "time": "0.006s",
+            "src": "192.168.1.2",
+            "dst": "192.168.1.20",
+            "proto": "RADIUS",
+            "info": "Access-Request id=81",
+            "len": "190 B",
+            "wire": {
+              "udp": {
+                "sport": 50112,
+                "dport": 1812,
+                "data": {
+                  "radius": {
+                    "code": 1,
+                    "id": 81,
+                    "attrs": [
+                      [
+                        "Message-Authenticator"
+                      ],
+                      [
+                        "User-Name",
+                        "alex@example.org"
+                      ],
+                      [
+                        "NAS-IP-Address",
+                        "192.168.1.2"
+                      ],
+                      [
+                        "Service-Type",
+                        2
+                      ],
+                      [
+                        "Called-Station-Id",
+                        "00-00-5E-00-53-01:Office"
+                      ],
+                      [
+                        "Calling-Station-Id",
+                        "00-00-5E-00-53-10"
+                      ],
+                      [
+                        "NAS-Port-Type",
+                        19
+                      ],
+                      [
+                        "Framed-MTU",
+                        1400
+                      ],
+                      [
+                        "EAP-Message",
+                        {
+                          "code": 2,
+                          "id": 1,
+                          "type": 1,
+                          "identity": "alex@example.org"
+                        }
+                      ]
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "lan",
+          "to": "router",
+          "color": "violet",
+          "label": "CHALLENGE",
+          "payload": [
+            "EAP-TLS start"
+          ],
+          "row": {
+            "time": "0.008s",
+            "src": "192.168.1.20",
+            "dst": "192.168.1.2",
+            "proto": "RADIUS",
+            "info": "Access-Challenge id=81",
+            "len": "106 B",
+            "wire": {
+              "udp": {
+                "sport": 1812,
+                "dport": 50112,
+                "data": {
+                  "radius": {
+                    "code": 11,
+                    "id": 81,
+                    "attrs": [
+                      [
+                        "Message-Authenticator"
+                      ],
+                      [
+                        "EAP-Message",
+                        {
+                          "code": 1,
+                          "id": 2,
+                          "type": 13,
+                          "tls": {
+                            "start": true
+                          }
+                        }
+                      ],
+                      [
+                        "State"
+                      ]
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "router",
+          "to": "client",
+          "color": "amber",
+          "label": "TLS START",
+          "payload": [
+            "EAP-TLS start"
+          ],
+          "row": {
+            "time": "0.009s",
+            "src": "00:00:5e:00:53:01",
+            "dst": "00:00:5e:00:53:10",
+            "proto": "EAP",
+            "info": "Request, TLS EAP (EAP-TLS)",
+            "len": "44 B",
+            "wire": {
+              "wifi": {
+                "from": "ap",
+                "kind": "eapol",
+                "duration": 44,
+                "seq": 1521,
+                "eap": {
+                  "code": 1,
+                  "id": 2,
+                  "type": 13,
+                  "tls": {
+                    "start": true
+                  }
+                }
+              }
+            }
+          },
+          "quick": true
+        }
+      ]
+    },
+    {
+      "title": "TLS Inside EAP",
+      "desc": "The server proves who it is",
+      "detail": "The laptop and the server now run a TLS 1.3 handshake inside EAP; the access point repacks each message, EAPOL over the air and RADIUS on the wire. The server sends its certificate and asks for the laptop’s. The laptop checks that it was issued by the company’s own certificate authority to radius.example.org. That check is what stops a fake access point from catching the login.",
+      "facts": [
+        [
+          "Handshake",
+          "TLS 1.3, inside EAP"
+        ],
+        [
+          "Server proves",
+          "Its certificate"
+        ],
+        [
+          "Laptop checks",
+          "Issuer and name"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "router",
+          "color": "amber",
+          "label": "CLIENT HELLO",
+          "payload": [
+            "TLS inside EAP"
+          ],
+          "row": {
+            "time": "0.012s",
+            "src": "00:00:5e:00:53:10",
+            "dst": "00:00:5e:00:53:01",
+            "proto": "EAP",
+            "info": "Response, TLS EAP: Client Hello",
+            "len": "261 B",
+            "wire": {
+              "wifi": {
+                "from": "sta",
+                "kind": "eapol",
+                "duration": 44,
+                "seq": 211,
+                "eap": {
+                  "code": 2,
+                  "id": 2,
+                  "type": 13,
+                  "tls": {
+                    "length": 213,
+                    "what": [
+                      "Client Hello: TLS 1.3, the laptop’s key share"
+                    ],
+                    "note": "The same TLS records as over TCP, only carried in EAP."
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "router",
+          "to": "lan",
+          "color": "violet",
+          "label": "ACCESS-REQUEST",
+          "payload": [
+            "Client Hello"
+          ],
+          "row": {
+            "time": "0.014s",
+            "src": "192.168.1.2",
+            "dst": "192.168.1.20",
+            "proto": "RADIUS",
+            "info": "Access-Request id=82: Client Hello",
+            "len": "410 B",
+            "wire": {
+              "udp": {
+                "sport": 50112,
+                "dport": 1812,
+                "data": {
+                  "radius": {
+                    "code": 1,
+                    "id": 82,
+                    "attrs": [
+                      [
+                        "Message-Authenticator"
+                      ],
+                      [
+                        "User-Name",
+                        "alex@example.org"
+                      ],
+                      [
+                        "NAS-IP-Address",
+                        "192.168.1.2"
+                      ],
+                      [
+                        "Service-Type",
+                        2
+                      ],
+                      [
+                        "Called-Station-Id",
+                        "00-00-5E-00-53-01:Office"
+                      ],
+                      [
+                        "Calling-Station-Id",
+                        "00-00-5E-00-53-10"
+                      ],
+                      [
+                        "NAS-Port-Type",
+                        19
+                      ],
+                      [
+                        "Framed-MTU",
+                        1400
+                      ],
+                      [
+                        "State"
+                      ],
+                      [
+                        "EAP-Message",
+                        {
+                          "code": 2,
+                          "id": 2,
+                          "type": 13,
+                          "tls": {
+                            "length": 213,
+                            "what": [
+                              "Client Hello: TLS 1.3, the laptop’s key share"
+                            ],
+                            "note": "The same TLS records as over TCP, only carried in EAP."
+                          }
+                        }
+                      ]
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "lan",
+          "to": "router",
+          "color": "violet",
+          "label": "CHALLENGE",
+          "payload": [
+            "Server Hello",
+            "certificate (encrypted)"
+          ],
+          "row": {
+            "time": "0.019s",
+            "src": "192.168.1.20",
+            "dst": "192.168.1.2",
+            "proto": "RADIUS",
+            "info": "Access-Challenge id=82: Server Hello, certificate",
+            "len": "1114 B",
+            "wire": {
+              "udp": {
+                "sport": 1812,
+                "dport": 50112,
+                "data": {
+                  "radius": {
+                    "code": 11,
+                    "id": 82,
+                    "attrs": [
+                      [
+                        "Message-Authenticator"
+                      ],
+                      [
+                        "EAP-Message",
+                        {
+                          "code": 1,
+                          "id": 3,
+                          "type": 13,
+                          "tls": {
+                            "length": 998,
+                            "what": [
+                              "Server Hello: TLS 1.3, the server’s key share",
+                              "Encrypted: certificate for radius.example.org, a request for the laptop’s certificate, signature, Finished"
+                            ]
+                          }
+                        }
+                      ],
+                      [
+                        "State"
+                      ]
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "router",
+          "to": "client",
+          "color": "amber",
+          "label": "SERVER HELLO",
+          "payload": [
+            "certificate (encrypted)"
+          ],
+          "row": {
+            "time": "0.020s",
+            "src": "00:00:5e:00:53:01",
+            "dst": "00:00:5e:00:53:10",
+            "proto": "EAP",
+            "info": "Request, TLS EAP: Server Hello, encrypted handshake",
+            "len": "1046 B",
+            "wire": {
+              "wifi": {
+                "from": "ap",
+                "kind": "eapol",
+                "duration": 44,
+                "seq": 1522,
+                "eap": {
+                  "code": 1,
+                  "id": 3,
+                  "type": 13,
+                  "tls": {
+                    "length": 998,
+                    "what": [
+                      "Server Hello: TLS 1.3, the server’s key share",
+                      "Encrypted: certificate for radius.example.org, a request for the laptop’s certificate, signature, Finished"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "quick": true
+        }
+      ]
+    },
+    {
+      "title": "Laptop’s Proof",
+      "desc": "Its own certificate",
+      "detail": "The laptop answers with its own certificate, which the company issued for this user, and a signature made with its private key; the key never leaves the laptop. No password is involved. The server checks the certificate and the signature and looks up the account. Many networks, eduroam among them, use a password instead, sent inside the TLS tunnel (PEAP or EAP-TTLS).",
+      "facts": [
+        [
+          "Laptop sends",
+          "Its certificate, a signature"
+        ],
+        [
+          "Password",
+          "None with EAP-TLS"
+        ],
+        [
+          "Or instead",
+          "PEAP: a password in TLS"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "router",
+          "color": "amber",
+          "label": "CERTIFICATE",
+          "payload": [
+            "laptop’s certificate",
+            "signature, Finished"
+          ],
+          "row": {
+            "time": "0.048s",
+            "src": "00:00:5e:00:53:10",
+            "dst": "00:00:5e:00:53:01",
+            "proto": "EAP",
+            "info": "Response, TLS EAP: encrypted handshake",
+            "len": "860 B",
+            "wire": {
+              "wifi": {
+                "from": "sta",
+                "kind": "eapol",
+                "duration": 44,
+                "seq": 212,
+                "eap": {
+                  "code": 2,
+                  "id": 3,
+                  "type": 13,
+                  "tls": {
+                    "length": 812,
+                    "what": [
+                      "Encrypted: the laptop’s certificate (for alex@example.org), its signature, Finished"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "locked": true
+        },
+        {
+          "type": "packet",
+          "from": "router",
+          "to": "lan",
+          "color": "violet",
+          "label": "ACCESS-REQUEST",
+          "payload": [
+            "laptop’s certificate"
+          ],
+          "row": {
+            "time": "0.050s",
+            "src": "192.168.1.2",
+            "dst": "192.168.1.20",
+            "proto": "RADIUS",
+            "info": "Access-Request id=83: encrypted handshake",
+            "len": "1015 B",
+            "wire": {
+              "udp": {
+                "sport": 50112,
+                "dport": 1812,
+                "data": {
+                  "radius": {
+                    "code": 1,
+                    "id": 83,
+                    "attrs": [
+                      [
+                        "Message-Authenticator"
+                      ],
+                      [
+                        "User-Name",
+                        "alex@example.org"
+                      ],
+                      [
+                        "NAS-IP-Address",
+                        "192.168.1.2"
+                      ],
+                      [
+                        "Service-Type",
+                        2
+                      ],
+                      [
+                        "Called-Station-Id",
+                        "00-00-5E-00-53-01:Office"
+                      ],
+                      [
+                        "Calling-Station-Id",
+                        "00-00-5E-00-53-10"
+                      ],
+                      [
+                        "NAS-Port-Type",
+                        19
+                      ],
+                      [
+                        "Framed-MTU",
+                        1400
+                      ],
+                      [
+                        "State"
+                      ],
+                      [
+                        "EAP-Message",
+                        {
+                          "code": 2,
+                          "id": 3,
+                          "type": 13,
+                          "tls": {
+                            "length": 812,
+                            "what": [
+                              "Encrypted: the laptop’s certificate (for alex@example.org), its signature, Finished"
+                            ]
+                          }
+                        }
+                      ]
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "quick": true,
+          "locked": true
+        }
+      ]
+    },
+    {
+      "title": "Handshake Done",
+      "desc": "Nothing more to send",
+      "detail": "With TLS 1.3 the server then sends one tiny encrypted message, a single zero byte, to say the handshake is over, and the laptop answers with an empty EAP message. Both ends now hold the same 64 bytes of key material, worked out during the handshake. Nobody on the way has seen it, not even the access point.",
+      "facts": [
+        [
+          "Server sends",
+          "One encrypted 0 byte"
+        ],
+        [
+          "Laptop sends",
+          "An empty EAP-TLS reply"
+        ],
+        [
+          "Both hold",
+          "64 bytes of key material"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "lan",
+          "to": "router",
+          "color": "violet",
+          "label": "CHALLENGE",
+          "payload": [
+            "handshake over"
+          ],
+          "row": {
+            "time": "0.056s",
+            "src": "192.168.1.20",
+            "dst": "192.168.1.2",
+            "proto": "RADIUS",
+            "info": "Access-Challenge id=83",
+            "len": "133 B",
+            "wire": {
+              "udp": {
+                "sport": 1812,
+                "dport": 50112,
+                "data": {
+                  "radius": {
+                    "code": 11,
+                    "id": 83,
+                    "attrs": [
+                      [
+                        "Message-Authenticator"
+                      ],
+                      [
+                        "EAP-Message",
+                        {
+                          "code": 1,
+                          "id": 4,
+                          "type": 13,
+                          "tls": {
+                            "length": 23,
+                            "what": [
+                              "Encrypted: one 0 byte, the “commitment message”: no more handshake messages"
+                            ]
+                          }
+                        }
+                      ],
+                      [
+                        "State"
+                      ]
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "quick": true,
+          "locked": true
+        },
+        {
+          "type": "packet",
+          "from": "router",
+          "to": "client",
+          "color": "amber",
+          "label": "DONE",
+          "payload": [
+            "one encrypted byte"
+          ],
+          "row": {
+            "time": "0.057s",
+            "src": "00:00:5e:00:53:01",
+            "dst": "00:00:5e:00:53:10",
+            "proto": "EAP",
+            "info": "Request, TLS EAP: Application Data",
+            "len": "71 B",
+            "wire": {
+              "wifi": {
+                "from": "ap",
+                "kind": "eapol",
+                "duration": 44,
+                "seq": 1523,
+                "eap": {
+                  "code": 1,
+                  "id": 4,
+                  "type": 13,
+                  "tls": {
+                    "length": 23,
+                    "what": [
+                      "Encrypted: one 0 byte, the “commitment message”: no more handshake messages"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "locked": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "router",
+          "color": "amber",
+          "label": "EMPTY",
+          "payload": [
+            "nothing more"
+          ],
+          "row": {
+            "time": "0.060s",
+            "src": "00:00:5e:00:53:10",
+            "dst": "00:00:5e:00:53:01",
+            "proto": "EAP",
+            "info": "Response, TLS EAP (EAP-TLS)",
+            "len": "44 B",
+            "wire": {
+              "wifi": {
+                "from": "sta",
+                "kind": "eapol",
+                "duration": 44,
+                "seq": 213,
+                "eap": {
+                  "code": 2,
+                  "id": 4,
+                  "type": 13,
+                  "tls": {}
+                }
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "router",
+          "to": "lan",
+          "color": "violet",
+          "label": "ACCESS-REQUEST",
+          "payload": [
+            "empty EAP-TLS"
+          ],
+          "row": {
+            "time": "0.062s",
+            "src": "192.168.1.2",
+            "dst": "192.168.1.20",
+            "proto": "RADIUS",
+            "info": "Access-Request id=84",
+            "len": "193 B",
+            "wire": {
+              "udp": {
+                "sport": 50112,
+                "dport": 1812,
+                "data": {
+                  "radius": {
+                    "code": 1,
+                    "id": 84,
+                    "attrs": [
+                      [
+                        "Message-Authenticator"
+                      ],
+                      [
+                        "User-Name",
+                        "alex@example.org"
+                      ],
+                      [
+                        "NAS-IP-Address",
+                        "192.168.1.2"
+                      ],
+                      [
+                        "Service-Type",
+                        2
+                      ],
+                      [
+                        "Called-Station-Id",
+                        "00-00-5E-00-53-01:Office"
+                      ],
+                      [
+                        "Calling-Station-Id",
+                        "00-00-5E-00-53-10"
+                      ],
+                      [
+                        "NAS-Port-Type",
+                        19
+                      ],
+                      [
+                        "Framed-MTU",
+                        1400
+                      ],
+                      [
+                        "State"
+                      ],
+                      [
+                        "EAP-Message",
+                        {
+                          "code": 2,
+                          "id": 4,
+                          "type": 13,
+                          "tls": {}
+                        }
+                      ]
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "quick": true
+        }
+      ]
+    },
+    {
+      "title": "Access-Accept",
+      "desc": "And a key for the access point",
+      "detail": "The server answers Access-Accept. Inside are EAP Success for the laptop; the first 32 bytes of the key material for the access point, encrypted with the shared secret (MS-MPPE-Recv-Key); and VLAN 20, so this user lands on the staff network. The same access point could put another user on another VLAN.",
+      "facts": [
+        [
+          "Answer",
+          "Access-Accept"
+        ],
+        [
+          "AP gets",
+          "The key (MS-MPPE-Recv-Key)"
+        ],
+        [
+          "VLAN",
+          "20 (staff)"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "lan",
+          "to": "router",
+          "color": "violet",
+          "label": "ACCESS-ACCEPT",
+          "payload": [
+            "EAP Success",
+            "key, VLAN 20"
+          ],
+          "row": {
+            "time": "0.065s",
+            "src": "192.168.1.20",
+            "dst": "192.168.1.2",
+            "proto": "RADIUS",
+            "info": "Access-Accept id=84",
+            "len": "218 B",
+            "wire": {
+              "udp": {
+                "sport": 1812,
+                "dport": 50112,
+                "data": {
+                  "radius": {
+                    "code": 2,
+                    "id": 84,
+                    "attrs": [
+                      [
+                        "Message-Authenticator"
+                      ],
+                      [
+                        "Tunnel-Type",
+                        13
+                      ],
+                      [
+                        "Tunnel-Medium-Type",
+                        6
+                      ],
+                      [
+                        "Tunnel-Private-Group-Id",
+                        "20"
+                      ],
+                      [
+                        "MS-MPPE-Recv-Key"
+                      ],
+                      [
+                        "MS-MPPE-Send-Key"
+                      ],
+                      [
+                        "EAP-Message",
+                        {
+                          "code": 3,
+                          "id": 4
+                        }
+                      ]
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "router",
+          "to": "client",
+          "color": "amber",
+          "label": "SUCCESS",
+          "payload": [
+            "EAP Success"
+          ],
+          "row": {
+            "time": "0.066s",
+            "src": "00:00:5e:00:53:01",
+            "dst": "00:00:5e:00:53:10",
+            "proto": "EAP",
+            "info": "Success",
+            "len": "42 B",
+            "wire": {
+              "wifi": {
+                "from": "ap",
+                "kind": "eapol",
+                "duration": 44,
+                "seq": 1524,
+                "eap": {
+                  "code": 3,
+                  "id": 4
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "4-Way Handshake",
+      "desc": "As at home, from a different key",
+      "detail": "The access point and the laptop now hold the same 32-byte key, the PMK. What follows is the 4-way handshake from the Wi-Fi lesson; only the PMK’s origin differs. At home it comes from the shared password, here from this one login, so every user gets different keys.",
+      "facts": [
+        [
+          "PMK from",
+          "This login"
+        ],
+        [
+          "At home",
+          "From the shared password"
+        ],
+        [
+          "Then",
+          "Encrypted data (CCMP)"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "router",
+          "to": "client",
+          "color": "teal",
+          "label": "MESSAGE 1",
+          "payload": [
+            "ANonce"
+          ],
+          "row": {
+            "time": "0.068s",
+            "src": "00:00:5e:00:53:01",
+            "dst": "00:00:5e:00:53:10",
+            "proto": "EAPOL",
+            "info": "Key (Message 1 of 4)",
+            "len": "133 B",
+            "wire": {
+              "wifi": {
+                "from": "ap",
+                "kind": "eapol",
+                "duration": 44,
+                "seq": 1525,
+                "msg": 1
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "router",
+          "color": "teal",
+          "label": "MESSAGE 2",
+          "payload": [
+            "SNonce + MIC"
+          ],
+          "row": {
+            "time": "0.071s",
+            "src": "00:00:5e:00:53:10",
+            "dst": "00:00:5e:00:53:01",
+            "proto": "EAPOL",
+            "info": "Key (Message 2 of 4)",
+            "len": "155 B",
+            "wire": {
+              "wifi": {
+                "from": "sta",
+                "kind": "eapol",
+                "duration": 44,
+                "seq": 214,
+                "msg": 2,
+                "akm": 1
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "router",
+          "to": "client",
+          "color": "teal",
+          "label": "MESSAGE 3",
+          "payload": [
+            "group key, MIC"
+          ],
+          "row": {
+            "time": "0.073s",
+            "src": "00:00:5e:00:53:01",
+            "dst": "00:00:5e:00:53:10",
+            "proto": "EAPOL",
+            "info": "Key (Message 3 of 4)",
+            "len": "189 B",
+            "wire": {
+              "wifi": {
+                "from": "ap",
+                "kind": "eapol",
+                "duration": 44,
+                "seq": 1526,
+                "msg": 3,
+                "keyData": 56
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "router",
+          "color": "teal",
+          "label": "MESSAGE 4",
+          "payload": [
+            "keys installed"
+          ],
+          "row": {
+            "time": "0.075s",
+            "src": "00:00:5e:00:53:10",
+            "dst": "00:00:5e:00:53:01",
+            "proto": "EAPOL",
+            "info": "Key (Message 4 of 4)",
+            "len": "133 B",
+            "wire": {
+              "wifi": {
+                "from": "sta",
+                "kind": "eapol",
+                "duration": 44,
+                "seq": 215,
+                "msg": 4
+              }
+            }
+          },
+          "quick": true
+        }
+      ]
+    },
+    {
+      "title": "Why Enterprise",
+      "desc": "One account per person",
+      "detail": "When someone leaves, their account is disabled and nobody else changes a password. Every login gets its own keys, so users can’t read each other’s traffic, and the RADIUS server records who connected and when. eduroam works the same way: a visitor’s login for user@their-university is passed from RADIUS server to RADIUS server until it reaches their own university.",
+      "facts": [
+        [
+          "A user leaves",
+          "Disable one account"
+        ],
+        [
+          "Keys",
+          "Different for every user"
+        ],
+        [
+          "eduroam",
+          "Login passed home"
+        ]
+      ],
+      "events": [
+        {
+          "type": "note",
+          "at": "lan",
+          "text": "ONE ACCOUNT PER PERSON",
+          "tone": "navy"
+        }
+      ]
+    }
+  ],
+  "teaching": {
+    "steps": [
+      [
+        "Bạn là ai?",
+        "Laptop đã vào “Office”, một mạng WPA2-Enterprise, nhưng cho đến khi đăng nhập, điểm truy cập không cho qua gì ngoài thông điệp đăng nhập. Nó hỏi laptop là ai bằng yêu cầu EAP Identity, và laptop trả lời alex@example.org. Điểm truy cập không biết tài khoản nào: nó sẽ chuyển câu trả lời tới máy chủ RADIUS."
+      ],
+      [
+        "Hỏi RADIUS",
+        "Điểm truy cập chép thông điệp EAP vào một RADIUS Access-Request và gửi tới máy chủ RADIUS trên cổng UDP 1812, kèm địa chỉ MAC của laptop và tên mạng. Một bí mật chỉ hai bên biết bảo vệ mọi gói. Máy chủ trả lời bằng Access-Challenge: thông điệp tiếp theo cho laptop, tức “bắt đầu EAP-TLS”."
+      ],
+      [
+        "TLS bên trong EAP",
+        "Giờ laptop và máy chủ chạy bắt tay TLS 1.3 bên trong EAP; điểm truy cập đóng gói lại mỗi thông điệp, EAPOL qua sóng và RADIUS qua dây. Máy chủ gửi chứng chỉ và xin chứng chỉ của laptop. Laptop kiểm tra rằng nó do tổ chức chứng thực của chính công ty cấp cho radius.example.org. Bước kiểm tra đó ngăn điểm truy cập giả bắt được phần đăng nhập."
+      ],
+      [
+        "Bằng chứng của laptop",
+        "Laptop trả lời bằng chứng chỉ của nó, do công ty cấp cho người dùng này, và một chữ ký tạo bằng khóa riêng; khóa không bao giờ rời laptop. Không cần mật khẩu. Máy chủ kiểm tra chứng chỉ và chữ ký rồi tra tài khoản. Nhiều mạng, trong đó có eduroam, dùng mật khẩu thay vào đó, gửi bên trong đường hầm TLS (PEAP hoặc EAP-TTLS)."
+      ],
+      [
+        "Bắt tay xong",
+        "Với TLS 1.3, máy chủ sau đó gửi một thông điệp mã hóa tí hon, một byte 0, để báo bắt tay đã xong, và laptop trả lời bằng một thông điệp EAP rỗng. Giờ cả hai đầu có cùng 64 byte vật liệu khóa, tính ra trong lúc bắt tay. Không ai trên đường thấy nó, kể cả điểm truy cập."
+      ],
+      [
+        "Access-Accept",
+        "Máy chủ trả lời Access-Accept. Bên trong có EAP Success cho laptop; 32 byte đầu của vật liệu khóa cho điểm truy cập, mã hóa bằng bí mật dùng chung (MS-MPPE-Recv-Key); và VLAN 20, để người dùng này vào mạng nhân viên. Cùng điểm truy cập đó có thể đặt người dùng khác vào VLAN khác."
+      ],
+      [
+        "Bắt tay 4 bước",
+        "Giờ điểm truy cập và laptop có cùng một khóa 32 byte, PMK. Tiếp theo là bắt tay 4 bước trong bài Wi-Fi; chỉ nguồn gốc của PMK khác. Ở nhà nó đến từ mật khẩu chung, ở đây từ chính lần đăng nhập này, nên mỗi người dùng có khóa khác nhau."
+      ],
+      [
+        "Vì sao Enterprise",
+        "Khi ai đó rời đi, tài khoản của họ bị vô hiệu hóa và không ai khác phải đổi mật khẩu. Mỗi lần đăng nhập có khóa riêng, nên người dùng không đọc được lưu lượng của nhau, và máy chủ RADIUS ghi lại ai đã kết nối và khi nào. eduroam hoạt động cùng cách: lần đăng nhập của một khách cho user@trường-của-họ được chuyển từ máy chủ RADIUS này sang máy chủ RADIUS khác cho đến khi tới trường của họ."
+      ]
+    ],
+    "notes": {
+      "ONE ACCOUNT PER PERSON": "MỖI NGƯỜI MỘT TÀI KHOẢN"
+    },
+    "labels": {
+      "Internet": "Internet",
+      "Client": "Máy khách",
+      "Router": "Router",
+      "DNS Resolver": "Bộ phân giải DNS",
+      "Web Server": "Máy chủ web",
+      "Root Server": "Máy chủ gốc",
+      ".com TLD Server": "Máy chủ TLD .com",
+      "Authoritative Server": "Máy chủ có thẩm quyền",
+      "Mail Server": "Máy chủ thư",
+      "Proxy": "Proxy",
+      "App Server": "Máy chủ ứng dụng",
+      "File Server": "Máy chủ tệp",
+      "ISP Router": "Router của ISP",
+      "Transit Router": "Router trung chuyển",
+      "Hosting Router": "Router của nhà lưu trữ",
+      "Their Router": "Router bên kia",
+      "Their Laptop": "Laptop bên kia",
+      "Switch": "Switch",
+      "Access Server": "Máy chủ truy cập",
+      "IP Camera": "Camera IP",
+      "TV Box": "TV box",
+      "Access Point": "Điểm truy cập",
+      "RADIUS Server": "Máy chủ RADIUS"
+    }
+  }
+}

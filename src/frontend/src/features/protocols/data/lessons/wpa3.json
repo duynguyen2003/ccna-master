@@ -1,0 +1,582 @@
+{
+  "id": "wpa3",
+  "name": "WPA3",
+  "title": "Safer Wi-Fi",
+  "layer": 2,
+  "nodes": [
+    "client",
+    "router"
+  ],
+  "latency": {
+    "client-router": 0.001
+  },
+  "labels": {
+    "client": [
+      "Client",
+      "MAC …:53:10"
+    ],
+    "router": [
+      "Access Point",
+      "\"HomeNet\""
+    ]
+  },
+  "legend": [
+    [
+      "violet",
+      "From the access point"
+    ],
+    [
+      "amber",
+      "From the laptop"
+    ],
+    [
+      "teal",
+      "4-way handshake"
+    ]
+  ],
+  "overview": {
+    "full": "Wi-Fi Protected Access 3",
+    "description": "WPA3 is the current Wi-Fi security standard. Its Personal mode keeps the simple shared password but changes how it is checked: SAE, a password exchange that no recording can attack offline, gives every connection a fresh key. It also makes protected management frames compulsory.",
+    "facts": [
+      [
+        "Layer",
+        "Data Link (Layer 2)"
+      ],
+      [
+        "Password check",
+        "SAE (Dragonfly)"
+      ],
+      [
+        "Then",
+        "The 4-way handshake"
+      ],
+      [
+        "Required",
+        "Protected management frames"
+      ],
+      [
+        "Since",
+        "2018"
+      ],
+      [
+        "Defined In",
+        "IEEE 802.11-2020, RFC 7664"
+      ]
+    ]
+  },
+  "outro": {
+    "title": "Connected with WPA3",
+    "desc": "Same password, better protocol",
+    "text": "The laptop and the access point proved to each other that they know the password without giving anyone a way to test guesses offline, then made fresh keys exactly as WPA2 does. Press REPLAY to watch it again.",
+    "facts": [
+      [
+        "SAE frames",
+        "4 (commit, confirm)"
+      ],
+      [
+        "Handshake",
+        "4 EAPOL-Key frames"
+      ],
+      [
+        "Offline guessing",
+        "Not possible"
+      ],
+      [
+        "Forged disconnects",
+        "Ignored"
+      ]
+    ]
+  },
+  "start": {
+    "nodes": [
+      "client"
+    ],
+    "frame": "client"
+  },
+  "steps": [
+    {
+      "title": "A WPA3 Network",
+      "desc": "The beacon asks for SAE",
+      "detail": "The beacon looks like WPA2’s with two changes in its RSN element: the key management is SAE instead of PSK, and protected management frames are required. Everyone still uses one shared password.",
+      "facts": [
+        [
+          "Key management",
+          "SAE"
+        ],
+        [
+          "Management frames",
+          "Protected (required)"
+        ],
+        [
+          "Password",
+          "Still one for everyone"
+        ]
+      ],
+      "events": [
+        {
+          "type": "show",
+          "nodes": [
+            "router"
+          ],
+          "frame": "local"
+        },
+        {
+          "type": "packet",
+          "from": "router",
+          "to": "client",
+          "color": "violet",
+          "label": "BEACON",
+          "payload": [
+            "SSID \"HomeNet\"",
+            "WPA3 (SAE)"
+          ],
+          "row": {
+            "time": "0.000s",
+            "src": "00:00:5e:00:53:01",
+            "dst": "Broadcast",
+            "proto": "802.11",
+            "info": "Beacon, SSID \"HomeNet\"",
+            "len": "279 B",
+            "wire": {
+              "wifi": {
+                "from": "ap",
+                "duration": 0,
+                "kind": "beacon",
+                "seq": 2040,
+                "ssid": "HomeNet",
+                "akm": 8,
+                "ts": 92418866310,
+                "other": 196
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "SAE Commit",
+      "desc": "Each side commits to the password",
+      "detail": "Instead of Open System authentication, the two sides run SAE, a password exchange between equals. Each picks a random secret and sends a scalar and an element worked out from that secret and the password. The password is the same on both sides, the secrets are not, so every connection ends up with a new key.",
+      "facts": [
+        [
+          "Group",
+          "19 (256-bit curve)"
+        ],
+        [
+          "Each sends",
+          "A scalar and an element"
+        ],
+        [
+          "Replaces",
+          "Open System authentication"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "router",
+          "color": "amber",
+          "label": "COMMIT",
+          "payload": [
+            "scalar + element"
+          ],
+          "row": {
+            "time": "0.040s",
+            "src": "00:00:5e:00:53:10",
+            "dst": "00:00:5e:00:53:01",
+            "proto": "802.11",
+            "info": "Authentication (SAE), Commit",
+            "len": "128 B",
+            "wire": {
+              "wifi": {
+                "from": "sta",
+                "duration": 44,
+                "kind": "auth",
+                "seq": 330,
+                "alg": 3,
+                "trans": 1,
+                "sae": "Commit"
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "router",
+          "to": "client",
+          "color": "violet",
+          "label": "COMMIT",
+          "payload": [
+            "scalar + element"
+          ],
+          "row": {
+            "time": "0.043s",
+            "src": "00:00:5e:00:53:01",
+            "dst": "00:00:5e:00:53:10",
+            "proto": "802.11",
+            "info": "Authentication (SAE), Commit",
+            "len": "128 B",
+            "wire": {
+              "wifi": {
+                "from": "ap",
+                "duration": 44,
+                "kind": "auth",
+                "seq": 2041,
+                "alg": 3,
+                "trans": 1,
+                "sae": "Commit"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "SAE Confirm",
+      "desc": "Proof, without the password",
+      "detail": "Each side now works out the shared key and sends a confirm, a value only someone with the right password could produce. Recording all four SAE frames doesn’t let an attacker test guesses at home: every guess takes a live exchange with the access point, which can slow them down or shut them out.",
+      "facts": [
+        [
+          "Result",
+          "A new key (PMK) each time"
+        ],
+        [
+          "Guessing",
+          "Live only, never offline"
+        ],
+        [
+          "Password leaks",
+          "Past traffic stays safe"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "router",
+          "color": "amber",
+          "label": "CONFIRM",
+          "payload": [
+            "proof of the key"
+          ],
+          "row": {
+            "time": "0.046s",
+            "src": "00:00:5e:00:53:10",
+            "dst": "00:00:5e:00:53:01",
+            "proto": "802.11",
+            "info": "Authentication (SAE), Confirm",
+            "len": "64 B",
+            "wire": {
+              "wifi": {
+                "from": "sta",
+                "duration": 44,
+                "kind": "auth",
+                "seq": 331,
+                "alg": 3,
+                "trans": 2,
+                "sae": "Confirm"
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "router",
+          "to": "client",
+          "color": "violet",
+          "label": "CONFIRM",
+          "payload": [
+            "proof of the key"
+          ],
+          "row": {
+            "time": "0.048s",
+            "src": "00:00:5e:00:53:01",
+            "dst": "00:00:5e:00:53:10",
+            "proto": "802.11",
+            "info": "Authentication (SAE), Confirm",
+            "len": "64 B",
+            "wire": {
+              "wifi": {
+                "from": "ap",
+                "duration": 44,
+                "kind": "auth",
+                "seq": 2042,
+                "alg": 3,
+                "trans": 2,
+                "sae": "Confirm"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Join, Handshake",
+      "desc": "Then the 4-way handshake, as in WPA2",
+      "detail": "Association works as before, repeating the choice of SAE. The 4-way handshake that follows is WPA2’s, starting from the key SAE just made, except that message 3 also brings the IGTK, a key that signs broadcast management frames.",
+      "facts": [
+        [
+          "Association ID",
+          "1"
+        ],
+        [
+          "Message 3 adds",
+          "IGTK"
+        ],
+        [
+          "Cipher",
+          "CCMP (AES)"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "router",
+          "color": "amber",
+          "label": "ASSOCIATE",
+          "payload": [
+            "join \"HomeNet\"",
+            "SAE"
+          ],
+          "row": {
+            "time": "0.050s",
+            "src": "00:00:5e:00:53:10",
+            "dst": "00:00:5e:00:53:01",
+            "proto": "802.11",
+            "info": "Association Request, SSID \"HomeNet\"",
+            "len": "155 B",
+            "wire": {
+              "wifi": {
+                "from": "sta",
+                "duration": 44,
+                "kind": "assoc-req",
+                "seq": 332,
+                "ssid": "HomeNet",
+                "akm": 8,
+                "other": 86
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "router",
+          "to": "client",
+          "color": "violet",
+          "label": "ASSOCIATED",
+          "payload": [
+            "association ID 1"
+          ],
+          "row": {
+            "time": "0.052s",
+            "src": "00:00:5e:00:53:01",
+            "dst": "00:00:5e:00:53:10",
+            "proto": "802.11",
+            "info": "Association Response, AID 1",
+            "len": "200 B",
+            "wire": {
+              "wifi": {
+                "from": "ap",
+                "duration": 44,
+                "kind": "assoc-resp",
+                "seq": 2043,
+                "other": 160
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "router",
+          "to": "client",
+          "color": "teal",
+          "label": "MESSAGE 1",
+          "payload": [],
+          "row": {
+            "time": "0.055s",
+            "src": "00:00:5e:00:53:01",
+            "dst": "00:00:5e:00:53:10",
+            "proto": "EAPOL",
+            "info": "Key (Message 1 of 4)",
+            "len": "133 B",
+            "wire": {
+              "wifi": {
+                "from": "ap",
+                "duration": 44,
+                "kind": "eapol",
+                "seq": 2044,
+                "msg": 1,
+                "sae": true
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "router",
+          "color": "teal",
+          "label": "MESSAGE 2",
+          "payload": [],
+          "row": {
+            "time": "0.058s",
+            "src": "00:00:5e:00:53:10",
+            "dst": "00:00:5e:00:53:01",
+            "proto": "EAPOL",
+            "info": "Key (Message 2 of 4)",
+            "len": "155 B",
+            "wire": {
+              "wifi": {
+                "from": "sta",
+                "duration": 44,
+                "kind": "eapol",
+                "seq": 333,
+                "msg": 2,
+                "sae": true
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "router",
+          "to": "client",
+          "color": "teal",
+          "label": "MESSAGE 3",
+          "payload": [],
+          "row": {
+            "time": "0.060s",
+            "src": "00:00:5e:00:53:01",
+            "dst": "00:00:5e:00:53:10",
+            "proto": "EAPOL",
+            "info": "Key (Message 3 of 4)",
+            "len": "221 B",
+            "wire": {
+              "wifi": {
+                "from": "ap",
+                "duration": 44,
+                "kind": "eapol",
+                "seq": 2045,
+                "msg": 3,
+                "sae": true,
+                "keyData": 88
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "router",
+          "color": "teal",
+          "label": "MESSAGE 4",
+          "payload": [],
+          "row": {
+            "time": "0.061s",
+            "src": "00:00:5e:00:53:10",
+            "dst": "00:00:5e:00:53:01",
+            "proto": "EAPOL",
+            "info": "Key (Message 4 of 4)",
+            "len": "133 B",
+            "wire": {
+              "wifi": {
+                "from": "sta",
+                "duration": 44,
+                "kind": "eapol",
+                "seq": 334,
+                "msg": 4,
+                "sae": true
+              }
+            }
+          },
+          "quick": true
+        }
+      ]
+    },
+    {
+      "title": "Why It’s Safer",
+      "desc": "Forged disconnects stop working",
+      "detail": "With WPA2, anyone in range could forge a “disconnect” frame and knock a device off the network, often to record its handshake when it joined again. WPA3 requires protected management frames, so forged disconnects are ignored. Many routers also offer a transition mode that lets WPA2 devices join too; those devices keep WPA2’s weaknesses.",
+      "facts": [
+        [
+          "Protected",
+          "Disconnects, other management"
+        ],
+        [
+          "WPA2/3 mode",
+          "WPA2 devices stay at risk"
+        ],
+        [
+          "Stronger still",
+          "WPA3-Enterprise (192-bit)"
+        ]
+      ],
+      "events": [
+        {
+          "type": "note",
+          "at": "client",
+          "text": "MANAGEMENT FRAMES PROTECTED",
+          "tone": "green"
+        }
+      ]
+    }
+  ],
+  "teaching": {
+    "steps": [
+      [
+        "Một mạng WPA3",
+        "Beacon trông giống của WPA2 với hai thay đổi trong phần tử RSN: quản lý khóa là SAE thay vì PSK, và khung quản lý được bảo vệ là bắt buộc. Mọi người vẫn dùng một mật khẩu chung."
+      ],
+      [
+        "SAE Commit",
+        "Thay cho xác thực Open System, hai bên chạy SAE, một trao đổi mật khẩu ngang hàng. Mỗi bên chọn một bí mật ngẫu nhiên và gửi một vô hướng và một phần tử tính từ bí mật đó và mật khẩu. Mật khẩu ở hai bên giống nhau, bí mật thì không, nên mỗi kết nối kết thúc với một khóa mới."
+      ],
+      [
+        "SAE Confirm",
+        "Giờ mỗi bên tính ra khóa chung và gửi một confirm, giá trị mà chỉ ai có đúng mật khẩu mới tạo ra được. Ghi lại cả bốn khung SAE không giúp kẻ tấn công thử đoán tại nhà: mỗi lần đoán cần một trao đổi trực tiếp với điểm truy cập, nơi có thể làm chậm hoặc chặn họ."
+      ],
+      [
+        "Vào mạng, bắt tay",
+        "Liên kết vẫn như trước, nhắc lại lựa chọn SAE. Bắt tay 4 bước theo sau là của WPA2, bắt đầu từ khóa SAE vừa tạo, chỉ khác là thông điệp 3 còn mang IGTK, một khóa ký các khung quản lý quảng bá."
+      ],
+      [
+        "Vì sao an toàn hơn",
+        "Với WPA2, bất kỳ ai trong vùng phủ đều có thể giả một khung “ngắt kết nối” và đá thiết bị khỏi mạng, thường để ghi lại bắt tay khi nó vào lại. WPA3 bắt buộc khung quản lý được bảo vệ, nên ngắt kết nối giả mạo bị bỏ qua. Nhiều router còn có chế độ chuyển tiếp cho thiết bị WPA2 vào cùng; những thiết bị đó vẫn mang điểm yếu của WPA2."
+      ]
+    ],
+    "notes": {
+      "MANAGEMENT FRAMES PROTECTED": "KHUNG QUẢN LÝ ĐƯỢC BẢO VỆ"
+    },
+    "labels": {
+      "Internet": "Internet",
+      "Client": "Máy khách",
+      "Router": "Router",
+      "DNS Resolver": "Bộ phân giải DNS",
+      "Web Server": "Máy chủ web",
+      "Root Server": "Máy chủ gốc",
+      ".com TLD Server": "Máy chủ TLD .com",
+      "Authoritative Server": "Máy chủ có thẩm quyền",
+      "Mail Server": "Máy chủ thư",
+      "Proxy": "Proxy",
+      "App Server": "Máy chủ ứng dụng",
+      "File Server": "Máy chủ tệp",
+      "ISP Router": "Router của ISP",
+      "Transit Router": "Router trung chuyển",
+      "Hosting Router": "Router của nhà lưu trữ",
+      "Their Router": "Router bên kia",
+      "Their Laptop": "Laptop bên kia",
+      "Switch": "Switch",
+      "Access Server": "Máy chủ truy cập",
+      "IP Camera": "Camera IP",
+      "TV Box": "TV box",
+      "Access Point": "Điểm truy cập"
+    }
+  }
+}

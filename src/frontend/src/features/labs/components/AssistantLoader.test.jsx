@@ -32,6 +32,22 @@ test('loader exposes status and close during chunk loading, then shows the loade
   expect(screen.queryByRole('status')).not.toBeInTheDocument();
 });
 
+test('embedded loading and errors leave the title and close action to the host sidebar', async () => {
+  const chunk = pending();
+  render(
+    <AssistantLoader embedded load={() => chunk.promise} onClose={jest.fn()}>
+      {(Panel) => <Panel />}
+    </AssistantLoader>
+  );
+  expect(screen.getByRole('status')).toHaveTextContent('Đang tải trợ lý');
+  expect(screen.queryByRole('heading', { name: 'Trợ lý AI' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Đóng trợ lý AI' })).not.toBeInTheDocument();
+  await act(async () => chunk.resolve({}));
+  expect(screen.getByRole('alert')).toHaveTextContent('Chưa tải được trợ lý');
+  expect(screen.getByRole('button', { name: 'Thử lại' })).toBeEnabled();
+  expect(screen.queryByRole('heading', { name: 'Trợ lý AI' })).not.toBeInTheDocument();
+});
+
 test('chunk timeout offers retry and ignores the previous attempt arriving late', async () => {
   jest.useFakeTimers();
   const old = pending();

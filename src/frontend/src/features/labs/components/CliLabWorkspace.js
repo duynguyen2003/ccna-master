@@ -4,11 +4,11 @@ import { COPY_ERROR } from '@ccna/agent-ui/clipboard';
 import React, { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   History,
-  Laptop,
   Lightbulb,
   Link2,
   LockKeyhole,
   Radio,
+  ListOrdered,
   Sparkles,
   Trophy,
   X,
@@ -17,11 +17,15 @@ import { api } from '../../../services/Api';
 import DropdownSelect from '../../../components/ui/DropdownSelect';
 import SlidingTabs from '../../../components/ui/SlidingTabs';
 import NetworkTopology from './NetworkTopology';
+import { createObservation, observationKey } from '../../protocols/model/observation';
+import useObservationPlayback from '../../protocols/hooks/useObservationPlayback';
 import { runThemeTransition } from '../../../components/ui/themeTransition';
 import '../styles/LabWorkspace.css';
+import PacketTracePanel from './PacketTracePanel';
 import AnimatedCopyButton from '../../../components/ui/AnimatedCopyButton';
 import Dialog from '../../../components/ui/Dialog';
 import AssistantLoader from '@ccna/agent-ui/loader';
+import DroidAvatar from '@ccna/agent-ui/avatar';
 import useTerminalHeight from '../hooks/useTerminalHeight';
 import LabObjectives from './LabObjectives';
 import LabDisclosure from './LabDisclosure';
@@ -31,6 +35,7 @@ import { gsap, prefersReducedMotion } from '../utils/labMotion';
 import { storeTransitionEvent } from '../../courses/hooks/useLearningProgress';
 import CliTerminal from './CliTerminal';
 import MarkdownRenderer from '../../../components/common/MarkdownRenderer';
+import '../styles/LabWorkspaceLayout.css';
 import {
   buildPreviewAttempt,
   gradePreview,
@@ -59,6 +64,13 @@ const MODE_SUFFIX = {
   ACL_CONFIG: '(config-ext-nacl)#',
 };
 const canPractice = (value) => value?.canPractice ?? value?.status === 'IN_PROGRESS';
+const SIDE_TITLES = {
+  tasks: 'Mục tiêu',
+  assistant: 'Trợ lý AI',
+  probe: 'Kiểm tra kết nối',
+  trace: 'Hành trình gói tin',
+  history: 'Lịch sử thao tác',
+};
 
 const LabRestartConfirmation = lazy(() => import('./LabRestartConfirmation'));
 const loadAssistant = () => import('./AiLabAssistant');
@@ -130,7 +142,10 @@ export default function CliLabWorkspace({
   const [destination, setDestination] = useState('');
   const [protocol, setProtocol] = useState('icmp');
   const [port, setPort] = useState(80);
-  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const probeInput = useRef(null);
+  const probeTrigger = useRef(null);
+  const historyInput = useRef(null);
+  const historyTrigger = useRef(null);
   const [debugMode, setDebugMode] = useState(false);
   const [restartConfirm, setRestartConfirm] = useState(false);
   const [converging, setConverging] = useState(false);
@@ -138,22 +153,104 @@ export default function CliLabWorkspace({
   const sessionMenuTrigger = useRef(null);
   const [hintOpen, setHintOpen] = useState(false);
   const [secondaryPanel, setSecondaryPanel] = useState(null);
-  const [assistantWidth, setAssistantWidth] = useState(null);
+  const [assistantMounted, setAssistantMounted] = useState(false);
+  const [assistantWorking, setAssistantWorking] = useState(false);
+  const [assistantFocusRequest, setAssistantFocusRequest] = useState(0);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const sidebarTrigger = useRef(null);
+  const tasksTab = useRef(null);
+  const [mobileView, setMobileView] = useState('network');
+  const [traceMode, setTraceMode] = useState('closed');
+  const traceTrigger = useRef(null);
+  const [detailTarget, setDetailTarget] = useState(null);
+  const [compactViewport, setCompactViewport] = useState(() => window.innerWidth <= 900);
+  useEffect(() => {
+    const media = window.matchMedia?.('(max-width: 900px)');
+    const update = () => setCompactViewport(Boolean(media?.matches));
+    update();
+    media?.addEventListener?.('change', update);
+    return () => media?.removeEventListener?.('change', update);
+  }, []);
   const assistantEnabled = Boolean(
     token && user?.id && !isPreview && !replay && canPractice(attempt)
   );
   const isReplay = Boolean(replay);
   useEffect(() => {
     setSecondaryPanel(null);
-  }, [token, attempt?.id, isReplay]);
+  }, [token, attempt?.id]);
+  useEffect(() => {
+    setSecondaryPanel((panel) => (panel === 'history' ? panel : null));
+  }, [isReplay]);
   const [pulseTaskId, setPulseTaskId] = useState('');
   const [focusedTaskId, setFocusedTaskId] = useState('');
   const drafts = useRef({});
-  const [tasksCollapsed, setTasksCollapsed] = useState(false);
   const [terminalShakeKey, setTerminalShakeKey] = useState(0);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState(0);
   const [theme, setTheme] = useState('light');
+  const openAssistant = () => {
+    setTraceMode((mode) => (mode === 'detail' ? 'quick' : mode));
+    setAssistantMounted(true);
+    setAssistantFocusRequest((value) => value + 1);
+    setSidebarCollapsed(false);
+    setSecondaryPanel('assistant');
+    setMobileView('assistant');
+  };
+  const sideTab = ['assistant', 'probe', 'trace', 'history'].includes(secondaryPanel)
+    ? secondaryPanel
+    : 'tasks';
+  useEffect(() => {
+    if (sideTab === 'probe' && !sidebarCollapsed && (!compactViewport || mobileView === 'probe'))
+      probeInput.current?.focus();
+  }, [sideTab, sidebarCollapsed, compactViewport, mobileView]);
+  const openTasks = () => {
+    setSidebarCollapsed(false);
+    setSecondaryPanel(null);
+    setMobileView('tasks');
+    setTraceMode((mode) => (mode === 'detail' ? 'quick' : mode));
+    requestAnimationFrame(() => {
+      if (compactViewport)
+        dialog.current?.querySelector('[aria-label="Mở mục tiêu trên điện thoại"]')?.focus();
+      else tasksTab.current?.focus();
+    });
+  };
+  const closeSidebar = () => {
+    setSidebarCollapsed(true);
+    setMobileView('network');
+    setTraceMode((mode) => (mode === 'detail' ? 'quick' : mode));
+    if (sideTab === 'trace') setSecondaryPanel(null);
+    requestAnimationFrame(() => {
+      if (!compactViewport) sidebarTrigger.current?.focus();
+      else if (sideTab === 'probe') probeTrigger.current?.focus();
+      else dialog.current?.querySelector('[aria-label="Xem sơ đồ mạng"]')?.focus();
+    });
+  };
+  useEffect(() => {
+    if (
+      sideTab === 'history' &&
+      !sidebarCollapsed &&
+      (!compactViewport || mobileView === 'history')
+    )
+      historyInput.current?.focus();
+  }, [sideTab, sidebarCollapsed, compactViewport, mobileView]);
+  useEffect(() => {
+    setAssistantMounted(false);
+    setAssistantWorking(false);
+    setTraceMode('closed');
+    setMobileView('network');
+  }, [token, attempt?.id]);
+  const changeTraceMode = (mode) => {
+    setTraceMode(mode);
+    if (mode === 'detail') {
+      setSidebarCollapsed(false);
+      setSecondaryPanel('trace');
+      setMobileView('trace');
+    } else if (secondaryPanel === 'trace') {
+      setSecondaryPanel(null);
+      setMobileView('network');
+    }
+    if (mode === 'hidden') requestAnimationFrame(() => traceTrigger.current?.focus());
+  };
   const requestedTheme = useRef('light');
   const themeTransition = useRef(null);
   useEffect(() => () => themeTransition.current?.(), []);
@@ -169,6 +266,7 @@ export default function CliLabWorkspace({
   const progress = useMemo(() => normalizeProgress(attempt), [attempt]);
   const displayedProgress = replay?.progress || progress;
   const displayed = replay?.state || attempt?.state;
+  const workspaceView = !displayed?.devices && mobileView === 'network' ? 'terminal' : mobileView;
   const active = displayed?.devices
     ? displayed.devices[deviceId]
       ? { ...displayed.devices[deviceId], id: deviceId }
@@ -497,6 +595,7 @@ export default function CliLabWorkspace({
     if (task.deviceId && displayed?.devices?.[task.deviceId]) selectDevice(task.deviceId);
     setFocusedTaskId(task.id);
     setHintOpen(true);
+    setMobileView('network');
   };
 
   const toggleSelectedLink = () => {
@@ -594,14 +693,32 @@ export default function CliLabWorkspace({
         }
       : null;
 
+  const traceKey = observationKey(
+    displayed?.lastPacket,
+    `${attempt?.id || ''}:${replay ? `history:${replay.sequence}` : 'live'}:${packetAnimationKey(displayed?.lastPacket, packetCommand)}`
+  );
+  const observation = useMemo(
+    () => createObservation(displayed?.lastPacket, traceKey),
+    [displayed?.lastPacket, traceKey]
+  );
+  const playback = useObservationPlayback(observation, { autoPlay: !isReplay });
+
   const closeOnEscape = (event) => {
     if (event.target.closest('.ui-dialog')) return;
     if (event.key === 'Escape') {
       event.stopPropagation();
       if (showOnboarding) {
         dismissOnboarding();
+      } else if (secondaryPanel === 'probe' || secondaryPanel === 'assistant') {
+        closeSidebar();
+      } else if (secondaryPanel === 'trace') {
+        changeTraceMode('quick');
       } else if (secondaryPanel) {
         setSecondaryPanel(null);
+        if (secondaryPanel === 'history') {
+          setMobileView('terminal');
+          requestAnimationFrame(() => historyTrigger.current?.focus());
+        }
       } else if (sessionMenu.current?.open) {
         sessionMenu.current.open = false;
       } else if (!page) {
@@ -652,7 +769,7 @@ export default function CliLabWorkspace({
   const captureEscape = (event) => {
     if (
       event.target.closest(
-        '[data-ai-panel], .ui-dialog, [role="combobox"][aria-expanded="true"], [role="listbox"]'
+        '[data-ai-panel], .lab-trace, .lab-trace-detail, .ui-dialog, [role="combobox"][aria-expanded="true"], [role="listbox"]'
       )
     )
       return;
@@ -678,30 +795,39 @@ export default function CliLabWorkspace({
                   ? 'Chưa đồng bộ'
                   : 'Đã lưu'}
       </span>
-      {!isPreview && (
-        <>
-          <button
-            type="button"
-            className="cli-lab-session-button cli-lab-button cli-lab-button--tertiary"
-            aria-label="Thành tích"
-            onClick={openAchievements}
-            aria-expanded={secondaryPanel === 'achievements'}
-          >
-            <Trophy size={15} aria-hidden="true" />
-            <span className="cli-lab-action-label">Thành tích</span>
-          </button>
-          <button
-            type="button"
-            className="cli-lab-session-button cli-lab-button cli-lab-button--secondary"
-            disabled={!assistantEnabled}
-            onClick={() =>
-              setSecondaryPanel((value) => (value === 'assistant' ? null : 'assistant'))
+      {sidebarCollapsed && (
+        <button
+          type="button"
+          ref={sidebarTrigger}
+          className="cli-lab-session-button cli-lab-button cli-lab-button--secondary"
+          aria-label="Mở bảng bên"
+          onClick={() => {
+            if (sideTab === 'assistant' && assistantEnabled) openAssistant();
+            else {
+              setSidebarCollapsed(false);
+              setMobileView(sideTab);
             }
-            aria-expanded={secondaryPanel === 'assistant'}
-          >
-            <Sparkles size={14} aria-hidden="true" /> Trợ lý AI
-          </button>
-        </>
+          }}
+        >
+          {sideTab === 'assistant' ? (
+            <DroidAvatar size={26} busy={assistantWorking} decorative />
+          ) : (
+            <Network size={15} aria-hidden="true" />
+          )}
+          <span>{SIDE_TITLES[sideTab]}</span>
+        </button>
+      )}
+      {!isPreview && (
+        <button
+          type="button"
+          className="cli-lab-session-button cli-lab-button cli-lab-button--tertiary"
+          aria-label="Thành tích"
+          onClick={openAchievements}
+          aria-expanded={secondaryPanel === 'achievements'}
+        >
+          <Trophy size={15} aria-hidden="true" />
+          <span className="cli-lab-action-label">Thành tích</span>
+        </button>
       )}
       <details className="cli-lab-menu" ref={sessionMenu}>
         <summary ref={sessionMenuTrigger} aria-label="Tùy chọn bài thực hành">
@@ -762,37 +888,13 @@ export default function CliLabWorkspace({
       ref={dialog}
       tabIndex={-1}
       data-theme={theme}
-      className={`cli-workspace-overlay cli-lab-theme cli-lab-stitch cli-lab-stitch--${theme} ${page ? 'cli-lab-page' : ''} ${isPreview ? 'cli-lab-preview-mode' : ''}`}
+      className={`cli-workspace-overlay cli-lab-workspace-v2 cli-lab-theme cli-lab-stitch cli-lab-stitch--${theme} ${page ? 'cli-lab-page' : ''} ${isPreview ? 'cli-lab-preview-mode' : ''}`}
       role={page ? 'region' : 'dialog'}
       aria-modal={page ? undefined : true}
       aria-label="Phòng thực hành mạng"
       onKeyDownCapture={captureEscape}
       onKeyDown={closeOnEscape}
     >
-      <div className="cli-mobile-fallback">
-        <div className="cli-mobile-fallback-card">
-          <div className="cli-mobile-fallback-icon">
-            <Laptop size={36} />
-          </div>
-          <h3>Thực hành CLI trên máy tính</h3>
-          <p>
-            Môi trường thực hành mô phỏng mạng Cisco yêu cầu màn hình rộng và bàn phím máy tính.
-          </p>
-          {!isPreview && (
-            <button
-              className="cli-mobile-fallback-btn"
-              disabled={!assistantEnabled}
-              onClick={() => setSecondaryPanel('assistant')}
-            >
-              Mở trợ lý AI
-            </button>
-          )}
-          <button className="cli-mobile-fallback-btn" onClick={onClose}>
-            Về danh sách lab
-          </button>
-        </div>
-      </div>
-
       <div className="cli-workspace network-workspace cli-lab-surface">
         <header className="cli-workspace-header cli-lab-header">
           {page && (
@@ -865,6 +967,46 @@ export default function CliLabWorkspace({
           )}
         </header>
 
+        <nav className="cli-mobile-worknav" aria-label="Khu vực thực hành">
+          {['network', 'terminal', 'tasks', 'assistant'].map((tab) => (
+            <button
+              type="button"
+              key={tab}
+              aria-pressed={workspaceView === tab}
+              aria-label={
+                {
+                  network: 'Xem sơ đồ mạng',
+                  terminal: 'Mở khu vực terminal',
+                  tasks: 'Mở mục tiêu trên điện thoại',
+                  assistant: 'Mở trợ lý trên điện thoại',
+                }[tab]
+              }
+              disabled={
+                (tab === 'assistant' && !assistantEnabled) ||
+                (tab === 'network' && !displayed?.devices)
+              }
+              onClick={() => {
+                setMobileView(tab);
+                setSidebarCollapsed(false);
+                if (tab !== 'assistant')
+                  setTraceMode((mode) => (mode === 'detail' ? 'quick' : mode));
+                if (tab === 'assistant') openAssistant();
+                else if (tab === 'tasks') openTasks();
+              }}
+            >
+              {tab === 'assistant' && <DroidAvatar size={24} busy={assistantWorking} decorative />}
+              {
+                {
+                  network: 'Sơ đồ',
+                  terminal: 'Terminal',
+                  tasks: `Mục tiêu ${displayedProgress.completed}/${displayedProgress.total}`,
+                  assistant: 'Trợ lý AI',
+                }[tab]
+              }
+            </button>
+          ))}
+        </nav>
+
         {error && attempt && (
           <div role="alert" className="cli-workspace-error cli-lab-error">
             {error}
@@ -910,41 +1052,10 @@ export default function CliLabWorkspace({
             )}
 
             <div
-              className={`cli-workspace-body cli-lab-body${secondaryPanel === 'assistant' && assistantEnabled ? ' has-ai-assistant' : ''}`}
-              style={assistantWidth ? { '--ai-lab-panel-width': `${assistantWidth}px` } : undefined}
+              className={`cli-workspace-body cli-lab-body cli-workspace-grid${sidebarCollapsed ? ' is-sidebar-collapsed' : ''}${sideTab === 'trace' ? ' has-trace-detail' : ''}`}
+              data-mobile-view={workspaceView}
+              data-side-view={sideTab}
             >
-              {secondaryPanel === 'assistant' && assistantEnabled && (
-                <AssistantLoader
-                  load={loadAssistant}
-                  Dialog={Dialog}
-                  theme={theme}
-                  onClose={() => setSecondaryPanel(null)}
-                >
-                  {(AiLabAssistant) => (
-                    <AiLabAssistant
-                      key={`${token}:${attempt.id}`}
-                      token={token}
-                      userId={user.id}
-                      attemptId={attempt.id}
-                      revision={attempt.state?.revision ?? 0}
-                      theme={theme}
-                      devices={deviceEntries(attempt.state?.devices).map(([id, device]) => ({
-                        id,
-                        name: device.hostname || id,
-                      }))}
-                      selectedDeviceId={deviceId}
-                      onWidthChange={setAssistantWidth}
-                      taskId={selectedTask?.id}
-                      taskDeviceId={selectedTask?.deviceId}
-                      taskTitle={selectedTask?.title}
-                      onSelectDevice={(id) => {
-                        if (Object.hasOwn(attempt.state?.devices || {}, id)) selectDevice(id);
-                      }}
-                      onClose={() => setSecondaryPanel(null)}
-                    />
-                  )}
-                </AssistantLoader>
-              )}
               <section
                 className="cli-terminal-pane cli-lab-terminal-pane"
                 ref={terminalSize.pane}
@@ -964,12 +1075,39 @@ export default function CliLabWorkspace({
                         data-tour-target="advanced"
                         data-testid="network-experiments"
                       >
+                        {displayed.lastPacket && (
+                          <button
+                            type="button"
+                            ref={traceTrigger}
+                            className="cli-lab-button cli-lab-button--secondary"
+                            aria-label="Hiện hoặc ẩn hành trình gói tin"
+                            aria-expanded={traceMode === 'quick' || traceMode === 'detail'}
+                            onClick={() =>
+                              changeTraceMode(
+                                traceMode === 'quick' || traceMode === 'detail' ? 'hidden' : 'quick'
+                              )
+                            }
+                          >
+                            <ListOrdered size={14} aria-hidden="true" /> Hành trình
+                          </button>
+                        )}
                         <button
                           type="button"
+                          ref={probeTrigger}
                           className="cli-lab-button cli-lab-button--secondary"
-                          aria-expanded={advancedOpen}
+                          aria-expanded={!sidebarCollapsed && sideTab === 'probe'}
+                          aria-controls="cli-lab-probe-form"
                           disabled={!editable}
-                          onClick={() => setAdvancedOpen((v) => !v)}
+                          onClick={() => {
+                            if (sideTab === 'probe' && !sidebarCollapsed) {
+                              closeSidebar();
+                              return;
+                            }
+                            setSidebarCollapsed(false);
+                            setSecondaryPanel('probe');
+                            setMobileView('probe');
+                            setTraceMode((mode) => (mode === 'detail' ? 'quick' : mode));
+                          }}
                         >
                           <Radio size={14} aria-hidden="true" /> Ping thử
                         </button>
@@ -1001,6 +1139,7 @@ export default function CliLabWorkspace({
                       <NetworkTopology
                         key={attempt.id}
                         fit
+                        fluid
                         devices={displayed.devices}
                         links={displayed.links}
                         selected={deviceId}
@@ -1008,70 +1147,20 @@ export default function CliLabWorkspace({
                         onSelect={selectDevice}
                         onLinkSelect={selectLink}
                         packet={packet}
+                        observation={playback}
                         stp={displayed.stp}
                         disabled={!editable}
                       />
                     </div>
-                    {advancedOpen && (
-                      <form
-                        className="cli-lab-ping-form"
-                        onSubmit={(event) => {
-                          event.preventDefault();
-                          action({
-                            type: 'probe',
-                            deviceId,
-                            destination,
-                            protocol,
-                            dstPort: protocol === 'icmp' ? 0 : port,
-                          });
-                        }}
-                      >
-                        <label>
-                          IP đích
-                          <input
-                            required
-                            aria-label="IP đích"
-                            placeholder="192.168.1.1"
-                            value={destination}
-                            onChange={(e) => setDestination(e.target.value)}
-                          />
-                        </label>
-                        <button disabled={!editable || !destination} type="submit">
-                          {protocol === 'icmp' ? 'Ping' : `Kiểm tra ${protocol.toUpperCase()}`}
-                        </button>
-                        <details>
-                          <summary>Tùy chọn TCP/UDP</summary>
-                          <div className="cli-lab-probe-options">
-                            <label>
-                              Giao thức
-                              <DropdownSelect
-                                aria-label="Giao thức thử nghiệm"
-                                value={protocol}
-                                onChange={(e) => setProtocol(e.target.value)}
-                              >
-                                {['icmp', 'tcp', 'udp'].map((v) => (
-                                  <option key={v} value={v}>
-                                    {v.toUpperCase()}
-                                  </option>
-                                ))}
-                              </DropdownSelect>
-                            </label>
-                            {protocol !== 'icmp' && (
-                              <label>
-                                Cổng đích
-                                <input
-                                  aria-label="Cổng đích"
-                                  type="number"
-                                  min="0"
-                                  max="65535"
-                                  value={port}
-                                  onChange={(e) => setPort(Number(e.target.value))}
-                                />
-                              </label>
-                            )}
-                          </div>
-                        </details>
-                      </form>
+                    {displayed?.lastPacket && (
+                      <PacketTracePanel
+                        key={attempt.id}
+                        playback={playback}
+                        devices={displayed.devices}
+                        mode={traceMode}
+                        onModeChange={changeTraceMode}
+                        detailTarget={detailTarget}
+                      />
                     )}
                   </>
                 )}
@@ -1144,31 +1233,111 @@ export default function CliLabWorkspace({
                 </div>
 
                 {!isPreview && Boolean(attempt.commands?.length) && (
-                  <details className="cli-lab-review">
-                    <summary>
-                      <History size={16} /> Lịch sử thao tác
-                    </summary>
+                  <button
+                    type="button"
+                    className="cli-history-trigger"
+                    ref={historyTrigger}
+                    aria-expanded={sideTab === 'history' && !sidebarCollapsed}
+                    onClick={() => {
+                      setSecondaryPanel('history');
+                      setSidebarCollapsed(false);
+                      setMobileView('history');
+                      setTraceMode((mode) => (mode === 'detail' ? 'quick' : mode));
+                    }}
+                  >
+                    <History size={16} /> Lịch sử thao tác
+                  </button>
+                )}
+              </section>
+
+              <aside
+                className="cli-workspace-sidebar"
+                hidden={sidebarCollapsed}
+                aria-label="Bảng bên thực hành"
+              >
+                <div className="cli-side-heading">
+                  {['tasks', 'assistant'].includes(sideTab) ? (
+                    <SlidingTabs
+                      value={sideTab}
+                      aria-label="Bảng bên thực hành"
+                      className="cli-side-tabs"
+                    >
+                      <button
+                        ref={tasksTab}
+                        type="button"
+                        aria-pressed={sideTab === 'tasks'}
+                        onClick={openTasks}
+                      >
+                        Mục tiêu{' '}
+                        <span className="cli-side-progress">
+                          {displayedProgress.completed}/{displayedProgress.total}
+                        </span>
+                      </button>
+                      {!isPreview && (
+                        <button
+                          type="button"
+                          disabled={!assistantEnabled}
+                          aria-pressed={sideTab === 'assistant'}
+                          aria-label="Mở tab Trợ lý AI"
+                          onClick={openAssistant}
+                        >
+                          <DroidAvatar size={26} busy={assistantWorking} decorative /> Trợ lý AI
+                        </button>
+                      )}
+                    </SlidingTabs>
+                  ) : (
+                    <div className="cli-side-context">
+                      {sideTab === 'probe' && (
+                        <button type="button" aria-label="Về mục tiêu lab" onClick={openTasks}>
+                          <ArrowLeft size={16} aria-hidden="true" />
+                        </button>
+                      )}
+                      <h2>{SIDE_TITLES[sideTab]}</h2>
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    className="cli-sidebar-collapse"
+                    aria-label={sideTab === 'probe' ? 'Đóng kiểm tra kết nối' : 'Thu gọn bảng bên'}
+                    onClick={closeSidebar}
+                  >
+                    <X size={17} aria-hidden="true" />
+                  </button>
+                </div>
+                {!isPreview && Boolean(attempt.commands?.length) && (
+                  <section
+                    className="cli-history-tab"
+                    aria-label="Xem lại thao tác"
+                    hidden={sideTab !== 'history'}
+                  >
+                    <button
+                      type="button"
+                      className="cli-history-back"
+                      onClick={() => {
+                        setSecondaryPanel(null);
+                        setMobileView('terminal');
+                        requestAnimationFrame(() => historyTrigger.current?.focus());
+                      }}
+                    >
+                      <ArrowLeft size={16} aria-hidden="true" /> Về terminal
+                    </button>
                     <div className="cli-lab-replay-bar">
-                      <p className="cli-lab-replay-help">
-                        Chọn mốc để xem trạng thái lab sau thao tác đó.
-                      </p>
+                      <p>Chọn mốc để xem trạng thái lab sau thao tác đó.</p>
                       <label>
-                        Mốc thao tác {sequence}/{attempt.commands?.length || 0}
+                        Mốc thao tác {sequence}/{attempt.commands.length}
                         <input
                           aria-label="Thao tác xem lại"
+                          ref={historyInput}
                           type="range"
                           min="0"
-                          max={attempt.commands?.length || 0}
+                          max={attempt.commands.length}
                           value={sequence}
-                          disabled={busy || isPreview}
-                          onChange={(event) => {
-                            const value = Number(event.target.value);
-                            setSequence(value);
-                          }}
+                          disabled={busy}
+                          onChange={(event) => setSequence(Number(event.target.value))}
                         />
                       </label>
                       <button
-                        disabled={busy || isPreview}
+                        disabled={busy}
                         onClick={() =>
                           perform(async () =>
                             setReplay(await api.cliReplay(token, attempt.id, sequence))
@@ -1181,263 +1350,336 @@ export default function CliLabWorkspace({
                         Quay lại hiện tại
                       </button>
                     </div>
-                  </details>
-                )}
-              </section>
-
-              <aside
-                className={`cli-task-pane cli-lab-task-pane${tasksCollapsed && secondaryPanel === 'assistant' ? ' is-collapsed' : ''}`}
-              >
-                {secondaryPanel === 'assistant' && (
-                  <button
-                    type="button"
-                    className="cli-task-collapse"
-                    aria-expanded={!tasksCollapsed}
-                    onClick={() => setTasksCollapsed((value) => !value)}
-                  >
-                    {tasksCollapsed ? 'Mở mục tiêu' : 'Thu gọn mục tiêu'}
-                  </button>
-                )}
-                <div className="cli-task-scroll cli-lab-task-scroll">
-                  <section className="cli-lab-objective">
-                    <LabDisclosure
-                      summary={<h3 className="cli-lab-section-title">Đề bài và hướng dẫn</h3>}
-                      aria-label="Yêu cầu bài thực hành"
-                      key={attempt.id}
-                      defaultOpen
-                    >
-                      <p>{attempt.lab.objective || 'Hoàn thành các yêu cầu cấu hình.'}</p>
-                      {attempt.lab.guideFormat === 'markdown' && (
-                        <MarkdownRenderer content={attempt.lab.guideContent} />
-                      )}
-                    </LabDisclosure>
                   </section>
-                  <div className="cli-lab-hint-bar" role="status">
-                    <div className="cli-lab-hint-icon">
-                      <Lightbulb size={16} />
-                    </div>
-                    <div className="cli-lab-hint-copy">
-                      <span>
-                        Việc tiếp theo{' '}
-                        {selectedTask?.deviceId && (
-                          <button
-                            type="button"
-                            className="cli-task-device-chip"
-                            onClick={() => focusTask(selectedTask)}
-                            aria-label={`Chuyển đến ${selectedTask.deviceId}`}
-                          >
-                            <Network size={12} aria-hidden="true" />
-                            {selectedTask.deviceId}
-                          </button>
-                        )}
-                      </span>
-                      <strong>
-                        {selectedTask?.title || 'Các mục tiêu hiện tại đã hoàn thành'}
-                      </strong>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setHintOpen((open) => !open)}
-                      aria-expanded={hintOpen}
+                )}
+                {sideTab === 'probe' && displayed?.devices && (
+                  <div className="cli-probe-tab">
+                    <form
+                      id="cli-lab-probe-form"
+                      aria-label="Kiểm tra kết nối"
+                      className="cli-lab-ping-form"
+                      onSubmit={(event) => {
+                        event.preventDefault();
+                        action({
+                          type: 'probe',
+                          deviceId,
+                          destination,
+                          protocol,
+                          dstPort: protocol === 'icmp' ? 0 : port,
+                        });
+                      }}
                     >
-                      {hintOpen ? 'Ẩn gợi ý' : 'Xem gợi ý'}
-                    </button>
-                    {hintOpen && (
-                      <div className="cli-lab-hint-expanded">
-                        {selectedTask?.hintCount ? (
-                          <>
-                            {(selectedTask.hints || []).map((hint, i) => (
-                              <p key={i}>{hint}</p>
-                            ))}
-                            {(selectedTask.hints?.length || 0) < selectedTask.hintCount && (
-                              <button
-                                type="button"
-                                disabled={!editable}
-                                onClick={() =>
-                                  action({
-                                    type: 'hint',
-                                    checkId: selectedTask.id,
-                                    deviceId: selectedTask.deviceId,
-                                    level: (selectedTask.hints?.length || 0) + 1,
-                                  })
-                                }
-                              >
-                                Mở gợi ý {(selectedTask.hints?.length || 0) + 1}/
-                                {selectedTask.hintCount}
-                              </button>
-                            )}
-                          </>
-                        ) : (
-                          selectedTask?.hint || hintText
-                        )}
-                        {!isPreview && (
-                          <button
-                            type="button"
-                            disabled={!assistantEnabled}
-                            onClick={() => setSecondaryPanel('assistant')}
-                          >
-                            Hỏi trợ lý
-                          </button>
-                        )}
+                      <div className="cli-lab-probe-heading">
+                        <strong>Gửi từ {deviceId}</strong>
                       </div>
+                      <label>
+                        IP đích
+                        <input
+                          ref={probeInput}
+                          required
+                          aria-label="IP đích"
+                          placeholder="192.168.1.1"
+                          value={destination}
+                          onChange={(e) => setDestination(e.target.value)}
+                        />
+                      </label>
+                      <button disabled={!editable || !destination} type="submit">
+                        {protocol === 'icmp' ? 'Ping' : `Kiểm tra ${protocol.toUpperCase()}`}
+                      </button>
+                      <details>
+                        <summary>Tùy chọn TCP/UDP</summary>
+                        <div className="cli-lab-probe-options">
+                          <label>
+                            Giao thức
+                            <DropdownSelect
+                              aria-label="Giao thức thử nghiệm"
+                              value={protocol}
+                              onChange={(e) => setProtocol(e.target.value)}
+                            >
+                              {['icmp', 'tcp', 'udp'].map((v) => (
+                                <option key={v} value={v}>
+                                  {v.toUpperCase()}
+                                </option>
+                              ))}
+                            </DropdownSelect>
+                          </label>
+                          {protocol !== 'icmp' && (
+                            <label>
+                              Cổng đích
+                              <input
+                                aria-label="Cổng đích"
+                                type="number"
+                                min="0"
+                                max="65535"
+                                value={port}
+                                onChange={(e) => setPort(Number(e.target.value))}
+                              />
+                            </label>
+                          )}
+                        </div>
+                      </details>
+                    </form>
+                  </div>
+                )}
+                <div className="cli-task-pane cli-lab-task-pane" hidden={sideTab !== 'tasks'}>
+                  <div className="cli-task-scroll cli-lab-task-scroll">
+                    <section className="cli-lab-objective">
+                      <LabDisclosure
+                        summary={<h3 className="cli-lab-section-title">Đề bài và hướng dẫn</h3>}
+                        aria-label="Yêu cầu bài thực hành"
+                        key={attempt.id}
+                        defaultOpen={false}
+                      >
+                        <p>{attempt.lab.objective || 'Hoàn thành các yêu cầu cấu hình.'}</p>
+                        {attempt.lab.guideFormat === 'markdown' && (
+                          <MarkdownRenderer content={attempt.lab.guideContent} />
+                        )}
+                      </LabDisclosure>
+                    </section>
+                    <div className="cli-lab-hint-bar" role="status">
+                      <div className="cli-lab-hint-icon">
+                        <Lightbulb size={16} />
+                      </div>
+                      <div className="cli-lab-hint-copy">
+                        <span>
+                          Việc tiếp theo{' '}
+                          {selectedTask?.deviceId && (
+                            <button
+                              type="button"
+                              className="cli-task-device-chip"
+                              onClick={() => focusTask(selectedTask)}
+                              aria-label={`Chuyển đến ${selectedTask.deviceId}`}
+                            >
+                              <Network size={12} aria-hidden="true" />
+                              {selectedTask.deviceId}
+                            </button>
+                          )}
+                        </span>
+                        <strong>
+                          {selectedTask?.title || 'Các mục tiêu hiện tại đã hoàn thành'}
+                        </strong>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setHintOpen((open) => !open)}
+                        aria-expanded={hintOpen}
+                      >
+                        {hintOpen ? 'Ẩn gợi ý' : 'Xem gợi ý'}
+                      </button>
+                      {hintOpen && (
+                        <div className="cli-lab-hint-expanded">
+                          {selectedTask?.hintCount ? (
+                            <>
+                              {(selectedTask.hints || []).map((hint, i) => (
+                                <p key={i}>{hint}</p>
+                              ))}
+                              {(selectedTask.hints?.length || 0) < selectedTask.hintCount && (
+                                <button
+                                  type="button"
+                                  disabled={!editable}
+                                  onClick={() =>
+                                    action({
+                                      type: 'hint',
+                                      checkId: selectedTask.id,
+                                      deviceId: selectedTask.deviceId,
+                                      level: (selectedTask.hints?.length || 0) + 1,
+                                    })
+                                  }
+                                >
+                                  Mở gợi ý {(selectedTask.hints?.length || 0) + 1}/
+                                  {selectedTask.hintCount}
+                                </button>
+                              )}
+                            </>
+                          ) : (
+                            selectedTask?.hint || hintText
+                          )}
+                          {!isPreview && (
+                            <button
+                              type="button"
+                              disabled={!assistantEnabled}
+                              onClick={openAssistant}
+                            >
+                              Hỏi trợ lý
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    <section
+                      className={`cli-lab-checklist-section ${tourStepId === 'tasks' ? 'is-tour-target' : ''}`}
+                      data-tour-target="tasks"
+                    >
+                      <div
+                        className="cli-lab-checklist-progress"
+                        role="progressbar"
+                        aria-label="Tiến độ bài thực hành"
+                        aria-valuemin={0}
+                        aria-valuemax={displayedProgress.total || 1}
+                        aria-valuenow={displayedProgress.completed}
+                      >
+                        <span
+                          style={{
+                            width: `${displayedProgress.total ? Math.min(100, (displayedProgress.completed / displayedProgress.total) * 100) : 0}%`,
+                          }}
+                        />
+                      </div>
+                      {attempt.lab.steps?.length > 0 && (
+                        <details className="cli-lab-stages">
+                          <summary>
+                            <h3 className="cli-lab-section-title">Các giai đoạn và lệnh mẫu</h3>
+                            <span className="cli-lab-stage-preview">
+                              {normalizeSteps(attempt.lab.steps).length} giai đoạn ·{' '}
+                              {normalizeSteps(attempt.lab.steps)[0]?.title}
+                            </span>
+                          </summary>
+                          {normalizeSteps(attempt.lab.steps).map((stage, index) => (
+                            <details key={stage.id || index}>
+                              <summary>{stage.title}</summary>
+                              {stage.note && <p>{stage.note}</p>}
+                              {stage.commands.map((entry, i) => (
+                                <div key={i} className="cli-lab-stage-command">
+                                  <span>{entry.deviceId || 'CLI'}</span>{' '}
+                                  <code>{entry.command}</code>
+                                  <AnimatedCopyButton
+                                    value={entry.command}
+                                    label={`Chép lệnh ${entry.deviceId || ''} ${entry.command}`}
+                                    onError={setError}
+                                    onCopied={() =>
+                                      setError((current) => (current === COPY_ERROR ? '' : current))
+                                    }
+                                  />
+                                </div>
+                              ))}
+                            </details>
+                          ))}
+                        </details>
+                      )}
+                      <LabObjectives
+                        tasks={tasks}
+                        progress={displayedProgress}
+                        selectedTaskId={selectedTask?.id}
+                        onSelect={focusTask}
+                        graded={Boolean(attempt.feedback)}
+                      />
+                    </section>
+
+                    {attempt.feedback && (
+                      <section className="cli-lab-feedback">
+                        <div className="cli-lab-section-heading">
+                          <h3>{attempt.feedback.score ?? attempt.score}/100 điểm</h3>
+                          <Sparkles size={16} />
+                        </div>
+                        <p>Điểm đạt: {attempt.lab.passingScore ?? 70}/100</p>
+                        {attempt.features?.mastery && (
+                          <p>
+                            {attempt.status === 'MASTERED'
+                              ? 'Thành thạo'
+                              : attempt.status === 'PASSED'
+                                ? 'Đã đạt'
+                                : 'Đang thực hành'}{' '}
+                            · Điểm cao nhất: {attempt.bestScore ?? attempt.score ?? 0}/100
+                          </p>
+                        )}
+                        {attempt.feedback.skills && (
+                          <ul>
+                            {Object.entries(attempt.feedback.skills).map(([skill, value]) => (
+                              <li key={skill}>
+                                {{
+                                  configuration: 'Cấu hình',
+                                  verification: 'Kiểm chứng',
+                                  observation: 'Quan sát',
+                                  reasoning: 'Tính toán',
+                                }[skill] || skill}
+                                : {Math.round((value.awarded / value.points) * 100)}%
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                        <Suspense fallback={<p role="status">Đang tải phần giải thích…</p>}>
+                          <AiFeedbackExplanation
+                            token={token}
+                            attempt={attempt}
+                            disabled={isPreview || Boolean(replay)}
+                          />
+                        </Suspense>
+                        {isPreview && explanation && (
+                          <p className="network-explanation">{explanation}</p>
+                        )}
+                      </section>
+                    )}
+
+                    {debugMode && (
+                      <section className="cli-lab-ospf">
+                        <details>
+                          <summary>
+                            <Radio size={14} /> Trạng thái OSPF / STP
+                          </summary>
+                          <pre>
+                            {JSON.stringify(
+                              { neighbors: displayed?.ospfNeighbors, spanningTree: displayed?.stp },
+                              null,
+                              2
+                            )}
+                          </pre>
+                        </details>
+                      </section>
                     )}
                   </div>
-                  <section
-                    className={`cli-lab-checklist-section ${tourStepId === 'tasks' ? 'is-tour-target' : ''}`}
-                    data-tour-target="tasks"
-                  >
-                    <div className="cli-lab-section-heading">
-                      <h3>Mục tiêu</h3>
-                      <span>
-                        {displayedProgress.completed}/{displayedProgress.total}
-                      </span>
-                    </div>
-                    <div
-                      className="cli-lab-checklist-progress"
-                      role="progressbar"
-                      aria-label="Tiến độ bài thực hành"
-                      aria-valuemin={0}
-                      aria-valuemax={displayedProgress.total || 1}
-                      aria-valuenow={displayedProgress.completed}
-                    >
-                      <span
-                        style={{
-                          width: `${displayedProgress.total ? Math.min(100, (displayedProgress.completed / displayedProgress.total) * 100) : 0}%`,
-                        }}
-                      />
-                    </div>
-                    {attempt.lab.steps?.length > 0 && (
-                      <details className="cli-lab-stages">
-                        <summary>
-                          <h3 className="cli-lab-section-title">Các giai đoạn và lệnh mẫu</h3>
-                          <span className="cli-lab-stage-preview">
-                            {normalizeSteps(attempt.lab.steps).length} giai đoạn ·{' '}
-                            {normalizeSteps(attempt.lab.steps)[0]?.title}
-                          </span>
-                        </summary>
-                        {normalizeSteps(attempt.lab.steps).map((stage, index) => (
-                          <details key={stage.id || index}>
-                            <summary>{stage.title}</summary>
-                            {stage.note && <p>{stage.note}</p>}
-                            {stage.commands.map((entry, i) => (
-                              <div key={i} className="cli-lab-stage-command">
-                                <span>{entry.deviceId || 'CLI'}</span> <code>{entry.command}</code>
-                                <AnimatedCopyButton
-                                  value={entry.command}
-                                  label={`Chép lệnh ${entry.deviceId || ''} ${entry.command}`}
-                                  onError={setError}
-                                  onCopied={() =>
-                                    setError((current) => (current === COPY_ERROR ? '' : current))
-                                  }
-                                />
-                              </div>
-                            ))}
-                          </details>
-                        ))}
-                      </details>
-                    )}
-                    <LabObjectives
-                      tasks={tasks}
-                      progress={displayedProgress}
-                      selectedTaskId={selectedTask?.id}
-                      onSelect={focusTask}
-                      graded={Boolean(attempt.feedback)}
-                    />
-                  </section>
-
-                  {attempt.feedback && (
-                    <section className="cli-lab-feedback">
-                      <div className="cli-lab-section-heading">
-                        <h3>{attempt.feedback.score ?? attempt.score}/100 điểm</h3>
-                        <Sparkles size={16} />
-                      </div>
-                      <p>Điểm đạt: {attempt.lab.passingScore ?? 70}/100</p>
-                      {attempt.features?.mastery && (
-                        <p>
-                          {attempt.status === 'MASTERED'
-                            ? 'Thành thạo'
-                            : attempt.status === 'PASSED'
-                              ? 'Đã đạt'
-                              : 'Đang thực hành'}{' '}
-                          · Điểm cao nhất: {attempt.bestScore ?? attempt.score ?? 0}/100
-                        </p>
-                      )}
-                      {attempt.feedback.skills && (
-                        <ul>
-                          {Object.entries(attempt.feedback.skills).map(([skill, value]) => (
-                            <li key={skill}>
-                              {{
-                                configuration: 'Cấu hình',
-                                verification: 'Kiểm chứng',
-                                observation: 'Quan sát',
-                                reasoning: 'Tính toán',
-                              }[skill] || skill}
-                              : {Math.round((value.awarded / value.points) * 100)}%
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                      <Suspense fallback={<p role="status">Đang tải phần giải thích…</p>}>
-                        <AiFeedbackExplanation
-                          token={token}
-                          attempt={attempt}
-                          disabled={isPreview || Boolean(replay)}
-                        />
-                      </Suspense>
-                      {isPreview && explanation && (
-                        <p className="network-explanation">{explanation}</p>
-                      )}
-                    </section>
-                  )}
-
-                  {displayed?.lastPacket && (
-                    <section className="cli-lab-packet">
-                      <details>
-                        <summary>
-                          <Link2 size={14} /> Hành trình gói tin:{' '}
-                          {displayed.lastPacket.success ? 'Thành công' : 'Bị chặn'}
-                        </summary>
-                        <p className={displayed.lastPacket.success ? 'is-success' : 'is-danger'}>
-                          {displayed.lastPacket.reason}
-                        </p>
-                        <ol>
-                          {displayed.lastPacket.events.map((event, index) => (
-                            <li key={`${event.type}-${event.deviceId}-${index}`}>
-                              <strong>
-                                {event.type} · {event.deviceId}
-                              </strong>
-                              <div>{event.detail}</div>
-                              <small>
-                                {event.packet?.src} → {event.packet?.dst} · TTL {event.packet?.ttl}
-                              </small>
-                            </li>
-                          ))}
-                        </ol>
-                      </details>
-                    </section>
-                  )}
-                  {debugMode && (
-                    <section className="cli-lab-ospf">
-                      <details>
-                        <summary>
-                          <Radio size={14} /> Trạng thái OSPF / STP
-                        </summary>
-                        <pre>
-                          {JSON.stringify(
-                            { neighbors: displayed?.ospfNeighbors, spanningTree: displayed?.stp },
-                            null,
-                            2
-                          )}
-                        </pre>
-                      </details>
-                    </section>
+                  {isPreview && (
+                    <span className="cli-lab-preview-note">
+                      <LockKeyhole size={13} /> Bản xem trước không lưu điểm hoặc trạng thái.
+                    </span>
                   )}
                 </div>
-                {isPreview && (
-                  <span className="cli-lab-preview-note">
-                    <LockKeyhole size={13} /> Bản xem trước không lưu điểm hoặc trạng thái.
-                  </span>
-                )}
+                <div className="cli-ai-tab" hidden={sideTab !== 'assistant'}>
+                  {assistantMounted && token && user?.id && !isPreview && (
+                    <AssistantLoader
+                      load={loadAssistant}
+                      Dialog={Dialog}
+                      theme={theme}
+                      embedded
+                      onClose={closeSidebar}
+                    >
+                      {(AiLabAssistant) => (
+                        <AiLabAssistant
+                          key={`${token}:${attempt.id}`}
+                          token={token}
+                          userId={user.id}
+                          attemptId={attempt.id}
+                          revision={attempt.state?.revision ?? 0}
+                          theme={theme}
+                          embedded
+                          focusRequest={assistantFocusRequest}
+                          visible={
+                            sideTab === 'assistant' &&
+                            !sidebarCollapsed &&
+                            !isReplay &&
+                            (!compactViewport || mobileView === 'assistant')
+                          }
+                          onActivityChange={setAssistantWorking}
+                          devices={deviceEntries(attempt.state?.devices).map(([id, device]) => ({
+                            id,
+                            name: device.hostname || id,
+                          }))}
+                          selectedDeviceId={deviceId}
+                          taskId={selectedTask?.id}
+                          taskDeviceId={selectedTask?.deviceId}
+                          taskTitle={selectedTask?.title}
+                          onSelectDevice={(id) => {
+                            if (Object.hasOwn(attempt.state?.devices || {}, id)) selectDevice(id);
+                          }}
+                          onClose={closeSidebar}
+                        />
+                      )}
+                    </AssistantLoader>
+                  )}
+                </div>
+                <div
+                  className="cli-trace-target"
+                  ref={setDetailTarget}
+                  hidden={sideTab !== 'trace'}
+                />
               </aside>
             </div>
           </>

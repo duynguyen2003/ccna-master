@@ -1,0 +1,614 @@
+{
+  "id": "wifi",
+  "name": "Wi-Fi",
+  "title": "Joining a Network",
+  "layer": 2,
+  "nodes": [
+    "client",
+    "router"
+  ],
+  "latency": {
+    "client-router": 0.001
+  },
+  "labels": {
+    "client": [
+      "Client",
+      "MAC …:53:10"
+    ],
+    "router": [
+      "Access Point",
+      "\"HomeNet\""
+    ]
+  },
+  "legend": [
+    [
+      "violet",
+      "From the access point"
+    ],
+    [
+      "amber",
+      "From the laptop"
+    ],
+    [
+      "teal",
+      "4-way handshake"
+    ]
+  ],
+  "overview": {
+    "full": "Wi-Fi (802.11) with WPA2",
+    "description": "Wi-Fi carries a network over radio. Before a device can send anything, it has to find the network, join it and prove it knows the password. With WPA2-Personal that proof is the 4-way handshake: four short messages that turn the password into fresh encryption keys, without the password ever going over the air.",
+    "facts": [
+      [
+        "Layer",
+        "Data Link (Layer 2)"
+      ],
+      [
+        "Standard",
+        "IEEE 802.11"
+      ],
+      [
+        "Security",
+        "WPA2: CCMP (AES)"
+      ],
+      [
+        "Joining",
+        "Probe, authenticate, associate"
+      ],
+      [
+        "Keys from",
+        "The 4-way handshake"
+      ],
+      [
+        "Defined In",
+        "IEEE 802.11-2020"
+      ]
+    ]
+  },
+  "outro": {
+    "title": "Connected",
+    "desc": "Eleven frames to a secure link",
+    "text": "The laptop found the network, joined it with two formalities and proved it knew the password in a four-message handshake, without ever sending it. Everything after that was encrypted with keys made for this connection alone. Press REPLAY to watch it again.",
+    "facts": [
+      [
+        "Frames to join",
+        "11"
+      ],
+      [
+        "Password sent",
+        "Never"
+      ],
+      [
+        "Session keys",
+        "New every time"
+      ],
+      [
+        "Next",
+        "DHCP, for an IP address"
+      ]
+    ]
+  },
+  "start": {
+    "nodes": [
+      "client"
+    ],
+    "frame": "client"
+  },
+  "steps": [
+    {
+      "title": "Find the Network",
+      "desc": "A beacon, then a probe",
+      "detail": "About ten times a second the router’s Wi-Fi sends a beacon: here is \"HomeNet\", protected with WPA2, on channel 36. The laptop could simply wait to hear one; to be quicker it also asks out loud with a probe request, and the access point answers with a probe response.",
+      "facts": [
+        [
+          "Network",
+          "\"HomeNet\""
+        ],
+        [
+          "Channel",
+          "36 (5 GHz)"
+        ],
+        [
+          "Security",
+          "WPA2-Personal (password)"
+        ]
+      ],
+      "events": [
+        {
+          "type": "show",
+          "nodes": [
+            "router"
+          ],
+          "frame": "local"
+        },
+        {
+          "type": "packet",
+          "from": "router",
+          "to": "client",
+          "color": "violet",
+          "label": "BEACON",
+          "payload": [
+            "SSID \"HomeNet\"",
+            "WPA2 · channel 36"
+          ],
+          "row": {
+            "time": "0.000s",
+            "src": "00:00:5e:00:53:01",
+            "dst": "Broadcast",
+            "proto": "802.11",
+            "info": "Beacon, SSID \"HomeNet\"",
+            "len": "279 B",
+            "wire": {
+              "wifi": {
+                "from": "ap",
+                "kind": "beacon",
+                "seq": 1520,
+                "ssid": "HomeNet",
+                "akm": 2,
+                "ts": 81234567890,
+                "other": 196
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "router",
+          "color": "amber",
+          "label": "PROBE",
+          "payload": [
+            "any networks here?"
+          ],
+          "row": {
+            "time": "0.035s",
+            "src": "00:00:5e:00:53:10",
+            "dst": "Broadcast",
+            "proto": "802.11",
+            "info": "Probe Request, any SSID",
+            "len": "134 B",
+            "wire": {
+              "wifi": {
+                "from": "sta",
+                "kind": "probe-req",
+                "seq": 210,
+                "other": 98
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "router",
+          "to": "client",
+          "color": "violet",
+          "label": "PROBE RESPONSE",
+          "payload": [
+            "SSID \"HomeNet\"",
+            "WPA2-Personal"
+          ],
+          "row": {
+            "time": "0.036s",
+            "src": "00:00:5e:00:53:01",
+            "dst": "00:00:5e:00:53:10",
+            "proto": "802.11",
+            "info": "Probe Response, SSID \"HomeNet\"",
+            "len": "267 B",
+            "wire": {
+              "wifi": {
+                "from": "ap",
+                "kind": "probe-resp",
+                "seq": 1521,
+                "duration": 44,
+                "ssid": "HomeNet",
+                "akm": 2,
+                "ts": 81234603910,
+                "other": 190
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Join the Network",
+      "desc": "Two formalities: hello, then join",
+      "detail": "Open System authentication lets anyone this far: no password yet. Then the laptop asks to associate, repeating the security it chose (CCMP, with a password), and the access point gives it association ID 1. The laptop is connected, but the only thing it may send is the handshake that comes next.",
+      "facts": [
+        [
+          "Authentication",
+          "Open System (no password)"
+        ],
+        [
+          "Association ID",
+          "1"
+        ],
+        [
+          "Allowed so far",
+          "The 4-way handshake"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "router",
+          "color": "amber",
+          "label": "AUTH",
+          "payload": [
+            "Open System"
+          ],
+          "row": {
+            "time": "0.050s",
+            "src": "00:00:5e:00:53:10",
+            "dst": "00:00:5e:00:53:01",
+            "proto": "802.11",
+            "info": "Authentication (Open System), 1 of 2",
+            "len": "30 B",
+            "wire": {
+              "wifi": {
+                "from": "sta",
+                "kind": "auth",
+                "seq": 211,
+                "duration": 44,
+                "alg": 0,
+                "trans": 1
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "router",
+          "to": "client",
+          "color": "violet",
+          "label": "AUTH",
+          "payload": [
+            "success"
+          ],
+          "row": {
+            "time": "0.051s",
+            "src": "00:00:5e:00:53:01",
+            "dst": "00:00:5e:00:53:10",
+            "proto": "802.11",
+            "info": "Authentication (Open System), 2 of 2",
+            "len": "30 B",
+            "wire": {
+              "wifi": {
+                "from": "ap",
+                "kind": "auth",
+                "seq": 1522,
+                "duration": 44,
+                "alg": 0,
+                "trans": 2
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "router",
+          "color": "amber",
+          "label": "ASSOCIATE",
+          "payload": [
+            "join \"HomeNet\"",
+            "CCMP, password"
+          ],
+          "row": {
+            "time": "0.052s",
+            "src": "00:00:5e:00:53:10",
+            "dst": "00:00:5e:00:53:01",
+            "proto": "802.11",
+            "info": "Association Request, SSID \"HomeNet\"",
+            "len": "155 B",
+            "wire": {
+              "wifi": {
+                "from": "sta",
+                "kind": "assoc-req",
+                "seq": 212,
+                "duration": 44,
+                "ssid": "HomeNet",
+                "akm": 2,
+                "other": 86
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "router",
+          "to": "client",
+          "color": "violet",
+          "label": "ASSOCIATED",
+          "payload": [
+            "association ID 1"
+          ],
+          "row": {
+            "time": "0.054s",
+            "src": "00:00:5e:00:53:01",
+            "dst": "00:00:5e:00:53:10",
+            "proto": "802.11",
+            "info": "Association Response, AID 1",
+            "len": "200 B",
+            "wire": {
+              "wifi": {
+                "from": "ap",
+                "kind": "assoc-resp",
+                "seq": 1523,
+                "duration": 44,
+                "other": 160
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Messages 1 and 2",
+      "desc": "The 4-way handshake: nonces",
+      "detail": "Both sides already hold the same key, worked out from the password and the network’s name (the PMK); it never goes over the air. The access point sends a random number, the ANonce. The laptop sends its own, the SNonce, with a check value (MIC). From the PMK, the two nonces and both MAC addresses, each side now works out the same session keys.",
+      "facts": [
+        [
+          "Shared key",
+          "PMK, from the password"
+        ],
+        [
+          "Exchanged",
+          "Two random nonces"
+        ],
+        [
+          "Worked out",
+          "Session keys (PTK)"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "router",
+          "to": "client",
+          "color": "teal",
+          "label": "MESSAGE 1",
+          "payload": [
+            "ANonce"
+          ],
+          "row": {
+            "time": "0.060s",
+            "src": "00:00:5e:00:53:01",
+            "dst": "00:00:5e:00:53:10",
+            "proto": "EAPOL",
+            "info": "Key (Message 1 of 4)",
+            "len": "133 B",
+            "wire": {
+              "wifi": {
+                "from": "ap",
+                "kind": "eapol",
+                "seq": 1524,
+                "duration": 44,
+                "msg": 1
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "router",
+          "color": "teal",
+          "label": "MESSAGE 2",
+          "payload": [
+            "SNonce + MIC"
+          ],
+          "row": {
+            "time": "0.063s",
+            "src": "00:00:5e:00:53:10",
+            "dst": "00:00:5e:00:53:01",
+            "proto": "EAPOL",
+            "info": "Key (Message 2 of 4)",
+            "len": "155 B",
+            "wire": {
+              "wifi": {
+                "from": "sta",
+                "kind": "eapol",
+                "seq": 213,
+                "duration": 44,
+                "msg": 2
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Messages 3 and 4",
+      "desc": "The 4-way handshake: keys",
+      "detail": "Message 3 shows the access point has the same keys (its MIC checks out) and brings the group key (GTK) for broadcasts, encrypted. Message 4 says the laptop is ready, and both ends start encrypting.",
+      "facts": [
+        [
+          "Group key",
+          "GTK, sent encrypted"
+        ],
+        [
+          "Install",
+          "Both ends at once"
+        ],
+        [
+          "Cipher",
+          "CCMP (AES-128)"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "router",
+          "to": "client",
+          "color": "teal",
+          "label": "MESSAGE 3",
+          "payload": [
+            "group key, encrypted",
+            "MIC"
+          ],
+          "row": {
+            "time": "0.065s",
+            "src": "00:00:5e:00:53:01",
+            "dst": "00:00:5e:00:53:10",
+            "proto": "EAPOL",
+            "info": "Key (Message 3 of 4)",
+            "len": "189 B",
+            "wire": {
+              "wifi": {
+                "from": "ap",
+                "kind": "eapol",
+                "seq": 1525,
+                "duration": 44,
+                "msg": 3,
+                "keyData": 56
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "router",
+          "color": "teal",
+          "label": "MESSAGE 4",
+          "payload": [
+            "keys installed"
+          ],
+          "row": {
+            "time": "0.066s",
+            "src": "00:00:5e:00:53:10",
+            "dst": "00:00:5e:00:53:01",
+            "proto": "EAPOL",
+            "info": "Key (Message 4 of 4)",
+            "len": "133 B",
+            "wire": {
+              "wifi": {
+                "from": "sta",
+                "kind": "eapol",
+                "seq": 214,
+                "duration": 44,
+                "msg": 4
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Encrypted Now",
+      "desc": "And what a listener could still do",
+      "detail": "Every data frame is encrypted now, like this first one carrying a DHCP Discover: anyone nearby sees only the MAC addresses and the size. But someone who recorded the four handshake messages can try password guesses at home, as fast as their computer allows: a guess is right when it gives the same MIC. A long, random password makes that hopeless; WPA3 removes the weakness.",
+      "facts": [
+        [
+          "Others see",
+          "MAC addresses, sizes, timing"
+        ],
+        [
+          "Weak point",
+          "Offline password guessing"
+        ],
+        [
+          "Defence",
+          "A long password, or WPA3"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "router",
+          "color": "amber",
+          "label": "DATA",
+          "payload": [
+            "DHCP Discover inside"
+          ],
+          "row": {
+            "time": "0.080s",
+            "src": "00:00:5e:00:53:10",
+            "dst": "Broadcast",
+            "proto": "802.11",
+            "info": "QoS Data (encrypted)",
+            "len": "378 B",
+            "wire": {
+              "wifi": {
+                "from": "sta",
+                "kind": "data",
+                "seq": 215,
+                "duration": 44,
+                "tid": 0,
+                "dst": "ff:ff:ff:ff:ff:ff",
+                "pn": 1,
+                "sealed": 336,
+                "inner": [
+                  "LLC/SNAP: an IPv4 packet",
+                  "DHCP Discover, 0.0.0.0 → 255.255.255.255"
+                ]
+              }
+            }
+          },
+          "locked": true
+        },
+        {
+          "type": "note",
+          "at": "client",
+          "text": "ENCRYPTED FROM HERE ON",
+          "tone": "green"
+        }
+      ]
+    }
+  ],
+  "teaching": {
+    "steps": [
+      [
+        "Tìm mạng",
+        "Khoảng mười lần mỗi giây, Wi-Fi của router gửi một beacon: đây là \"HomeNet\", bảo vệ bằng WPA2, trên kênh 36. Laptop có thể chỉ chờ nghe một beacon; để nhanh hơn, nó còn hỏi to bằng probe request, và điểm truy cập trả lời bằng probe response."
+      ],
+      [
+        "Vào mạng",
+        "Xác thực Open System cho bất kỳ ai tới bước này: chưa cần mật khẩu. Rồi laptop xin liên kết, nhắc lại kiểu bảo mật đã chọn (CCMP, có mật khẩu), và điểm truy cập cấp cho nó ID liên kết 1. Laptop đã kết nối, nhưng thứ duy nhất nó được gửi là cuộc bắt tay tiếp theo."
+      ],
+      [
+        "Thông điệp 1 và 2",
+        "Cả hai bên đã có cùng một khóa, tính từ mật khẩu và tên mạng (PMK); nó không bao giờ đi qua sóng. Điểm truy cập gửi một số ngẫu nhiên, ANonce. Laptop gửi số của mình, SNonce, kèm một giá trị kiểm tra (MIC). Từ PMK, hai nonce và cả hai địa chỉ MAC, mỗi bên giờ tính ra cùng các khóa phiên."
+      ],
+      [
+        "Thông điệp 3 và 4",
+        "Thông điệp 3 cho thấy điểm truy cập có cùng khóa (MIC của nó khớp) và mang theo khóa nhóm (GTK) cho quảng bá, đã mã hóa. Thông điệp 4 cho biết laptop đã sẵn sàng, và cả hai đầu bắt đầu mã hóa."
+      ],
+      [
+        "Giờ đã mã hóa",
+        "Giờ mọi khung dữ liệu đều được mã hóa, như khung đầu tiên này mang một DHCP Discover: ai ở gần chỉ thấy địa chỉ MAC và kích thước. Nhưng ai đã ghi lại bốn thông điệp bắt tay có thể đoán mật khẩu tại nhà, nhanh như máy tính của họ cho phép: một lần đoán đúng khi cho ra cùng MIC. Một mật khẩu dài, ngẫu nhiên khiến việc đó vô vọng; WPA3 loại bỏ điểm yếu này."
+      ]
+    ],
+    "notes": {
+      "ENCRYPTED FROM HERE ON": "MÃ HÓA TỪ ĐÂY TRỞ ĐI"
+    },
+    "labels": {
+      "Internet": "Internet",
+      "Client": "Máy khách",
+      "Router": "Router",
+      "DNS Resolver": "Bộ phân giải DNS",
+      "Web Server": "Máy chủ web",
+      "Root Server": "Máy chủ gốc",
+      ".com TLD Server": "Máy chủ TLD .com",
+      "Authoritative Server": "Máy chủ có thẩm quyền",
+      "Mail Server": "Máy chủ thư",
+      "Proxy": "Proxy",
+      "App Server": "Máy chủ ứng dụng",
+      "File Server": "Máy chủ tệp",
+      "ISP Router": "Router của ISP",
+      "Transit Router": "Router trung chuyển",
+      "Hosting Router": "Router của nhà lưu trữ",
+      "Their Router": "Router bên kia",
+      "Their Laptop": "Laptop bên kia",
+      "Switch": "Switch",
+      "Access Server": "Máy chủ truy cập",
+      "IP Camera": "Camera IP",
+      "TV Box": "TV box",
+      "Access Point": "Điểm truy cập"
+    }
+  }
+}

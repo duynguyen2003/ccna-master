@@ -13,10 +13,24 @@ jest.mock('../../../components/common/MarkdownRenderer', () => ({
   default: ({ content }) => <div>{content}</div>,
 }));
 jest.mock('../../../context/AuthContext', () => ({ useAuth: jest.fn(() => ({ token: 'test' })) }));
-jest.mock('@ccna/agent-ui/loader', () => ({
-  __esModule: true,
-  default: ({ children }) => children(() => <div>Trợ lý đã mở</div>),
-}));
+jest.mock('@ccna/agent-ui/loader', () => {
+  const React = require('react');
+  function MockAssistant({ onClose }) {
+    const [draft, setDraft] = React.useState('');
+    return (
+      <div>
+        Trợ lý đã mở
+        <input
+          aria-label="Bản nháp trợ lý"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+        />
+        <button onClick={onClose}>Đóng trợ lý AI</button>
+      </div>
+    );
+  }
+  return { __esModule: true, default: ({ children }) => children(MockAssistant) };
+});
 jest.mock('../../../services/Api', () => ({
   api: {
     startCliLabAttempt: jest.fn(),
@@ -68,6 +82,109 @@ beforeEach(() => {
   window.localStorage.removeItem('ccna.cli-lab.onboarding.v1');
   api.startCliLabAttempt.mockResolvedValue(example());
   api.cliAchievements.mockResolvedValue({ points: 0, completed: 0, badges: [], streak: 0 });
+});
+
+test('the trace observer selects fields and failures, steps and replays without sending lab actions', async () => {
+  const initial = example();
+  const snapshot = { src: '10.0.0.1', dst: '10.0.0.2', protocol: 'icmp', ttl: 31 };
+  initial.state.lastPacket = {
+    success: false,
+    reason: 'ACL inbound',
+    events: [
+      { type: 'ROUTE', deviceId: 'R1', packet: snapshot },
+      {
+        type: 'FRAME',
+        deviceId: 'R1',
+        from: { deviceId: 'R1', interface: 'Gi0/0' },
+        to: { deviceId: 'PC1', interface: 'eth0' },
+        srcMac: 'aa:bb',
+        dstMac: 'cc:dd',
+        packet: snapshot,
+      },
+      { type: 'ACL_IN', deviceId: 'R1', detail: 'deny ip any any', packet: snapshot },
+      { type: 'DROP', deviceId: 'R1', detail: 'ACL inbound', packet: { ...snapshot, ttl: 32 } },
+    ],
+  };
+  api.startCliLabAttempt.mockResolvedValue(initial);
+  render(<CliLabWorkspace lab={{ id: 1 }} page />);
+  await screen.findByText('Terminal Router>');
+  const skip = screen.queryByRole('button', { name: 'Bỏ qua' });
+  if (skip) fireEvent.click(skip);
+  fireEvent.click(screen.getByRole('button', { name: 'Mở hành trình gói tin' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Sự kiện 2: Chuyển frame' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Xem chi tiết' }));
+  const inspector = screen.getByRole('region', { name: 'Chi tiết sự kiện' });
+  expect(within(inspector).getByText('aa:bb')).toBeInTheDocument();
+  expect(within(inspector).getByText('Gi0/0')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Sự kiện 2: Chuyển frame' })).toHaveAttribute(
+    'aria-current',
+    'step'
+  );
+  fireEvent.click(screen.getByRole('button', { name: 'Tới lỗi' }));
+  expect(within(inspector).getByText('deny ip any any')).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Sự kiện trước' }));
+  expect(within(inspector).getByRole('heading', { name: 'Chuyển frame' })).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('combobox', { name: 'Tốc độ phát' }));
+  fireEvent.click(screen.getByRole('option', { name: '2×', exact: true }));
+  fireEvent.click(screen.getByRole('button', { name: 'Phát' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Tạm dừng' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Về đầu' }));
+  expect(within(inspector).getByRole('heading', { name: 'Chọn đường đi' })).toBeInTheDocument();
+  expect(api.cliAction).not.toHaveBeenCalled();
+  expect(api.cliReplay).not.toHaveBeenCalled();
+  expect(api.restartCliLabAttempt).not.toHaveBeenCalled();
+  expect(initial.state.revision).toBe(0);
+});
+
+test('legacy single-device labs keep the terminal view when there is no network diagram', async () => {
+  const current = example();
+  current.state = { ...current.state.devices.R1, revision: 0, tick: 0 };
+  api.startCliLabAttempt.mockResolvedValue(current);
+  render(<CliLabWorkspace lab={{ id: 1 }} page />);
+  await screen.findByText('Terminal Router>');
+  expect(screen.getByRole('button', { name: 'Xem sơ đồ mạng' })).toBeDisabled();
+  expect(screen.getByRole('button', { name: 'Mở khu vực terminal' })).toHaveAttribute(
+    'aria-pressed',
+    'true'
+  );
+  fireEvent.click(screen.getByRole('button', { name: 'Mở mục tiêu trên điện thoại' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Thu gọn bảng bên' }));
+  expect(screen.getByRole('button', { name: 'Mở khu vực terminal' })).toHaveAttribute(
+    'aria-pressed',
+    'true'
+  );
+});
+
+test('probe form uses the sidebar and keeps the existing source/action contract', async () => {
+  const attempt = example();
+  api.cliAction.mockResolvedValue({
+    state: attempt.state,
+    event: { output: 'Request and reply delivered' },
+  });
+  render(<CliLabWorkspace lab={{ id: 1 }} page />);
+  const trigger = await screen.findByRole('button', { name: 'Ping thử' });
+  const skip = screen.queryByRole('button', { name: 'Bỏ qua' });
+  if (skip) fireEvent.click(skip);
+  fireEvent.click(trigger);
+  const sidebar = screen.getByRole('complementary', { name: 'Bảng bên thực hành' });
+  expect(within(sidebar).getByRole('heading', { name: 'Kiểm tra kết nối' })).toBeInTheDocument();
+  expect(within(sidebar).queryByRole('button', { name: /^Mục tiêu/ })).not.toBeInTheDocument();
+  const form = within(sidebar).getByRole('form', { name: 'Kiểm tra kết nối' });
+  expect(within(form).getByText('Gửi từ R1')).toBeInTheDocument();
+  const destination = within(form).getByRole('textbox', { name: 'IP đích' });
+  expect(destination).toHaveFocus();
+  fireEvent.change(destination, { target: { value: '192.1.12.1' } });
+  fireEvent.click(within(form).getByRole('button', { name: 'Ping', exact: true }));
+  await waitFor(() =>
+    expect(api.cliAction).toHaveBeenCalledWith(
+      'test',
+      attempt.id,
+      { type: 'probe', deviceId: 'R1', destination: '192.1.12.1', protocol: 'icmp', dstPort: 0 },
+      0
+    )
+  );
+  fireEvent.click(within(sidebar).getByRole('button', { name: 'Đóng kiểm tra kết nối' }));
+  expect(screen.queryByRole('form', { name: 'Kiểm tra kết nối' })).not.toBeInTheDocument();
 });
 
 test('blocked ping identifies its prerequisite by title', async () => {
@@ -361,27 +478,104 @@ test('empty history has no inactive replay slider', async () => {
   expect(screen.queryByRole('slider', { name: 'Thao tác xem lại' })).not.toBeInTheDocument();
 });
 
-test('guide starts open, stays open with AI, and preserves a manual collapse across AI toggles', async () => {
+test('sidebar owns navigation and the header only reopens it after collapse', async () => {
+  useAuth.mockReturnValue({ token: 'test', user: { id: 1 } });
+  render(<CliLabWorkspace lab={{ id: 1 }} page />);
+  await screen.findByText('Terminal Router>');
+  const header = screen.getByRole('banner');
+  expect(
+    within(header).queryByRole('button', { name: /Mục tiêu|Trợ lý AI/ })
+  ).not.toBeInTheDocument();
+  expect(screen.queryByRole('heading', { name: 'Mục tiêu', exact: true })).not.toBeInTheDocument();
+  const sidebar = screen.getByRole('complementary', { name: 'Bảng bên thực hành' });
+  expect(within(sidebar).getAllByRole('button', { name: /^Mục tiêu/ })).toHaveLength(1);
+  fireEvent.click(screen.getByRole('button', { name: 'Thu gọn bảng bên' }));
+  fireEvent.click(within(header).getByRole('button', { name: 'Mở bảng bên' }));
+  expect(sidebar).toBeVisible();
+  expect(within(header).queryByRole('button', { name: 'Mở bảng bên' })).not.toBeInTheDocument();
+  expect(api.startCliLabAttempt).toHaveBeenCalledTimes(1);
+});
+
+test('guide starts collapsed and preserves an expanded guide across sidebar tabs', async () => {
   useAuth.mockReturnValue({ token: 'test', user: { id: 1 } });
   render(<CliLabWorkspace lab={{ id: 1 }} />);
   const guide = await screen.findByRole('group', { name: 'Yêu cầu bài thực hành' });
-  expect(guide).toHaveAttribute('open');
-  expect(within(guide).getByText('Practice routing')).toBeVisible();
-  const assistant = screen.getByRole('button', { name: 'Trợ lý AI', exact: true });
+  expect(guide).not.toHaveAttribute('open');
+  fireEvent.click(within(guide).getByText('Đề bài và hướng dẫn'));
+  await waitFor(() => expect(guide).toHaveAttribute('open'));
+  const assistant = screen.getByRole('button', { name: 'Mở tab Trợ lý AI' });
   fireEvent.click(assistant);
   await screen.findByText('Trợ lý đã mở');
   expect(guide).toHaveAttribute('open');
+  expect(guide).not.toBeVisible();
+  fireEvent.click(screen.getByRole('button', { name: /^Mục tiêu/ }));
+  expect(guide).toBeVisible();
   fireEvent.click(within(guide).getByText('Đề bài và hướng dẫn'));
   await waitFor(() => expect(guide).not.toHaveAttribute('open'));
   fireEvent.click(assistant);
   expect(guide).not.toHaveAttribute('open');
-  fireEvent.click(assistant);
   await screen.findByText('Trợ lý đã mở');
   expect(guide).not.toHaveAttribute('open');
 });
 
+test('assistant draft, selected event and terminal survive switching sidebar and quick/detail modes', async () => {
+  useAuth.mockReturnValue({ token: 'test', user: { id: 1 } });
+  const current = example();
+  current.state.lastPacket = {
+    success: true,
+    events: [
+      {
+        type: 'DELIVERED',
+        deviceId: 'R1',
+        detail: 'Packet delivered',
+        packet: { src: '192.1.12.1', dst: '192.1.12.1', protocol: 'icmp' },
+      },
+      {
+        type: 'REPLY_DELIVERED',
+        deviceId: 'R1',
+        detail: 'Packet delivered',
+        packet: { src: '192.1.12.1', dst: '192.1.12.1', protocol: 'icmp' },
+      },
+    ],
+  };
+  api.startCliLabAttempt.mockResolvedValue(current);
+  render(<CliLabWorkspace lab={{ id: 1 }} page />);
+  const terminal = await screen.findByRole('button', { name: 'Terminal Router>' });
+  const openAi = screen.getByRole('button', { name: 'Mở tab Trợ lý AI' });
+  fireEvent.click(openAi);
+  const draft = await screen.findByRole('textbox', { name: 'Bản nháp trợ lý' });
+  fireEvent.change(draft, { target: { value: 'Câu hỏi đang soạn' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Đóng trợ lý AI' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Mở hành trình gói tin' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Sự kiện 2: Đã nhận phản hồi' }));
+  fireEvent.keyDown(screen.getByRole('button', { name: 'Sự kiện 2: Đã nhận phản hồi' }), {
+    key: 'Escape',
+  });
+  expect(screen.getByRole('button', { name: 'Mở hành trình gói tin' })).toHaveAttribute(
+    'aria-expanded',
+    'false'
+  );
+  fireEvent.click(screen.getByRole('button', { name: 'Mở hành trình gói tin' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Xem chi tiết' }));
+  expect(terminal).toBeEnabled();
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Về bản xem nhanh' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Mở tab Trợ lý AI' }));
+  expect(screen.getByRole('textbox', { name: 'Bản nháp trợ lý' })).toHaveValue('Câu hỏi đang soạn');
+  expect(screen.getByLabelText('Vị trí sự kiện')).toHaveTextContent('2/2');
+  expect(screen.getByRole('button', { name: 'Phát' })).toBeEnabled();
+  expect(terminal).toBeInTheDocument();
+  expect(api.startCliLabAttempt).toHaveBeenCalledTimes(1);
+  expect(api.cliAction).not.toHaveBeenCalled();
+});
+
 test('replay disables terminal writes and returning live restores controls', async () => {
   const current = example();
+  current.state.lastPacket = {
+    success: false,
+    reason: 'No route',
+    events: [{ type: 'DROP', deviceId: 'R1', detail: 'No route' }],
+  };
   current.state.devices.R1.mode = 'PRIVILEGED_EXEC';
   current.commands = [
     {
@@ -394,7 +588,11 @@ test('replay disables terminal writes and returning live restores controls', asy
     },
   ];
   api.startCliLabAttempt.mockResolvedValue(current);
-  api.cliReplay.mockResolvedValue({ state: example().state, sequence: 0, readOnly: true });
+  api.cliReplay.mockResolvedValue({
+    state: { ...example().state, lastPacket: current.state.lastPacket },
+    sequence: 0,
+    readOnly: true,
+  });
   render(
     <CliLabWorkspace
       lab={{ id: 1 }}
@@ -407,9 +605,15 @@ test('replay disables terminal writes and returning live restores controls', asy
   fireEvent.click(screen.getByRole('button', { name: 'Xem trạng thái', exact: true }));
   await waitFor(() => expect(screen.getByText('Quay lại hiện tại')).toBeEnabled());
   expect(screen.getByText('Terminal Router>')).toBeDisabled();
+  fireEvent.click(screen.getByRole('button', { name: 'Mở hành trình gói tin' }));
+  expect(screen.getByRole('button', { name: 'Phát', exact: true })).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Phát', exact: true }));
+  expect(screen.getByRole('button', { name: 'Tạm dừng' })).toBeInTheDocument();
+  expect(api.cliAction).not.toHaveBeenCalled();
   fireEvent.click(screen.getByText('Quay lại hiện tại'));
   expect(screen.getByText('Terminal Router#')).toBeEnabled();
 });
+
 test('rapid local theme clicks preserve the final choice through the animated fallback', async () => {
   render(<CliLabWorkspace lab={{ id: 1 }} page />);
   await screen.findByText('Terminal Router>');
@@ -620,7 +824,7 @@ test('task device chips switch the terminal and overall progress appears once', 
   expect(screen.getByRole('button', { name: 'Terminal R2>' })).toBeInTheDocument();
   expect(screen.getAllByRole('progressbar')).toHaveLength(1);
   expect(screen.getAllByRole('button', { name: 'Chấm bài' })).toHaveLength(1);
-  expect(screen.getByRole('group', { name: 'Yêu cầu bài thực hành' })).toHaveAttribute('open');
+  expect(screen.getByRole('group', { name: 'Yêu cầu bài thực hành' })).not.toHaveAttribute('open');
 });
 
 test('preview uses the local simulator and never calls attempt APIs', async () => {

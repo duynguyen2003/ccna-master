@@ -1,0 +1,342 @@
+{
+  "id": "ntp",
+  "name": "NTP",
+  "title": "Setting the Clock",
+  "layer": 7,
+  "nodes": [
+    "client",
+    "router",
+    "internet",
+    "web"
+  ],
+  "latency": {
+    "client-web": 0.012
+  },
+  "labels": {
+    "web": [
+      "time.windows.com",
+      "203.0.113.123"
+    ]
+  },
+  "legend": [
+    [
+      "amber",
+      "Request"
+    ],
+    [
+      "violet",
+      "Answer"
+    ]
+  ],
+  "overview": {
+    "full": "Network Time Protocol",
+    "description": "Computer clocks drift by seconds a week, and a lot depends on them: certificates have dates, logins and payments expire, logs from different machines must line up. NTP sets a clock from a time server over the internet. One small request and answer carry four timestamps, enough to work out how far off the clock is and how long the network took.",
+    "facts": [
+      [
+        "Layer",
+        "Application (Layer 7)"
+      ],
+      [
+        "Port",
+        "UDP 123"
+      ],
+      [
+        "Message",
+        "48 bytes"
+      ],
+      [
+        "Timestamps",
+        "4: T1 to T4"
+      ],
+      [
+        "Accuracy",
+        "A few milliseconds online"
+      ],
+      [
+        "Defined In",
+        "RFC 5905"
+      ]
+    ]
+  },
+  "outro": {
+    "title": "Clock set",
+    "desc": "Four timestamps, one answer",
+    "text": "One request and one answer gave four timestamps. From them the laptop worked out that its clock was 0.25 s slow and that the network took 24 ms there and back, and it began easing its clock into line. Press REPLAY to watch it again.",
+    "facts": [
+      [
+        "Offset",
+        "250.0 ms (slow)"
+      ],
+      [
+        "Round trip",
+        "24.0 ms"
+      ],
+      [
+        "Server",
+        "Stratum 2"
+      ],
+      [
+        "Next check",
+        "Minutes to days later"
+      ]
+    ]
+  },
+  "start": {
+    "nodes": [
+      "client"
+    ],
+    "frame": "client"
+  },
+  "steps": [
+    {
+      "title": "Clocks Drift",
+      "desc": "The laptop’s clock is a little slow",
+      "detail": "A computer keeps time with a quartz crystal that runs a little fast or slow, so clocks drift apart by seconds a week. This laptop’s clock is a quarter of a second behind. Windows sets it from time.windows.com, whose address it has already looked up by DNS.",
+      "facts": [
+        [
+          "Laptop clock",
+          "0.25 s slow"
+        ],
+        [
+          "Time server",
+          "time.windows.com"
+        ],
+        [
+          "Why it matters",
+          "Certificates, logins, logs"
+        ]
+      ],
+      "events": [
+        {
+          "type": "show",
+          "nodes": [
+            "router",
+            "internet",
+            "web"
+          ],
+          "frame": "path"
+        },
+        {
+          "type": "note",
+          "at": "client",
+          "text": "CLOCK 0.250 s SLOW",
+          "tone": "amber"
+        }
+      ]
+    },
+    {
+      "title": "Ask for the Time",
+      "desc": "T1: when the request leaves",
+      "detail": "The laptop sends a 48-byte request to port 123. It writes in the time by its own clock as the request leaves: T1, 09:40:59.750. Everything else is empty.",
+      "facts": [
+        [
+          "T1 (laptop)",
+          "09:40:59.750000"
+        ],
+        [
+          "Mode",
+          "3 (client)"
+        ],
+        [
+          "Size",
+          "48 bytes"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "amber",
+          "label": "REQUEST",
+          "payload": [
+            "T1 09:40:59.750"
+          ],
+          "row": {
+            "time": "0.000s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.123",
+            "proto": "NTP",
+            "info": "NTP Version 3, client",
+            "len": "90 B",
+            "wire": {
+              "udp": {
+                "sport": 123,
+                "dport": 123,
+                "data": {
+                  "ntp": {
+                    "version": 3,
+                    "transmit": 1794044459.75
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "The Answer",
+      "desc": "T2 and T3 from the server, T4 on arrival",
+      "detail": "The server copies T1 back, adds T2, when the request arrived, and T3, when its answer leaves, both by its own accurate clock. When the answer arrives, the laptop notes T4 by its own clock. The server is stratum 2: it sets its clock from a stratum 1 server, which has a GPS receiver or an atomic clock.",
+      "facts": [
+        [
+          "T2, T3",
+          "09:41:00.012000, .012100"
+        ],
+        [
+          "T4 (laptop)",
+          "09:40:59.774100"
+        ],
+        [
+          "Stratum",
+          "2"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "violet",
+          "label": "ANSWER",
+          "payload": [
+            "T2 09:41:00.012000",
+            "T3 09:41:00.012100"
+          ],
+          "row": {
+            "time": "0.012s",
+            "src": "203.0.113.123",
+            "dst": "192.168.1.10",
+            "proto": "NTP",
+            "info": "NTP Version 3, server",
+            "len": "90 B",
+            "wire": {
+              "udp": {
+                "sport": 123,
+                "dport": 123,
+                "data": {
+                  "ntp": {
+                    "version": 3,
+                    "server": true,
+                    "reference": 1794043936.582,
+                    "origin": 1794044459.75,
+                    "receive": 1794044460.012,
+                    "transmit": 1794044460.0121
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "The Offset",
+      "desc": "Four times, two answers",
+      "detail": "The time on the network, there and back, is (T4 − T1) − (T3 − T2) = 24.0 ms. The offset assumes the trip takes as long each way: ((T2 − T1) + (T3 − T4)) / 2 = 250.0 ms. The laptop’s clock is a quarter of a second slow. An uneven route (slower one way than the other) would skew the result by up to half the difference.",
+      "facts": [
+        [
+          "Round trip",
+          "(T4 − T1) − (T3 − T2) = 24.0 ms"
+        ],
+        [
+          "Offset",
+          "((T2 − T1) + (T3 − T4)) / 2 = 250.0 ms"
+        ],
+        [
+          "Assumes",
+          "Equal time each way"
+        ]
+      ],
+      "events": [
+        {
+          "type": "note",
+          "at": "client",
+          "text": "OFFSET +250.0 ms",
+          "tone": "navy"
+        }
+      ]
+    },
+    {
+      "title": "Ease It In",
+      "desc": "No jumps backwards",
+      "detail": "A small error is not fixed in one jump: the clock is run slightly fast until it catches up, so time never stops or goes backwards for running programs. Only a big error is set straight away. As a clock settles, an NTP client asks less often, from every 64 seconds up to every 17 minutes or so; Windows on its own checks time.windows.com far less often, every several hours or less.",
+      "facts": [
+        [
+          "Small offsets",
+          "Eased in gradually"
+        ],
+        [
+          "Large offsets",
+          "Set at once"
+        ],
+        [
+          "Asks again",
+          "Less often as it settles"
+        ]
+      ],
+      "events": [
+        {
+          "type": "note",
+          "at": "client",
+          "text": "CLOCK IN STEP",
+          "tone": "green"
+        }
+      ]
+    }
+  ],
+  "teaching": {
+    "steps": [
+      [
+        "Đồng hồ bị lệch",
+        "Máy tính giữ giờ bằng tinh thể thạch anh chạy hơi nhanh hoặc hơi chậm, nên các đồng hồ lệch nhau vài giây mỗi tuần. Đồng hồ của laptop này chậm một phần tư giây. Windows chỉnh nó theo time.windows.com, địa chỉ đã được tra bằng DNS."
+      ],
+      [
+        "Hỏi giờ",
+        "Laptop gửi một yêu cầu 48 byte tới cổng 123. Nó ghi vào đó giờ theo đồng hồ của mình lúc yêu cầu rời đi: T1, 09:40:59.750. Mọi thứ khác để trống."
+      ],
+      [
+        "Câu trả lời",
+        "Máy chủ chép lại T1, thêm T2, lúc yêu cầu đến, và T3, lúc câu trả lời rời đi, cả hai theo đồng hồ chính xác của nó. Khi câu trả lời đến, laptop ghi T4 theo đồng hồ của mình. Máy chủ là stratum 2: nó chỉnh đồng hồ theo một máy chủ stratum 1, nơi có bộ thu GPS hoặc đồng hồ nguyên tử."
+      ],
+      [
+        "Độ lệch",
+        "Thời gian trên mạng, cả đi lẫn về, là (T4 − T1) − (T3 − T2) = 24.0 ms. Độ lệch giả định chiều đi và chiều về mất cùng thời gian: ((T2 − T1) + (T3 − T4)) / 2 = 250.0 ms. Đồng hồ laptop chậm một phần tư giây. Một tuyến không đều (chiều này chậm hơn chiều kia) sẽ làm lệch kết quả tới một nửa chênh lệch."
+      ],
+      [
+        "Chỉnh dần",
+        "Sai số nhỏ không được sửa bằng một bước nhảy: đồng hồ được cho chạy nhanh hơn chút cho đến khi bắt kịp, nên với chương trình đang chạy, thời gian không bao giờ dừng hay lùi lại. Chỉ sai số lớn mới được đặt lại ngay. Khi đồng hồ ổn định, máy khách NTP hỏi thưa dần, từ mỗi 64 giây đến khoảng mỗi 17 phút; riêng Windows kiểm tra time.windows.com thưa hơn nhiều, vài giờ một lần hoặc ít hơn."
+      ]
+    ],
+    "notes": {
+      "CLOCK 0.250 s SLOW": "ĐỒNG HỒ CHẬM 0.250 s",
+      "OFFSET +250.0 ms": "ĐỘ LỆCH +250.0 ms",
+      "CLOCK IN STEP": "ĐỒNG HỒ ĐÃ KHỚP"
+    },
+    "labels": {
+      "Internet": "Internet",
+      "Client": "Máy khách",
+      "Router": "Router",
+      "DNS Resolver": "Bộ phân giải DNS",
+      "Web Server": "Máy chủ web",
+      "Root Server": "Máy chủ gốc",
+      ".com TLD Server": "Máy chủ TLD .com",
+      "Authoritative Server": "Máy chủ có thẩm quyền",
+      "Mail Server": "Máy chủ thư",
+      "Proxy": "Proxy",
+      "App Server": "Máy chủ ứng dụng",
+      "File Server": "Máy chủ tệp",
+      "ISP Router": "Router của ISP",
+      "Transit Router": "Router trung chuyển",
+      "Hosting Router": "Router của nhà lưu trữ",
+      "Their Router": "Router bên kia",
+      "Their Laptop": "Laptop bên kia",
+      "Switch": "Switch",
+      "Access Server": "Máy chủ truy cập",
+      "IP Camera": "Camera IP",
+      "TV Box": "TV box",
+      "time.windows.com": "time.windows.com"
+    }
+  }
+}

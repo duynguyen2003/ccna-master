@@ -1,0 +1,671 @@
+{
+  "id": "doh",
+  "name": "DNS over HTTPS",
+  "title": "Private",
+  "layer": 7,
+  "nodes": [
+    "client",
+    "router",
+    "internet",
+    "dns"
+  ],
+  "latency": {
+    "client-dns": 0.012
+  },
+  "labels": {
+    "dns": [
+      "dns.google",
+      "8.8.8.8"
+    ]
+  },
+  "legend": [
+    [
+      "blue",
+      "Plain DNS"
+    ],
+    [
+      "green",
+      "TCP"
+    ],
+    [
+      "teal",
+      "TLS"
+    ],
+    [
+      "amber",
+      "DNS inside HTTPS"
+    ]
+  ],
+  "overview": {
+    "full": "DNS queries inside HTTPS",
+    "description": "Ordinary DNS travels in the clear: anyone on the same Wi-Fi, and your internet provider, can read every name you look up and even change the answers. DNS over HTTPS (DoH) sends the same DNS messages inside an encrypted HTTPS connection to the resolver, so on the way they look like any other web traffic. Browsers and operating systems can turn it on.",
+    "facts": [
+      [
+        "Layer",
+        "Application (Layer 7)"
+      ],
+      [
+        "Port",
+        "443 (HTTPS)"
+      ],
+      [
+        "Carries",
+        "Ordinary DNS messages"
+      ],
+      [
+        "Hides",
+        "Which names you look up"
+      ],
+      [
+        "Similar",
+        "DNS over TLS (port 853)"
+      ],
+      [
+        "Defined In",
+        "RFC 8484"
+      ]
+    ]
+  },
+  "outro": {
+    "title": "Looked up in private",
+    "desc": "Same question, sealed",
+    "text": "The plain lookup could be read by anyone on the path. Over HTTPS the same DNS message was sealed inside TLS, readable only by the resolver. The resolver still sees every question, so the trust moves to it, and the site you then visit can still be seen by its address. Press REPLAY to watch it again.",
+    "facts": [
+      [
+        "On the way",
+        "Only “HTTPS to dns.google”"
+      ],
+      [
+        "The resolver",
+        "Still sees every name"
+      ],
+      [
+        "Still visible",
+        "The site’s address you then visit"
+      ],
+      [
+        "Answers",
+        "Can’t be changed on the way"
+      ]
+    ]
+  },
+  "start": {
+    "nodes": [
+      "client"
+    ],
+    "frame": "client"
+  },
+  "steps": [
+    {
+      "title": "Plain DNS",
+      "desc": "Readable by anyone on the way",
+      "detail": "This is the lookup from the other lessons: a UDP packet to port 53 asking for www.example.com, and the answer. Neither is encrypted, so everyone on the café’s Wi-Fi, and the internet provider, can see which names the laptop looks up, and could even answer with a false address.",
+      "facts": [
+        [
+          "Transport",
+          "UDP port 53"
+        ],
+        [
+          "Encrypted",
+          "No"
+        ],
+        [
+          "Can be changed",
+          "Yes, on the way"
+        ]
+      ],
+      "events": [
+        {
+          "type": "show",
+          "nodes": [
+            "router",
+            "internet",
+            "dns"
+          ],
+          "frame": "lookup"
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "dns",
+          "color": "blue",
+          "label": "DNS QUERY",
+          "payload": [
+            "A? www.example.com",
+            "readable"
+          ],
+          "row": {
+            "time": "0.000s",
+            "src": "192.168.1.10",
+            "dst": "8.8.8.8",
+            "proto": "DNS",
+            "info": "Standard query A www.example.com",
+            "len": "75 B",
+            "wire": {
+              "udp": {
+                "sport": 60412,
+                "dport": 53,
+                "data": {
+                  "dns": {
+                    "id": 27196,
+                    "rd": true,
+                    "q": [
+                      "www.example.com",
+                      "A"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "dns",
+          "to": "client",
+          "color": "blue",
+          "label": "DNS REPLY",
+          "payload": [
+            "A 203.0.113.10",
+            "readable"
+          ],
+          "row": {
+            "time": "0.012s",
+            "src": "8.8.8.8",
+            "dst": "192.168.1.10",
+            "proto": "DNS",
+            "info": "Standard query response A 203.0.113.10",
+            "len": "91 B",
+            "wire": {
+              "udp": {
+                "sport": 53,
+                "dport": 60412,
+                "data": {
+                  "dns": {
+                    "id": 27196,
+                    "rd": true,
+                    "q": [
+                      "www.example.com",
+                      "A"
+                    ],
+                    "response": true,
+                    "ra": true,
+                    "an": [
+                      [
+                        "www.example.com",
+                        "A",
+                        1745,
+                        "203.0.113.10"
+                      ]
+                    ],
+                    "exampleTtl": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "note",
+          "at": "router",
+          "text": "ANYONE HERE CAN READ IT",
+          "tone": "amber"
+        }
+      ]
+    },
+    {
+      "title": "An HTTPS Link",
+      "desc": "TCP and TLS to dns.google",
+      "detail": "With DNS over HTTPS on, the browser opens an HTTPS connection to the resolver instead: TCP to port 443 and a TLS handshake for dns.google. It keeps this connection open and sends every lookup down it.",
+      "facts": [
+        [
+          "Resolver",
+          "dns.google (8.8.8.8)"
+        ],
+        [
+          "Port",
+          "443, like any website"
+        ],
+        [
+          "Kept open",
+          "For every lookup"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "dns",
+          "color": "green",
+          "label": "SYN",
+          "payload": [],
+          "row": {
+            "time": "1.000s",
+            "src": "192.168.1.10",
+            "dst": "8.8.8.8",
+            "proto": "TCP",
+            "info": "52420 → 443 [SYN] Seq=0",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 52420,
+                "dport": 443,
+                "flags": "S"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "dns",
+          "to": "client",
+          "color": "green",
+          "label": "SYN-ACK",
+          "payload": [],
+          "row": {
+            "time": "1.012s",
+            "src": "8.8.8.8",
+            "dst": "192.168.1.10",
+            "proto": "TCP",
+            "info": "443 → 52420 [SYN, ACK] Seq=0 Ack=1",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 443,
+                "dport": 52420,
+                "flags": "SA"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "dns",
+          "color": "green",
+          "label": "ACK",
+          "payload": [],
+          "row": {
+            "time": "1.024s",
+            "src": "192.168.1.10",
+            "dst": "8.8.8.8",
+            "proto": "TCP",
+            "info": "52420 → 443 [ACK] Seq=1 Ack=1",
+            "len": "60 B",
+            "wire": {
+              "tcp": {
+                "sport": 52420,
+                "dport": 443,
+                "flags": "A"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "dns",
+          "color": "teal",
+          "label": "CLIENT HELLO",
+          "payload": [],
+          "row": {
+            "time": "1.024s",
+            "src": "192.168.1.10",
+            "dst": "8.8.8.8",
+            "proto": "TLSv1.3",
+            "info": "Client Hello (SNI=dns.google)",
+            "len": "571 B",
+            "wire": {
+              "tcp": {
+                "sport": 52420,
+                "dport": 443,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "handshake",
+                      "legacy": true,
+                      "length": 512,
+                      "hello": {
+                        "type": 1,
+                        "name": "Client Hello",
+                        "note": "What this client supports. Its exact contents vary from client to client; this is an example.",
+                        "fields": [
+                          [
+                            "Server name (SNI)",
+                            "dns.google"
+                          ],
+                          [
+                            "Versions offered",
+                            "TLS 1.3, TLS 1.2"
+                          ],
+                          [
+                            "Key share",
+                            "X25519"
+                          ],
+                          [
+                            "Padding",
+                            "up to 512 bytes"
+                          ]
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "dns",
+          "to": "client",
+          "color": "teal",
+          "label": "SERVER HELLO",
+          "payload": [],
+          "row": {
+            "time": "1.036s",
+            "src": "8.8.8.8",
+            "dst": "192.168.1.10",
+            "proto": "TLSv1.3",
+            "info": "Server Hello + encrypted handshake, 2 segments",
+            "len": "2.9 KB",
+            "wire": {
+              "tcp": {
+                "sport": 443,
+                "dport": 52420,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "handshake",
+                      "length": 122,
+                      "hello": {
+                        "type": 2,
+                        "name": "Server Hello",
+                        "note": "The server’s choices and its key share.",
+                        "fields": [
+                          [
+                            "Version",
+                            "TLS 1.3"
+                          ],
+                          [
+                            "Cipher suite",
+                            "TLS_AES_128_GCM_SHA256"
+                          ],
+                          [
+                            "Key share",
+                            "X25519"
+                          ]
+                        ]
+                      }
+                    },
+                    {
+                      "type": "ccs",
+                      "length": 1
+                    },
+                    {
+                      "type": "appdata",
+                      "length": 2724,
+                      "inner": {
+                        "what": "Encrypted Extensions, Certificate (the chain), Certificate Verify (the signature), Finished"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "dns",
+          "color": "teal",
+          "label": "FINISHED",
+          "payload": [],
+          "row": {
+            "time": "1.048s",
+            "src": "192.168.1.10",
+            "dst": "8.8.8.8",
+            "proto": "TLSv1.3",
+            "info": "Change Cipher Spec, Finished (encrypted)",
+            "len": "118 B",
+            "wire": {
+              "tcp": {
+                "sport": 52420,
+                "dport": 443,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "ccs",
+                      "length": 1
+                    },
+                    {
+                      "type": "appdata",
+                      "length": 53,
+                      "inner": {
+                        "what": "Finished: a check value over the whole handshake"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "quick": true
+        }
+      ]
+    },
+    {
+      "title": "Sealed Question",
+      "desc": "A DNS message in an HTTP request",
+      "detail": "The question is the same DNS message as before. It goes in an HTTP/2 request, GET /dns-query?dns= followed by the message in base64url, asking for an answer in the type application/dns-message. Inside TLS, nobody on the way can read it.",
+      "facts": [
+        [
+          "Request",
+          "GET /dns-query?dns=…"
+        ],
+        [
+          "Format",
+          "application/dns-message"
+        ],
+        [
+          "On the way",
+          "Encrypted (TLS)"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "dns",
+          "color": "amber",
+          "label": "DoH QUERY",
+          "payload": [
+            "inside: GET /dns-query?dns=…"
+          ],
+          "row": {
+            "time": "1.048s",
+            "src": "192.168.1.10",
+            "dst": "8.8.8.8",
+            "proto": "TLSv1.3",
+            "info": "Application Data (HTTP/2: DNS query)",
+            "len": "219 B",
+            "wire": {
+              "tcp": {
+                "sport": 52420,
+                "dport": 443,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "appdata",
+                      "length": 160,
+                      "inner": {
+                        "what": "HTTP/2: the connection preface and settings, then the request",
+                        "text": [
+                          "GET /dns-query?dns=AAABAAABAAAAAAAAA3d3dwdleGFtcGxlA2NvbQAAAQAB",
+                          "accept: application/dns-message"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "locked": true
+        }
+      ]
+    },
+    {
+      "title": "Sealed Answer",
+      "desc": "The DNS answer in an HTTP response",
+      "detail": "The resolver answers 200 with a body of type application/dns-message: the same DNS answer as the plain lookup, A 203.0.113.10. Because it arrives through TLS from dns.google, nobody on the way could have changed it.",
+      "facts": [
+        [
+          "Response",
+          "200, application/dns-message"
+        ],
+        [
+          "Body",
+          "The DNS answer (49 bytes)"
+        ],
+        [
+          "Tampering",
+          "Impossible on the way"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "dns",
+          "to": "client",
+          "color": "amber",
+          "label": "DoH ANSWER",
+          "payload": [
+            "inside: A 203.0.113.10"
+          ],
+          "row": {
+            "time": "1.061s",
+            "src": "8.8.8.8",
+            "dst": "192.168.1.10",
+            "proto": "TLSv1.3",
+            "info": "Application Data (HTTP/2: DNS answer)",
+            "len": "200 B",
+            "wire": {
+              "tcp": {
+                "sport": 443,
+                "dport": 52420,
+                "flags": "PA",
+                "data": {
+                  "tls": [
+                    {
+                      "type": "appdata",
+                      "length": 141,
+                      "inner": {
+                        "what": "HTTP/2: settings, the response headers, then the DNS answer",
+                        "text": [
+                          ":status: 200",
+                          "content-type: application/dns-message",
+                          "www.example.com A 203.0.113.10 (49-byte DNS message)"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "locked": true
+        }
+      ]
+    },
+    {
+      "title": "What Still Shows",
+      "desc": "Hidden on the way, not from the resolver",
+      "detail": "On the way, the lookups now look like any HTTPS traffic to dns.google. But the resolver itself reads every question, so you are trusting it instead of whoever runs your network. And the site you then visit is still seen by its IP address, and by its name in the TLS Client Hello unless it supports Encrypted Client Hello. DNS over TLS does the same job on port 853.",
+      "facts": [
+        [
+          "Resolver",
+          "Sees every name"
+        ],
+        [
+          "Then visible",
+          "The site’s IP, maybe its name"
+        ],
+        [
+          "Alternative",
+          "DNS over TLS (port 853)"
+        ]
+      ],
+      "events": [
+        {
+          "type": "note",
+          "at": "dns",
+          "text": "TRUST MOVES TO THE RESOLVER",
+          "tone": "navy"
+        }
+      ]
+    }
+  ],
+  "teaching": {
+    "steps": [
+      [
+        "DNS thường",
+        "Đây là tra cứu trong các bài khác: một gói UDP tới cổng 53 hỏi www.example.com, và câu trả lời. Cả hai đều không mã hóa, nên mọi người trên Wi-Fi quán cà phê, và nhà mạng, đều thấy laptop tra tên nào, và thậm chí có thể trả lời bằng địa chỉ giả."
+      ],
+      [
+        "Một liên kết HTTPS",
+        "Khi bật DNS over HTTPS, trình duyệt mở một kết nối HTTPS tới bộ phân giải: TCP tới cổng 443 và bắt tay TLS cho dns.google. Nó giữ kết nối này mở và gửi mọi lượt tra cứu qua đó."
+      ],
+      [
+        "Câu hỏi đã niêm phong",
+        "Câu hỏi vẫn là thông điệp DNS như trước. Nó đi trong một yêu cầu HTTP/2, GET /dns-query?dns= theo sau là thông điệp dạng base64url, xin câu trả lời kiểu application/dns-message. Bên trong TLS, không ai trên đường đọc được."
+      ],
+      [
+        "Câu trả lời đã niêm phong",
+        "Bộ phân giải trả lời 200 với phần thân kiểu application/dns-message: cùng câu trả lời DNS như tra cứu thường, A 203.0.113.10. Vì nó đến qua TLS từ dns.google, không ai trên đường sửa được."
+      ],
+      [
+        "Những gì vẫn lộ",
+        "Trên đường, các lượt tra cứu giờ trông như lưu lượng HTTPS thường tới dns.google. Nhưng chính bộ phân giải đọc mọi câu hỏi, nên bạn tin nó thay vì người quản lý mạng của bạn. Và trang bạn truy cập sau đó vẫn bị thấy qua địa chỉ IP, và qua tên trong TLS Client Hello trừ khi nó hỗ trợ Encrypted Client Hello. DNS over TLS làm cùng việc trên cổng 853."
+      ]
+    ],
+    "notes": {
+      "ANYONE HERE CAN READ IT": "AI Ở ĐÂY CŨNG ĐỌC ĐƯỢC",
+      "TRUST MOVES TO THE RESOLVER": "LÒNG TIN CHUYỂN SANG BỘ PHÂN GIẢI"
+    },
+    "labels": {
+      "Internet": "Internet",
+      "Client": "Máy khách",
+      "Router": "Router",
+      "DNS Resolver": "Bộ phân giải DNS",
+      "Web Server": "Máy chủ web",
+      "Root Server": "Máy chủ gốc",
+      ".com TLD Server": "Máy chủ TLD .com",
+      "Authoritative Server": "Máy chủ có thẩm quyền",
+      "Mail Server": "Máy chủ thư",
+      "Proxy": "Proxy",
+      "App Server": "Máy chủ ứng dụng",
+      "File Server": "Máy chủ tệp",
+      "ISP Router": "Router của ISP",
+      "Transit Router": "Router trung chuyển",
+      "Hosting Router": "Router của nhà lưu trữ",
+      "Their Router": "Router bên kia",
+      "Their Laptop": "Laptop bên kia",
+      "Switch": "Switch",
+      "Access Server": "Máy chủ truy cập",
+      "IP Camera": "Camera IP",
+      "TV Box": "TV box",
+      "dns.google": "dns.google"
+    }
+  }
+}

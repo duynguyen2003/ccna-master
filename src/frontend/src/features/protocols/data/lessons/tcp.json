@@ -1,0 +1,628 @@
+{
+  "id": "tcp",
+  "name": "TCP",
+  "title": "Reliable Delivery",
+  "layer": 4,
+  "nodes": [
+    "client",
+    "router",
+    "internet",
+    "web"
+  ],
+  "latency": {
+    "client-web": 0.017
+  },
+  "legend": [
+    [
+      "green",
+      "Handshake and ACKs"
+    ],
+    [
+      "amber",
+      "Data from laptop"
+    ],
+    [
+      "violet",
+      "Data from server"
+    ],
+    [
+      "slate",
+      "Closing (FIN)"
+    ]
+  ],
+  "overview": {
+    "full": "Transmission Control Protocol",
+    "description": "TCP turns the internet’s best-effort packet delivery into a reliable, ordered stream of bytes. It numbers every byte, acknowledges what arrives, resends what goes missing, and paces the sender so neither the other side nor the network is overwhelmed.",
+    "facts": [
+      [
+        "Layer",
+        "Transport (Layer 4)"
+      ],
+      [
+        "Connection",
+        "Three-way handshake"
+      ],
+      [
+        "Reliability",
+        "Sequence numbers + ACKs"
+      ],
+      [
+        "Recovery",
+        "Retransmission"
+      ],
+      [
+        "Header",
+        "20–60 bytes"
+      ],
+      [
+        "Defined In",
+        "RFC 9293"
+      ]
+    ]
+  },
+  "outro": {
+    "title": "Connection closed",
+    "desc": "Every byte accounted for",
+    "text": "TCP opened a connection, numbered and acknowledged every byte, spotted a gap and resent just the missing segment, then closed both directions cleanly. curl received every byte in order and never saw the loss. Press REPLAY to watch it again.",
+    "facts": [
+      [
+        "Segments",
+        "14 (1 lost, 1 resent)"
+      ],
+      [
+        "Bytes delivered",
+        "78 up, 2,920 down"
+      ],
+      [
+        "Loss found by",
+        "Duplicate ACK + SACK"
+      ],
+      [
+        "Total time",
+        "0.148 s"
+      ]
+    ]
+  },
+  "start": {
+    "nodes": [
+      "client"
+    ],
+    "frame": "client"
+  },
+  "steps": [
+    {
+      "title": "Open Connection",
+      "desc": "Three-way handshake",
+      "detail": "curl already knows the server’s address. Before any data moves, both sides choose a starting sequence number and confirm it: SYN, SYN-ACK, ACK. The numbers here are relative; real ones start at a random value.",
+      "facts": [
+        [
+          "Server",
+          "203.0.113.10, port 80"
+        ],
+        [
+          "Client port",
+          "49152 (ephemeral)"
+        ],
+        [
+          "Flags",
+          "SYN → SYN-ACK → ACK"
+        ]
+      ],
+      "events": [
+        {
+          "type": "show",
+          "nodes": [
+            "router",
+            "internet",
+            "web"
+          ],
+          "frame": "full"
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "green",
+          "label": "SYN",
+          "payload": [
+            "seq=0"
+          ],
+          "row": {
+            "time": "0.000s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.10",
+            "proto": "TCP",
+            "info": "49152 → 80 [SYN] Seq=0",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 49152,
+                "dport": 80,
+                "flags": "S"
+              }
+            }
+          },
+          "quick": false
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "green",
+          "label": "SYN-ACK",
+          "payload": [
+            "seq=0 ack=1"
+          ],
+          "row": {
+            "time": "0.017s",
+            "src": "203.0.113.10",
+            "dst": "192.168.1.10",
+            "proto": "TCP",
+            "info": "80 → 49152 [SYN, ACK] Seq=0 Ack=1",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 80,
+                "dport": 49152,
+                "flags": "SA"
+              }
+            }
+          },
+          "quick": false
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "green",
+          "label": "ACK",
+          "payload": [
+            "seq=1 ack=1"
+          ],
+          "row": {
+            "time": "0.034s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.10",
+            "proto": "TCP",
+            "info": "49152 → 80 [ACK] Seq=1 Ack=1",
+            "len": "60 B",
+            "wire": {
+              "tcp": {
+                "sport": 49152,
+                "dport": 80,
+                "flags": "A"
+              }
+            }
+          },
+          "quick": false
+        }
+      ]
+    },
+    {
+      "title": "Send Data",
+      "desc": "Every byte is numbered",
+      "detail": "curl sends its 78-byte HTTP request: bytes 1 to 78. The server’s ACK number, 79, is the next byte it expects, which means everything before it has arrived.",
+      "facts": [
+        [
+          "Sent",
+          "78 bytes (seq 1–78)"
+        ],
+        [
+          "ACK",
+          "79 = next byte expected"
+        ],
+        [
+          "Flags",
+          "PSH, ACK"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "amber",
+          "label": "DATA",
+          "payload": [
+            "seq=1  len=78",
+            "GET / HTTP/1.1 …"
+          ],
+          "row": {
+            "time": "0.034s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.10",
+            "proto": "TCP",
+            "info": "49152 → 80 [PSH, ACK] Seq=1 Ack=1 Len=78",
+            "len": "132 B",
+            "wire": {
+              "tcp": {
+                "sport": 49152,
+                "dport": 80,
+                "flags": "PA",
+                "data": {
+                  "text": [
+                    "GET / HTTP/1.1",
+                    "Host: www.example.com",
+                    "User-Agent: curl/8.9.1",
+                    "Accept: */*",
+                    ""
+                  ],
+                  "name": "HTTP"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "green",
+          "label": "ACK",
+          "payload": [
+            "ack=79"
+          ],
+          "row": {
+            "time": "0.051s",
+            "src": "203.0.113.10",
+            "dst": "192.168.1.10",
+            "proto": "TCP",
+            "info": "80 → 49152 [ACK] Seq=1 Ack=79",
+            "len": "60 B",
+            "wire": {
+              "tcp": {
+                "sport": 80,
+                "dport": 49152,
+                "flags": "A"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Two Segments Back",
+      "desc": "One of them is lost",
+      "detail": "The server answers with 2,920 bytes: two full segments of 1,460 bytes, the most that fits in one packet here, sent back to back. The first is dropped somewhere on the internet; the second gets through.",
+      "facts": [
+        [
+          "Segment 1",
+          "bytes 1–1460 (lost)"
+        ],
+        [
+          "Segment 2",
+          "bytes 1461–2920"
+        ],
+        [
+          "Segment size",
+          "1,460 bytes (MSS)"
+        ]
+      ],
+      "events": [
+        {
+          "type": "stream",
+          "from": "web",
+          "to": "client",
+          "color": "violet",
+          "label": "2 SEGMENTS",
+          "payload": [
+            "seq=1 and seq=1461",
+            "the first is lost"
+          ],
+          "packets": [
+            {
+              "type": "packet",
+              "from": "web",
+              "to": "client",
+              "color": "violet",
+              "label": "DATA",
+              "payload": [],
+              "row": {
+                "time": "0.052s",
+                "src": "203.0.113.10",
+                "dst": "192.168.1.10",
+                "proto": "TCP",
+                "info": "80 → 49152 [ACK] Seq=1 Ack=79 Len=1460",
+                "len": "1514 B",
+                "wire": {
+                  "tcp": {
+                    "sport": 80,
+                    "dport": 49152,
+                    "flags": "A",
+                    "data": {
+                      "opaque": 1460,
+                      "what": "the HTTP response, bytes 1–1460",
+                      "name": "HTTP"
+                    }
+                  }
+                }
+              },
+              "lost": true
+            },
+            {
+              "type": "packet",
+              "from": "web",
+              "to": "client",
+              "color": "violet",
+              "label": "DATA",
+              "payload": [],
+              "row": {
+                "time": "0.052s",
+                "src": "203.0.113.10",
+                "dst": "192.168.1.10",
+                "proto": "TCP",
+                "info": "80 → 49152 [PSH, ACK] Seq=1461 Ack=79 Len=1460",
+                "len": "1514 B",
+                "wire": {
+                  "tcp": {
+                    "sport": 80,
+                    "dport": 49152,
+                    "flags": "PA",
+                    "data": {
+                      "opaque": 1460,
+                      "what": "the HTTP response, bytes 1461–2920",
+                      "name": "HTTP"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "note",
+          "at": "internet",
+          "text": "SEGMENT 1 LOST",
+          "tone": "amber"
+        }
+      ]
+    },
+    {
+      "title": "A Gap Is Noticed",
+      "desc": "Duplicate ACK with SACK",
+      "detail": "Bytes 1461–2920 arrive, but 1–1460 never did. An ACK can only count bytes received in order, so the laptop repeats ACK 1 at once and adds a SACK block saying it already holds 1461–2920.",
+      "facts": [
+        [
+          "ACK",
+          "1 (still waiting for byte 1)"
+        ],
+        [
+          "SACK",
+          "holds bytes 1461–2920"
+        ],
+        [
+          "Sent",
+          "At once, not delayed"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "green",
+          "label": "DUP ACK",
+          "payload": [
+            "ack=1",
+            "sack: has 1461–2920"
+          ],
+          "row": {
+            "time": "0.069s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.10",
+            "proto": "TCP",
+            "info": "49152 → 80 [ACK] Seq=79 Ack=1 SLE=1461 SRE=2921",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 49152,
+                "dport": 80,
+                "flags": "A",
+                "sack": true
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Resend the Gap",
+      "desc": "Only the missing bytes",
+      "detail": "The SACK tells the server exactly what is missing, so it resends just segment 1, and the laptop acknowledges everything. Had no ACK come back at all, timers would have stepped in: a probe after about two round trips, then a retransmission timeout (at least 200 ms on Linux).",
+      "facts": [
+        [
+          "Resent",
+          "bytes 1–1460 only"
+        ],
+        [
+          "Next ACK",
+          "2921 (everything)"
+        ],
+        [
+          "curl saw",
+          "Every byte, in order"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "violet",
+          "label": "RESEND",
+          "payload": [
+            "seq=1  len=1460",
+            "just the missing segment"
+          ],
+          "row": {
+            "time": "0.095s",
+            "src": "203.0.113.10",
+            "dst": "192.168.1.10",
+            "proto": "TCP",
+            "info": "80 → 49152 [TCP Retransmission] Seq=1 Ack=79 Len=1460",
+            "len": "1514 B",
+            "wire": {
+              "tcp": {
+                "sport": 80,
+                "dport": 49152,
+                "flags": "A",
+                "data": {
+                  "opaque": 1460,
+                  "what": "the HTTP response, bytes 1–1460",
+                  "name": "HTTP"
+                },
+                "seq": 1
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "green",
+          "label": "ACK",
+          "payload": [
+            "ack=2921"
+          ],
+          "row": {
+            "time": "0.112s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.10",
+            "proto": "TCP",
+            "info": "49152 → 80 [ACK] Seq=79 Ack=2921",
+            "len": "60 B",
+            "wire": {
+              "tcp": {
+                "sport": 49152,
+                "dport": 80,
+                "flags": "A"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Close Connection",
+      "desc": "Each side says goodbye",
+      "detail": "curl is done, so it closes. Each direction closes on its own: the laptop sends FIN and the server acknowledges it, then the server sends its own FIN and the laptop acknowledges that. The laptop keeps the connection’s details for a while (TIME-WAIT).",
+      "facts": [
+        [
+          "Closed by",
+          "A FIN from each side"
+        ],
+        [
+          "Order",
+          "FIN → ACK → FIN → ACK"
+        ],
+        [
+          "Then",
+          "Laptop waits (TIME-WAIT)"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "slate",
+          "label": "FIN",
+          "payload": [
+            "seq=79  ack=2921"
+          ],
+          "row": {
+            "time": "0.113s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.10",
+            "proto": "TCP",
+            "info": "49152 → 80 [FIN, ACK] Seq=79 Ack=2921",
+            "len": "60 B",
+            "wire": {
+              "tcp": {
+                "sport": 49152,
+                "dport": 80,
+                "flags": "FA"
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "green",
+          "label": "ACK",
+          "payload": [
+            "ack=80"
+          ],
+          "row": {
+            "time": "0.130s",
+            "src": "203.0.113.10",
+            "dst": "192.168.1.10",
+            "proto": "TCP",
+            "info": "80 → 49152 [ACK] Seq=2921 Ack=80",
+            "len": "60 B",
+            "wire": {
+              "tcp": {
+                "sport": 80,
+                "dport": 49152,
+                "flags": "A"
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "web",
+          "to": "client",
+          "color": "slate",
+          "label": "FIN",
+          "payload": [
+            "seq=2921  ack=80"
+          ],
+          "row": {
+            "time": "0.131s",
+            "src": "203.0.113.10",
+            "dst": "192.168.1.10",
+            "proto": "TCP",
+            "info": "80 → 49152 [FIN, ACK] Seq=2921 Ack=80",
+            "len": "60 B",
+            "wire": {
+              "tcp": {
+                "sport": 80,
+                "dport": 49152,
+                "flags": "FA"
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "web",
+          "color": "green",
+          "label": "ACK",
+          "payload": [
+            "ack=2922"
+          ],
+          "row": {
+            "time": "0.148s",
+            "src": "192.168.1.10",
+            "dst": "203.0.113.10",
+            "proto": "TCP",
+            "info": "49152 → 80 [ACK] Seq=80 Ack=2922",
+            "len": "60 B",
+            "wire": {
+              "tcp": {
+                "sport": 49152,
+                "dport": 80,
+                "flags": "A"
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

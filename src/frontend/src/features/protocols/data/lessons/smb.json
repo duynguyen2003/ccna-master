@@ -1,0 +1,932 @@
+{
+  "id": "smb",
+  "name": "SMB",
+  "title": "Shared Folders",
+  "layer": 7,
+  "nodes": [
+    "client",
+    "router",
+    "lan"
+  ],
+  "latency": {
+    "client-lan": 0.001
+  },
+  "labels": {
+    "lan": [
+      "nas (File Server)",
+      "192.168.1.20"
+    ]
+  },
+  "legend": [
+    [
+      "green",
+      "TCP"
+    ],
+    [
+      "amber",
+      "Requests"
+    ],
+    [
+      "violet",
+      "Responses"
+    ]
+  ],
+  "overview": {
+    "full": "Server Message Block (SMB 3)",
+    "description": "SMB is how Windows shares files and printers: \\\\server\\share in File Explorer, a mapped network drive, a NAS at home. macOS and Linux speak it too. Over one TCP connection to port 445 the client agrees on a version, logs in and connects to a share, then opens, reads, writes and closes files with numbered requests.",
+    "facts": [
+      [
+        "Layer",
+        "Application (Layer 7)"
+      ],
+      [
+        "Port",
+        "TCP 445"
+      ],
+      [
+        "Version",
+        "SMB 3.1.1"
+      ],
+      [
+        "Login",
+        "NTLM or Kerberos"
+      ],
+      [
+        "Protection",
+        "Signing, optional encryption"
+      ],
+      [
+        "Defined In",
+        "MS-SMB2 (Microsoft)"
+      ]
+    ]
+  },
+  "outro": {
+    "title": "File read",
+    "desc": "Seven requests, one connection",
+    "text": "Over one TCP connection the laptop agreed on SMB 3.1.1, logged in with NTLM without sending its password, connected to the share and read a 240 KB file with a single request. Every message after the login was signed. Press REPLAY to watch it again.",
+    "facts": [
+      [
+        "Requests",
+        "7 on one connection"
+      ],
+      [
+        "Login",
+        "NTLMv2, no password sent"
+      ],
+      [
+        "File",
+        "240 KB in 169 segments"
+      ],
+      [
+        "Signed",
+        "Every message after login"
+      ]
+    ]
+  },
+  "start": {
+    "nodes": [
+      "client"
+    ],
+    "frame": "client"
+  },
+  "steps": [
+    {
+      "title": "Port 445",
+      "desc": "A TCP connection to the NAS",
+      "detail": "The laptop opens \\\\nas\\Documents, a shared folder on the NAS. It finds nas’s address with a local name lookup and opens a TCP connection to port 445. The packets pass through the home router to the NAS and never leave the home network.",
+      "facts": [
+        [
+          "Server",
+          "nas, 192.168.1.20"
+        ],
+        [
+          "Port",
+          "TCP 445"
+        ],
+        [
+          "Stays",
+          "On the home network"
+        ]
+      ],
+      "events": [
+        {
+          "type": "show",
+          "nodes": [
+            "router",
+            "lan"
+          ],
+          "frame": "office"
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "lan",
+          "color": "green",
+          "label": "SYN",
+          "payload": [],
+          "row": {
+            "time": "0.000s",
+            "src": "192.168.1.10",
+            "dst": "192.168.1.20",
+            "proto": "TCP",
+            "info": "50532 → 445 [SYN] Seq=0",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 50532,
+                "dport": 445,
+                "flags": "S"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "lan",
+          "to": "client",
+          "color": "green",
+          "label": "SYN-ACK",
+          "payload": [],
+          "row": {
+            "time": "0.001s",
+            "src": "192.168.1.20",
+            "dst": "192.168.1.10",
+            "proto": "TCP",
+            "info": "445 → 50532 [SYN, ACK] Seq=0 Ack=1",
+            "len": "66 B",
+            "wire": {
+              "tcp": {
+                "sport": 445,
+                "dport": 50532,
+                "flags": "SA"
+              }
+            }
+          },
+          "quick": true
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "lan",
+          "color": "green",
+          "label": "ACK",
+          "payload": [],
+          "row": {
+            "time": "0.002s",
+            "src": "192.168.1.10",
+            "dst": "192.168.1.20",
+            "proto": "TCP",
+            "info": "50532 → 445 [ACK] Seq=1 Ack=1",
+            "len": "60 B",
+            "wire": {
+              "tcp": {
+                "sport": 50532,
+                "dport": 445,
+                "flags": "A"
+              }
+            }
+          },
+          "quick": true
+        }
+      ]
+    },
+    {
+      "title": "Negotiate",
+      "desc": "Agree on a version",
+      "detail": "The laptop lists every SMB version it speaks, from 2.0.2 to 3.1.1, and says it requires signing. The NAS picks 3.1.1, the newest. Both sides keep a SHA-512 hash of everything exchanged from here until the login is done. It goes into the keys, so if anyone changed these messages on the way, to force an older version for instance, the login would fail.",
+      "facts": [
+        [
+          "Offered",
+          "2.0.2 to 3.1.1"
+        ],
+        [
+          "Chosen",
+          "SMB 3.1.1"
+        ],
+        [
+          "Tamper check",
+          "SHA-512 of the exchange"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "lan",
+          "color": "amber",
+          "label": "NEGOTIATE",
+          "payload": [
+            "SMB 2.0.2 … 3.1.1",
+            "signing required"
+          ],
+          "row": {
+            "time": "0.002s",
+            "src": "192.168.1.10",
+            "dst": "192.168.1.20",
+            "proto": "SMB2",
+            "info": "Negotiate Protocol Request",
+            "len": "272 B",
+            "wire": {
+              "tcp": {
+                "sport": 50532,
+                "dport": 445,
+                "flags": "PA",
+                "data": {
+                  "smb": {
+                    "cmd": 0,
+                    "mid": 0,
+                    "credits": 1
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "lan",
+          "to": "client",
+          "color": "violet",
+          "label": "NEGOTIATE",
+          "payload": [
+            "SMB 3.1.1"
+          ],
+          "row": {
+            "time": "0.004s",
+            "src": "192.168.1.20",
+            "dst": "192.168.1.10",
+            "proto": "SMB2",
+            "info": "Negotiate Protocol Response",
+            "len": "342 B",
+            "wire": {
+              "tcp": {
+                "sport": 445,
+                "dport": 50532,
+                "flags": "PA",
+                "data": {
+                  "smb": {
+                    "resp": true,
+                    "cmd": 0,
+                    "mid": 0,
+                    "credits": 1
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "NTLM Challenge",
+      "desc": "The NAS sends a random number",
+      "detail": "A home NAS has no domain, so there is no Kerberos: the laptop logs in with NTLM. Its first SESSION_SETUP says it wants to log in, and the NAS answers “more processing required” with a challenge of 8 random bytes. It also gives this login a session ID.",
+      "facts": [
+        [
+          "Login",
+          "NTLMv2 (in a domain: Kerberos)"
+        ],
+        [
+          "Challenge",
+          "8 random bytes"
+        ],
+        [
+          "Status",
+          "More processing required"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "lan",
+          "color": "amber",
+          "label": "SESSION SETUP",
+          "payload": [
+            "NTLM: let me log in"
+          ],
+          "row": {
+            "time": "0.006s",
+            "src": "192.168.1.10",
+            "dst": "192.168.1.20",
+            "proto": "SMB2",
+            "info": "Session Setup Request, NTLMSSP_NEGOTIATE",
+            "len": "220 B",
+            "wire": {
+              "tcp": {
+                "sport": 50532,
+                "dport": 445,
+                "flags": "PA",
+                "data": {
+                  "smb": {
+                    "cmd": 1,
+                    "mid": 1,
+                    "credits": 33,
+                    "blob": [
+                      74,
+                      [
+                        "NTLMSSP NEGOTIATE: the NTLM options the laptop supports"
+                      ]
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "lan",
+          "to": "client",
+          "color": "violet",
+          "label": "CHALLENGE",
+          "payload": [
+            "8 random bytes",
+            "a session ID"
+          ],
+          "row": {
+            "time": "0.008s",
+            "src": "192.168.1.20",
+            "dst": "192.168.1.10",
+            "proto": "SMB2",
+            "info": "Session Setup Response, NTLMSSP_CHALLENGE",
+            "len": "321 B",
+            "wire": {
+              "tcp": {
+                "sport": 445,
+                "dport": 50532,
+                "flags": "PA",
+                "data": {
+                  "smb": {
+                    "resp": true,
+                    "cmd": 1,
+                    "mid": 1,
+                    "credits": 33,
+                    "status": 3221225494,
+                    "session": 134422208708645,
+                    "blob": [
+                      191,
+                      [
+                        "NTLMSSP CHALLENGE: an 8-byte random challenge",
+                        "The NAS’s names and its clock"
+                      ]
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "NTLM Response",
+      "desc": "Proof, not the password",
+      "detail": "The laptop answers with the user name, alex, and an NTLMv2 response: an HMAC of the challenge and a few other values, keyed with a hash of the password. The NAS has the same hash and works out the same value. The password itself never crosses the network, and both sides now have a session key to sign messages with.",
+      "facts": [
+        [
+          "User",
+          "alex"
+        ],
+        [
+          "Sends",
+          "An HMAC of the challenge"
+        ],
+        [
+          "Password",
+          "Never sent"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "lan",
+          "color": "amber",
+          "label": "SESSION SETUP",
+          "payload": [
+            "user alex",
+            "NTLMv2 response"
+          ],
+          "row": {
+            "time": "0.010s",
+            "src": "192.168.1.10",
+            "dst": "192.168.1.20",
+            "proto": "SMB2",
+            "info": "Session Setup Request, NTLMSSP_AUTH, User: \\alex",
+            "len": "723 B",
+            "wire": {
+              "tcp": {
+                "sport": 50532,
+                "dport": 445,
+                "flags": "PA",
+                "data": {
+                  "smb": {
+                    "cmd": 1,
+                    "mid": 2,
+                    "credits": 33,
+                    "session": 134422208708645,
+                    "blob": [
+                      577,
+                      [
+                        "NTLMSSP AUTH: user alex, computer ALEX-PC",
+                        "NTLMv2 response: an HMAC of the challenge, keyed with a hash of the password",
+                        "A key for signing, encrypted"
+                      ]
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "lan",
+          "to": "client",
+          "color": "violet",
+          "label": "LOGGED IN",
+          "payload": [
+            "STATUS_SUCCESS",
+            "signed"
+          ],
+          "row": {
+            "time": "0.013s",
+            "src": "192.168.1.20",
+            "dst": "192.168.1.10",
+            "proto": "SMB2",
+            "info": "Session Setup Response",
+            "len": "139 B",
+            "wire": {
+              "tcp": {
+                "sport": 445,
+                "dport": 50532,
+                "flags": "PA",
+                "data": {
+                  "smb": {
+                    "resp": true,
+                    "cmd": 1,
+                    "mid": 2,
+                    "credits": 64,
+                    "session": 134422208708645,
+                    "signed": true,
+                    "blob": "done"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Connect a Share",
+      "desc": "\\\\nas\\Documents",
+      "detail": "TREE_CONNECT asks for the share by its full name, \\\\nas\\Documents. The answer gives it a tree ID and says what this user may do there. Every message is now signed: each carries a tag over the whole message, made with a key from the login, so a changed or forged message would be caught.",
+      "facts": [
+        [
+          "Share",
+          "\\\\nas\\Documents"
+        ],
+        [
+          "Tree ID",
+          "0x00002a51"
+        ],
+        [
+          "Every message",
+          "Signed (AES-GMAC)"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "lan",
+          "color": "amber",
+          "label": "TREE CONNECT",
+          "payload": [
+            "\\\\nas\\Documents"
+          ],
+          "row": {
+            "time": "0.015s",
+            "src": "192.168.1.10",
+            "dst": "192.168.1.20",
+            "proto": "SMB2",
+            "info": "Tree Connect Request Tree: \\\\nas\\Documents",
+            "len": "160 B",
+            "wire": {
+              "tcp": {
+                "sport": 50532,
+                "dport": 445,
+                "flags": "PA",
+                "data": {
+                  "smb": {
+                    "cmd": 3,
+                    "mid": 3,
+                    "credits": 64,
+                    "session": 134422208708645,
+                    "signed": true,
+                    "path": "\\\\nas\\Documents"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "lan",
+          "to": "client",
+          "color": "violet",
+          "label": "TREE CONNECT",
+          "payload": [
+            "tree ID 0x2a51"
+          ],
+          "row": {
+            "time": "0.017s",
+            "src": "192.168.1.20",
+            "dst": "192.168.1.10",
+            "proto": "SMB2",
+            "info": "Tree Connect Response",
+            "len": "138 B",
+            "wire": {
+              "tcp": {
+                "sport": 445,
+                "dport": 50532,
+                "flags": "PA",
+                "data": {
+                  "smb": {
+                    "resp": true,
+                    "cmd": 3,
+                    "mid": 3,
+                    "credits": 64,
+                    "session": 134422208708645,
+                    "tree": 10833,
+                    "signed": true
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Open the File",
+      "desc": "With CREATE",
+      "detail": "SMB opens files with CREATE, which can also make new ones. This one opens report.pdf to read it, and fails if it doesn’t exist. The answer gives the file’s size and dates, and a file ID that the read and the close will use.",
+      "facts": [
+        [
+          "File",
+          "report.pdf"
+        ],
+        [
+          "Size",
+          "245,760 bytes"
+        ],
+        [
+          "Handle",
+          "A 16-byte file ID"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "lan",
+          "color": "amber",
+          "label": "CREATE",
+          "payload": [
+            "report.pdf",
+            "open to read"
+          ],
+          "row": {
+            "time": "0.019s",
+            "src": "192.168.1.10",
+            "dst": "192.168.1.20",
+            "proto": "SMB2",
+            "info": "Create Request File: report.pdf",
+            "len": "198 B",
+            "wire": {
+              "tcp": {
+                "sport": 50532,
+                "dport": 445,
+                "flags": "PA",
+                "data": {
+                  "smb": {
+                    "cmd": 5,
+                    "mid": 4,
+                    "credits": 64,
+                    "session": 134422208708645,
+                    "tree": 10833,
+                    "signed": true,
+                    "name": "report.pdf"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "lan",
+          "to": "client",
+          "color": "violet",
+          "label": "CREATE",
+          "payload": [
+            "file ID",
+            "245,760 bytes"
+          ],
+          "row": {
+            "time": "0.021s",
+            "src": "192.168.1.20",
+            "dst": "192.168.1.10",
+            "proto": "SMB2",
+            "info": "Create Response File: report.pdf",
+            "len": "210 B",
+            "wire": {
+              "tcp": {
+                "sport": 445,
+                "dport": 50532,
+                "flags": "PA",
+                "data": {
+                  "smb": {
+                    "resp": true,
+                    "cmd": 5,
+                    "mid": 4,
+                    "credits": 64,
+                    "session": 134422208708645,
+                    "tree": 10833,
+                    "signed": true,
+                    "size": 245760
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Read It",
+      "desc": "The whole file in one request",
+      "detail": "One READ asks for the whole file, 245,760 bytes from offset 0. It costs 4 credits, one for every 64 KB. The answer is 80 bytes of headers and then the file, in 169 TCP segments. A bigger file is read with several requests, many on their way at once, as far as the credits allow.",
+      "facts": [
+        [
+          "Asks for",
+          "245,760 bytes from 0"
+        ],
+        [
+          "Credits",
+          "4 (one per 64 KB)"
+        ],
+        [
+          "Arrives in",
+          "169 TCP segments"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "lan",
+          "color": "amber",
+          "label": "READ",
+          "payload": [
+            "245,760 bytes",
+            "from offset 0"
+          ],
+          "row": {
+            "time": "0.023s",
+            "src": "192.168.1.10",
+            "dst": "192.168.1.20",
+            "proto": "SMB2",
+            "info": "Read Request Len:245760 Off:0 File: report.pdf",
+            "len": "171 B",
+            "wire": {
+              "tcp": {
+                "sport": 50532,
+                "dport": 445,
+                "flags": "PA",
+                "data": {
+                  "smb": {
+                    "cmd": 8,
+                    "mid": 5,
+                    "credits": 64,
+                    "charge": 4,
+                    "session": 134422208708645,
+                    "tree": 10833,
+                    "signed": true,
+                    "length": 245760
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "lan",
+          "to": "client",
+          "color": "violet",
+          "label": "DATA",
+          "payload": [
+            "report.pdf",
+            "169 segments"
+          ],
+          "row": {
+            "time": "0.025s",
+            "src": "192.168.1.20",
+            "dst": "192.168.1.10",
+            "proto": "SMB2",
+            "info": "Read Response, 169 segments",
+            "len": "249.0 KB",
+            "wire": {
+              "tcp": {
+                "sport": 445,
+                "dport": 50532,
+                "flags": "PA",
+                "data": {
+                  "smb": {
+                    "resp": true,
+                    "cmd": 8,
+                    "mid": 5,
+                    "credits": 64,
+                    "charge": 4,
+                    "session": 134422208708645,
+                    "tree": 10833,
+                    "signed": true,
+                    "length": 245760
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Close the File",
+      "desc": "And keep 445 at home",
+      "detail": "CLOSE hands the file ID back; the connection stays open for the next file. SMB 3 can also encrypt every message with AES-GCM, for one share or a whole server. Here only signing protects the messages, so anyone on the network could read the file as it passed. Port 445 should never be reachable from the internet: the WannaCry worm (2017) spread through a flaw in the old SMB1.",
+      "facts": [
+        [
+          "Encryption",
+          "SMB 3: AES-GCM, optional"
+        ],
+        [
+          "SMB1",
+          "Switched off: old, unsafe"
+        ],
+        [
+          "Port 445",
+          "Never open to the internet"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "lan",
+          "color": "amber",
+          "label": "CLOSE",
+          "payload": [
+            "report.pdf"
+          ],
+          "row": {
+            "time": "0.030s",
+            "src": "192.168.1.10",
+            "dst": "192.168.1.20",
+            "proto": "SMB2",
+            "info": "Close Request File: report.pdf",
+            "len": "146 B",
+            "wire": {
+              "tcp": {
+                "sport": 50532,
+                "dport": 445,
+                "flags": "PA",
+                "data": {
+                  "smb": {
+                    "cmd": 6,
+                    "mid": 9,
+                    "credits": 64,
+                    "session": 134422208708645,
+                    "tree": 10833,
+                    "signed": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "lan",
+          "to": "client",
+          "color": "violet",
+          "label": "CLOSE",
+          "payload": [
+            "done"
+          ],
+          "row": {
+            "time": "0.032s",
+            "src": "192.168.1.20",
+            "dst": "192.168.1.10",
+            "proto": "SMB2",
+            "info": "Close Response File: report.pdf",
+            "len": "182 B",
+            "wire": {
+              "tcp": {
+                "sport": 445,
+                "dport": 50532,
+                "flags": "PA",
+                "data": {
+                  "smb": {
+                    "resp": true,
+                    "cmd": 6,
+                    "mid": 9,
+                    "credits": 64,
+                    "session": 134422208708645,
+                    "tree": 10833,
+                    "signed": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "note",
+          "at": "router",
+          "text": "KEEP PORT 445 OFF THE INTERNET",
+          "tone": "amber"
+        }
+      ]
+    }
+  ],
+  "teaching": {
+    "steps": [
+      [
+        "Cổng 445",
+        "Laptop mở \\\\nas\\Documents, một thư mục chia sẻ trên NAS. Nó tìm địa chỉ của nas bằng tra tên cục bộ và mở kết nối TCP tới cổng 445. Các gói đi qua router ở nhà tới NAS và không bao giờ rời mạng gia đình."
+      ],
+      [
+        "Negotiate",
+        "Laptop liệt kê mọi phiên bản SMB nó nói được, từ 2.0.2 đến 3.1.1, và nói nó yêu cầu ký. NAS chọn 3.1.1, mới nhất. Cả hai bên giữ một giá trị băm SHA-512 của mọi thứ trao đổi từ đây cho tới khi đăng nhập xong. Nó đi vào khóa, nên nếu ai sửa các thông điệp này trên đường, chẳng hạn để ép dùng phiên bản cũ hơn, việc đăng nhập sẽ thất bại."
+      ],
+      [
+        "Thử thách NTLM",
+        "NAS ở nhà không có miền, nên không có Kerberos: laptop đăng nhập bằng NTLM. SESSION_SETUP đầu tiên của nó nói nó muốn đăng nhập, và NAS trả lời “cần xử lý thêm” kèm một thử thách 8 byte ngẫu nhiên. Nó cũng cấp cho lần đăng nhập này một ID phiên."
+      ],
+      [
+        "Trả lời NTLM",
+        "Laptop trả lời bằng tên người dùng, alex, và một trả lời NTLMv2: một HMAC của thử thách và vài giá trị khác, tính bằng giá trị băm của mật khẩu. NAS có cùng giá trị băm và tính ra cùng kết quả. Bản thân mật khẩu không bao giờ đi qua mạng, và giờ cả hai bên có một khóa phiên để ký thông điệp."
+      ],
+      [
+        "Kết nối thư mục chia sẻ",
+        "TREE_CONNECT xin thư mục chia sẻ bằng tên đầy đủ, \\\\nas\\Documents. Câu trả lời cấp cho nó một tree ID và cho biết người dùng này được làm gì ở đó. Giờ mọi thông điệp đều được ký: mỗi thông điệp mang một thẻ trên toàn bộ thông điệp, tạo bằng khóa từ lần đăng nhập, nên thông điệp bị sửa hay giả mạo sẽ bị phát hiện."
+      ],
+      [
+        "Mở tệp",
+        "SMB mở tệp bằng CREATE, lệnh này cũng có thể tạo tệp mới. Lần này nó mở report.pdf để đọc, và thất bại nếu tệp không tồn tại. Câu trả lời cho biết kích thước và ngày của tệp, cùng một file ID mà lệnh đọc và đóng sẽ dùng."
+      ],
+      [
+        "Đọc tệp",
+        "Một READ xin cả tệp, 245,760 byte từ vị trí 0. Nó tốn 4 credit, mỗi 64 KB một credit. Câu trả lời là 80 byte tiêu đề rồi đến tệp, trong 169 đoạn TCP. Tệp lớn hơn được đọc bằng nhiều yêu cầu, nhiều yêu cầu đi cùng lúc, trong giới hạn credit cho phép."
+      ],
+      [
+        "Đóng tệp",
+        "CLOSE trả lại file ID; kết nối vẫn mở cho tệp tiếp theo. SMB 3 còn có thể mã hóa mọi thông điệp bằng AES-GCM, cho một thư mục chia sẻ hay cả máy chủ. Ở đây chỉ chữ ký bảo vệ thông điệp, nên ai trong mạng cũng đọc được tệp khi nó đi qua. Cổng 445 không bao giờ nên mở ra Internet: sâu WannaCry (2017) lây lan qua một lỗ hổng trong SMB1 cũ."
+      ]
+    ],
+    "notes": {
+      "KEEP PORT 445 OFF THE INTERNET": "ĐỪNG ĐỂ CỔNG 445 RA INTERNET"
+    },
+    "labels": {
+      "Internet": "Internet",
+      "Client": "Máy khách",
+      "Router": "Router",
+      "DNS Resolver": "Bộ phân giải DNS",
+      "Web Server": "Máy chủ web",
+      "Root Server": "Máy chủ gốc",
+      ".com TLD Server": "Máy chủ TLD .com",
+      "Authoritative Server": "Máy chủ có thẩm quyền",
+      "Mail Server": "Máy chủ thư",
+      "Proxy": "Proxy",
+      "App Server": "Máy chủ ứng dụng",
+      "File Server": "Máy chủ tệp",
+      "ISP Router": "Router của ISP",
+      "Transit Router": "Router trung chuyển",
+      "Hosting Router": "Router của nhà lưu trữ",
+      "Their Router": "Router bên kia",
+      "Their Laptop": "Laptop bên kia",
+      "Switch": "Switch",
+      "Access Server": "Máy chủ truy cập",
+      "IP Camera": "Camera IP",
+      "TV Box": "TV box",
+      "nas (File Server)": "nas (máy chủ tệp)"
+    }
+  }
+}

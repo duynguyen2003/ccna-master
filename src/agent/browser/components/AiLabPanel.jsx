@@ -2,6 +2,7 @@ import React, { useEffect, useId, useLayoutEffect, useRef, useState } from 'reac
 import useAiLabAssistant from '../hooks/useAiLabAssistant.js';
 import AiMessage from './AiMessage.jsx';
 import AiIcon from './AiIcon.jsx';
+import DroidAvatar, { assistantIsWorking } from './DroidAvatar.jsx';
 import usePanelWidth from '../hooks/usePanelWidth.js';
 import useMobile from '../hooks/useMobile.js';
 import { AssistantClock } from './AssistantLoader.jsx';
@@ -52,6 +53,10 @@ function AiLabPanelScope({
   Select = 'select',
   CopyButton,
   api,
+  embedded = false,
+  visible = true,
+  focusRequest = 0,
+  onActivityChange,
 }) {
   const { state, controller } = useAiLabAssistant({
     baseUrl,
@@ -62,7 +67,8 @@ function AiLabPanelScope({
     api,
   });
   const mobile = useMobile();
-  const sizing = usePanelWidth(mobile, onWidthChange);
+  const modal = mobile && !embedded;
+  const sizing = usePanelWidth(mobile || embedded, onWidthChange);
   const titleId = useId();
   const [intent, setIntent] = useState('NEXT_STEP');
   const [message, setMessage] = useState('');
@@ -90,7 +96,11 @@ function AiLabPanelScope({
   const panel = useRef(null);
   const stick = useRef(true);
   const anchor = useRef(null);
-  const rootClass = `cli-lab-theme ai-lab-root cli-lab-stitch cli-lab-stitch--${theme}${mobile ? ' ai-lab-root--modal' : ''}`;
+  const rootClass = `cli-lab-theme ai-lab-root cli-lab-stitch cli-lab-stitch--${theme}${modal ? ' ai-lab-root--modal' : ''}${embedded ? ' ai-lab-root--embedded' : ''}`;
+  const working = assistantIsWorking(state);
+  useEffect(() => {
+    onActivityChange?.(working);
+  }, [working, onActivityChange]);
   const blocked = state.phase === 'blocked';
   const serviceBlocked = ['AI_DISABLED', 'AI_BUDGET_PAUSED', 'AI_CAPACITY_EXHAUSTED'].includes(
     state.error?.code
@@ -106,12 +116,20 @@ function AiLabPanelScope({
     !quotaBlocked &&
     state.phase !== 'loading';
   useEffect(() => {
+    if (!visible) return undefined;
     const trigger = document.activeElement;
-    if (!mobile) panel.current?.querySelector('.ai-lab-close')?.focus();
+    if (!modal && !embedded) panel.current?.querySelector('.ai-lab-close')?.focus();
     return () => {
-      if (!mobile && trigger?.isConnected) trigger.focus();
+      if (!modal && !embedded && trigger?.isConnected) trigger.focus();
     };
-  }, [mobile]);
+  }, [modal, visible, embedded]);
+  const loading = state.phase === 'loading';
+  useEffect(() => {
+    if (!embedded || !visible || loading) return;
+    const tools = panel.current?.querySelector('.ai-lab-tools');
+    if (tools) tools.open = false;
+    question.current?.focus();
+  }, [embedded, visible, focusRequest, loading]);
   useEffect(() => {
     setSource(defaultSource);
   }, [defaultSource, deviceIds]);
@@ -146,11 +164,11 @@ function AiLabPanelScope({
   const request = state.request;
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
-      if (state.pending) controller.markFeedbackVisible?.();
-      if (request?.result) controller.markResultVisible?.(request.result.messageId);
+      if (visible && state.pending) controller.markFeedbackVisible?.();
+      if (visible && request?.result) controller.markResultVisible?.(request.result.messageId);
     });
     return () => cancelAnimationFrame(frame);
-  }, [controller, state.pending, request?.result]);
+  }, [controller, state.pending, request?.result, visible]);
   useLayoutEffect(() => {
     const input = question.current;
     if (!input) return;
@@ -252,86 +270,103 @@ function AiLabPanelScope({
                   ? 'Chưa xác định được kết quả. Hệ thống sẽ không tự gửi lại câu hỏi.'
                   : entries.at(-1)?.role === 'USER' && !request
                     ? 'Chưa có phản hồi cho câu hỏi gần nhất. Bạn có thể gửi câu hỏi mới.'
-                    : '';
-  const statusMoving =
-    state.phase === 'sending' || Boolean(state.pending && !state.error && state.online);
+                    : request?.status === 'COMPLETED'
+                      ? 'Đã trả lời.'
+                      : '';
+  const statusMoving = working;
+
+  const showComposer = !blocked && (!serviceBlocked || state.pending);
+  const tools = (
+    <div className="ai-lab-info">
+      <details className="ai-lab-tools">
+        <summary>Tùy chọn</summary>
+        <div>
+          <details
+            open={privacyOpen}
+            onToggle={(event) => setPrivacyOpen(event.currentTarget.open)}
+          >
+            <summary>AI đang xem gì</summary>
+            <p>
+              Câu hỏi và cấu hình lab đã lọc được gửi tới dịch vụ AI. Hội thoại riêng của bạn. Trợ
+              lý không tự chạy lệnh; hãy đối chiếu câu trả lời trong terminal.
+            </p>
+          </details>
+
+          {!mobile && !embedded && (
+            <div className="ai-lab-width-controls" aria-label="Điều chỉnh chiều rộng">
+              <button type="button" onClick={() => sizing.change(sizing.width - 40)}>
+                Thu hẹp
+              </button>
+              <button type="button" onClick={() => sizing.change(sizing.width + 40)}>
+                Mở rộng
+              </button>
+              <button type="button" onClick={() => sizing.change(440)}>
+                Mặc định
+              </button>
+            </div>
+          )}
+          <button
+            type="button"
+            disabled={!state.capabilities?.conversationId || !state.online || state.resetting}
+            onClick={(event) => {
+              const menu = event.currentTarget.closest('.ai-lab-tools');
+              if (menu) menu.open = false;
+              setResetConfirm(true);
+            }}
+          >
+            Đặt lại hội thoại
+          </button>
+        </div>
+      </details>
+    </div>
+  );
 
   const content = (
     <aside
       className={rootClass}
       data-theme={theme}
       data-ai-panel="true"
-      style={mobile ? undefined : { '--ai-lab-panel-width': `${sizing.width}px` }}
-      aria-labelledby={titleId}
+      data-ai-state={working ? 'working' : state.error ? 'error' : 'idle'}
+      style={mobile || embedded ? undefined : { '--ai-lab-panel-width': `${sizing.width}px` }}
+      aria-label={embedded ? 'Trợ lý AI' : undefined}
+      aria-labelledby={embedded ? undefined : titleId}
       ref={panel}
       onKeyDown={(event) => {
         if (event.key === 'Escape') {
           event.stopPropagation();
-          onClose();
+          const tools = panel.current?.querySelector('.ai-lab-tools[open]');
+          if (tools) {
+            tools.open = false;
+            tools.querySelector('summary')?.focus();
+          } else onClose();
         }
       }}
     >
-      {!mobile && <div className="ai-lab-resize" {...sizing.separator} />}
-      <header className="ai-lab-header">
-        <div className="ai-lab-heading">
-          <span className="ai-lab-avatar">
-            <AiIcon name="assistant" size={22} />
-          </span>
-          <h2 id={titleId}>Trợ lý AI</h2>
-        </div>
-        <div className="ai-lab-info">
-          <details className="ai-lab-tools">
-            <summary>Tùy chọn</summary>
-            <div>
-              <details
-                open={privacyOpen}
-                onToggle={(event) => setPrivacyOpen(event.currentTarget.open)}
-              >
-                <summary>AI đang xem gì</summary>
-                <p>
-                  Câu hỏi và cấu hình lab đã lọc được gửi tới dịch vụ AI. Hội thoại riêng của bạn.
-                  Trợ lý không tự chạy lệnh; hãy đối chiếu câu trả lời trong terminal.
-                </p>
-              </details>
-
-              {!mobile && (
-                <div className="ai-lab-width-controls" aria-label="Điều chỉnh chiều rộng">
-                  <button type="button" onClick={() => sizing.change(sizing.width - 40)}>
-                    Thu hẹp
-                  </button>
-                  <button type="button" onClick={() => sizing.change(sizing.width + 40)}>
-                    Mở rộng
-                  </button>
-                  <button type="button" onClick={() => sizing.change(440)}>
-                    Mặc định
-                  </button>
-                </div>
-              )}
-              <button
-                type="button"
-                disabled={!state.capabilities?.conversationId || !state.online || state.resetting}
-                onClick={(event) => {
-                  const menu = event.currentTarget.closest('.ai-lab-tools');
-                  if (menu) menu.open = false;
-                  setResetConfirm(true);
-                }}
-              >
-                Đặt lại hội thoại
-              </button>
-            </div>
-          </details>
-        </div>
-        {!mobile && (
-          <button
-            type="button"
-            className="ai-lab-close"
-            aria-label="Đóng trợ lý AI"
-            onClick={onClose}
-          >
-            <AiIcon name="close" size={20} />
-          </button>
-        )}
-      </header>
+      {!mobile && !embedded && <div className="ai-lab-resize" {...sizing.separator} />}
+      {!embedded && (
+        <header className="ai-lab-header">
+          <div className="ai-lab-heading">
+            <DroidAvatar
+              size={32}
+              busy={working}
+              visible={visible}
+              onActivate={() => question.current?.focus()}
+            />
+            <h2 id={titleId}>Trợ lý AI</h2>
+          </div>
+          {tools}
+          {!modal && (
+            <button
+              type="button"
+              className="ai-lab-close"
+              aria-label="Đóng trợ lý AI"
+              onClick={onClose}
+            >
+              <AiIcon name="close" size={20} />
+            </button>
+          )}
+        </header>
+      )}
       {resetConfirm && (
         <div className="ai-lab-reset-confirm" role="group" aria-label="Xác nhận đặt lại hội thoại">
           <p>
@@ -490,12 +525,18 @@ function AiLabPanelScope({
               : `ai-lab-status${statusMoving ? ' ai-lab-status--working' : ''}`
           }
           role="status"
+          aria-label="Trạng thái trợ lý"
           aria-live="polite"
         >
+          {statusText && statusMoving && (
+            <span className="ai-lab-status-avatar">
+              <DroidAvatar size={30} appearance="flower" busy visible={visible} decorative />
+            </span>
+          )}
           {statusText && (
             <span
               key={progress?.phase || state.phase}
-              className={statusMoving ? 't-shimmer' : undefined}
+              className={`ai-lab-status-text${statusMoving ? ' t-shimmer' : ''}`}
               data-text={statusMoving ? statusText : undefined}
             >
               {statusText}
@@ -562,7 +603,7 @@ function AiLabPanelScope({
       {blocked && !state.error && (
         <p className="ai-lab-muted">Trợ lý chưa được bật cho phiên này.</p>
       )}
-      {!blocked && (!serviceBlocked || state.pending) && (
+      {showComposer && (
         <form
           className={`ai-lab-composer${intent === 'DIAGNOSE' ? ' ai-lab-composer--diagnose' : ''}`}
           onSubmit={send}
@@ -706,37 +747,36 @@ function AiLabPanelScope({
                 </label>
               </div>
             )}
-            <div className="ai-lab-hint-budget">
-              {intent !== 'EXPLAIN_CONCEPT' && (
-                <label className="ai-lab-hint-level">
-                  <span className="ai-lab-sr-only">Mức gợi ý</span>
-                  <Select
-                    disabled={!canAsk}
-                    aria-label="Mức gợi ý"
-                    {...(typeof Select === 'string'
-                      ? {}
-                      : { displayLabel: `Mức gợi ý ${level}/3` })}
-                    value={level}
-                    onChange={(event) => setLevel(Number(event.target.value))}
-                  >
-                    <option value={1}>1 · Định hướng</option>
-                    <option value={2}>
-                      {intent === 'NEXT_STEP' ? '2 · Cú pháp lệnh' : '2 · Kiểm tra cụ thể'}
-                    </option>
-                    <option value={3}>
-                      {intent === 'NEXT_STEP' ? '3 · Lệnh đầy đủ' : '3 · Chi tiết hơn'}
-                    </option>
-                  </Select>
-                </label>
-              )}
-              {message.length > 1800 && (
-                <span className="ai-lab-character-count">{Array.from(message).length}/2000</span>
-              )}
-              {state.quota && (
-                <span className="ai-lab-remaining">Còn {state.quota.remaining} lượt</span>
-              )}
-            </div>
           </fieldset>
+          <div className="ai-lab-hint-budget">
+            {intent !== 'EXPLAIN_CONCEPT' && (
+              <label className="ai-lab-hint-level">
+                <span className="ai-lab-sr-only">Mức gợi ý</span>
+                <Select
+                  disabled={!canAsk}
+                  aria-label="Mức gợi ý"
+                  {...(typeof Select === 'string' ? {} : { displayLabel: `Mức gợi ý ${level}/3` })}
+                  value={level}
+                  onChange={(event) => setLevel(Number(event.target.value))}
+                >
+                  <option value={1}>1 · Định hướng</option>
+                  <option value={2}>
+                    {intent === 'NEXT_STEP' ? '2 · Cú pháp lệnh' : '2 · Kiểm tra cụ thể'}
+                  </option>
+                  <option value={3}>
+                    {intent === 'NEXT_STEP' ? '3 · Lệnh đầy đủ' : '3 · Chi tiết hơn'}
+                  </option>
+                </Select>
+              </label>
+            )}
+            {message.length > 1800 && (
+              <span className="ai-lab-character-count">{Array.from(message).length}/2000</span>
+            )}
+            {embedded && tools}
+            {state.quota && (
+              <span className="ai-lab-remaining">Còn {state.quota.remaining} lượt</span>
+            )}
+          </div>
           {validation && (
             <p id={`${titleId}-validation`} className="ai-lab-validation" role="alert">
               {validation}
@@ -771,9 +811,10 @@ function AiLabPanelScope({
           </div>
         </form>
       )}
+      {embedded && !showComposer && <div className="ai-lab-embedded-tools">{tools}</div>}
     </aside>
   );
-  return mobile && Dialog ? (
+  return modal && Dialog ? (
     <Dialog
       title="Trợ lý AI"
       className={`ai-lab-dialog cli-lab-editor cli-lab-stitch cli-lab-stitch--${theme}${theme === 'dark' ? ' is-dark' : ''}`}

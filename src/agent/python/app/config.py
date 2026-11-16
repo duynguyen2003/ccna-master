@@ -51,7 +51,17 @@ class Settings:
             valid = valid and len(self.service_secret) >= 32
             valid = valid and not any(char.isspace() for char in self.service_secret)
         if self.mode == "gemini":
-            valid = valid and self.environment == "local" and bool(self.service_secret)
+            valid = (
+                valid and self.environment in {"local", "production"} and bool(self.service_secret)
+            )
+        if self.environment == "production":
+            valid = valid and (
+                self.mode == "gemini"
+                and self.live_enabled
+                and bool(self.api_key.strip())
+                and self.key_id == "production-v1"
+                and self.host in {"127.0.0.1", "::1"}
+            )
         valid = valid and type(self.live_enabled) is bool and type(self.trace_timings) is bool
         try:
             url = urlsplit(self.node_url)
@@ -71,6 +81,10 @@ class Settings:
             valid = False
         if not valid:
             raise ValueError("AI_PYTHON_CONFIGURATION_INVALID")
+
+    @property
+    def provider_config_id(self):
+        return "gemini-production-v1" if self.environment == "production" else "local-gemini-v1"
 
     @classmethod
     def from_env(cls, environ=None):

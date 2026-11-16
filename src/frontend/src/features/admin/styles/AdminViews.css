@@ -74,6 +74,20 @@
   min-height: calc(100vh - 120px);
 }
 
+.labm-editor-shell :is(input, textarea, button) {
+  font-family: inherit;
+}
+
+.labm-editor-shell .acm-field > span {
+  font-size: 13px !important;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.labm-editor-shell .labm-code-input {
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+}
+
 .labm-editor-shell {
   background: #ffffff;
   border: 1px solid #e2e8f0;

@@ -1,0 +1,168 @@
+{
+  "checkedAt": "2026-11-15T15:51:05.649Z",
+  "scope": {
+    "browser": "Chromium on localhost:3000",
+    "transport": "Mock ReadableStream delivers valid incremental SSE request-resource frames through the production parser/controller; HTTP endpoints/auth are isolated fixtures.",
+    "providerOrDatabaseCalls": false,
+    "avatarPackage": "bot-avatars 0.2.2 already installed",
+    "body": "flower",
+    "material": "fabric",
+    "color": "#2FCB7A",
+    "activeSize": 30,
+    "historySize": 26,
+    "header": "droid unchanged",
+    "viewportTests": [
+      [
+        1366,
+        768
+      ],
+      [
+        390,
+        844
+      ],
+      [
+        320,
+        740
+      ]
+    ]
+  },
+  "checks": {
+    "working": {
+      "unique": 8,
+      "samples": 8
+    },
+    "sameAvatarAcrossProgress": true,
+    "hiddenFreeze": true,
+    "reducedFreeze": true,
+    "reducedTextAnimation": {
+      "text": "none",
+      "shimmer": "none"
+    },
+    "finalizing": {
+      "state": "working",
+      "sameNode": true
+    },
+    "complete": {
+      "status": "Đã trả lời.",
+      "activeAvatar": 0,
+      "reply": {
+        "appearance": "flower",
+        "state": "default",
+        "paused": "true"
+      },
+      "staticImage": true
+    },
+    "postCount": 1,
+    "mobile": [
+      {
+        "viewport": [
+          390,
+          844
+        ],
+        "pageWidth": 390,
+        "status": {
+          "x": 10,
+          "y": 174.25,
+          "width": 355.20001220703125,
+          "height": 50,
+          "top": 174.25,
+          "right": 365.20001220703125,
+          "bottom": 224.25,
+          "left": 10
+        },
+        "avatar": {
+          "x": 24.399999618530273,
+          "y": 184.25,
+          "width": 30,
+          "height": 30,
+          "top": 184.25,
+          "right": 54.39999961853027,
+          "bottom": 214.25,
+          "left": 24.399999618530273
+        },
+        "input": {
+          "x": 20.80000114440918,
+          "y": 708.7999877929688,
+          "width": 348.8000183105469,
+          "height": 26,
+          "top": 708.7999877929688,
+          "right": 369.60001945495605,
+          "bottom": 734.7999877929688,
+          "left": 20.80000114440918
+        },
+        "text": "Đang phân tích nhiệm vụ trên R1…"
+      },
+      {
+        "viewport": [
+          320,
+          740
+        ],
+        "pageWidth": 320,
+        "status": {
+          "x": 10,
+          "y": 174.25,
+          "width": 284.8000183105469,
+          "height": 50,
+          "top": 174.25,
+          "right": 294.8000183105469,
+          "bottom": 224.25,
+          "left": 10
+        },
+        "avatar": {
+          "x": 24.399999618530273,
+          "y": 184.25,
+          "width": 30,
+          "height": 30,
+          "top": 184.25,
+          "right": 54.39999961853027,
+          "bottom": 214.25,
+          "left": 24.399999618530273
+        },
+        "input": {
+          "x": 20.80000114440918,
+          "y": 604.7999877929688,
+          "width": 278.3999938964844,
+          "height": 26,
+          "top": 604.7999877929688,
+          "right": 299.19999504089355,
+          "bottom": 630.7999877929688,
+          "left": 20.80000114440918
+        },
+        "text": "Đang phân tích nhiệm vụ trên R1…"
+      }
+    ],
+    "cancel": {
+      "status": "Đã hủy yêu cầu.",
+      "activeAvatar": 0
+    },
+    "error": {
+      "text": "Trợ lý đang bận. Bạn vẫn có thể thực hành.",
+      "activeAvatar": 0,
+      "headerState": "default"
+    },
+    "statusStyles": {
+      "color": "rgb(71, 85, 105)",
+      "opacity": "1",
+      "statusOpacity": "1",
+      "background": "rgb(238, 242, 255)"
+    }
+  },
+  "errors": [],
+  "images": [
+    "streaming-avatar-desktop.png",
+    "streaming-avatar-mobile.png"
+  ],
+  "validation": {
+    "tests": {
+      "success": true,
+      "numTotalTests": 74,
+      "numPassedTests": 74,
+      "numFailedTests": 0,
+      "numTotalTestSuites": 4
+    },
+    "eslint": "pass",
+    "prettier": "pass",
+    "boundaries": "2222 imports/assets across 525 files",
+    "productionBuild": "CI=true, exit 0"
+  }
+}

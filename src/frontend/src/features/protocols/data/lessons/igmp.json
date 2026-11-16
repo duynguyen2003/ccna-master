@@ -1,0 +1,1057 @@
+{
+  "id": "igmp",
+  "name": "IGMP",
+  "title": "Multicast TV",
+  "layer": 3,
+  "nodes": [
+    "client",
+    "switch",
+    "stb",
+    "router",
+    "isp"
+  ],
+  "links": [
+    "client-switch",
+    "switch-stb",
+    "switch-router",
+    "router-isp"
+  ],
+  "lifelines": [
+    "client",
+    "switch",
+    "stb",
+    "router",
+    "isp"
+  ],
+  "latency": {
+    "client-switch": 0.000001,
+    "switch-stb": 0.000001,
+    "switch-router": 0.000001,
+    "router-isp": 0.002
+  },
+  "labels": {
+    "client": [
+      "Client",
+      "192.168.1.10"
+    ],
+    "isp": [
+      "ISP Router",
+      "TV channels"
+    ]
+  },
+  "legend": [
+    [
+      "amber",
+      "Joins and leaves"
+    ],
+    [
+      "violet",
+      "Queries"
+    ],
+    [
+      "blue",
+      "Channel 1"
+    ]
+  ],
+  "overview": {
+    "full": "Internet Group Management Protocol",
+    "description": "Multicast sends one stream to a group address, and the network copies it only where it’s wanted: it’s how internet providers deliver live TV channels. IGMP is how a device tells its router which groups it wants. Switches listen in (IGMP snooping), so each stream reaches only the ports that asked for it.",
+    "facts": [
+      [
+        "Layer",
+        "Network (Layer 3)"
+      ],
+      [
+        "Carried in",
+        "IP protocol 2"
+      ],
+      [
+        "Groups",
+        "224.0.0.0 to 239.255.255.255"
+      ],
+      [
+        "Messages",
+        "Report, Query, Leave"
+      ],
+      [
+        "Version here",
+        "IGMPv2"
+      ],
+      [
+        "Defined In",
+        "RFC 2236 (v3: RFC 3376)"
+      ]
+    ]
+  },
+  "outro": {
+    "title": "Tuned In",
+    "desc": "Joined, copied, checked, left",
+    "text": "The TV box and then the laptop joined channel 1 with IGMP reports. The router joined once for the whole home, and the switch, listening in, copied the channel only to the ports that wanted it. Queries kept it flowing, and when the laptop left, the TV box’s answer kept it on. Press REPLAY to watch it again.",
+    "facts": [
+      [
+        "Channel 1",
+        "233.252.0.1"
+      ],
+      [
+        "Upstream",
+        "One stream for the home"
+      ],
+      [
+        "Switch",
+        "Copies to ports that joined"
+      ],
+      [
+        "Checks",
+        "Every 125 s"
+      ]
+    ]
+  },
+  "start": {
+    "nodes": [
+      "client",
+      "switch",
+      "stb",
+      "router"
+    ],
+    "frame": "tvbox"
+  },
+  "steps": [
+    {
+      "title": "Pick a Channel",
+      "desc": "The TV box joins a group",
+      "detail": "The viewer picks channel 1. Each channel is a multicast group, here 233.252.0.1, and the TV box sends an IGMP Membership Report to that address: I want this group. The switch listens in (IGMP snooping), notes port 2, and passes the report to the router alone.",
+      "facts": [
+        [
+          "Channel 1",
+          "233.252.0.1"
+        ],
+        [
+          "Message",
+          "Membership Report"
+        ],
+        [
+          "Switch notes",
+          "Port 2 wants it"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "stb",
+          "to": "switch",
+          "color": "amber",
+          "label": "JOIN",
+          "payload": [
+            "233.252.0.1, please"
+          ],
+          "row": {
+            "time": "0.000000s",
+            "src": "192.168.1.30",
+            "dst": "233.252.0.1",
+            "proto": "IGMPv2",
+            "info": "Membership Report group 233.252.0.1",
+            "len": "60 B",
+            "wire": {
+              "igmp": {
+                "type": 22,
+                "group": "233.252.0.1",
+                "maxResp": 0
+              },
+              "routerAlert": true,
+              "ttl": 1,
+              "ttlNote": "Always 1: IGMP never goes past the first router.",
+              "tos": 192,
+              "df": true,
+              "at": "Seen going into the switch, port 2"
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "switch",
+          "to": "router",
+          "color": "amber",
+          "label": "JOIN",
+          "payload": [
+            "to the router port only"
+          ],
+          "row": {
+            "time": "0.000006s",
+            "src": "192.168.1.30",
+            "dst": "233.252.0.1",
+            "proto": "IGMPv2",
+            "info": "Membership Report group 233.252.0.1",
+            "len": "60 B",
+            "wire": {
+              "copyOf": -1,
+              "at": "Seen leaving the switch, port 8"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Ask the Provider",
+      "desc": "The router joins for the home",
+      "detail": "The router is an IGMP proxy: it joins the group on its internet side with a report of its own, from its public address, and the provider’s network starts sending channel 1 down the line. However many screens at home tune in, the router joins only once.",
+      "facts": [
+        [
+          "Router role",
+          "IGMP proxy"
+        ],
+        [
+          "Joins",
+          "Once for the whole home"
+        ],
+        [
+          "From",
+          "198.51.100.7"
+        ]
+      ],
+      "events": [
+        {
+          "type": "show",
+          "nodes": [
+            "isp"
+          ],
+          "frame": "tvlink"
+        },
+        {
+          "type": "packet",
+          "from": "router",
+          "to": "isp",
+          "color": "amber",
+          "label": "JOIN",
+          "payload": [
+            "for the whole home"
+          ],
+          "row": {
+            "time": "0.000400s",
+            "src": "198.51.100.7",
+            "dst": "233.252.0.1",
+            "proto": "IGMPv2",
+            "info": "Membership Report group 233.252.0.1",
+            "len": "60 B",
+            "wire": {
+              "igmp": {
+                "type": 22,
+                "group": "233.252.0.1",
+                "maxResp": 0
+              },
+              "routerAlert": true,
+              "ttl": 1,
+              "ttlNote": "Always 1: IGMP never goes past the first router.",
+              "tos": 192,
+              "df": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "The Channel Flows",
+      "desc": "Sent only where it was asked for",
+      "detail": "The provider’s TV server sends channel 1 to 233.252.0.1: UDP datagrams holding seven 188-byte MPEG-TS packets of video and audio each. The router passes them in, and the switch sends them out of port 2 alone: only the TV box joined, so the laptop gets none.",
+      "facts": [
+        [
+          "Datagram",
+          "UDP, 1,316 bytes of TV"
+        ],
+        [
+          "Holds",
+          "7 MPEG-TS packets"
+        ],
+        [
+          "Laptop gets",
+          "Nothing"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "isp",
+          "to": "router",
+          "color": "blue",
+          "label": "CHANNEL 1",
+          "payload": [
+            "to 233.252.0.1",
+            "MPEG-TS over UDP"
+          ],
+          "row": {
+            "time": "0.012300s",
+            "src": "203.0.113.80",
+            "dst": "233.252.0.1",
+            "proto": "MPEG TS",
+            "info": "5000 → 1234 Len=1316, 7 TS packets (video PID 256)",
+            "len": "1358 B",
+            "wire": {
+              "udp": {
+                "sport": 5000,
+                "dport": 1234,
+                "data": {
+                  "mpegts": {
+                    "pid": 256,
+                    "cc": 4
+                  }
+                }
+              },
+              "df": false,
+              "ttl": 62,
+              "ttlNote": "Started at 64; 2 routers on the way each took 1.",
+              "link": {
+                "at": "Seen arriving on the router’s internet side",
+                "src": "00:00:5e:00:53:fe",
+                "srcNote": "The provider’s router, passing the channel on."
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "router",
+          "to": "switch",
+          "color": "blue",
+          "label": "CHANNEL 1",
+          "payload": [
+            "passed into the home"
+          ],
+          "row": {
+            "time": "0.014306s",
+            "src": "203.0.113.80",
+            "dst": "233.252.0.1",
+            "proto": "MPEG TS",
+            "info": "5000 → 1234 Len=1316, 7 TS packets (video PID 256)",
+            "len": "1358 B",
+            "wire": {
+              "udp": {
+                "sport": 5000,
+                "dport": 1234,
+                "data": {
+                  "mpegts": {
+                    "pid": 256,
+                    "cc": 4
+                  }
+                }
+              },
+              "df": false,
+              "ttl": 61,
+              "ttlNote": "Started at 64; 3 routers on the way each took 1.",
+              "natOf": -1,
+              "link": {
+                "at": "Seen going into the switch, port 8",
+                "src": "00:00:5e:00:53:01",
+                "srcNote": "The router, passing the channel into the home."
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "switch",
+          "to": "stb",
+          "color": "blue",
+          "label": "CHANNEL 1",
+          "payload": [
+            "port 2 only"
+          ],
+          "row": {
+            "time": "0.014318s",
+            "src": "203.0.113.80",
+            "dst": "233.252.0.1",
+            "proto": "MPEG TS",
+            "info": "5000 → 1234 Len=1316, 7 TS packets (video PID 256)",
+            "len": "1358 B",
+            "wire": {
+              "copyOf": -1,
+              "at": "Seen leaving the switch, port 2"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "A Second Screen",
+      "desc": "The laptop tunes in too",
+      "detail": "The laptop opens channel 1 in VLC and sends its own report. The switch adds port 1 and now makes two copies of every datagram. The router already gets the channel, so it asks the provider for nothing: one stream still comes down the line.",
+      "facts": [
+        [
+          "Switch sends to",
+          "Ports 1 and 2"
+        ],
+        [
+          "Upstream",
+          "Still one stream"
+        ],
+        [
+          "Router asks",
+          "Nothing new"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "switch",
+          "color": "amber",
+          "label": "JOIN",
+          "payload": [
+            "233.252.0.1, please"
+          ],
+          "row": {
+            "time": "4.200000s",
+            "src": "192.168.1.10",
+            "dst": "233.252.0.1",
+            "proto": "IGMPv2",
+            "info": "Membership Report group 233.252.0.1",
+            "len": "60 B",
+            "wire": {
+              "igmp": {
+                "type": 22,
+                "group": "233.252.0.1",
+                "maxResp": 0
+              },
+              "routerAlert": true,
+              "ttl": 1,
+              "ttlNote": "Always 1: IGMP never goes past the first router.",
+              "at": "Seen going into the switch, port 1"
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "switch",
+          "to": "router",
+          "color": "amber",
+          "label": "JOIN",
+          "payload": [
+            "to the router port only"
+          ],
+          "row": {
+            "time": "4.200006s",
+            "src": "192.168.1.10",
+            "dst": "233.252.0.1",
+            "proto": "IGMPv2",
+            "info": "Membership Report group 233.252.0.1",
+            "len": "60 B",
+            "wire": {
+              "copyOf": -1,
+              "at": "Seen leaving the switch, port 8"
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "isp",
+          "to": "router",
+          "color": "blue",
+          "label": "CHANNEL 1",
+          "payload": [
+            "the same one stream"
+          ],
+          "row": {
+            "time": "4.202100s",
+            "src": "203.0.113.80",
+            "dst": "233.252.0.1",
+            "proto": "MPEG TS",
+            "info": "5000 → 1234 Len=1316, 7 TS packets (video PID 256)",
+            "len": "1358 B",
+            "wire": {
+              "udp": {
+                "sport": 5000,
+                "dport": 1234,
+                "data": {
+                  "mpegts": {
+                    "pid": 256,
+                    "cc": 9
+                  }
+                }
+              },
+              "df": false,
+              "ttl": 62,
+              "ttlNote": "Started at 64; 2 routers on the way each took 1.",
+              "link": {
+                "at": "Seen arriving on the router’s internet side",
+                "src": "00:00:5e:00:53:fe",
+                "srcNote": "The provider’s router, passing the channel on."
+              }
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "router",
+          "to": "switch",
+          "color": "blue",
+          "label": "CHANNEL 1",
+          "payload": [
+            "passed into the home"
+          ],
+          "row": {
+            "time": "4.204106s",
+            "src": "203.0.113.80",
+            "dst": "233.252.0.1",
+            "proto": "MPEG TS",
+            "info": "5000 → 1234 Len=1316, 7 TS packets (video PID 256)",
+            "len": "1358 B",
+            "wire": {
+              "udp": {
+                "sport": 5000,
+                "dport": 1234,
+                "data": {
+                  "mpegts": {
+                    "pid": 256,
+                    "cc": 9
+                  }
+                }
+              },
+              "df": false,
+              "ttl": 61,
+              "ttlNote": "Started at 64; 3 routers on the way each took 1.",
+              "natOf": -1,
+              "link": {
+                "at": "Seen going into the switch, port 8",
+                "src": "00:00:5e:00:53:01",
+                "srcNote": "The router, passing the channel into the home."
+              }
+            }
+          }
+        },
+        {
+          "type": "stream",
+          "from": "switch",
+          "to": "stb",
+          "color": "blue",
+          "label": "CHANNEL 1",
+          "payload": [
+            "copied to ports 1 and 2"
+          ],
+          "spacing": 0,
+          "packets": [
+            {
+              "type": "packet",
+              "from": "switch",
+              "to": "client",
+              "color": "blue",
+              "label": "CHANNEL 1",
+              "payload": [
+                "copy for port 1"
+              ],
+              "row": {
+                "time": "4.204118s",
+                "src": "203.0.113.80",
+                "dst": "233.252.0.1",
+                "proto": "MPEG TS",
+                "info": "5000 → 1234 Len=1316, 7 TS packets (video PID 256)",
+                "len": "1358 B",
+                "wire": {
+                  "copyOf": -1,
+                  "at": "Seen leaving the switch, port 1"
+                }
+              }
+            },
+            {
+              "type": "packet",
+              "from": "switch",
+              "to": "stb",
+              "color": "blue",
+              "label": "CHANNEL 1",
+              "payload": [
+                "copy for port 2"
+              ],
+              "row": {
+                "time": "4.204118s",
+                "src": "203.0.113.80",
+                "dst": "233.252.0.1",
+                "proto": "MPEG TS",
+                "info": "5000 → 1234 Len=1316, 7 TS packets (video PID 256)",
+                "len": "1358 B",
+                "wire": {
+                  "copyOf": -2,
+                  "at": "Seen leaving the switch, port 2"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Still Watching?",
+      "desc": "The router checks regularly",
+      "detail": "Every 125 seconds the router sends a General Query to 224.0.0.1, every device: which groups do you still want? The switch passes it to every port. Each member answers at a random moment within 10 seconds, so the router and the switch keep the channel coming.",
+      "facts": [
+        [
+          "Every",
+          "125 seconds"
+        ],
+        [
+          "Sent to",
+          "224.0.0.1, all devices"
+        ],
+        [
+          "Answer within",
+          "10 seconds"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "router",
+          "to": "switch",
+          "color": "violet",
+          "label": "QUERY",
+          "payload": [
+            "any groups wanted?"
+          ],
+          "row": {
+            "time": "125.600000s",
+            "src": "192.168.1.1",
+            "dst": "224.0.0.1",
+            "proto": "IGMPv2",
+            "info": "Membership Query, general",
+            "len": "60 B",
+            "wire": {
+              "igmp": {
+                "type": 17,
+                "group": "0.0.0.0",
+                "maxResp": 100
+              },
+              "routerAlert": true,
+              "ttl": 1,
+              "ttlNote": "Always 1: IGMP never goes past the first router.",
+              "tos": 192,
+              "df": true,
+              "at": "Seen going into the switch, port 8"
+            }
+          }
+        },
+        {
+          "type": "stream",
+          "from": "switch",
+          "to": "stb",
+          "color": "violet",
+          "label": "QUERY",
+          "payload": [
+            "to every port"
+          ],
+          "spacing": 0,
+          "packets": [
+            {
+              "type": "packet",
+              "from": "switch",
+              "to": "client",
+              "color": "violet",
+              "label": "QUERY",
+              "payload": [
+                "to port 1"
+              ],
+              "row": {
+                "time": "125.600006s",
+                "src": "192.168.1.1",
+                "dst": "224.0.0.1",
+                "proto": "IGMPv2",
+                "info": "Membership Query, general",
+                "len": "60 B",
+                "wire": {
+                  "copyOf": -1,
+                  "at": "Seen leaving the switch, port 1"
+                }
+              }
+            },
+            {
+              "type": "packet",
+              "from": "switch",
+              "to": "stb",
+              "color": "violet",
+              "label": "QUERY",
+              "payload": [
+                "to port 2"
+              ],
+              "row": {
+                "time": "125.600006s",
+                "src": "192.168.1.1",
+                "dst": "224.0.0.1",
+                "proto": "IGMPv2",
+                "info": "Membership Query, general",
+                "len": "60 B",
+                "wire": {
+                  "copyOf": -2,
+                  "at": "Seen leaving the switch, port 2"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "packet",
+          "from": "stb",
+          "to": "switch",
+          "color": "amber",
+          "label": "REPORT",
+          "payload": [
+            "still watching"
+          ],
+          "row": {
+            "time": "128.930000s",
+            "src": "192.168.1.30",
+            "dst": "233.252.0.1",
+            "proto": "IGMPv2",
+            "info": "Membership Report group 233.252.0.1",
+            "len": "60 B",
+            "wire": {
+              "igmp": {
+                "type": 22,
+                "group": "233.252.0.1",
+                "maxResp": 0
+              },
+              "routerAlert": true,
+              "ttl": 1,
+              "ttlNote": "Always 1: IGMP never goes past the first router.",
+              "tos": 192,
+              "df": true,
+              "at": "Seen going into the switch, port 2"
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "switch",
+          "to": "router",
+          "color": "amber",
+          "label": "REPORT",
+          "payload": [
+            "to the router port only"
+          ],
+          "row": {
+            "time": "128.930006s",
+            "src": "192.168.1.30",
+            "dst": "233.252.0.1",
+            "proto": "IGMPv2",
+            "info": "Membership Report group 233.252.0.1",
+            "len": "60 B",
+            "wire": {
+              "copyOf": -1,
+              "at": "Seen leaving the switch, port 8"
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "switch",
+          "color": "amber",
+          "label": "REPORT",
+          "payload": [
+            "still watching"
+          ],
+          "row": {
+            "time": "133.410000s",
+            "src": "192.168.1.10",
+            "dst": "233.252.0.1",
+            "proto": "IGMPv2",
+            "info": "Membership Report group 233.252.0.1",
+            "len": "60 B",
+            "wire": {
+              "igmp": {
+                "type": 22,
+                "group": "233.252.0.1",
+                "maxResp": 0
+              },
+              "routerAlert": true,
+              "ttl": 1,
+              "ttlNote": "Always 1: IGMP never goes past the first router.",
+              "at": "Seen going into the switch, port 1"
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "switch",
+          "to": "router",
+          "color": "amber",
+          "label": "REPORT",
+          "payload": [
+            "to the router port only"
+          ],
+          "row": {
+            "time": "133.410006s",
+            "src": "192.168.1.10",
+            "dst": "233.252.0.1",
+            "proto": "IGMPv2",
+            "info": "Membership Report group 233.252.0.1",
+            "len": "60 B",
+            "wire": {
+              "copyOf": -1,
+              "at": "Seen leaving the switch, port 8"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Leave",
+      "desc": "The laptop stops watching",
+      "detail": "Closing VLC sends a Leave Group to 224.0.0.2, all routers. Others may still watch, so the router asks about that group alone and waits 1 second. The TV box answers, so the channel stays; the switch just stops sending it to port 1.",
+      "facts": [
+        [
+          "Leave sent to",
+          "224.0.0.2, all routers"
+        ],
+        [
+          "Router asks",
+          "About that group alone"
+        ],
+        [
+          "Channel",
+          "Stays: the TV box answered"
+        ]
+      ],
+      "events": [
+        {
+          "type": "packet",
+          "from": "client",
+          "to": "switch",
+          "color": "amber",
+          "label": "LEAVE",
+          "payload": [
+            "done with 233.252.0.1"
+          ],
+          "row": {
+            "time": "300.500000s",
+            "src": "192.168.1.10",
+            "dst": "224.0.0.2",
+            "proto": "IGMPv2",
+            "info": "Leave Group 233.252.0.1",
+            "len": "60 B",
+            "wire": {
+              "igmp": {
+                "type": 23,
+                "group": "233.252.0.1",
+                "maxResp": 0
+              },
+              "routerAlert": true,
+              "ttl": 1,
+              "ttlNote": "Always 1: IGMP never goes past the first router.",
+              "at": "Seen going into the switch, port 1"
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "switch",
+          "to": "router",
+          "color": "amber",
+          "label": "LEAVE",
+          "payload": [
+            "to the router port only"
+          ],
+          "row": {
+            "time": "300.500006s",
+            "src": "192.168.1.10",
+            "dst": "224.0.0.2",
+            "proto": "IGMPv2",
+            "info": "Leave Group 233.252.0.1",
+            "len": "60 B",
+            "wire": {
+              "copyOf": -1,
+              "at": "Seen leaving the switch, port 8"
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "router",
+          "to": "switch",
+          "color": "violet",
+          "label": "QUERY",
+          "payload": [
+            "anyone for 233.252.0.1?"
+          ],
+          "row": {
+            "time": "300.500400s",
+            "src": "192.168.1.1",
+            "dst": "233.252.0.1",
+            "proto": "IGMPv2",
+            "info": "Membership Query, specific for group 233.252.0.1",
+            "len": "60 B",
+            "wire": {
+              "igmp": {
+                "type": 17,
+                "group": "233.252.0.1",
+                "maxResp": 10
+              },
+              "routerAlert": true,
+              "ttl": 1,
+              "ttlNote": "Always 1: IGMP never goes past the first router.",
+              "tos": 192,
+              "df": true,
+              "at": "Seen going into the switch, port 8"
+            }
+          }
+        },
+        {
+          "type": "stream",
+          "from": "switch",
+          "to": "stb",
+          "color": "violet",
+          "label": "QUERY",
+          "payload": [
+            "to the ports that joined"
+          ],
+          "spacing": 0,
+          "packets": [
+            {
+              "type": "packet",
+              "from": "switch",
+              "to": "client",
+              "color": "violet",
+              "label": "QUERY",
+              "payload": [
+                "to port 1"
+              ],
+              "row": {
+                "time": "300.500406s",
+                "src": "192.168.1.1",
+                "dst": "233.252.0.1",
+                "proto": "IGMPv2",
+                "info": "Membership Query, specific for group 233.252.0.1",
+                "len": "60 B",
+                "wire": {
+                  "copyOf": -1,
+                  "at": "Seen leaving the switch, port 1"
+                }
+              }
+            },
+            {
+              "type": "packet",
+              "from": "switch",
+              "to": "stb",
+              "color": "violet",
+              "label": "QUERY",
+              "payload": [
+                "to port 2"
+              ],
+              "row": {
+                "time": "300.500406s",
+                "src": "192.168.1.1",
+                "dst": "233.252.0.1",
+                "proto": "IGMPv2",
+                "info": "Membership Query, specific for group 233.252.0.1",
+                "len": "60 B",
+                "wire": {
+                  "copyOf": -2,
+                  "at": "Seen leaving the switch, port 2"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "packet",
+          "from": "stb",
+          "to": "switch",
+          "color": "amber",
+          "label": "REPORT",
+          "payload": [
+            "still watching"
+          ],
+          "row": {
+            "time": "300.830000s",
+            "src": "192.168.1.30",
+            "dst": "233.252.0.1",
+            "proto": "IGMPv2",
+            "info": "Membership Report group 233.252.0.1",
+            "len": "60 B",
+            "wire": {
+              "igmp": {
+                "type": 22,
+                "group": "233.252.0.1",
+                "maxResp": 0
+              },
+              "routerAlert": true,
+              "ttl": 1,
+              "ttlNote": "Always 1: IGMP never goes past the first router.",
+              "tos": 192,
+              "df": true,
+              "at": "Seen going into the switch, port 2"
+            }
+          }
+        },
+        {
+          "type": "packet",
+          "from": "switch",
+          "to": "router",
+          "color": "amber",
+          "label": "REPORT",
+          "payload": [
+            "to the router port only"
+          ],
+          "row": {
+            "time": "300.830006s",
+            "src": "192.168.1.30",
+            "dst": "233.252.0.1",
+            "proto": "IGMPv2",
+            "info": "Membership Report group 233.252.0.1",
+            "len": "60 B",
+            "wire": {
+              "copyOf": -1,
+              "at": "Seen leaving the switch, port 8"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "teaching": {
+    "steps": [
+      [
+        "Chọn kênh",
+        "Người xem chọn kênh 1. Mỗi kênh là một nhóm multicast, ở đây là 233.252.0.1, và TV box gửi một IGMP Membership Report tới địa chỉ đó: tôi muốn nhóm này. Switch lắng nghe (IGMP snooping), ghi nhớ cổng 2 và chỉ chuyển báo cáo cho router."
+      ],
+      [
+        "Xin nhà mạng",
+        "Router là một IGMP proxy: nó tham gia nhóm ở phía internet bằng báo cáo của chính nó, từ địa chỉ công cộng của nó, và mạng của nhà mạng bắt đầu gửi kênh 1 xuống đường dây. Dù trong nhà có bao nhiêu màn hình xem, router chỉ tham gia một lần."
+      ],
+      [
+        "Kênh Chảy Vào",
+        "Máy chủ truyền hình của nhà mạng gửi kênh 1 tới 233.252.0.1: các datagram UDP, mỗi cái chứa bảy gói MPEG-TS 188 byte gồm video và âm thanh. Router cho chúng vào trong, còn switch chỉ đẩy ra cổng 2: chỉ TV box tham gia, nên laptop không nhận được gói nào."
+      ],
+      [
+        "Màn Hình Thứ Hai",
+        "Laptop mở kênh 1 trong VLC và gửi báo cáo của chính nó. Switch thêm cổng 1 và giờ tạo hai bản sao cho mỗi datagram. Router đã nhận kênh rồi, nên nó không xin gì thêm từ nhà mạng: trên đường dây vẫn chỉ có một luồng."
+      ],
+      [
+        "Vẫn Đang Xem?",
+        "Cứ 125 giây router gửi một General Query tới 224.0.0.1, tức mọi thiết bị: các bạn còn muốn những nhóm nào? Switch chuyển nó tới mọi cổng. Mỗi thành viên trả lời vào một thời điểm ngẫu nhiên trong vòng 10 giây, nên router và switch tiếp tục cho kênh chảy vào."
+      ],
+      [
+        "Rời đi",
+        "Đóng VLC sẽ gửi một Leave Group tới 224.0.0.2, tức mọi router. Có thể người khác vẫn đang xem, nên router chỉ hỏi về nhóm đó và đợi 1 giây. TV box trả lời, nên kênh vẫn giữ; switch chỉ thôi gửi nó tới cổng 1."
+      ]
+    ],
+    "notes": {},
+    "labels": {
+      "Internet": "Internet",
+      "Client": "Máy khách",
+      "Router": "Router",
+      "DNS Resolver": "Bộ phân giải DNS",
+      "Web Server": "Máy chủ web",
+      "Root Server": "Máy chủ gốc",
+      ".com TLD Server": "Máy chủ TLD .com",
+      "Authoritative Server": "Máy chủ có thẩm quyền",
+      "Mail Server": "Máy chủ thư",
+      "Proxy": "Proxy",
+      "App Server": "Máy chủ ứng dụng",
+      "File Server": "Máy chủ tệp",
+      "ISP Router": "Router của ISP",
+      "Transit Router": "Router trung chuyển",
+      "Hosting Router": "Router của nhà lưu trữ",
+      "Their Router": "Router bên kia",
+      "Their Laptop": "Laptop bên kia",
+      "Switch": "Switch",
+      "Access Server": "Máy chủ truy cập",
+      "IP Camera": "Camera IP",
+      "TV Box": "TV box"
+    }
+  }
+}
