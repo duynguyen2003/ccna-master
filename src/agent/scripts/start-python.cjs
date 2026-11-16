@@ -6,9 +6,10 @@ const { spawn } = require('node:child_process');
 const { runtimeConfig } = require('../node/workerConfig');
 
 function pythonEnvironment(env) {
+  const config = runtimeConfig(env);
   if (
-    !runtimeConfig(env).enabled ||
-    !['python-gemini', 'app-gemini'].includes(env.AI_WORKER_MODE) ||
+    !config.enabled ||
+    !['python-gemini', 'app-gemini', 'production-gemini'].includes(env.AI_WORKER_MODE) ||
     !env.AI_SERVICE_SECRET ||
     env.AI_SERVICE_SECRET.length < 32 ||
     /\s/.test(env.AI_SERVICE_SECRET) ||
@@ -49,7 +50,8 @@ function pythonEnvironment(env) {
     PYTHONDONTWRITEBYTECODE: '1',
     AI_SERVICE_SECRET: env.AI_SERVICE_SECRET,
     AI_PYTHON_MODE: 'gemini',
-    AI_PYTHON_ENVIRONMENT: 'local',
+    AI_PYTHON_ENVIRONMENT: config.environment === 'production' ? 'production' : 'local',
+    AI_PYTHON_KEY_ID: config.auth.keyId,
     AI_PYTHON_LIVE_ENABLED: 'true',
     AI_PYTHON_HOST: analyze.hostname === '[::1]' ? '::1' : '127.0.0.1',
     AI_PYTHON_PORT: analyze.port,

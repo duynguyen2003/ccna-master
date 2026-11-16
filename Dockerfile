@@ -12,6 +12,7 @@ COPY src/backend/package.json ./src/backend/package.json
 COPY src/shared/package.json ./src/shared/package.json
 COPY src/agent/package.json ./src/agent/package.json
 COPY src/agent/contracts/package.json ./src/agent/contracts/package.json
+COPY src/agent/browser/package.json ./src/agent/browser/package.json
 COPY src/backend/prisma ./src/backend/prisma
 COPY prisma.config.ts ./prisma.config.ts
 COPY src/scripts/prisma-postinstall.cjs ./src/scripts/prisma-postinstall.cjs
@@ -29,6 +30,8 @@ ENV GENERATE_SOURCEMAP=false
 COPY src/frontend ./src/frontend
 COPY src/shared ./src/shared
 COPY src/agent/contracts ./src/agent/contracts
+COPY src/agent/browser ./src/agent/browser
+COPY src/agent/scripts/frontend-browser.cjs ./src/agent/scripts/frontend-browser.cjs
 RUN pnpm run build
 
 FROM nginx:1.27-alpine AS frontend
@@ -48,5 +51,21 @@ COPY src/shared ./src/shared
 COPY src/storage/uploads ./src/storage/uploads
 EXPOSE 5000
 HEALTHCHECK --interval=10s --timeout=3s --start-period=15s --retries=5 \
-  CMD node -e "fetch('http://127.0.0.1:5000/api/health/ready').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"
+  CMD node -e "fetch('http://127.0.0.1:'+(process.env.PORT||5000)+'/api/health/ready').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"
 CMD ["node", "src/backend/src/Server.js"]
+
+# API + internal Python + worker share one host, retaining loopback-only transport.
+# API-only remains the default until AI_PRODUCTION_ENABLED is explicitly true.
+FROM backend AS backend-ai
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends python3 python3-venv tini \
+    && rm -rf /var/lib/apt/lists/*
+COPY --from=ghcr.io/astral-sh/uv:0.11.22 /uv /usr/local/bin/uv
+ENV UV_PYTHON_DOWNLOADS=never \
+    UV_PYTHON=/usr/bin/python3 \
+    UV_LINK_MODE=copy \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+RUN uv sync --project src/agent/python --frozen --no-dev --no-install-project
+ENTRYPOINT ["tini", "--"]
+CMD ["node", "src/agent/scripts/production-entry.cjs"]

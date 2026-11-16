@@ -413,6 +413,7 @@ async function main() {
         'src/agent/node/admission.integration.test.js',
         'src/agent/node/worker.integration.test.js',
         'src/agent/node/context.integration.test.js',
+        'src/agent/node/productionPolicy.integration.test.js',
         ...(process.env.PY02_INTEGRATION === '1'
           ? ['src/agent/node/python.integration.test.js']
           : []),

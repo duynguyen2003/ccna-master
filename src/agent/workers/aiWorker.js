@@ -8,6 +8,7 @@ const { serviceAuth } = require('../node/serviceAuth');
 const { contextPreparer } = require('../node/context');
 const { pythonAnalyze } = require('../node/pythonTransport');
 const { setProgress } = require('../node/progress');
+const { runSweeper } = require('./aiSweeper');
 
 function createWorker(prisma, config, adapters) {
   const workerId = adapters.workerId || `worker_${randomUUID()}`;
@@ -93,29 +94,44 @@ async function main() {
   const config = runtimeConfig();
   if (!config.enabled)
     throw new Error(
-      'Worker disabled: select an isolated local mode or explicit admin-test application mode'
+      'Worker disabled: configure a supported Gemini environment and explicit activation'
     );
   let stopping = false;
+  const sweepAbort = new AbortController();
   process.on('SIGINT', () => {
     stopping = true;
+    sweepAbort.abort();
   });
   process.on('SIGTERM', () => {
     stopping = true;
+    sweepAbort.abort();
   });
   const worker = createWorker(getPrisma(), config, {
     analyze: workerAnalyze(process.env),
   });
+  const sweeping =
+    process.env.AI_INLINE_SWEEPER === 'true'
+      ? runSweeper(getPrisma(), config, {
+          signal: sweepAbort.signal,
+          onError: () => console.error('AI_SWEEPER_FAILED'),
+        })
+      : Promise.resolve();
+  if (process.env.AI_INLINE_SWEEPER === 'true')
+    console.info(JSON.stringify({ event: 'ai.sweeper.started', mode: 'inline' }));
   try {
     while (!stopping) {
       await worker.tick();
       await delay(1000);
     }
   } finally {
+    sweepAbort.abort();
+    await sweeping;
     await disconnectDatabase();
   }
 }
 function workerAnalyze(env, adapters = { pythonAnalyze }) {
-  if (!['python-gemini', 'app-gemini'].includes(env.AI_WORKER_MODE)) throw new Error('AI_DISABLED');
+  if (!['python-gemini', 'app-gemini', 'production-gemini'].includes(env.AI_WORKER_MODE))
+    throw new Error('AI_DISABLED');
   return adapters.pythonAnalyze(
     env.AI_ANALYZE_URL || 'http://127.0.0.1:8001/internal/v1/lab-assistant/analyze'
   );

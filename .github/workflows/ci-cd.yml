@@ -47,6 +47,11 @@ jobs:
       - name: Verify browser icon exports
         run: pnpm check:icons
 
+      - name: Verify native protocol catalog and shared network artwork
+        run: |
+          pnpm check:network-devices
+          pnpm check:protocol-lessons
+
       - name: Verify AI contracts and offline budget
         run: |
           pnpm check:ai:contracts
@@ -63,6 +68,11 @@ jobs:
           pnpm exec eslint src/agent/node/context*.js src/agent/node/redaction.js src/agent/node/evidence.js src/agent/node/outputVerifier.js
           pnpm exec eslint src/agent/node/diagnostics/*.js
           pnpm exec eslint src/agent/node/localGemini*.js src/agent/node/feedback.js src/backend/src/simulation/labFeedback.js src/agent/scripts/check-gemini-live.cjs
+
+      - name: Verify production AI configuration and launch guards
+        run: |
+          node --test src/agent/tests/productionRuntime.test.js
+          pnpm exec eslint src/agent/node/productionPolicy*.js src/agent/tests/productionRuntime.test.js src/agent/scripts/*production*.cjs
 
       - name: Setup Python for shared contract validation
         uses: actions/setup-python@v5
@@ -147,6 +157,9 @@ jobs:
         run: pnpm run build
         env:
           CI: false
+
+      - name: Verify production protocol assets
+        run: pnpm check:protocol-lessons --build
 
       - name: 📤 Upload build artifact
         uses: actions/upload-artifact@v4
@@ -248,9 +261,34 @@ jobs:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/netmastery_test
           OPERATIONS_INTEGRATION: '1'
 
+  ai-production-image:
+    name: AI production Docker readiness
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build API, Python and worker image
+        run: docker build --target backend-ai -t ccna-ai-production:local-check .
+      - name: Build frontend image
+        run: docker build --target frontend -t ccna-ai-frontend:local-check .
+      - name: Verify production startup without provider calls
+        run: node src/agent/scripts/test-production-docker.cjs
+      - name: Save sanitized startup evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-production-readiness
+          path: .tmp/ai-production-docker-result.json
+          include-hidden-files: true
+          if-no-files-found: error
+
   deploy-vercel:
     name: 🚀 Deploy to Vercel
-    needs: [test-and-build, integration]
+    needs: [test-and-build, integration, ai-production-image]
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/developer')
     environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'preview' }}

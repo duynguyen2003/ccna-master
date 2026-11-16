@@ -41,7 +41,7 @@ def create_app(settings=None, *, transport=None, adapter=None, provider_transpor
                 app.state.callbacks = NodeCallbacks(client, settings)
                 app.state.adapters = {}
                 if settings.mode == "gemini":
-                    app.state.adapters["local-gemini-v1"] = adapter or GeminiAdapter(
+                    app.state.adapters[settings.provider_config_id] = adapter or GeminiAdapter(
                         settings, provider_client
                     )
                 yield

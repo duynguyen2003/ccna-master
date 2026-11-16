@@ -1,0 +1,19 @@
+services:
+  backend:
+    build:
+      target: backend-ai
+    environment:
+      AI_PRODUCTION_ENABLED: ${AI_PRODUCTION_ENABLED:-false}
+      AI_ENVIRONMENT: production
+      AI_WORKER_MODE: production-gemini
+      AI_RELEASE_SHA: ${AI_RELEASE_SHA:-}
+      AI_RECOVERY_EPOCH: ${AI_RECOVERY_EPOCH:-}
+      AI_SERVICE_SECRET: ${AI_SERVICE_SECRET:-}
+      AI_OWNER_SECRET: ${AI_OWNER_SECRET:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.5-flash-lite}
+      AI_INTERNAL_URL: http://127.0.0.1:5000/internal/v1/ai
+      AI_ANALYZE_URL: http://127.0.0.1:8001/internal/v1/lab-assistant/analyze
+      AI_STATUS_STREAM_ENABLED: 'true'
+      LAB_AI_MODE: deterministic
+    stop_grace_period: 30s

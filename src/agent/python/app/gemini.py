@@ -56,7 +56,7 @@ class GeminiAdapter:
         if (
             not self.settings.live_enabled
             or not self.settings.api_key
-            or payload["providerConfigId"] != "local-gemini-v1"
+            or payload["providerConfigId"] != self.settings.provider_config_id
             or any(payload["versions"].get(key) != value for key, value in GEMINI_VERSIONS.items())
             or payload["policy"]["maxInputTokens"] > POLICY["maxInputTokens"]
             or payload["policy"]["maxOutputTokens"] > POLICY["maxTotalOutputTokens"]

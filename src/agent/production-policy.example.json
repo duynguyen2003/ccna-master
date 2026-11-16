@@ -1,0 +1,13 @@
+{
+  "actorId": 1,
+  "studentAccess": true,
+  "userIds": [],
+  "labIds": [],
+  "limits": {
+    "userMinute": 2,
+    "userDay": 20,
+    "globalDayMicros": 50000,
+    "globalMonthMicros": 100000,
+    "globalConcurrency": 1
+  }
+}
