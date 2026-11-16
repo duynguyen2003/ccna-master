@@ -70,6 +70,13 @@ Artifact Docker chỉ upload file JSON đã lọc; bật rõ tùy chọn cho đ�
 theo [hướng dẫn upload artifact](https://github.com/actions/upload-artifact#uploading-hidden-files).
 Lỗi không tìm thấy artifact sẽ làm bước upload thất bại.
 
+CI backup/restore dùng `postgresql-client-16` và đường dẫn `PG_DUMP_BIN` /
+`PG_RESTORE_BIN` cụ thể để khớp server test PostgreSQL 16. Client mặc định mới hơn
+trên runner đã sinh `SET transaction_timeout = 0` mà server 16 không nhận. Cố định
+major của công cụ, giữ bài test restore và các kiểm tra lỗi nguyên vẹn; không lọc SQL
+hoặc bỏ qua lỗi restore. [Tài liệu PostgreSQL về tương thích pg_dump](https://www.postgresql.org/docs/16/app-pgdump.html#APP-PGDUMP-NOTES)
+không bảo đảm bản dump sẽ tải được vào server có major cũ hơn công cụ dump.
+
 ## Ảnh nghiệm thu
 
 - [Catalog desktop](../ui-ux/evidence/protocol-catalog/catalog-39-desktop.png).
