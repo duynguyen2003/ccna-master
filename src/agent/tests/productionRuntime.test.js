@@ -78,7 +78,7 @@ test('Python receives production identity and only required service/provider cre
   assert.equal(values.AI_PYTHON_ENVIRONMENT, 'production');
   assert.equal(values.AI_PYTHON_KEY_ID, 'production-v1');
   assert.equal(values.AI_PYTHON_HOST, '127.0.0.1');
-  assert.equal(values.AI_PYTHON_CALLBACK_TIMEOUT_MS, '5000');
+  assert.equal(values.AI_PYTHON_CALLBACK_TIMEOUT_MS, '10000');
   assert.equal(values.DATABASE_URL, undefined);
   assert.equal(values.JWT_SECRET, undefined);
   assert.equal(values.AI_OWNER_SECRET, undefined);

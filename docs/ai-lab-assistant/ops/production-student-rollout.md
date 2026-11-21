@@ -89,4 +89,4 @@ Bản vá ưu tiên lấy job khi sweeper chạy cùng tiến trình, kiểm rec
 
 Lần thử bản `d408779` lấy job sau 5,6 giây và ghi permit. Timeout DB làm worker và API khởi động lại trước khi có receipt. Lượt này giữ trạng thái `OUTCOME_UNKNOWN` cùng dự phòng chi phí và policy thử nghiệm đã tắt.
 
-Bản vá tiếp theo đọc trạng thái và quota trong snapshot PostgreSQL, giảm tranh khóa với callback. Sweeper chỉ lấy khóa cho job có thể cần cập nhật hoặc đã nhận receipt và chỉ dự toán usage sau cửa sổ 24 giờ. Python production cho callback loopback tối đa 5 giây. Worker chờ vòng kế tiếp khi gặp timeout DB tạm thời, giữ bảo đảm mỗi permit chỉ dùng một lần.
+Bản vá tiếp theo đọc trạng thái và quota trong snapshot PostgreSQL, giảm tranh khóa với callback. Sweeper chỉ lấy khóa cho job có thể cần cập nhật hoặc đã nhận receipt và chỉ dự toán usage sau cửa sổ 24 giờ. Mô phỏng DB trễ 176 ms cho thấy callback claim cần hơn 5 giây. Callback loopback production được chờ tối đa 10 giây trong deadline chung. Worker chờ vòng kế tiếp khi gặp timeout DB tạm thời, giữ bảo đảm mỗi permit chỉ dùng một lần.
