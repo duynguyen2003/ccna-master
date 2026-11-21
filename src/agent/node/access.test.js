@@ -48,6 +48,21 @@ test('current membership, account and session are checked before the callback', 
   await assert.rejects(run(), { status: 404 });
   assert.equal(calls, 1);
 });
+
+test('status reads authorize against one snapshot without taking write-path locks', async () => {
+  const f = fixture();
+  f.tx.$queryRaw = () => assert.fail('status read acquired a lock');
+  f.db.$transaction = async (callback, options) => {
+    assert.equal(options.isolationLevel, 'RepeatableRead');
+    return callback(f.tx);
+  };
+  const read = () => withAiAccess(f.db, { ...f.scope, readOnly: true }, async (_, c) => c.user.id);
+  assert.equal(await read(), 1);
+  f.policy.admissionEnabled = false;
+  await assert.rejects(read(), { status: 403 });
+  f.user.sessionVersion++;
+  await assert.rejects(read(), { status: 401 });
+});
 test('missing cohort and someone else’s conversation fail closed', async () => {
   const f = fixture();
   f.policy.eligibilityRules = {};

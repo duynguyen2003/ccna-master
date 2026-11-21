@@ -7,6 +7,7 @@ const { createWorker, workerAnalyze } = require('../workers/aiWorker');
 test('the worker can claim immediately when a separate loop handles reaping', async () => {
   const operations = [];
   const prisma = {
+    $queryRaw: async () => [{ milliseconds: Date.now() }],
     aiRequest: {
       async findMany() {
         operations.push('reap');

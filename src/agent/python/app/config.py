@@ -38,7 +38,7 @@ class Settings:
             ("max_body_bytes", 1, 65536),
             ("body_timeout_ms", 1, 10000),
             ("max_request_ms", 1, 55000 if self.mode == "gemini" else 30000),
-            ("callback_timeout_ms", 1, 5000),
+            ("callback_timeout_ms", 1, 10000 if self.environment == "production" else 5000),
             ("max_concurrent", 1, 8),
             ("receipt_attempts", 1, 3),
         ]:

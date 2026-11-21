@@ -30,7 +30,7 @@ function readPrincipal(authorization, secret) {
 
 // Server-selected environment and principal only. Callback must stay DB-local.
 async function withAiAccess(prisma, scope, callback) {
-  const { principal, attemptId, environment, conversationId, epoch } = scope;
+  const { principal, attemptId, environment, conversationId, epoch, readOnly = false } = scope;
   if (
     !principal ||
     !Number.isSafeInteger(principal.id) ||
@@ -40,8 +40,8 @@ async function withAiAccess(prisma, scope, callback) {
   const current = await prisma.user.findUnique({ where: { id: principal.id } });
   if (!isAccountActive(current) || current.sessionVersion !== principal.sessionVersion)
     throw denied(401, 'UNAUTHORIZED');
-  return withAttempt(prisma, attemptId, principal.id, async (tx, attempt) => {
-    await tx.$queryRaw`SELECT id FROM users WHERE id = ${principal.id} FOR SHARE`;
+  const authorize = async (tx, attempt) => {
+    if (!readOnly) await tx.$queryRaw`SELECT id FROM users WHERE id = ${principal.id} FOR SHARE`;
     const user = await tx.user.findUnique({
       where: { id: principal.id },
       select: {
@@ -70,12 +70,14 @@ async function withAiAccess(prisma, scope, callback) {
       if (!Number.isInteger(epoch) || conversation.epoch !== epoch)
         throw denied(409, 'AI_CONVERSATION_CHANGED');
     }
-    await tx.$queryRaw`SELECT environment FROM ai_runtime_policies WHERE environment = ${environment} FOR SHARE`;
+    if (!readOnly)
+      await tx.$queryRaw`SELECT environment FROM ai_runtime_policies WHERE environment = ${environment} FOR SHARE`;
     const policy = await tx.aiRuntimePolicy.findUnique({ where: { environment } });
     if (!policy?.admissionEnabled || !inAiCohort(policy, user, attempt.labId))
       throw denied(403, 'AI_NOT_ELIGIBLE');
     return callback(tx, { attempt, conversation, policy, user });
-  });
+  };
+  return withAttempt(prisma, attemptId, principal.id, authorize, { readOnly });
 }
 
 module.exports = { readPrincipal, withAiAccess };
