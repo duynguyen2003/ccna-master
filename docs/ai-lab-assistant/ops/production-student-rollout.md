@@ -78,3 +78,11 @@ Giữ worker/sweeper đủ lâu để xử lý receipt muộn và job hết hạ
 - Source được chuẩn bị trong nhánh PR vào `main`; chưa deploy revision này hoặc có kết nối quản trị Render trong phiên. Plugin Render đã được tìm thấy và đề xuất, nhưng chưa cài/kết nối. Do đó không đánh dấu USER đã dùng được trên production. Cần hoàn tất cấu hình host, phát hành và smoke tài khoản thật ở bước 7.
 
 Bằng chứng tổng hợp: [production-readiness.json](production-readiness.json), ghi lại trạng thái trước khi publish source qua PR. Không lưu key/URL DB có credential trong báo cáo.
+
+## Kiểm thử trên Render ngày 21/11/2026
+
+Render chạy Docker trên gói Free ở Oregon với PostgreSQL Supabase tại Singapore. Đã xác nhận đủ 9 migration và kiểm archive của bản sao lưu PostgreSQL mã hóa. API, Python, worker và sweeper cùng khởi động từ bản `4ae2bde`. Vercel tiếp tục gọi URL API hiện có.
+
+Pilot dùng một tài khoản STUDENT kiểm thử trên ITN 02. Capabilities trả 403 trước khi áp policy và 200 sau khi áp. API nhận câu hỏi vào hàng đợi, sau đó job hết hạn trước khi worker lấy và API đọc trạng thái gặp timeout DB. Kiểm receipt xác nhận 0 lượt Gemini, rồi đã tắt admission/dispatch của pilot.
+
+Bản vá ưu tiên lấy job khi sweeper chạy cùng tiến trình, kiểm receipt và expiry trong cùng transaction, đồng thời khởi động API bằng lệnh mặc định của image khi cờ AI tắt. CI kiểm readiness ở cả hai chế độ. Hạn hàng đợi vẫn là 10 giây và ngân sách pilot giữ nguyên. Chỉ mở pilot sau khi bản vá chạy trên Render và dùng lượt thử có receipt thực để xác minh.

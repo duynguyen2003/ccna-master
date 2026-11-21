@@ -249,6 +249,7 @@ function receipts(prisma, config) {
     finalize(requestId, worker) {
       return locked(prisma, environment, requestId, (tx, c) => finalizeLocked(tx, c, worker));
     },
+    finalizeLocked,
     // Trusted accounting input, never exposed to a browser or generation adapter.
     reconcile(requestId, key, usage) {
       if (!/^[A-Za-z0-9_-]{1,80}$/.test(key)) throw fail('AI_INVALID_REQUEST');

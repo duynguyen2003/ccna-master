@@ -10,7 +10,7 @@ const { pythonAnalyze } = require('../node/pythonTransport');
 const { setProgress } = require('../node/progress');
 const { runSweeper } = require('./aiSweeper');
 
-function createWorker(prisma, config, adapters) {
+function createWorker(prisma, config, adapters, { reapBeforeClaim = true } = {}) {
   const workerId = adapters.workerId || `worker_${randomUUID()}`;
   const queue = leases(prisma, config);
   const permits = dispatch(prisma, config);
@@ -20,7 +20,7 @@ function createWorker(prisma, config, adapters) {
   return {
     workerId,
     async tick() {
-      await queue.reap();
+      if (reapBeforeClaim) await queue.reap();
       const row = await queue.claim(workerId);
       if (!row) return false;
       const started = Date.now();
@@ -106,18 +106,20 @@ async function main() {
     stopping = true;
     sweepAbort.abort();
   });
-  const worker = createWorker(getPrisma(), config, {
-    analyze: workerAnalyze(process.env),
-  });
-  const sweeping =
-    process.env.AI_INLINE_SWEEPER === 'true'
-      ? runSweeper(getPrisma(), config, {
-          signal: sweepAbort.signal,
-          onError: () => console.error('AI_SWEEPER_FAILED'),
-        })
-      : Promise.resolve();
-  if (process.env.AI_INLINE_SWEEPER === 'true')
-    console.info(JSON.stringify({ event: 'ai.sweeper.started', mode: 'inline' }));
+  const inlineSweeper = process.env.AI_INLINE_SWEEPER === 'true';
+  const worker = createWorker(
+    getPrisma(),
+    config,
+    { analyze: workerAnalyze(process.env) },
+    { reapBeforeClaim: !inlineSweeper }
+  );
+  const sweeping = inlineSweeper
+    ? runSweeper(getPrisma(), config, {
+        signal: sweepAbort.signal,
+        onError: () => console.error('AI_SWEEPER_FAILED'),
+      })
+    : Promise.resolve();
+  if (inlineSweeper) console.info(JSON.stringify({ event: 'ai.sweeper.started', mode: 'inline' }));
   try {
     while (!stopping) {
       await worker.tick();
