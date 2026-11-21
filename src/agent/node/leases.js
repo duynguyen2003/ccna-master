@@ -2,6 +2,23 @@ const { clock, locked, pending, eligible, releaseSlot, terminal, event } = requi
 const { settle } = require('./settlement');
 const { receipts } = require('./receipts');
 const { fail } = require('./quota');
+
+function reapAction(c, recoveryEpoch) {
+  const { row, now, call } = c;
+  if (!eligible(c) || row.recoveryEpoch !== recoveryEpoch)
+    return c.conversation?.deletedAt ? 'DELETED' : 'REVOKED';
+  if (row.status === 'QUEUED')
+    return row.deadlineAt <= now || (!row.startedAt && +now - +row.createdAt > 10000)
+      ? 'EXPIRED'
+      : null;
+  const preDispatch = !call || call.state === 'PLANNED';
+  const executionEnd = call?.analyzeInput?.deadlineAt || row.deadlineAt;
+  if (!preDispatch && +now >= +new Date(executionEnd) + 5000) return 'OUTCOME_UNKNOWN';
+  if (preDispatch && row.deadlineAt <= now) return 'FAILED';
+  if (preDispatch && row.leaseExpiresAt <= now) return 'REQUEUE';
+  return null;
+}
+
 function leases(prisma, config) {
   const { environment } = config;
   const results = receipts(prisma, config);
@@ -58,46 +75,79 @@ function leases(prisma, config) {
       const scope = {
         reservations: { some: { bucket: { scopeType: 'GLOBAL_DAY', scopeKey: environment } } },
       };
+      const now = await clock(prisma);
       const jobs = await prisma.aiRequest.findMany({
         where: { ...scope, status: { in: ['QUEUED', 'RUNNING'] } },
-        select: { id: true },
+        select: {
+          id: true,
+          status: true,
+          createdAt: true,
+          startedAt: true,
+          deadlineAt: true,
+          leaseExpiresAt: true,
+          userId: true,
+          attemptId: true,
+          sessionVersionAtAdmission: true,
+          conversationEpoch: true,
+          recoveryEpoch: true,
+          user: {
+            select: { id: true, role: true, isActive: true, deletedAt: true, sessionVersion: true },
+          },
+          attempt: {
+            select: {
+              userId: true,
+              members: true,
+              labId: true,
+              lab: { select: { status: true, deletedAt: true } },
+            },
+          },
+          conversation: { select: { userId: true, attemptId: true, epoch: true, deletedAt: true } },
+          providerCalls: {
+            where: { stepIndex: 0 },
+            select: { state: true, receiptHash: true, analyzeInput: true },
+          },
+        },
         orderBy: { createdAt: 'asc' },
         take: 256,
       });
-      for (const { id } of jobs) {
-        await locked(prisma, environment, id, async (tx, c) => {
+      const policy = jobs.length
+        ? await prisma.aiRuntimePolicy.findUnique({ where: { environment } })
+        : null;
+      for (const row of jobs) {
+        const {
+          user,
+          attempt,
+          conversation,
+          providerCalls: [call],
+        } = row;
+        // Healthy jobs don't need locks. Recheck candidates under the lifecycle locks.
+        if (
+          !call?.receiptHash &&
+          !reapAction({ row, user, attempt, conversation, call, policy, now }, config.recoveryEpoch)
+        )
+          continue;
+        await locked(prisma, environment, row.id, async (tx, c) => {
           if (!pending(c.row)) return;
           // Finalize any durable receipt before expiry decisions, using the same locks.
           if (await results.finalizeLocked(tx, c)) return;
-          const preDispatch = !c.call || c.call.state === 'PLANNED';
-          let stop = null;
-          if (!eligible(c) || c.row.recoveryEpoch !== config.recoveryEpoch)
-            stop = c.conversation?.deletedAt ? 'DELETED' : 'REVOKED';
-          else if (
-            c.row.status === 'QUEUED' &&
-            (c.row.deadlineAt <= c.now || (!c.row.startedAt && +c.now - +c.row.createdAt > 10000))
-          )
-            stop = 'EXPIRED';
-          else if (c.row.status === 'RUNNING') {
-            const executionEnd = c.call?.analyzeInput?.deadlineAt || c.row.deadlineAt;
-            if (!preDispatch && +c.now >= +new Date(executionEnd) + 5000) stop = 'OUTCOME_UNKNOWN';
-            else if (preDispatch && c.row.deadlineAt <= c.now) stop = 'FAILED';
-            else if (preDispatch && c.row.leaseExpiresAt <= c.now) {
-              await tx.aiRequest.update({
-                where: { id },
-                data: {
-                  status: 'QUEUED',
-                  leaseOwner: null,
-                  leaseExpiresAt: null,
-                  streamVersion: { increment: 1 },
-                  progressPhase: null,
-                },
-              });
-              await event(tx, 'AI_REQUEST_REQUEUED', id);
-              return;
-            }
-          }
+          const stop = reapAction(c, config.recoveryEpoch);
           if (!stop) return;
+          const id = c.row.id;
+          if (stop === 'REQUEUE') {
+            await tx.aiRequest.update({
+              where: { id },
+              data: {
+                status: 'QUEUED',
+                leaseOwner: null,
+                leaseExpiresAt: null,
+                streamVersion: { increment: 1 },
+                progressPhase: null,
+              },
+            });
+            await event(tx, 'AI_REQUEST_REQUEUED', id);
+            return;
+          }
+          const preDispatch = !c.call || c.call.state === 'PLANNED';
           if (c.call?.state === 'PLANNED')
             await tx.aiProviderCall.update({
               where: { id: c.call.id },
@@ -123,7 +173,7 @@ function leases(prisma, config) {
       }
       // Occupied unknown slots survive lease loss and are released only at deadline + grace.
       const expiredSlots = await prisma.aiExecutionSlot.findMany({
-        where: { environment, requestId: { not: null }, expiresAt: { lte: new Date() } },
+        where: { environment, requestId: { not: null }, expiresAt: { lte: now } },
         select: { requestId: true },
       });
       for (const { requestId } of expiredSlots)
@@ -140,7 +190,7 @@ function leases(prisma, config) {
           providerCalls: {
             some: {
               usageStatus: { in: ['PENDING', 'UNRESOLVED'] },
-              dispatchedAt: { not: null },
+              dispatchedAt: { lte: new Date(+now - 86400000) },
             },
           },
         },

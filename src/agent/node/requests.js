@@ -18,22 +18,26 @@ function service(prisma, config) {
     )
       throw fail('AI_DISABLED');
   };
-  const checked = (principal, attemptId, fn, serialize = true) => {
+  const checked = (principal, attemptId, fn, readOnly = false) => {
     if (
       !/^[A-Za-z][A-Za-z0-9_-]{0,79}$/.test(recoveryEpoch || '') ||
       !ownerSecret ||
       ownerSecret.length < 32
     )
       throw fail('AI_DISABLED');
-    return withAiAccess(prisma, { principal, attemptId, environment }, async (tx, context) => {
-      if (serialize)
-        await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`ai-admission:${environment}`}, 1))::text`;
-      const now = await clock(tx);
-      const owner = createHmac('sha256', ownerSecret)
-        .update(`${environment}:${principal.id}`)
-        .digest('hex');
-      return fn(tx, { ...context, now, owner });
-    });
+    return withAiAccess(
+      prisma,
+      { principal, attemptId, environment, readOnly },
+      async (tx, context) => {
+        if (!readOnly)
+          await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`ai-admission:${environment}`}, 1))::text`;
+        const now = await clock(tx);
+        const owner = createHmac('sha256', ownerSecret)
+          .update(`${environment}:${principal.id}`)
+          .digest('hex');
+        return fn(tx, { ...context, now, owner });
+      }
+    );
   };
   async function resource(tx, row, c) {
     const conversation = await tx.aiConversation.findFirst({
@@ -192,39 +196,44 @@ function service(prisma, config) {
           if (!row) throw fail('AI_RESOURCE_NOT_FOUND');
           return resource(tx, row, c);
         },
-        false
+        true
       );
     },
     info(principal, attemptId, quotaOnly = false) {
-      return checked(principal, attemptId, async (tx, c) => {
-        requireProvider(c.policy);
-        if (quotaOnly)
-          return {
+      return checked(
+        principal,
+        attemptId,
+        async (tx, c) => {
+          requireProvider(c.policy);
+          if (quotaOnly)
+            return {
+              contractVersion: VERSION,
+              data: {
+                quota: await userQuota(tx, environment, c.owner, c.policy, c.now),
+                serverTime: c.now.toISOString(),
+              },
+            };
+          const conversation = await tx.aiConversation.findUnique({
+            where: { userId_attemptId: { userId: principal.id, attemptId } },
+          });
+          return schemas.CapabilitiesResponse.parse({
             contractVersion: VERSION,
             data: {
-              quota: await userQuota(tx, environment, c.owner, c.policy, c.now),
+              eligible: !conversation?.deletedAt,
+              streaming: config.streamEnabled === true,
+              conversationId: conversation?.id || null,
+              conversationEpoch: conversation?.epoch || 0,
+              recoveryEpoch,
+              intents: ['NEXT_STEP', 'DIAGNOSE', 'EXPLAIN_CONCEPT', 'LAB_REVIEW'],
+              supportedDeviceIds: Object.keys(c.attempt.deviceState.devices),
+              supportedTopics: [],
+              limits: { questionCharacters: 2000, contextBytes: 65536, userConcurrent: 1 },
               serverTime: c.now.toISOString(),
             },
-          };
-        const conversation = await tx.aiConversation.findUnique({
-          where: { userId_attemptId: { userId: principal.id, attemptId } },
-        });
-        return schemas.CapabilitiesResponse.parse({
-          contractVersion: VERSION,
-          data: {
-            eligible: !conversation?.deletedAt,
-            streaming: config.streamEnabled === true,
-            conversationId: conversation?.id || null,
-            conversationEpoch: conversation?.epoch || 0,
-            recoveryEpoch,
-            intents: ['NEXT_STEP', 'DIAGNOSE', 'EXPLAIN_CONCEPT', 'LAB_REVIEW'],
-            supportedDeviceIds: Object.keys(c.attempt.deviceState.devices),
-            supportedTopics: [],
-            limits: { questionCharacters: 2000, contextBytes: 65536, userConcurrent: 1 },
-            serverTime: c.now.toISOString(),
-          },
-        });
-      });
+          });
+        },
+        true
+      );
     },
   };
 }

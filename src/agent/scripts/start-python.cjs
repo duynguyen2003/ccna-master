@@ -58,6 +58,7 @@ function pythonEnvironment(env) {
     AI_PYTHON_NODE_URL: callback.toString(),
     AI_PYTHON_MAX_CONCURRENT: '1',
     AI_PYTHON_MAX_REQUEST_MS: '55000',
+    AI_PYTHON_CALLBACK_TIMEOUT_MS: config.environment === 'production' ? '5000' : '3000',
     AI_PYTHON_TRACE_TIMINGS: env.AI_TRACE_TIMINGS === 'true' ? 'true' : 'false',
     GEMINI_API_KEY: env.GEMINI_API_KEY,
   };

@@ -122,7 +122,17 @@ async function main() {
   if (inlineSweeper) console.info(JSON.stringify({ event: 'ai.sweeper.started', mode: 'inline' }));
   try {
     while (!stopping) {
-      await worker.tick();
+      try {
+        await worker.tick();
+      } catch (error) {
+        const isDatabaseTimeout =
+          ['P1001', 'P1002', 'P1017', 'P2024', 'ETIMEDOUT', 'ECONNRESET'].includes(error.code) ||
+          /query read timeout|connection terminated unexpectedly|expired transaction/i.test(
+            error.message || ''
+          );
+        if (!isDatabaseTimeout) throw error;
+        console.warn('AI_WORKER_DATABASE_RETRY');
+      }
       await delay(1000);
     }
   } finally {

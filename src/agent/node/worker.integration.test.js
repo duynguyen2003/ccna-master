@@ -362,6 +362,23 @@ test('BE-04 durable workers, permits and accounting on isolated PostgreSQL', asy
     );
 
     await t.test(
+      'status and sweeping healthy work continue during an attempt write lock',
+      async () => {
+        const j = await fresh();
+        await db.$transaction(async (tx) => {
+          await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${j.attemptId}, 0))::text`;
+          assert.equal(
+            (await api.read(j.principal, j.attemptId, 'id', j.id)).data.status,
+            'QUEUED'
+          );
+          await b.rpc('reap');
+        });
+        assert.equal((await db.aiRequest.findUnique({ where: { id: j.id } })).status, 'QUEUED');
+        await results.cancel(j.id, j.principal, j.attemptId);
+      }
+    );
+
+    await t.test(
       'DB clock is UTC-correct in non-UTC sessions and settlement uses original reserved windows',
       async () => {
         const { clock } = require('./lifecycle');
