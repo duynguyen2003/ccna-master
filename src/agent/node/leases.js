@@ -65,9 +65,10 @@ function leases(prisma, config) {
         take: 256,
       });
       for (const { id } of jobs) {
-        await results.finalize(id); // A durable receipt wins over a lost worker ACK.
         await locked(prisma, environment, id, async (tx, c) => {
           if (!pending(c.row)) return;
+          // Finalize any durable receipt before expiry decisions, using the same locks.
+          if (await results.finalizeLocked(tx, c)) return;
           const preDispatch = !c.call || c.call.state === 'PLANNED';
           let stop = null;
           if (!eligible(c) || c.row.recoveryEpoch !== config.recoveryEpoch)

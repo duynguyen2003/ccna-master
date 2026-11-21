@@ -9,6 +9,7 @@ const nonce = crypto.randomBytes(6).toString('hex');
 const prefix = 'ccna-ai-qa-' + nonce;
 const network = prefix + '-network',
   database = prefix + '-db',
+  apiOnly = prefix + '-api',
   app = prefix + '-app';
 const dir = path.join(root, '.tmp', 'ai-production-docker-' + nonce);
 fs.mkdirSync(path.dirname(dir), { recursive: true });
@@ -36,6 +37,18 @@ function envFile(name, values) {
   );
   envFiles.push(file);
   return file;
+}
+async function waitForReadiness(container, ...urls) {
+  const probe =
+    'Promise.all(process.argv.slice(1).map(async u=>{const r=await fetch(u);return {status:r.status,body:await r.json()}})).then(x=>{console.log(JSON.stringify(x));if(x.some(r=>r.status!==200))process.exitCode=1}).catch(()=>process.exitCode=1)';
+  for (let i = 0; i < 45; i++) {
+    try {
+      return JSON.parse(docker(['exec', container, 'node', '-e', probe, ...urls]));
+    } catch {
+      await delay(1000);
+    }
+  }
+  throw new Error('QA service readiness failed: ' + container);
 }
 async function main() {
   const password = crypto.randomBytes(24).toString('hex');
@@ -94,37 +107,34 @@ async function main() {
   }
   if (!ready) throw new Error('QA PostgreSQL not ready');
   docker(['run', '--rm', '--network', network, '--env-file', appEnv, image, 'pnpm', 'db:deploy']);
-  docker([
-    'run',
-    '-d',
-    '--name',
-    app,
-    '--network',
-    network,
-    '--label',
-    'netmaster.qa=' + nonce,
-    '--env-file',
-    appEnv,
-    image,
-  ]);
-  created.push(app);
-  let statuses;
-  for (let i = 0; i < 45; i++) {
-    try {
-      const output = docker([
-        'exec',
-        app,
-        'node',
-        '-e',
-        "Promise.all(['http://127.0.0.1:10000/api/health/ready','http://127.0.0.1:8001/health/ready'].map(async u=>{const r=await fetch(u);return {status:r.status,body:await r.json()}})).then(x=>{console.log(JSON.stringify(x));if(x.some(r=>r.status!==200))process.exitCode=1}).catch(()=>process.exitCode=1)",
-      ]);
-      statuses = JSON.parse(output);
-      break;
-    } catch {
-      await delay(1000);
-    }
+  function startApp(name, enabled) {
+    docker([
+      'run',
+      '-d',
+      '--name',
+      name,
+      '--network',
+      network,
+      '--label',
+      'netmaster.qa=' + nonce,
+      '--env-file',
+      appEnv,
+      '-e',
+      'AI_PRODUCTION_ENABLED=' + enabled,
+      image,
+    ]);
+    created.push(name);
   }
-  if (!statuses) throw new Error('QA app readiness failed');
+  const apiUrl = 'http://127.0.0.1:10000/api/health/ready';
+  startApp(apiOnly, false);
+  const [apiOnlyStatus] = await waitForReadiness(apiOnly, apiUrl);
+  const apiOnlyProcesses = docker(['top', apiOnly, '-eo', 'pid,args']);
+  if (/aiWorker\.js|-m app/.test(apiOnlyProcesses))
+    throw new Error('AI processes started with AI_PRODUCTION_ENABLED=false');
+  docker(['stop', apiOnly]);
+
+  startApp(app, true);
+  const statuses = await waitForReadiness(app, apiUrl, 'http://127.0.0.1:8001/health/ready');
   await delay(2500);
   const processes = docker(['top', app, '-eo', 'pid,args']);
   for (const needle of ['Server.js', 'aiWorker.js', '-m app'])
@@ -148,6 +158,7 @@ async function main() {
     apiPort: 10000,
     health,
     api: statuses[0].status,
+    apiOnly: apiOnlyStatus.status,
     python: statuses[1].status,
     processes: { api: true, python: true, worker: true, sweeper: 'inline' },
     policy: policy.policy,
@@ -165,9 +176,11 @@ main()
   .catch((e) => {
     console.error('Production Docker smoke failed:', e.message);
     process.exitCode = 1;
-    try {
-      console.error(docker(['logs', '--tail', '45', app]));
-    } catch {}
+    for (const container of [apiOnly, app]) {
+      try {
+        console.error(docker(['logs', '--tail', '45', container]));
+      } catch {}
+    }
   })
   .finally(() => {
     for (const name of created.reverse()) {

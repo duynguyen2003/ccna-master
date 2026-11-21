@@ -8,6 +8,5 @@ if (process.env.AI_PRODUCTION_ENABLED === 'true') {
       process.exitCode = 1;
     });
 } else {
-  // The existing API-only deployment remains the default until AI is configured.
-  require('../../backend/src/Server.js');
+  require('../../backend/src/Server.js').startServer();
 }

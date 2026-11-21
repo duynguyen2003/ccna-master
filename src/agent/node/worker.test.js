@@ -2,7 +2,36 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { runtimeConfig } = require('./workerConfig');
 const { costOf } = require('./settlement');
-const { workerAnalyze } = require('../workers/aiWorker');
+const { createWorker, workerAnalyze } = require('../workers/aiWorker');
+
+test('the worker can claim immediately when a separate loop handles reaping', async () => {
+  const operations = [];
+  const prisma = {
+    aiRequest: {
+      async findMany() {
+        operations.push('reap');
+        return [];
+      },
+    },
+    aiExecutionSlot: { findMany: async () => [] },
+    $transaction: (read) =>
+      read({
+        async $queryRaw() {
+          operations.push('claim');
+          return [];
+        },
+      }),
+  };
+  const config = { enabled: true, environment: 'production' };
+  const adapters = { workerId: 'test_worker' };
+  assert.equal(
+    await createWorker(prisma, config, adapters, { reapBeforeClaim: false }).tick(),
+    false
+  );
+  assert.deepEqual(operations.splice(0), ['claim']);
+  assert.equal(await createWorker(prisma, config, adapters).tick(), false);
+  assert.deepEqual(operations, ['reap', 'reap', 'claim']);
+});
 test('worker has no implicit live provider or application database activation', () => {
   assert.equal(runtimeConfig({}).enabled, false);
   const env = { AI_WORKER_MODE: 'fake', DATABASE_URL: 'postgresql://127.0.0.1:55432/ai_lab_local' };
